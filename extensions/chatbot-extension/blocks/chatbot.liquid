@@ -1,0 +1,37 @@
+{% schema %}
+{
+  "name": "Chatbot",
+  "target": "body",
+  "javascript": "chatbot.js",
+  "stylesheet": "chatbot.css",
+  "settings": [
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Primary Color",
+      "default": "#0088cc"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "text",
+      "id": "chatbot_title",
+      "label": "Chatbot Title",
+      "default": "Store Assistant"
+    }
+  ]
+}
+{% endschema %}
+
+<div 
+  id="shopify-chatbot" 
+  data-primary-color="{{ block.settings.primary_color }}" 
+  data-text-color="{{ block.settings.text_color }}" 
+  data-title="{{ block.settings.chatbot_title }}"
+>
+
+</div>
