@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@huggingface/inference": "^3.5.2",
+    "@huggingface/transformers": "^3.4.0",
     "@pinecone-database/pinecone": "^5.1.1",
     "@prisma/client": "^6.2.1",
     "@remix-run/dev": "^2.15.0",
@@ -43,6 +44,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^11.0.5",
+    "torch": "^0.2.7",
     "vite-tsconfig-paths": "^5.0.1"
   },
   "devDependencies": {
