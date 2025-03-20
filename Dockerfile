@@ -1,5 +1,9 @@
 FROM node:18-alpine
-RUN apk add --no-cache openssl
+RUN apk add --no-cache \
+    openssl \
+    gcompat \
+    libgomp \
+    libstdc++
 
 EXPOSE 3000
 
