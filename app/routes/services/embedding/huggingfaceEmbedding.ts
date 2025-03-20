@@ -3,6 +3,7 @@ import { padVector } from "../../utils/vectorUtils";
 
 export const generateEmbeddings = async (text: string): Promise<number[]> => {
   const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+  console.log("HUGGINGFACE_API_KEY", HUGGINGFACE_API_KEY);
   
   const response = await fetch(
     "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
