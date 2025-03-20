@@ -1,26 +1,16 @@
-import fetch from "node-fetch";
+import { pipeline } from "@xenova/transformers";
 import { padVector } from "../../utils/vectorUtils";
 
+let extractor: any;
+
 export const generateEmbeddings = async (text: string): Promise<number[]> => {
-  const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-  console.log("HUGGINGFACE_API_KEY", HUGGINGFACE_API_KEY);
-  
-  const response = await fetch(
-    "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inputs: text }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Hugging Face API error: ${response.statusText}`);
+  if (!extractor) {
+    extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
   }
+  
+  const output = await extractor(text, { pooling: "mean", normalize: true });
 
-  const data = await response.json();
-  return padVector(data, 1024);
+  const embeddings = Array.from(output.data);
+
+  return padVector(embeddings, 1024);
 };
