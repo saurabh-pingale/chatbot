@@ -1,107 +1,190 @@
 .container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
-  padding: 20px;
-  background-color: #f5f5f5;
+  background-color: #23272a;
   font-family: Arial, sans-serif;
-  gap: 20px; 
+  color: #f8f8f8;
+}
+
+.header {
+  padding: 20px;
+  background-color: #2c2f33;
+  border-bottom: 2px solid #40444b;
+}
+
+.header h2 {
+  margin: 0;
+  color: #f8f8f8;
+  font-size: 24px;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: #b9bbbe;
+  font-size: 14px;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  padding: 20px;
+  gap: 20px;
 }
 
 .chatbotSection {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background-color: #2c2f33;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.chatHeader {
+  padding: 12px 20px;
+  background-color: #008080;
+  color: #f8f8f8;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.chatHeader h3 {
+  margin: 0;
+  font-size: 18px;
 }
 
 .chatWindow {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  padding: 15px;
+  background-color: #40444b;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .userMessage {
-  padding: 10px;
-  margin-bottom: 10px;
-  background-color: #e3f2fd;
-  border-radius: 8px;
-  max-width: 70%;
+  padding: 10px 15px;
+  margin-bottom: 5px;
+  background-color: #008080;
+  color: #f8f8f8;
+  border-radius: 12px;
+  border-top-right-radius: 0;
+  max-width: 80%;
   align-self: flex-end;
   word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .botMessage {
-  padding: 10px;
-  margin-bottom: 10px;
-  background-color: #f1f1f1;
-  border-radius: 8px;
-  max-width: 70%;
+  padding: 10px 15px;
+  margin-bottom: 5px;
+  background-color: #2c2f33;
+  color: #f8f8f8;
+  border-radius: 12px;
+  border-top-left-radius: 0;
+  max-width: 80%;
   align-self: flex-start;
   word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .inputArea {
   display: flex;
+  padding: 12px;
+  background-color: #2c2f33;
+  border-top: 1px solid #40444b;
   gap: 10px;
 }
 
 .inputArea input {
   flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #40444b;
+  background-color: #40444b;
+  color: #f8f8f8;
+  font-size: 14px;
 }
 
-.inputArea button {
-  padding: 10px 20px;
-  border-radius: 8px;
+.inputArea input::placeholder {
+  color: #b9bbbe;
+}
+
+.sendButton {
+  padding: 10px 16px;
+  border-radius: 6px;
   border: none;
-  background-color: #007bff;
-  color: #fff;
-  font-size: 16px;
+  background-color: #008080;
+  color: #f8f8f8;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.inputArea button:hover {
-  background-color: #0056b3;
+.sendButton:hover {
+  background-color: #006666;
 }
 
 .trainingSection {
-  width: 300px; 
+  width: 300px;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background-color: #2c2f33;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
-.trainingSection h3 {
-  margin-bottom: 20px;
+.trainingHeader {
+  padding: 12px 20px;
+  background-color: #008080;
+  color: #f8f8f8;
+}
+
+.trainingHeader h3 {
+  margin: 0;
   font-size: 18px;
-  color: #333;
 }
 
-.trainingSection button {
-  padding: 10px 20px;
-  border-radius: 8px;
+.trainingContent {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.trainingContent p {
+  margin: 0;
+  color: #b9bbbe;
+  font-size: 14px;
+}
+
+.fetchButton {
+  padding: 12px 20px;
+  border-radius: 6px;
   border: none;
-  background-color: #28a745;
-  color: #fff;
-  font-size: 16px;
+  background-color: #008080;
+  color: #f8f8f8;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.trainingSection button:hover {
-  background-color: #218838;
+.fetchButton:hover {
+  background-color: #006666;
+}
+
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
+  }
+  
+  .trainingSection {
+    width: 100%;
+  }
 }

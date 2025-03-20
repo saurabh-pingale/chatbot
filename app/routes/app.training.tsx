@@ -85,7 +85,16 @@ export default function TrainingPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.chatbotSection}>
+      <div className={styles.header}>
+        <h2>SmartBot Training</h2>
+        <p>Train your SmartBot with your shop's products</p>
+      </div>
+
+      <div className={styles.content}>
+        <div className={styles.chatbotSection}>
+          <div className={styles.chatHeader}>
+            <h3>Training Chat</h3>
+          </div>
         <div className={styles.chatWindow}>
           {messages.map((msg, index) => (
             <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
@@ -100,14 +109,20 @@ export default function TrainingPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your query..."
           />
-        <button onClick={handleSend} className={styles.button}>Send</button>
+        <button onClick={handleSend} className={styles.sendButton}>Send</button>
         </div>
         </div>
 
       <div className={styles.trainingSection}>
-        <h3>Fetch Products</h3>
-        <button onClick={handleFetchProducts} className={styles.button}>Fetch Products</button>
+      <div className={styles.trainingHeader}>
+            <h3>Training Options</h3>
+          </div>
+          <div className={styles.trainingContent}>
+          <p>Fetch your store's products to train the SmartBot</p>
+        <button onClick={handleFetchProducts} className={styles.fetchButton}>Fetch Products</button>
       </div>
+    </div>
+    </div>
     </div>
   );
 }

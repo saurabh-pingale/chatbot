@@ -38,7 +38,7 @@
 
 .chatbotHeader {
   padding: 10px;
-  /* background-color: #008080 !important; */
+  background-color: #008080;
   color: #f8f8f8;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -78,7 +78,7 @@
 .chatbotInputButton {
   margin-left: 10px;
   padding: 8px 12px;
-  /* background-color: #008080 !important;  */
+  background-color: #008080; 
   color: #f8f8f8;
   border: none;
   border-radius: 5px;
