@@ -114,14 +114,14 @@ export default function TrainingPage() {
         </div>
 
       <div className={styles.trainingSection}>
-      <div className={styles.trainingHeader}>
+        <div className={styles.trainingHeader}>
             <h3>Training Options</h3>
-          </div>
-          <div className={styles.trainingContent}>
+        </div>
+        <div className={styles.trainingContent}>
           <p>Fetch your store's products to train the SmartBot</p>
-        <button onClick={handleFetchProducts} className={styles.fetchButton}>Fetch Products</button>
+          <button onClick={handleFetchProducts} className={styles.fetchButton}>Fetch Products</button>
+        </div>
       </div>
-    </div>
     </div>
     </div>
   );
