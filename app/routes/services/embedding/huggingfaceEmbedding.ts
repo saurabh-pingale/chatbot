@@ -5,7 +5,9 @@ let extractor: any;
 
 export const generateEmbeddings = async (text: string): Promise<number[]> => {
   if (!extractor) {
-    extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+    extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
+      runtime: "web",
+    });
   }
   
   const output = await extractor(text, { pooling: "mean", normalize: true });
