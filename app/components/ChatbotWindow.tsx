@@ -37,8 +37,10 @@ import TypingLoader from "./TypingLoader";
           <div className={styles.chatbotHeader} style={{ backgroundColor: color || "#008080"}}>
             <span>Bot Name</span>
           </div>
-          <MessageList messages={messages}/>
-          {isLoading && <TypingLoader color={color} />}
+          <div className={styles.chatbotMessages}>
+            <MessageList messages={messages}/>
+            {isLoading && <TypingLoader color={color} />}
+          </div>
           <InputComponent onSendMessage={handleSendMessage} color={color} />
         </div>
       );
