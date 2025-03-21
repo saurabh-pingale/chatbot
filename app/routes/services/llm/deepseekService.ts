@@ -223,38 +223,6 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
     };
   }
 
-  // Handle price range queries
-  const priceRangeKeywords = /price\s+range|cost|below|under|above|over|between|cheaper|expensive|affordable/i;
-  if (priceRangeKeywords.test(userMessage)) {
-    const priceRange = extractPriceRange(userMessage);
-    
-    if (priceRange) {
-      const filteredProducts = filterProductsByPrice(validProducts, priceRange);
-      
-      if (filteredProducts.length > 0) {
-        const [min, max] = priceRange.split("-");
-        let responseText = "Here are";
-        
-        if (min && max && max < 999999) {
-          responseText += ` products priced between $${min} and $${max}:`;
-        } else if (min && (!max || max >= 999999)) {
-          responseText += ` products priced above $${min}:`;
-        } else if (max && max < 999999) {
-          responseText += ` products priced below $${max}:`;
-        } else {
-          responseText += " some products that match your price criteria:";
-        }
-        
-        return { response: responseText, products: filteredProducts };
-      } else {
-        return { 
-          response: "I couldn't find any products matching that price range. Here are some other products you might be interested in:", 
-          products: validProducts.slice(0, 5)
-        };
-      }
-    }
-  }
-
    // Handle exact price queries
    if (userMessage.match(/(?:costs?|price[ds]?)\s+(?:exactly|precisely)?\s*\$?\d+(?:\.\d+)?/i)) {
     const priceRange = extractPriceRange(userMessage);
@@ -339,10 +307,23 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
 
 export const createDeepseekPrompt = (userMessage: string, contextTexts?: string): string => {
   return `
-    You are a helpful assistant that ONLY responds based on the provided context.
-    If the information isn't in the context, say "I don't have much information on this."
-    ${contextTexts ? `Context: ${contextTexts}` : ""}
+    You are a specialized product assistant that ONLY responds based on the provided product catalog context.
+
+    Instructions:
+    - ONLY use information from the provided product context to answer questions
+    - If asked about products, provide clear, concise information about available items
+    - If asked for products within a specific price range, filter and show only relevant items
+    - If asked about features, specifications, or details of a specific product, provide only factual information from the context
+    - Do not make assumptions about products not mentioned in the context
+    - If the question isn't about products in the context or requires information not in the context, respond ONLY with: "I don't have much information on this."
+    - Present product information in a clear, organized manner
+    - Do not use phrases like "based on the context" or "according to the information provided"
+    - Do not include thinking tags or explanations of your reasoning process
+
+    ${contextTexts ? `Product Catalog Context: ${contextTexts}` : ""}
+
     Question: ${userMessage}
-    Answer (based ONLY on the provided context, without any thinking tags, and also don't use text like based on this approach):
+
+    Answer:
   `;
 };
