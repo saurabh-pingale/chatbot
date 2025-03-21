@@ -57,6 +57,10 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
     }
   };
 
+  const handleSelectOption = (option: string) => {
+    handleSendMessage(option);
+  };
+
   return (
     <div className={styles.chatbotPopup} style={{ borderColor: color || "#555" }}>
       <div className={styles.chatbotHeader} style={{ backgroundColor: color || "#008080"}}>
@@ -66,7 +70,7 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
         <MessageList messages={messages} color={color}/>
         {isLoading && <TypingLoader color={color} />}
       </div>
-      <StaticSlider color={color} />
+      <StaticSlider color={color} onSelectOption={handleSelectOption} />
       <InputComponent onSendMessage={handleSendMessage} color={color} />
     </div>
   );
