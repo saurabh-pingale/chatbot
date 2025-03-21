@@ -24,32 +24,32 @@ This is a Shopify Remix Chatbot App that allows users to interact with a chatbot
 Before you begin, ensure you have the following installed:
 
 1. **Shopify Partners Account:**
+  
+    - If you don’t already have one, create a [Shopify Partners account](https://www.shopify.com/in/partners). This account allows you to manage and develop Shopify apps.
 
-  - If you don’t already have one, create a [Shopify Partners account](https://www.shopify.com/in/partners). This account allows you to manage and develop Shopify apps.
-
-  - After creating a Shopify Partners account, create a `Development Store` from the Shopify Partners   
-    dashboard. This store will be used to test your app during development.
+    - After creating a Shopify Partners account, create a `Development Store` from the Shopify Partners  
+      dashboard. This store will be used to test your app during development.
 
 2. **Node.js:**
 
-  - Install [Node.js](https://nodejs.org/en) (v18.20 or higher).
+    - Install [Node.js](https://nodejs.org/en) (v18.20 or higher).
  
 3. **Shopify CLI:**
 
-  - Install the [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) to set up and manage your 
+    - Install the [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) to set up and manage your 
     Shopify app.
  
 4. **Supabase Account:**
 
-  - Create a [Supabase](https://supabase.com/) account for database management.
+    - Create a [Supabase](https://supabase.com/) account for database management.
  
 5. **Pinecone Account:**
 
-  - Create a [Pinecone](https://www.pinecone.io/) account for vector storage.
+    - Create a [Pinecone](https://www.pinecone.io/) account for vector storage.
 
 6. **Hugging Face Account:**
 
-  - Create a [Hugging Face](https://huggingface.co/) account to access language models.
+    - Create a [Hugging Face](https://huggingface.co/) account to access language models.
 
 
 ## Setup
@@ -57,7 +57,7 @@ Before you begin, ensure you have the following installed:
 1. **Clone the Repository**
 
 ```bash
-git clone 
+git clone https://github.com/saurabh-pingale/chatbot.git 
 cd chatbot
 ```
 
@@ -140,17 +140,25 @@ function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boo
 
 ## Usage
 
-**Chatbot Interface**
-When a user visits your Shopify store, they will see the chatbot in the bottom right corner of the page. They can interact with the chatbot by sending messages and receiving responses.
+- **Chatbot Interface**
+  When a user visits your Shopify store, they will see the chatbot in the bottom right corner of the 
+  page. They can interact with the chatbot by sending messages and receiving responses.
 
-**Customization**
-To customize the chatbot, log in to the app using your Shopify shop domain. Once logged in, navigate to the Settings page. Here, you can change the default color of the chatbot. The changes will be applied automatically after saving.
+- **Customization**
+  To customize the chatbot, log in to the app using your Shopify shop domain. Once logged in, navigate 
+  to the Settings page. Here, you can change the default color of the chatbot. The changes will be 
+  applied automatically after saving.
 
-**Training the Chatbot**
-To train the chatbot, navigate to the Training page. You can either fetch products from your Shopify store using the Fetch Products button or manually enter product data in JSON format. The products will be converted into embeddings and stored in the Pinecone vector database.
+- **Training the Chatbot**
+  To train the chatbot, navigate to the Training page. You can either fetch products from your Shopify  
+  store using the Fetch Products button or manually enter product data in JSON format. The products will 
+  be converted into embeddings and stored in the Pinecone vector database.
 
-**Querying the Chatbot**
-When a user sends a message to the chatbot, the app queries the Pinecone vector database for matching embeddings. If a match is found, the embeddings and the user's message are passed to the language model, which generates a response. If no match is found, the chatbot responds with "I don't have much information on this."
+- **Querying the Chatbot**
+  When a user sends a message to the chatbot, the app queries the Pinecone vector database for matching 
+  embeddings. If a match is found, the embeddings and the user's message are passed to the language 
+  model, which generates a response. If no match is found, the chatbot responds with "I don't have much 
+  information on this."
 
 
 ## Technologies Used
