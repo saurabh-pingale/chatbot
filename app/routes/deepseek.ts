@@ -101,93 +101,89 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
 
-    // Check for different types of product queries
-    const isShowAllProductsQuery = /show\s+(?:me\s+)?(?:all\s+)?products/i.test(userMessage);
-    const isPriceRangeQuery = /price\s+range|below|under|above|over|between/i.test(userMessage);
-    const isSpecificProductQuery = userMessage.toLowerCase().includes("product") && 
-                                  !isShowAllProductsQuery && 
-                                  !isPriceRangeQuery;
+    // Detect query type and set appropriate parameters
+    // Improved regex patterns for better detection
+    const isShowAllProductsQuery = /show\s+(?:me\s+)?(?:all\s+)?(?:your\s+)?products/i.test(userMessage);
+    const isPriceRangeQuery = /price\s+range|cost|below|under|above|over|between|cheaper|expensive|affordable/i.test(userMessage);
+    const hasProductMention = /product|item|goods|merchandise|buy|purchase/i.test(userMessage);
+    
+    // Unified flag for any product-related query with more comprehensive detection
+    const isProductQuery = isShowAllProductsQuery || isPriceRangeQuery || 
+                          hasProductMention || 
+                          /show me|what (do you|are) (have|selling)|can i (buy|get)/i.test(userMessage);
 
-     // Combined flag for any product-related query
-    const productQuery = isShowAllProductsQuery || isPriceRangeQuery || isSpecificProductQuery || 
-    userMessage.toLowerCase().includes("show me");
+    console.log(`Query type detection: isProductQuery=${isProductQuery}, isPriceRange=${isPriceRangeQuery}, isShowAll=${isShowAllProductsQuery}`);
 
     // Step 1: Convert query to embeddings
     const embeddings = await generateEmbeddings(userMessage);
+    
+    // Step 2: Query Pinecone with appropriate parameters
+    // Use larger topK for product queries to ensure good coverage
+    const topK = isProductQuery ? 20 : 5;
+    const results = await queryEmbeddings(embeddings, topK);
 
-    if (isShowAllProductsQuery) {
-    // Step 2: Query Pinecone for similar vectors
-    const results = await queryEmbeddings(embeddings, 20);
-
-    const products = results.map(r => ({
-      id: r.id || "",
-      title: r.metadata?.title || "",
-      description: r.metadata?.description || "",
-      url: r.metadata?.url || "",
-      price: r.metadata?.price || "",
-      image: r.metadata?.image || ""
-    })).filter(p => p.title && p.url);
-
-    // If still no products found, use a fallback method to query Pinecone
-    if (products.length === 0) {
-      console.log("No products found with semantic search, using fallback method");
-      // You can implement a fallback method here if needed
-      // For now, we'll continue with the flow
+    // Better error handling if Pinecone returns no results
+    if (!results || results.length === 0) {
+      console.log("Warning: No results returned from Pinecone");
+      if (isProductQuery) {
+        return json({ 
+          answer: "I'm sorry, I couldn't find any products matching your query. Please try a different search term.", 
+          products: [] 
+        });
+      } else {
+        return json({ 
+          answer: "I don't have much information on this topic.", 
+          products: [] 
+        });
+      }
     }
 
-    return json({ 
-      answer: "Here are some products you might like:", 
-      products: products
-    });
-  }
-
-  // For all other queries, use the existing approach with some enhancements
-    // Step 2: Query Pinecone for similar vectors
-    const results = await queryEmbeddings(embeddings, isPriceRangeQuery ? 20 : 5);
-
-    // Step 3: Format products from Pinecone results
-    const products = results.map(r => ({
-      id: r.id || "",
-      title: r.metadata?.title || "",
-      description: r.metadata?.description || "",
-      url: r.metadata?.url || "",
-      price: r.metadata?.price || "",
-      image: r.metadata?.image || ""
-    })).filter(p => p.title && p.url);
+    // Step 3: Format products from Pinecone results with improved error handling
+    const products = results
+      .filter(r => r && r.metadata)
+      .map(r => ({
+        id: r.id || "",
+        title: r.metadata?.title || "",
+        description: r.metadata?.description || "",
+        url: r.metadata?.url || "",
+        price: r.metadata?.price || "",
+        image: r.metadata?.image || ""
+      }))
+      .filter(p => p.title && p.url); // Ensure we have at least title and URL
 
     console.log(`Found ${products.length} products for query: ${userMessage}`);
 
-    // Step 4: Check if we have relevant results
-    const hasRelevantResults = results.length > 0 && productQuery;
-
-    // If no relevant results, return the default message
-    if (!hasRelevantResults && !productQuery) {
-      // Step 5: Generate context and prompt for LLM for non-product queries
-      let contextTexts = results.map(r => r.metadata?.text || "").join("\n");
-      const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
-
-      // Step 6: Generate response using DeepSeek for non-product queries
-      const { response } = await generateLLMResponse(fullPrompt, []);
-      
+    // Handle "show all products" query directly
+    if (isShowAllProductsQuery) {
       return json({ 
-        answer: response, 
-        products: [] 
+        answer: "Here are our products:", 
+        products: products
       });
-    } 
+    }
 
-    // For product queries, even if no products found, we should use the product flow
-    let contextTexts = results.map(r => r.metadata?.text || "").join("\n");
+    // Build context from results for LLM
+    const contextTexts = results
+      .filter(r => r && r.metadata && r.metadata.text)
+      .map(r => r.metadata.text)
+      .join("\n");
+    
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     
-     // Generate response for product queries
+    // Generate response using LLM with the products and context
     const { response, products: filteredProducts } = await generateLLMResponse(fullPrompt, products);
-
+    
+    // Return products if this is a product query - use filtered products if available
+    const finalProducts = isProductQuery 
+      ? (filteredProducts && filteredProducts.length > 0 ? filteredProducts : products)
+      : [];
+      
     return json({ 
       answer: response, 
-      products: filteredProducts && filteredProducts.length > 0 ? filteredProducts : products
+      products: finalProducts
     });
+    
   } catch (error) {
-    console.error("Error processing DeepSeek request:", error);
-    return json({ error: "Failed to fetch response from DeepSeek" }, { status: 500 });
+    console.error("Error processing request:", error);
+    return json({ error: "Failed to process your request" }, { status: 500 });
   }
 };

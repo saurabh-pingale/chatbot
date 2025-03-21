@@ -35,13 +35,37 @@ const extractPriceRange = (prompt: string): string => {
 };
 
 const filterProductsByPrice = (products: any[], priceRange: string): any[] => {
-  if (!priceRange || !products || products.length === 0) return [];
+  if (!priceRange || !products || products.length === 0) return products;
 
   const [min, max] = priceRange.split("-").map(Number);
   return products.filter((product) => {
-    if (!product.metadata || !product.metadata.price) return false;
-    const price = parseFloat(product.metadata.price.replace(/[^\d.]/g, ""));
-    return (!min || price >= min) && (!max || price <= max);
+    if (!product.price && (!product.metadata || !product.metadata.price)) return false;
+    
+    const priceStr = product.price || product.metadata?.price || "";
+    // Handle various price formats (e.g. "$10.99", "10.99", etc.)
+    const price = parseFloat(priceStr.replace(/[^\d.]/g, ""));
+    
+    return price && (!isNaN(min) ? price >= min : true) && (!isNaN(max) ? price <= max : true);
+  });
+};
+
+// Check if query is about a specific product
+const isAboutSpecificProduct = (userMessage: string, products: any[]): boolean => {
+  if (!products || products.length === 0) return false;
+  
+  // Remove common product query words to focus on product specifics
+  const cleanedMessage = userMessage.toLowerCase()
+    .replace(/show\s+me|product|products|about|do you have|tell me about|price|cost/gi, '')
+    .trim();
+  
+  if (cleanedMessage.length < 3) return false; // Too short to be meaningful
+  
+  // Check if any product title words match significant parts of the query
+  return products.some(product => {
+    const title = (product.title || product.metadata?.title || "").toLowerCase();
+    const titleWords = title.split(/\s+/).filter(word => word.length > 3); // Focus on significant words
+    
+    return titleWords.some(word => cleanedMessage.includes(word));
   });
 };
 
@@ -80,8 +104,9 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
       image: product.image || product.metadata?.image || ""
     }));
 
-  // Handle "Show me products" query - return all valid products
-  if (/show\s+(?:me\s+)?products/i.test(userMessage)) {
+  // General product listing query
+  const showProductsRegex = /show\s+(?:me\s+)?(?:all\s+)?(?:your\s+)?products/i;
+  if (showProductsRegex.test(userMessage)) {
     return { 
       response: "Here are some products you might like:", 
       products: validProducts
@@ -89,32 +114,56 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
   }
 
   // Handle price range queries
-  const priceRangeKeywords = /price\s+range|below|under|above|over|between/i;
+  const priceRangeKeywords = /price\s+range|cost|below|under|above|over|between|cheaper|expensive|affordable/i;
   if (priceRangeKeywords.test(userMessage)) {
     const priceRange = extractPriceRange(userMessage);
+    
     if (priceRange) {
       const filteredProducts = filterProductsByPrice(validProducts, priceRange);
       
-      return { 
-        response: `Here are some products within the price range ${priceRange}:`, 
-        products: filteredProducts
-      };
+      if (filteredProducts.length > 0) {
+        const [min, max] = priceRange.split("-");
+        let responseText = "Here are";
+        
+        if (min && max) {
+          responseText += ` products priced between $${min} and $${max}:`;
+        } else if (min) {
+          responseText += ` products priced above $${min}:`;
+        } else if (max) {
+          responseText += ` products priced below $${max}:`;
+        } else {
+          responseText += " some products that match your price criteria:";
+        }
+        
+        return { response: responseText, products: filteredProducts };
+      } else {
+        return { 
+          response: "I couldn't find any products matching that price range. Here are some other products you might be interested in:", 
+          products: validProducts.slice(0, 5)  // Fallback to showing some products
+        };
+      }
     }
   }
 
-  // Handle product-specific queries
-  let matchedProducts: any[] = [];
-
-  if (validProducts.length > 0) {
-    // Look for product titles in the user's query
-    matchedProducts = validProducts.filter(product => {
-      const productTitle = product.title.toLowerCase();
-      return productTitle && userMessage.toLowerCase().includes(productTitle);
+  // Handle specific product queries
+  const isSpecificProduct = isAboutSpecificProduct(userMessage, validProducts);
+  if (isSpecificProduct) {
+    // Filter products based on the query terms
+    const queryTerms = userMessage.toLowerCase().split(/\s+/).filter(term => term.length > 3);
+    
+    const matchedProducts = validProducts.filter(product => {
+      const title = (product.title || "").toLowerCase();
+      const description = (product.description || "").toLowerCase();
+      
+      // Check if product title or description contains query terms
+      return queryTerms.some(term => 
+        title.includes(term) || description.includes(term)
+      );
     });
     
     if (matchedProducts.length > 0) {
       return { 
-        response: `Here are some products that match your query:`, 
+        response: `Here are the products that match your query:`, 
         products: matchedProducts 
       };
     }
