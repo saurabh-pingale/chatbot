@@ -12,10 +12,35 @@ const getGreeting = (): string => {
   else return "Good evening";
 };
 
+const extractPriceRange = (prompt: string): string => {
+  // Check for explicit range format (e.g., "$10-$20" or "10-20")
+  const rangeMatch = prompt.match(/\$?(\d+)\s*-\s*\$?(\d+)/);
+  if (rangeMatch) {
+    return `${rangeMatch[1]}-${rangeMatch[2]}`;
+  }
+  
+  // Check for "below X" or "under X" format
+  const belowMatch = prompt.match(/(?:below|under)\s+\$?(\d+)/i);
+  if (belowMatch) {
+    return `0-${belowMatch[1]}`;
+  }
+  
+  // Check for "above X" or "over X" format
+  const aboveMatch = prompt.match(/(?:above|over)\s+\$?(\d+)/i);
+  if (aboveMatch) {
+    return `${aboveMatch[1]}-10000`; // Using a large upper bound
+  }
+  
+  return "";
+};
+
 const filterProductsByPrice = (products: any[], priceRange: string): any[] => {
+  if (!priceRange || !products || products.length === 0) return [];
+
   const [min, max] = priceRange.split("-").map(Number);
   return products.filter((product) => {
-    const price = parseFloat(product.metadata.price.replace("$", ""));
+    if (!product.metadata || !product.metadata.price) return false;
+    const price = parseFloat(product.metadata.price.replace(/[^\d.]/g, ""));
     return (!min || price >= min) && (!max || price <= max);
   });
 };
@@ -24,70 +49,85 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
   response: string; products?: any[] }> => {
   const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
+  // Extract the raw user query from the prompt
+  const userMessageMatch = prompt.match(/Question:\s*(.*?)(?:\n|$)/);
+  const userMessage = userMessageMatch ? userMessageMatch[1] : prompt;
+
+  // Empty or meaningless prompt check
+  const cleanPrompt = userMessage.trim();
+  if (cleanPrompt.length === 0 || cleanPrompt === "." || /^[^a-zA-Z0-9]+$/.test(cleanPrompt)) {
+    return { response: "I don't have much information on this." };
+  }
+
   // Handle greetings dynamically
-  if (isGreeting(prompt)) {
+  if (isGreeting(userMessage)) {
     const greeting = getGreeting();
     return { response: `${greeting}! 🌟 How can I assist you today? If you have any questions about our products, feel free to ask! I'm here to help you with all things! 😊` };
   }
 
+  // Handle "Show me products" query
+  if (/show\s+(?:me\s+)?products/i.test(userMessage)) {
+    return { 
+      response: "Here are some products you might like:", 
+      products: products.length > 0 ? products : [] 
+    };
+  }
+
   // Handle price range queries
-  if (prompt.toLowerCase().includes("price range") || prompt.toLowerCase().includes("below") || prompt.toLowerCase().includes("above")) {
-    const priceRange = prompt.match(/\d+-\d+/)?.[0] || "";
-    const filteredProducts = filterProductsByPrice(products, priceRange);
-    return { response: `Here are some products within the price range ${priceRange}:`, products: filteredProducts };
+  const priceRangeKeywords = /price\s+range|below|under|above|over|between/i;
+  if (priceRangeKeywords.test(userMessage)) {
+    const priceRange = extractPriceRange(userMessage);
+    if (priceRange) {
+      const filteredProducts = filterProductsByPrice(products, priceRange);
+      return { 
+        response: `Here are some products within the price range ${priceRange}:`, 
+        products: filteredProducts.length > 0 ? filteredProducts : []
+      };
+    }
   }
 
   // Handle product-specific queries
-  const productKeywords = products.map((product) => product.title.toLowerCase());
-  const hasProductKeyword = productKeywords.some((keyword) => prompt.toLowerCase().includes(keyword));
-
-  if (hasProductKeyword) {
+  if (products && products.length > 0) {
     const matchedProducts = products.filter((product) =>
-      prompt.toLowerCase().includes(product.title.toLowerCase())
+      product.title && prompt.toLowerCase().includes(product.title.toLowerCase())
     );
-    return { response: "Here are some products you might like:", products: matchedProducts };
+    
+    if (matchedProducts.length > 0) {
+      return { 
+        response: `Here are some products: ${matchedProducts[0].title}`, 
+        products: matchedProducts 
+      };
+    }
   }
 
-  // Handle "Show me products" query
-  if (prompt.toLowerCase().includes("show me products") || prompt.toLowerCase().includes("show products")) {
-    return { response: "Here are some products you might like:", products };
-  }
+  try{
+    const response = await hf.textGeneration({
+      model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 200,
+        temperature: 0.3,
+        return_full_text: false,
+      },
+    });
 
-  // Default response for unrelated queries
-  if (prompt.trim().length === 0 || prompt.trim() === ".") {
+    // Clean up the response to remove any thinking tags or other artifacts
+    let cleanedResponse = response.generated_text
+      .replace(/<\/?think>|<\/?reasoning>/gi, '') // Remove any thinking/reasoning tags
+      .replace(/^\s*\n/gm, '') // Remove empty lines
+      .trim();
+
+    // If the response still seems to contain thinking or is too verbose, simplify it
+    if (cleanedResponse.includes('</think>') || cleanedResponse.length > 300) {
+      const lastParagraph = cleanedResponse.split('\n\n').pop() || cleanedResponse;
+      cleanedResponse = lastParagraph.trim();
+    }
+
+    return { response: cleanedResponse };
+  } catch(error) {
+    console.error("Error generating response:", error);
     return { response: "I don't have much information on this." };
   }
-
-  const response = await hf.textGeneration({
-    model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-    inputs: prompt,
-    parameters: {
-      max_new_tokens: 200,
-      temperature: 0.3,
-      return_full_text: false,
-    },
-  });
-
-  // Clean up the response to remove any thinking tags or other artifacts
-  let cleanedResponse = response.generated_text
-    .replace(/<\/?think>|<\/?reasoning>/gi, '') // Remove any thinking/reasoning tags
-    .replace(/^\s*\n/gm, '') // Remove empty lines
-    .trim();
-
-  // If the response still seems to contain thinking or is too verbose, simplify it
-  if (cleanedResponse.includes('</think>') || cleanedResponse.length > 300) {
-    const lastParagraph = cleanedResponse.split('\n\n').pop() || cleanedResponse;
-    cleanedResponse = lastParagraph.trim();
-  }
-
-  cleanedResponse = cleanedResponse.split("\n")[0].trim();
-  
-  // Check if the response indicates products should be shown
-  if (cleanedResponse.toLowerCase().includes("show products") || prompt.toLowerCase().includes("show me")) {
-    return { response: cleanedResponse, products: [] }; 
-  }
-
-  return { response: cleanedResponse };
 };
 
 export const createDeepseekPrompt = (userMessage: string, contextTexts?: string): string => {

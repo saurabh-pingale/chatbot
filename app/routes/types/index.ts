@@ -3,6 +3,11 @@ export interface VectorMetadata {
     label?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    title?: string;
+    description?: string;
+    url?: string;
+    price?: string;
+    image?: string;
   }
   
   export interface Vector {

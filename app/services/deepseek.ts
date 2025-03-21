@@ -5,7 +5,19 @@ interface Message {
   content: string;
 }
 
-export const sendMessageToDeepSeek = async (userMessage: string): Promise<string> => {
+interface Product {
+  title: string;
+  price: string;
+  image: string;
+  url: string;
+}
+
+interface DeepSeekResponse {
+  answer: string;
+  products?: Product[];
+}
+
+export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSeekResponse> => {
   if (!userMessage.trim()) {
     throw new Error("Message cannot be empty");
   }
@@ -19,9 +31,15 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<string
       throw new Error("No valid response from DeepSeek");
     }
 
-    return response.data;
+    return {
+      answer: response.data.answer,
+      products: Array.isArray(response.data.products) ? response.data.products : []
+    };
   } catch (error) {
     console.error("Error communicating with DeepSeek:", error);
-    return "Sorry, I am unable to process your request at the moment. Please try again later.";
+    return {
+      answer: "Sorry, I am unable to process your request at the moment. Please try again later.",
+      products: []
+    };
   }
 };

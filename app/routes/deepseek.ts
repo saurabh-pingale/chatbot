@@ -107,7 +107,17 @@ export const action: ActionFunction = async ({ request }) => {
     // Step 2: Query Pinecone for similar vectors
     const results = await queryEmbeddings(embeddings);
 
-    // Step 3: Check if we have relevant results
+    // Step 3: Format products from Pinecone results
+    const products: any[] = results.map(r => ({
+      id: r.id,
+      title: r.metadata?.title || "",
+      description: r.metadata?.description || "",
+      url: r.metadata?.url || "",
+      price: r.metadata?.price || "",
+      image: r.metadata?.image || ""
+    }));
+
+    // Step 4: Check if we have relevant results
     const hasRelevantResults = results.length > 0;
 
     // If no relevant results, return the default message
@@ -115,22 +125,23 @@ export const action: ActionFunction = async ({ request }) => {
       return json(
         {
           answer: "I don't have much information on this.",
+          products: [],
           metadata: {
             similar_documents_count: 0,
             processed_data: null,
           },
         }
       );
-    }  
+    } 
 
-    // Step 4: Generate context and prompt for LLM
+    // Step 5: Generate context and prompt for LLM
     let contextTexts = results.map(r => r.metadata?.text || "").join("\n");
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     
     // Step 5: Generate response using DeepSeek
-    const { response, products } = await generateLLMResponse(fullPrompt);
+    const { response, products: filteredProducts } = await generateLLMResponse(fullPrompt, products);
 
-    return json({ answer: response, products });
+    return json({ answer: response, products: filteredProducts || products  });
   } catch (error) {
     console.error("Error processing DeepSeek request:", error);
     return json({ error: "Failed to fetch response from DeepSeek" }, { status: 500 });
