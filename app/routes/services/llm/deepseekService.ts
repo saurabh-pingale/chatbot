@@ -1,7 +1,39 @@
 import { HfInference } from "@huggingface/inference";
 
-export const generateLLMResponse = async (prompt: string): Promise<string> => {
+const isGreeting = (message: string): boolean => {
+  const greetings = ["hi", "hello", "hey", "how are you", "good morning", "good evening", "good afternoon"];
+  return greetings.some((greeting) => message.toLowerCase().includes(greeting));
+};
+
+const filterProductsByPrice = (products: any[], priceRange: string): any[] => {
+  const [min, max] = priceRange.split("-").map(Number);
+  return products.filter((product) => {
+    const price = parseFloat(product.metadata.price.replace("$", ""));
+    return (!min || price >= min) && (!max || price <= max);
+  });
+};
+
+export const generateLLMResponse = async (prompt: string, products: any[] = []): Promise<{
+  response: string; products?: any[] }> => {
   const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+
+  // Handle greetings dynamically
+  if (isGreeting(prompt)) {
+    const currentHour = new Date().getHours();
+    let greeting = "Good day";
+    if (currentHour < 12) greeting = "Good morning";
+    else if (currentHour < 18) greeting = "Good afternoon";
+    else greeting = "Good evening";
+
+    return { response: `${greeting}! 🌟 How can I assist you today? If you have any questions about our products, feel free to ask! I'm here to help you with all things! 😊` };
+  }
+
+  // Handle price range queries
+  if (prompt.toLowerCase().includes("price range") || prompt.toLowerCase().includes("below") || prompt.toLowerCase().includes("above")) {
+    const priceRange = prompt.match(/\d+-\d+/)?.[0] || "";
+    const filteredProducts = filterProductsByPrice(products, priceRange);
+    return { response: `Here are some products within the price range ${priceRange}:`, products: filteredProducts };
+  }
 
   const response = await hf.textGeneration({
     model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
@@ -27,7 +59,12 @@ export const generateLLMResponse = async (prompt: string): Promise<string> => {
 
   cleanedResponse = cleanedResponse.split("\n")[0].trim();
   
-  return cleanedResponse;
+  // Check if the response indicates products should be shown
+  if (cleanedResponse.toLowerCase().includes("show products") || prompt.toLowerCase().includes("show me")) {
+    return { response: cleanedResponse, products: [] }; 
+  }
+
+  return { response: cleanedResponse };
 };
 
 export const createDeepseekPrompt = (userMessage: string, contextTexts?: string): string => {
@@ -36,6 +73,6 @@ export const createDeepseekPrompt = (userMessage: string, contextTexts?: string)
     If the information isn't in the context, say "I don't have much information on this."
     ${contextTexts ? `Context: ${contextTexts}` : ""}
     Question: ${userMessage}
-    Answer (based ONLY on the provided context, without any thinking tags):
+    Answer (based ONLY on the provided context, without any thinking tags, and also don't use text like based on this approach):
   `;
 };

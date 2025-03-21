@@ -128,9 +128,9 @@ export const action: ActionFunction = async ({ request }) => {
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     
     // Step 5: Generate response using DeepSeek
-    const cleanedResponse = await generateLLMResponse(fullPrompt);
+    const { response, products } = await generateLLMResponse(fullPrompt);
 
-    return json({ answer: cleanedResponse });
+    return json({ answer: response, products });
   } catch (error) {
     console.error("Error processing DeepSeek request:", error);
     return json({ error: "Failed to fetch response from DeepSeek" }, { status: 500 });
