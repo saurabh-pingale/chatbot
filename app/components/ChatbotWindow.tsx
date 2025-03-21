@@ -16,8 +16,8 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<Array<{ title: string; price: string; image: string; url: string }>>([]);
   
-  const addMessage = (text: string, sender: 'user' | 'bot') => {
-    setMessages((prev) => [...prev, { text, sender }]);
+  const addMessage = (text: string, sender: 'user' | 'bot', products?: Array<{ title: string; price: string; image: string; url: string}>) => {
+    setMessages((prev) => [...prev, { text, sender, products }]);
   };
 
   const handleSendMessage = async (userMessage: string) => {
@@ -25,12 +25,14 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
     setIsLoading(true);
     
     try {
-      const { answer, products } = await sendMessageToDeepSeek(userMessage);
+      const { answer, products = [] } = await sendMessageToDeepSeek(userMessage);
       addMessage(answer, "bot");
 
-      if (products) {
-        setProducts(products);
-      }
+      const validProducts = products.filter(p => 
+        p && p.title && p.price && p.image && p.url
+      );
+
+      addMessage(answer, "bot", validProducts.length > 0 ? validProducts : undefined);
     } catch (error) {
       addMessage("Error: Unable to fetch response. Please try again.", "bot");
     } finally {
@@ -44,9 +46,8 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
         <span>Bot Name</span>
       </div>
       <div className={styles.chatbotMessages}>
-        <MessageList messages={messages}/>
+        <MessageList messages={messages} color={color}/>
         {isLoading && <TypingLoader color={color} />}
-        {products.length > 0 && <ProductSlider products={products} color={color} />}
       </div>
       <InputComponent onSendMessage={handleSendMessage} color={color} />
     </div>

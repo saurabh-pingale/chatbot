@@ -62,14 +62,32 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
   // Handle greetings dynamically
   if (isGreeting(userMessage)) {
     const greeting = getGreeting();
-    return { response: `${greeting}! 🌟 How can I assist you today? If you have any questions about our products, feel free to ask! I'm here to help you with all things! 😊` };
+    return { 
+      response: `${greeting}! 🌟 How can I assist you today? If you have any questions about our products, feel free to ask! I'm here to help you with all things! 😊`,
+      products: [] 
+    };
   }
 
   // Handle "Show me products" query
   if (/show\s+(?:me\s+)?products/i.test(userMessage)) {
+    const validProducts = products.filter(product => 
+      product.id && 
+      (product.title || product.metadata?.title) && 
+      (product.description || product.metadata?.description) && 
+      (product.url || product.metadata?.url) && 
+      (product.price || product.metadata?.price) && 
+      (product.image || product.metadata?.image)
+    ).map(product => ({
+      id: product.id,
+      title: product.title || product.metadata?.title || "",
+      description: product.description || product.metadata?.description || "",
+      url: product.url || product.metadata?.url || "",
+      price: product.price || product.metadata?.price || "",
+      image: product.image || product.metadata?.image || ""
+    }));
     return { 
       response: "Here are some products you might like:", 
-      products: products.length > 0 ? products : [] 
+      products: validProducts.length > 0 ? validProducts : [] 
     };
   }
 
@@ -79,22 +97,47 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
     const priceRange = extractPriceRange(userMessage);
     if (priceRange) {
       const filteredProducts = filterProductsByPrice(products, priceRange);
+
+      // Map filtered products to ensure all required fields are present
+      const validFilteredProducts = filteredProducts.map(product => ({
+        id: product.id,
+        title: product.title || product.metadata?.title || "",
+        description: product.description || product.metadata?.description || "",
+        url: product.url || product.metadata?.url || "",
+        price: product.price || product.metadata?.price || "",
+        image: product.image || product.metadata?.image || ""
+      }));
+
       return { 
         response: `Here are some products within the price range ${priceRange}:`, 
-        products: filteredProducts.length > 0 ? filteredProducts : []
+        products: validFilteredProducts.length > 0 ? validFilteredProducts : []
       };
     }
   }
 
   // Handle product-specific queries
-  if (products && products.length > 0) {
-    const matchedProducts = products.filter((product) =>
-      product.title && prompt.toLowerCase().includes(product.title.toLowerCase())
-    );
+  let shouldShowProducts = false;
+  let matchedProducts: any[] = [];
+
+   if (products && products.length > 0) {
+    // Look for product titles in the user's query
+    matchedProducts = products.filter(product => {
+      const productTitle = product.title || product.metadata?.title || "";
+      return productTitle && userMessage.toLowerCase().includes(productTitle.toLowerCase());
+    }).map(product => ({
+      id: product.id,
+      title: product.title || product.metadata?.title || "",
+      description: product.description || product.metadata?.description || "",
+      url: product.url || product.metadata?.url || "",
+      price: product.price || product.metadata?.price || "",
+      image: product.image || product.metadata?.image || ""
+    }));
+
+    shouldShowProducts = matchedProducts.length > 0;
     
-    if (matchedProducts.length > 0) {
+    if (shouldShowProducts) {
       return { 
-        response: `Here are some products: ${matchedProducts[0].title}`, 
+        response: `Here are some products that match your query:`, 
         products: matchedProducts 
       };
     }
@@ -123,7 +166,7 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
       cleanedResponse = lastParagraph.trim();
     }
 
-    return { response: cleanedResponse };
+    return { response: cleanedResponse, products: [] };
   } catch(error) {
     console.error("Error generating response:", error);
     return { response: "I don't have much information on this." };
