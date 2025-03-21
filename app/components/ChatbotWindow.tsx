@@ -4,6 +4,7 @@ import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
 import styles from './Chatbot.module.css'
 import TypingLoader from "./TypingLoader";
+import StaticSlider from "./StaticSlider";
 
 interface ChatbotWindowProps {
   onClose: () => void;
@@ -65,6 +66,7 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
         <MessageList messages={messages} color={color}/>
         {isLoading && <TypingLoader color={color} />}
       </div>
+      <StaticSlider color={color} />
       <InputComponent onSendMessage={handleSendMessage} color={color} />
     </div>
   );
