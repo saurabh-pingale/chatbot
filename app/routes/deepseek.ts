@@ -103,7 +103,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     // Detect query type and set appropriate parameters
     // Improved regex patterns for better detection
-    const isShowAllProductsQuery = /show\s+(?:me\s+)?(?:all\s+)?(?:your\s+)?products/i.test(userMessage);
+    const isShowAllProductsQuery = /\b(?:show|list|display)\b.*?\b(?:products|snowboards|items)\b/i.test(userMessage);
     const isPriceRangeQuery = /price\s+range|cost|below|under|above|over|between|cheaper|expensive|affordable/i.test(userMessage);
     const hasProductMention = /product|item|goods|merchandise|buy|purchase/i.test(userMessage);
     
@@ -167,9 +167,10 @@ export const action: ActionFunction = async ({ request }) => {
     const contextTexts = results
       .filter(r => r && r.metadata)
       .map(r => {
-        const title = r.metadata?.title || "Untitled Product";
+        // Extract title, description, and price properly from metadata
+        const title = r.metadata?.text?.split('  ')[0] || "Untitled Product";
+        const price = r.metadata?.text?.split('  ')[1] || "Price not available.";
         const description = r.metadata?.description || "No description available.";
-        const price = r.metadata?.price || "Price not available.";
         return `${title}: ${description}. Price: ${price}.`;
       })
       .join("\n");
