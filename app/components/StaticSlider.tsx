@@ -6,7 +6,7 @@ interface StaticSliderProps {
   onSelectOption: (option: string) => void;
 }
 
-const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) => {
+const StaticSlider: React.FC<StaticSliderProps> = ({ color }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showLeftButton, setShowLeftButton] = useState(false);
   const [showRightButton, setShowRightButton] = useState(true);
@@ -24,7 +24,7 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
       if (!sliderRef.current) return;
       
       const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
-      setShowLeftButton(scrollLeft > 5);
+      setShowLeftButton(scrollLeft > 0);
       setShowRightButton(scrollLeft < scrollWidth - clientWidth - 5);
     };
 
@@ -53,48 +53,44 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
   };
 
   const handleOptionClick = (option: string) => {
-    onSelectOption(option);
+    console.log(`Selected option: ${option}`);
+    // You can add functionality to send this as a message
   };
 
-  const defaultColor = '#008B8B'; // Teal color similar to the image
-  const buttonColor = color || defaultColor;
-
   return (
-    <div className={styles.staticSliderWrapper}>
-      <div className={styles.staticSliderContainer}>
-        {showLeftButton && (
+    <div className={styles.staticSliderContainer}>
+      {showLeftButton && (
+        <button 
+          className={styles.sliderButton} 
+          onClick={() => scroll('left')}
+          style={{ left: 0, backgroundColor: color || '#008080' }}
+        >
+          &lt;
+        </button>
+      )}
+      
+      <div className={styles.staticSlider} ref={sliderRef}>
+        {options.map((option, index) => (
           <button 
-            className={styles.sliderButton} 
-            onClick={() => scroll('left')}
-            style={{ backgroundColor: buttonColor }}
+            key={index} 
+            className={styles.sliderOption}
+            onClick={() => handleOptionClick(option)}
+            style={{ borderColor: color || '#008080' }}
           >
-            &lt;
+            {option}
           </button>
-        )}
-        
-        <div className={styles.staticSlider} ref={sliderRef}>
-          {options.map((option, index) => (
-            <button 
-              key={index} 
-              className={styles.sliderOption}
-              onClick={() => handleOptionClick(option)}
-              style={{ borderColor: buttonColor, color: '#333' }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-        
-        {showRightButton && (
-          <button 
-            className={styles.sliderButton} 
-            onClick={() => scroll('right')}
-            style={{ backgroundColor: buttonColor }}
-          >
-            &gt;
-          </button>
-        )}
+        ))}
       </div>
+      
+      {showRightButton && (
+        <button 
+          className={styles.sliderButton} 
+          onClick={() => scroll('right')}
+          style={{ right: 0, backgroundColor: color || '#008080' }}
+        >
+          &gt;
+        </button>
+      )}
     </div>
   );
 };
