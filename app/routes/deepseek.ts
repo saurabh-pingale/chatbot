@@ -101,6 +101,11 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
 
+    // Check for product-specific queries
+    const productQuery = userMessage.toLowerCase().includes("product") || 
+                        userMessage.toLowerCase().includes("show me") ||
+                        /price\s+range|below|under|above|over|between/i.test(userMessage);
+
     // Step 1: Convert query to embeddings
     const embeddings = await generateEmbeddings(userMessage);
 
@@ -108,40 +113,44 @@ export const action: ActionFunction = async ({ request }) => {
     const results = await queryEmbeddings(embeddings);
 
     // Step 3: Format products from Pinecone results
-    const products: any[] = results.map(r => ({
-      id: r.id,
+    const products = results.map(r => ({
+      id: r.id || "",
       title: r.metadata?.title || "",
       description: r.metadata?.description || "",
       url: r.metadata?.url || "",
       price: r.metadata?.price || "",
       image: r.metadata?.image || ""
-    }));
+    })).filter(p => p.title && p.url);
 
     // Step 4: Check if we have relevant results
-    const hasRelevantResults = results.length > 0;
+    const hasRelevantResults = results.length > 0 && productQuery;
 
     // If no relevant results, return the default message
-    if (!hasRelevantResults) {
-      return json(
-        {
-          answer: "I don't have much information on this.",
-          products: [],
-          metadata: {
-            similar_documents_count: 0,
-            processed_data: null,
-          },
-        }
-      );
+    if (!hasRelevantResults && !productQuery) {
+      // Step 5: Generate context and prompt for LLM for non-product queries
+      let contextTexts = results.map(r => r.metadata?.text || "").join("\n");
+      const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
+
+      // Step 6: Generate response using DeepSeek for non-product queries
+      const { response } = await generateLLMResponse(fullPrompt, []);
+      
+      return json({ 
+        answer: response, 
+        products: [] 
+      });
     } 
 
-    // Step 5: Generate context and prompt for LLM
+    // For product queries, even if no products found, we should use the product flow
     let contextTexts = results.map(r => r.metadata?.text || "").join("\n");
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     
-    // Step 5: Generate response using DeepSeek
+     // Generate response for product queries
     const { response, products: filteredProducts } = await generateLLMResponse(fullPrompt, products);
 
-    return json({ answer: response, products: filteredProducts || products  });
+    return json({ 
+      answer: response, 
+      products: filteredProducts && filteredProducts.length > 0 ? filteredProducts : products
+    });
   } catch (error) {
     console.error("Error processing DeepSeek request:", error);
     return json({ error: "Failed to fetch response from DeepSeek" }, { status: 500 });

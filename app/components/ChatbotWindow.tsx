@@ -4,35 +4,51 @@ import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
 import styles from './Chatbot.module.css'
 import TypingLoader from "./TypingLoader";
-import ProductSlider from "./ProductSlider";
 
 interface ChatbotWindowProps {
   onClose: () => void;
   color: string | null;
 }
 
+interface Product {
+  title: string;
+  price: string;
+  image: string;
+  url: string;
+}
+
+interface Message {
+  text: string;
+  sender: 'user' | 'bot';
+  products?: Product[];
+}
+
 export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
-  const [messages, setMessages] = useState<Array<{ text: string; sender: 'user' | 'bot' }>>([]);
+  const [messages, setMessages] = useState<Array<Message>>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState<Array<{ title: string; price: string; image: string; url: string }>>([]);
   
-  const addMessage = (text: string, sender: 'user' | 'bot', products?: Array<{ title: string; price: string; image: string; url: string}>) => {
+  const addMessage = (text: string, sender: 'user' | 'bot', products?: Product[]) => {
     setMessages((prev) => [...prev, { text, sender, products }]);
   };
 
   const handleSendMessage = async (userMessage: string) => {
+    if (!userMessage.trim()) return;
+
     addMessage(userMessage, 'user');
     setIsLoading(true);
     
     try {
-      const { answer, products = [] } = await sendMessageToDeepSeek(userMessage);
-      addMessage(answer, "bot");
+      const response = await sendMessageToDeepSeek(userMessage);
 
-      const validProducts = products.filter(p => 
+      const validProducts = response.products?.filter(p => 
         p && p.title && p.price && p.image && p.url
       );
 
-      addMessage(answer, "bot", validProducts.length > 0 ? validProducts : undefined);
+      addMessage(
+        response.answer, 
+        "bot", 
+        validProducts && validProducts.length > 0 ? validProducts : undefined
+      );
     } catch (error) {
       addMessage("Error: Unable to fetch response. Please try again.", "bot");
     } finally {

@@ -23,8 +23,8 @@ const MessageList: React.FC<MessageListProps> = ({ messages, color }) => {
   return (
     <div className={styles.chatbotMessages}>
       {messages.map((msg, index) => (
-        <div key={index}> 
-          <div className={`${styles.message} ${styles[msg.sender]}`} >
+        <div key={index} className={styles.messageWrapper} >
+          <div className={`${styles.message} ${msg.sender === 'user' ? styles.user : styles.bot}`}>
             {msg.text}
           </div>
           {msg.sender === 'bot' && msg.products && msg.products.length > 0 && (

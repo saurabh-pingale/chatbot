@@ -68,26 +68,23 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
     };
   }
 
-  // Handle "Show me products" query
-  if (/show\s+(?:me\s+)?products/i.test(userMessage)) {
-    const validProducts = products.filter(product => 
-      product.id && 
-      (product.title || product.metadata?.title) && 
-      (product.description || product.metadata?.description) && 
-      (product.url || product.metadata?.url) && 
-      (product.price || product.metadata?.price) && 
-      (product.image || product.metadata?.image)
-    ).map(product => ({
-      id: product.id,
+  // Clean up products and ensure they have all required fields
+  const validProducts = products
+    .filter(product => product && (product.title || product.metadata?.title))
+    .map(product => ({
+      id: product.id || "",
       title: product.title || product.metadata?.title || "",
       description: product.description || product.metadata?.description || "",
       url: product.url || product.metadata?.url || "",
       price: product.price || product.metadata?.price || "",
       image: product.image || product.metadata?.image || ""
     }));
+
+  // Handle "Show me products" query - return all valid products
+  if (/show\s+(?:me\s+)?products/i.test(userMessage)) {
     return { 
       response: "Here are some products you might like:", 
-      products: validProducts.length > 0 ? validProducts : [] 
+      products: validProducts
     };
   }
 
@@ -96,46 +93,26 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
   if (priceRangeKeywords.test(userMessage)) {
     const priceRange = extractPriceRange(userMessage);
     if (priceRange) {
-      const filteredProducts = filterProductsByPrice(products, priceRange);
-
-      // Map filtered products to ensure all required fields are present
-      const validFilteredProducts = filteredProducts.map(product => ({
-        id: product.id,
-        title: product.title || product.metadata?.title || "",
-        description: product.description || product.metadata?.description || "",
-        url: product.url || product.metadata?.url || "",
-        price: product.price || product.metadata?.price || "",
-        image: product.image || product.metadata?.image || ""
-      }));
-
+      const filteredProducts = filterProductsByPrice(validProducts, priceRange);
+      
       return { 
         response: `Here are some products within the price range ${priceRange}:`, 
-        products: validFilteredProducts.length > 0 ? validFilteredProducts : []
+        products: filteredProducts
       };
     }
   }
 
   // Handle product-specific queries
-  let shouldShowProducts = false;
   let matchedProducts: any[] = [];
 
-   if (products && products.length > 0) {
+  if (validProducts.length > 0) {
     // Look for product titles in the user's query
-    matchedProducts = products.filter(product => {
-      const productTitle = product.title || product.metadata?.title || "";
-      return productTitle && userMessage.toLowerCase().includes(productTitle.toLowerCase());
-    }).map(product => ({
-      id: product.id,
-      title: product.title || product.metadata?.title || "",
-      description: product.description || product.metadata?.description || "",
-      url: product.url || product.metadata?.url || "",
-      price: product.price || product.metadata?.price || "",
-      image: product.image || product.metadata?.image || ""
-    }));
-
-    shouldShowProducts = matchedProducts.length > 0;
+    matchedProducts = validProducts.filter(product => {
+      const productTitle = product.title.toLowerCase();
+      return productTitle && userMessage.toLowerCase().includes(productTitle);
+    });
     
-    if (shouldShowProducts) {
+    if (matchedProducts.length > 0) {
       return { 
         response: `Here are some products that match your query:`, 
         products: matchedProducts 
@@ -165,6 +142,8 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
       const lastParagraph = cleanedResponse.split('\n\n').pop() || cleanedResponse;
       cleanedResponse = lastParagraph.trim();
     }
+
+    cleanedResponse = cleanedResponse[0];
 
     return { response: cleanedResponse, products: [] };
   } catch(error) {
