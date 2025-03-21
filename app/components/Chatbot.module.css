@@ -204,18 +204,10 @@
   font-size: 12px;
 }
 
-.staticSliderWrapper {
-  position: relative;
-  width: 100%;
-  background-color: white;
-  padding: 16px 0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
 .staticSliderContainer {
   position: relative;
   width: 100%;
-  padding: 0 8px;
+  margin-bottom: 10px;
 }
 
 .staticSlider {
@@ -224,8 +216,8 @@
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   scroll-behavior: smooth;
-  padding: 0 16px;
-  gap: 12px;
+  padding: 10px 5px;
+  gap: 8px;
   position: relative;
 }
 
@@ -237,30 +229,27 @@
   flex: 0 0 auto;
   white-space: nowrap;
   padding: 8px 16px;
-  background-color: white;
-  border: 1px solid #008B8B;
+  background-color: transparent;
+  border: 1px solid #008080;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
   color: #333;
   transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  height: 40px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .sliderOption:hover {
-  background-color: rgba(0, 139, 139, 0.05);
+  background-color: rgba(0, 128, 128, 0.1);
 }
 
 .sliderButton {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background-color: #008B8B;
+  background-color: #008080;
   color: white;
   border: none;
   display: flex;
@@ -269,18 +258,8 @@
   cursor: pointer;
   z-index: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  font-size: 14px;
-  font-weight: bold;
 }
 
 .sliderButton:hover {
-  opacity: 0.9;
-}
-
-.sliderButton:first-child {
-  left: 2px;
-}
-
-.sliderButton:last-child {
-  right: 2px;
+  background-color: rgba(0, 128, 128, 0.8);
 }
