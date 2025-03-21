@@ -24,8 +24,8 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
       if (!sliderRef.current) return;
       
       const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
-      setShowLeftButton(scrollLeft > 0);
-      setShowRightButton(scrollLeft < scrollWidth - clientWidth - 5);
+      setShowLeftButton(scrollLeft > 10);
+      setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
     };
 
     const sliderElement = sliderRef.current;
@@ -34,7 +34,6 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
       // Initial check
       checkScroll();
       
-      // Check on window resize as well
       window.addEventListener('resize', checkScroll);
       
       return () => {
@@ -47,7 +46,7 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
   const scroll = (direction: 'left' | 'right') => {
     if (!sliderRef.current) return;
     
-    const scrollAmount = 200;
+    const scrollAmount = 150;
     const currentScroll = sliderRef.current.scrollLeft;
     
     sliderRef.current.scrollTo({
@@ -60,41 +59,10 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
     onSelectOption(option);
   };
 
-  // Custom button style based on the theme color
-  const getButtonHighlightStyle = (baseColor: string) => {
-    // Create a slightly lighter version of the base color for hover effects
-    const colorWithoutHash = baseColor.replace('#', '');
-    const r = parseInt(colorWithoutHash.substr(0, 2), 16);
-    const g = parseInt(colorWithoutHash.substr(2, 2), 16);
-    const b = parseInt(colorWithoutHash.substr(4, 2), 16);
-    
-    // Lighten by 15%
-    const lighterColor = `#${Math.min(255, Math.floor(r * 1.15)).toString(16).padStart(2, '0')}${
-      Math.min(255, Math.floor(g * 1.15)).toString(16).padStart(2, '0')}${
-      Math.min(255, Math.floor(b * 1.15)).toString(16).padStart(2, '0')}`;
-    
-    return {
-      backgroundColor: baseColor,
-      borderColor: lighterColor
-    };
-  };
-
   const themeColor = color || '#008080';
-  const buttonStyle = getButtonHighlightStyle(themeColor);
 
   return (
     <div className={styles.staticSliderContainer}>
-      {showLeftButton && (
-        <button 
-          className={styles.sliderButton} 
-          onClick={() => scroll('left')}
-          style={{ left: 0, backgroundColor: themeColor }}
-          aria-label="Scroll left"
-        >
-          &lt;
-        </button>
-      )}
-      
       <div className={styles.staticSlider} ref={sliderRef}>
         {options.map((option, index) => (
           <button 
@@ -102,7 +70,7 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
             className={styles.sliderOption}
             onClick={() => handleOptionClick(option)}
             style={{ 
-              boxShadow: `0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 1px ${themeColor}25` 
+              boxShadow: `0 2px 4px rgba(0, 0, 0, 0.2)` 
             }}
           >
             {option}
@@ -110,11 +78,22 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
         ))}
       </div>
       
+      {showLeftButton && (
+        <button 
+          className={`${styles.sliderButton} ${styles.sliderLeftButton}`}
+          onClick={() => scroll('left')}
+          style={{ backgroundColor: themeColor }}
+          aria-label="Scroll left"
+        >
+          &lt;
+        </button>
+      )}
+      
       {showRightButton && (
         <button 
-          className={styles.sliderButton} 
+          className={`${styles.sliderButton} ${styles.sliderRightButton}`}
           onClick={() => scroll('right')}
-          style={{ right: 0, backgroundColor: themeColor }}
+          style={{ backgroundColor: themeColor }}
           aria-label="Scroll right"
         >
           &gt;

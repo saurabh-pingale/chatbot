@@ -207,8 +207,9 @@
 .staticSliderContainer {
   position: relative;
   width: 100%;
-  margin: 8px 0;
-  padding: 0 10px;
+  margin: 0;
+  padding: 0;
+  background-color: #23272a;
 }
 
 .staticSlider {
@@ -217,8 +218,8 @@
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   scroll-behavior: smooth;
-  padding: 10px 5px;
-  gap: 10px;
+  padding: 10px;
+  gap: 8px;
   position: relative;
   background-color: #23272a;
 }
@@ -230,54 +231,66 @@
 .sliderOption {
   flex: 0 0 auto;
   white-space: nowrap;
-  padding: 8px 16px;
+  padding: 8px 12px;
   background-color: #40444b;
   border: none;
-  border-radius: 18px;
+  border-radius: 16px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   color: #f8f8f8;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .sliderOption:hover {
   background-color: #4d5258;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.sliderOption:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .sliderButton {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background-color: #008080;
   color: #f8f8f8;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   font-weight: bold;
-  transition: all 0.2s ease;
 }
 
-.sliderButton:hover {
-  background-color: #009393;
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+.sliderLeftButton {
+  left: 5px;
 }
 
-.sliderButton:active {
-  transform: translateY(-50%) scale(0.95);
+.sliderRightButton {
+  right: 5px;
+}
+
+/* Position the slider between messages and input */
+.chatbotLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chatbotMessages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: #23272a;
+  padding: 10px;
+}
+
+.chatbotBottom {
+  background-color: #23272a;
 }
