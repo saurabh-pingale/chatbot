@@ -149,16 +149,13 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
   const isSpecificProduct = isAboutSpecificProduct(userMessage, validProducts);
   if (isSpecificProduct) {
     // Filter products based on the query terms
-    const queryTerms = userMessage.toLowerCase().split(/\s+/).filter(term => term.length > 3);
     
     const matchedProducts = validProducts.filter(product => {
       const title = (product.title || "").toLowerCase();
       const description = (product.description || "").toLowerCase();
+      const queryTerms = userMessage.toLowerCase().split(/\s+/).filter(term => term.length > 3);
       
-      // Check if product title or description contains query terms
-      return queryTerms.some(term => 
-        title.includes(term) || description.includes(term)
-      );
+      return queryTerms.some(term => title.includes(term) || description.includes(term));
     });
     
     if (matchedProducts.length > 0) {
@@ -191,6 +188,8 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
       const lastParagraph = cleanedResponse.split('\n\n').pop() || cleanedResponse;
       cleanedResponse = lastParagraph.trim();
     }
+
+    cleanedResponse = cleanedResponse[0];
 
     return { response: cleanedResponse, products: [] };
   } catch(error) {

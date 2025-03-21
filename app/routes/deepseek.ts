@@ -165,9 +165,16 @@ export const action: ActionFunction = async ({ request }) => {
 
     // Build context from results for LLM
     const contextTexts = results
-      .filter(r => r && r.metadata && r.metadata.text)
-      .map(r => r.metadata.text)
+      .filter(r => r && r.metadata)
+      .map(r => {
+        const title = r.metadata?.title || "Untitled Product";
+        const description = r.metadata?.description || "No description available.";
+        const price = r.metadata?.price || "Price not available.";
+        return `${title}: ${description}. Price: ${price}.`;
+      })
       .join("\n");
+
+console.log("Enhanced Context:", contextTexts);
     
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     console.log("Prompt:", fullPrompt);
