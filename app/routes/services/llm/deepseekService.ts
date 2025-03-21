@@ -192,8 +192,6 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
       cleanedResponse = lastParagraph.trim();
     }
 
-    cleanedResponse = cleanedResponse[0];
-
     return { response: cleanedResponse, products: [] };
   } catch(error) {
     console.error("Error generating response:", error);

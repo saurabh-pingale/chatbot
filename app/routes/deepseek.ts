@@ -116,11 +116,13 @@ export const action: ActionFunction = async ({ request }) => {
 
     // Step 1: Convert query to embeddings
     const embeddings = await generateEmbeddings(userMessage);
+    console.log("Generated Embeddings:", embeddings);
     
     // Step 2: Query Pinecone with appropriate parameters
     // Use larger topK for product queries to ensure good coverage
     const topK = isProductQuery ? 20 : 5;
     const results = await queryEmbeddings(embeddings, topK);
+    console.log("Pinecone Result:", results);
 
     // Better error handling if Pinecone returns no results
     if (!results || results.length === 0) {
@@ -168,6 +170,7 @@ export const action: ActionFunction = async ({ request }) => {
       .join("\n");
     
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
+    console.log("Prompt:", fullPrompt);
     
     // Generate response using LLM with the products and context
     const { response, products: filteredProducts } = await generateLLMResponse(fullPrompt, products);
