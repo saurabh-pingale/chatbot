@@ -50,10 +50,10 @@ export const fetchShopifyProducts = async (shopifyStore: string, shopifyAccessTo
     return data.data.products.edges.map((edge: any) => ({
       id: edge.node.id,
       title: edge.node.title,
-      description: edge.node.description,
+      description: edge.node.description || "No description available",
       url: edge.node.url || `https://${shopifyStore}/products/${edge.node.handle}`,
-      price: edge.node.variants.edges[0]?.node.price,
-      image: edge.node.images.edges[0]?.node.src,
+      price: edge.node.variants.edges[0]?.node.price || "Price not available",
+      image: edge.node.images.edges[0]?.node.src || "https://via.placeholder.com/150",
     }));
   } catch(error) {
     console.error(error);

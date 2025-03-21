@@ -25,25 +25,11 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
     setIsLoading(true);
     
     try {
-      const botResponse = await sendMessageToDeepSeek(userMessage);
-      addMessage(botResponse, "bot");
+      const { answer, products } = await sendMessageToDeepSeek(userMessage);
+      addMessage(answer, "bot");
 
-       // Check if the response indicates products should be shown
-       if (botResponse.toLowerCase().includes("show products") || userMessage.toLowerCase().includes("show me")) {
-        const response = await fetch("/deepseek", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: [{ role: "user", content: userMessage }] }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
-        const data = await response.json();
-        if (data.products) {
-          setProducts(data.products);
-        }
+      if (products) {
+        setProducts(products);
       }
     } catch (error) {
       addMessage("Error: Unable to fetch response. Please try again.", "bot");
@@ -60,7 +46,7 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
       <div className={styles.chatbotMessages}>
         <MessageList messages={messages}/>
         {isLoading && <TypingLoader color={color} />}
-        {products.length > 0 && <ProductSlider color={color} />}
+        {products.length > 0 && <ProductSlider products={products} color={color} />}
       </div>
       <InputComponent onSendMessage={handleSendMessage} color={color} />
     </div>

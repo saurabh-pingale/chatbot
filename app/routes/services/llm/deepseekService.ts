@@ -5,6 +5,13 @@ const isGreeting = (message: string): boolean => {
   return greetings.some((greeting) => message.toLowerCase().includes(greeting));
 };
 
+const getGreeting = (): string => {
+  const currentHour = new Date().getHours();
+  if (currentHour < 12) return "Good morning";
+  else if (currentHour < 18) return "Good afternoon";
+  else return "Good evening";
+};
+
 const filterProductsByPrice = (products: any[], priceRange: string): any[] => {
   const [min, max] = priceRange.split("-").map(Number);
   return products.filter((product) => {
@@ -19,12 +26,7 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
 
   // Handle greetings dynamically
   if (isGreeting(prompt)) {
-    const currentHour = new Date().getHours();
-    let greeting = "Good day";
-    if (currentHour < 12) greeting = "Good morning";
-    else if (currentHour < 18) greeting = "Good afternoon";
-    else greeting = "Good evening";
-
+    const greeting = getGreeting();
     return { response: `${greeting}! 🌟 How can I assist you today? If you have any questions about our products, feel free to ask! I'm here to help you with all things! 😊` };
   }
 
@@ -33,6 +35,27 @@ export const generateLLMResponse = async (prompt: string, products: any[] = []):
     const priceRange = prompt.match(/\d+-\d+/)?.[0] || "";
     const filteredProducts = filterProductsByPrice(products, priceRange);
     return { response: `Here are some products within the price range ${priceRange}:`, products: filteredProducts };
+  }
+
+  // Handle product-specific queries
+  const productKeywords = products.map((product) => product.title.toLowerCase());
+  const hasProductKeyword = productKeywords.some((keyword) => prompt.toLowerCase().includes(keyword));
+
+  if (hasProductKeyword) {
+    const matchedProducts = products.filter((product) =>
+      prompt.toLowerCase().includes(product.title.toLowerCase())
+    );
+    return { response: "Here are some products you might like:", products: matchedProducts };
+  }
+
+  // Handle "Show me products" query
+  if (prompt.toLowerCase().includes("show me products") || prompt.toLowerCase().includes("show products")) {
+    return { response: "Here are some products you might like:", products };
+  }
+
+  // Default response for unrelated queries
+  if (prompt.trim().length === 0 || prompt.trim() === ".") {
+    return { response: "I don't have much information on this." };
   }
 
   const response = await hf.textGeneration({

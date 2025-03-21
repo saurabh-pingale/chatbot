@@ -19,7 +19,7 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<string
       throw new Error("No valid response from DeepSeek");
     }
 
-    return response.data.answer;
+    return response.data;
   } catch (error) {
     console.error("Error communicating with DeepSeek:", error);
     return "Sorry, I am unable to process your request at the moment. Please try again later.";
