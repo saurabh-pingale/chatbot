@@ -10,6 +10,22 @@ export const fetchShopifyProducts = async (shopifyStore: string, shopifyAccessTo
             id
             title
             description
+            handle
+            onlineStoreUrl
+            variants(first: 1) {
+              edges {
+                node {
+                  price
+                }
+              }
+            }
+            images(first: 1) {
+              edges {
+                node {
+                  src
+                }
+              }
+            }  
           }
         }
       }
@@ -31,7 +47,14 @@ export const fetchShopifyProducts = async (shopifyStore: string, shopifyAccessTo
     }
 
     const data = await response.json();
-    return data.data.products.edges.map((edge: any) => edge.node);
+    return data.data.products.edges.map((edge: any) => ({
+      id: edge.node.id,
+      title: edge.node.title,
+      description: edge.node.description,
+      url: edge.node.url || `https://${shopifyStore}/products/${edge.node.handle}`,
+      price: edge.node.variants.edges[0]?.node.price,
+      image: edge.node.images.edges[0]?.node.src,
+    }));
   } catch(error) {
     console.error(error);
     throw new Error("Failed to fetch products from Shopify");

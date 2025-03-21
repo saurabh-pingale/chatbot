@@ -15,6 +15,9 @@ export interface VectorMetadata {
     id: string;
     title: string;
     description: string;
+    url: string;
+    price: string;
+    image: string;
     [key: string]: any;
   }
   
