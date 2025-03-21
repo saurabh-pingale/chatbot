@@ -101,16 +101,49 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
 
-    // Check for product-specific queries
-    const productQuery = userMessage.toLowerCase().includes("product") || 
-                        userMessage.toLowerCase().includes("show me") ||
-                        /price\s+range|below|under|above|over|between/i.test(userMessage);
+    // Check for different types of product queries
+    const isShowAllProductsQuery = /show\s+(?:me\s+)?(?:all\s+)?products/i.test(userMessage);
+    const isPriceRangeQuery = /price\s+range|below|under|above|over|between/i.test(userMessage);
+    const isSpecificProductQuery = userMessage.toLowerCase().includes("product") && 
+                                  !isShowAllProductsQuery && 
+                                  !isPriceRangeQuery;
+
+     // Combined flag for any product-related query
+    const productQuery = isShowAllProductsQuery || isPriceRangeQuery || isSpecificProductQuery || 
+    userMessage.toLowerCase().includes("show me");
 
     // Step 1: Convert query to embeddings
     const embeddings = await generateEmbeddings(userMessage);
 
+    if (isShowAllProductsQuery) {
     // Step 2: Query Pinecone for similar vectors
-    const results = await queryEmbeddings(embeddings);
+    const results = await queryEmbeddings(embeddings, 20);
+
+    const products = results.map(r => ({
+      id: r.id || "",
+      title: r.metadata?.title || "",
+      description: r.metadata?.description || "",
+      url: r.metadata?.url || "",
+      price: r.metadata?.price || "",
+      image: r.metadata?.image || ""
+    })).filter(p => p.title && p.url);
+
+    // If still no products found, use a fallback method to query Pinecone
+    if (products.length === 0) {
+      console.log("No products found with semantic search, using fallback method");
+      // You can implement a fallback method here if needed
+      // For now, we'll continue with the flow
+    }
+
+    return json({ 
+      answer: "Here are some products you might like:", 
+      products: products
+    });
+  }
+
+  // For all other queries, use the existing approach with some enhancements
+    // Step 2: Query Pinecone for similar vectors
+    const results = await queryEmbeddings(embeddings, isPriceRangeQuery ? 20 : 5);
 
     // Step 3: Format products from Pinecone results
     const products = results.map(r => ({
@@ -121,6 +154,8 @@ export const action: ActionFunction = async ({ request }) => {
       price: r.metadata?.price || "",
       image: r.metadata?.image || ""
     })).filter(p => p.title && p.url);
+
+    console.log(`Found ${products.length} products for query: ${userMessage}`);
 
     // Step 4: Check if we have relevant results
     const hasRelevantResults = results.length > 0 && productQuery;
