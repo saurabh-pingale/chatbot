@@ -15,16 +15,11 @@ import {
   Banner,
   Tooltip,
 } from "@shopify/polaris";
+import { ActionResponse } from "./types";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 
 const COLOR_UPDATE_EVENT = "color-preference-updated";
-
-interface ActionResponse {
-  success?: boolean;
-  error?: string;
-  color?: string;
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -55,13 +50,14 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Settings() {
-  const fetcher = useFetcher<ActionResponse>();
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const { session } = useLoaderData<{ session: { shop: string } }>();
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showErrorBanner, setShowErrorBanner] = useState(false);
+  const fetcher = useFetcher<ActionResponse>();
+  const { session } = useLoaderData<{ session: { shop: string } }>();
 
   useEffect(() => {
+    console.log("Session:", session);
     if(session?.shop) {
       localStorage.setItem("shopId", session.shop);
     }
@@ -71,7 +67,6 @@ export default function Settings() {
     if (fetcher.data?.success) {
       setShowSuccessBanner(true);
 
-      // Dispatch custom event to notify other components about the color change
       const colorUpdateEvent = new CustomEvent(COLOR_UPDATE_EVENT, {
         detail: { color: fetcher.data.color }
       });
@@ -108,7 +103,7 @@ export default function Settings() {
         {showSuccessBanner && (
           <Banner
             title="Settings saved successfully"
-            status="success"
+            tone="success"
             onDismiss={() => setShowSuccessBanner(false)}
           />
         )}
@@ -116,7 +111,7 @@ export default function Settings() {
         {showErrorBanner && (
           <Banner
             title="Error saving settings"
-            status="critical"
+            tone="critical"
             onDismiss={() => setShowErrorBanner(false)}
           >
             <p>{fetcher.data?.error || "An unknown error occurred"}</p>
@@ -169,7 +164,7 @@ export default function Settings() {
                 
                 <InlineStack gap="200">
                   <Button 
-                    primary 
+                    variant="primary" 
                     onClick={handleSave} 
                     disabled={!selectedColor || isLoading} 
                     loading={isLoading}

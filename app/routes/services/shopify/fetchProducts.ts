@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { ShopifyProduct } from "../../types";
 
 export const fetchShopifyProducts = async (shopifyStore: string, shopifyAccessToken: string): Promise<ShopifyProduct[]> => {
@@ -43,7 +42,7 @@ export const fetchShopifyProducts = async (shopifyStore: string, shopifyAccessTo
     });
 
     if (!response.ok) {
-      return json({ error: "Failed to fetch products" }, { status: 500 });
+      throw new Error("Failed to fetch products");
     }
 
     const data = await response.json();

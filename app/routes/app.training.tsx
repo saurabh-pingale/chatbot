@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLoaderData } from "@remix-run/react";
 import { json, LoaderFunction } from "@remix-run/node";
 import { authenticate } from "app/shopify.server";
-import styles from '../components/training.module.css';
+import styles from '../components/styles/training.module.css';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -24,7 +24,6 @@ export default function TrainingPage() {
     setMessages((prev) => [...prev, { sender: "user", text: input }]);
 
     try {
-
       try {
         JSON.parse(input);
       } catch (jsonError) {
@@ -72,7 +71,6 @@ export default function TrainingPage() {
       });
 
       const data = await response.json();
-      console.log("Products Data:", data);
       if (data.error) {
         throw new Error(data.error);
       }

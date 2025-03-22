@@ -1,24 +1,21 @@
 import { useEffect, useState } from "react";
+import { useLoaderData } from "@remix-run/react";
 import { ChatbotToggleButton } from "./ChatbotToggleButton";
 import { ChatbotWindow } from "./ChatbotWindow";
 import { getColorPreference } from "app/services/supabase";
-import { useLoaderData } from "@remix-run/react";
-
-const COLOR_UPDATE_EVENT = "color-preference-updated";
+import { constants } from "app/common/constants";
+import { LoaderData } from "app/common/types";
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [color, setColor] = useState<string | null>(null);
-  const data = useLoaderData();
+  const data = useLoaderData<LoaderData>();
   
   const fetchColor = async () =>{
-    let shopId = data?.session?.shop;
-
+    let shopId: string | null = localStorage.getItem("shopId") || null ;
+    console.log("Shop ID:", shopId);
     if(!shopId) {
-      shopId = localStorage.getItem("shopId");
-    }
-
-    if(!shopId) {
+      shopId = data?.session?.shop || null;
       console.error("No shopId available");
       return;
     }
@@ -31,26 +28,20 @@ export default function Chatbot() {
     }
   };
 
+ const handleColorUpdate = (event: CustomEvent) => {
+   const newColor = event.detail?.color;
+   if(newColor) {
+     setColor(newColor);
+   } 
+};
+
   useEffect(() => {
     fetchColor();
 
-     // Listen for color update events
-    const handleColorUpdate = (event: CustomEvent) => {
-      const newColor = event.detail?.color;
-      if(newColor) {
-        setColor(newColor);
-      } else {
-        // If no color is provided in the event, refetch from the database
-        fetchColor();
-      }
-    };
+    window.addEventListener(constants.COLOR_UPDATE_EVENT, handleColorUpdate as EventListener);
 
-    // Add event listener for color updates
-    window.addEventListener(COLOR_UPDATE_EVENT, handleColorUpdate as EventListener);
-
-    // Clean up event listener when component unmounts
     return () => {
-      window.removeEventListener(COLOR_UPDATE_EVENT, handleColorUpdate as EventListener);
+      window.removeEventListener(constants.COLOR_UPDATE_EVENT, handleColorUpdate as EventListener);
     };
   }, [data]);
 

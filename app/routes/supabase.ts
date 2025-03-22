@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { json, LoaderFunction } from "@remix-run/node";
+import { verifyAppProxySignature } from './utils/shopifyProxyUtils';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,6 +14,15 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const shopId = url.searchParams.get("shopId");
+  const query = url.searchParams;
+  const API_SECRET = process.env.SHOPIFY_API_SECRET || '';
+
+  if (query.has('signature')) {
+    if (!verifyAppProxySignature(query, API_SECRET)) {
+      console.error("Invalid signature for App Proxy request");
+      return json({ error: "Invalid signature" }, { status: 401 });
+    }
+  }
 
   if(!shopId) {
     return json({ error: "shopId is required." }, { status: 400 });
@@ -20,6 +30,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   try {
     const color = await getColorPreference(shopId);
+    console.log("Color:", color);
     return json({ color });
   } catch (error) {
     console.error("Error in loader:", error);
@@ -47,7 +58,7 @@ export const saveColorPreference = async (shopId: string, color: string) => {
       .eq('shop_id', shopId)
       .single();
 
-    if (userError && userError.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (userError && userError.code !== 'PGRST116') { 
       console.error("Error checking users table:", userError);
       throw new Error(`Error checking users table: ${JSON.stringify(userError)}`);
     }
@@ -81,6 +92,8 @@ export const saveColorPreference = async (shopId: string, color: string) => {
 
 export const getColorPreference = async (shopId: string) => {
   try {
+    console.log(`Fetching color preference for shop: ${shopId}`);
+
     const { data, error } = await supabase
       .from('data')
       .select('color')
@@ -88,6 +101,11 @@ export const getColorPreference = async (shopId: string) => {
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        console.log(`No color preference found for shop: ${shopId}, returning default`);
+        return null;
+      }
+
       console.error("Supabase error:", error); 
       throw error;
     }

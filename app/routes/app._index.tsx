@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
+import { useState } from "react";
 import {
   Page,
   Layout,
@@ -10,28 +8,12 @@ import {
   BlockStack,
   Box,
   List,
-  Link,
   InlineStack,
-  Icon,
   TextField,
   Banner,
 } from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate } from "../shopify.server";
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-  return null;
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  
-  return { success: true };
-};
 
 export default function ChatbotIndex() {
-  const fetcher = useFetcher<typeof action>();
   const [demoQuestion, setDemoQuestion] = useState("");
   const [demoResponse, setDemoResponse] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -81,7 +63,7 @@ export default function ChatbotIndex() {
                   </Text>
                 </BlockStack>
 
-                <Banner title="Ready to assist your customers" status="success">
+                <Banner title="Ready to assist your customers" tone="success">
                   Your chatbot is active and ready to help your customers with their questions.
                 </Banner>
 
@@ -96,6 +78,7 @@ export default function ChatbotIndex() {
                         value={demoQuestion}
                         onChange={setDemoQuestion}
                         placeholder="Type a question to see how the chatbot responds..."
+                        autoComplete="off"
                         connectedRight={
                           <Button onClick={handleDemoSubmit} disabled={!demoQuestion.trim()}>
                             Ask

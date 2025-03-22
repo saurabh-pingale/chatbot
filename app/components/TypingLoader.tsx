@@ -1,9 +1,6 @@
 import React from 'react';
-import styles from './Chatbot.module.css';
-
-interface TypingLoaderProps {
-  color: string | null;
-}
+import { TypingLoaderProps } from 'app/common/types';
+import styles from './styles/Chatbot.module.css';
 
 const TypingLoader: React.FC<TypingLoaderProps> = ({ color }) => {
   return (

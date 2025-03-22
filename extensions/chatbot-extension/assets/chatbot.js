@@ -1,71 +1,127 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Get the container and settings
+  console.log("Mounting----------------------------------------------------------------");
   const container = document.getElementById('shopify-chatbot');
   if (!container) return;
 
-  const primaryColor = container.dataset.primaryColor || '#0088cc';
-  const textColor = container.dataset.textColor || '#ffffff';
+  const primaryColor = container.dataset.primaryColor || '#008080';
+  const textColor = container.dataset.textColor || '#f8f8f8';
   const chatbotTitle = container.dataset.title || 'Store Assistant';
 
-  // Set CSS variables
   container.style.setProperty('--primary-color', primaryColor);
   container.style.setProperty('--text-color', textColor);
 
-  // Create the chatbot components
   createChatbot();
+  
+  
+  const getColorPreference = async (shopId) => {
+    try {
+      const response = await fetch(`/apps/chatbot-api/supabase?shopId=${encodeURIComponent(shopId)}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json'
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.color;
+    } catch (error) {
+      console.error("Error fetching the color preference!", error);
+      return primaryColor; 
+    }
+  };
+
+  getColorPreference();
+
+  // Function to apply color to chatbot elements
+  const applyColorToChatbot = (color) => {
+    const chatbotElements = document.querySelectorAll('.chatbot-toggle-button, .chatbot-header, .send-button, .user-message');
+    chatbotElements.forEach((element) => {
+      element.style.backgroundColor = color;
+    });
+
+    const borderElements = document.querySelectorAll('.chatbot-window, .user-message');
+    borderElements.forEach((element) => {
+      element.style.borderColor = color;
+    });
+
+    const typingLoaderDots = document.querySelectorAll('.typing-indicator span');
+    typingLoaderDots.forEach((dot) => {
+      dot.style.backgroundColor = color;
+    });
+  };
+
+  const getShopId = () => {
+    let shopId = window.Shopify?.shop;
+    return shopId;
+  }
+
+  // Initialize chatbot with color preference
+  const initColorPreference = async () => {
+    const shopId = getShopId();
+    console.log("ShopId:", shopId);
+    if (shopId) {
+      const color = await getColorPreference(shopId);
+      if(color) applyColorToChatbot(color);
+    }
+  };
+  
+  initColorPreference();
 
   function createChatbot() {
-    // Create Toggle Button
     const toggleButton = createToggleButton();
     container.appendChild(toggleButton);
 
-    // Create Chatbot Window
     const chatbotWindow = createChatbotWindow();
     container.appendChild(chatbotWindow);
 
-    // Toggle functionality
     toggleButton.addEventListener('click', () => {
       chatbotWindow.classList.toggle('open');
+      if (chatbotWindow.classList.contains('open')) {
+        toggleButton.innerHTML = '×';
+      } else {
+        toggleButton.innerHTML = '💬';
+      }
+      
       if (chatbotWindow.classList.contains('open')) {
         document.querySelector('.input-box').focus();
       }
     });
 
-    // Initialize chat functionality
     initChat();
   }
 
   function createToggleButton() {
     const button = document.createElement('button');
     button.className = 'chatbot-toggle-button';
-    button.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
-        <path d="M7 9h10M7 12h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    `;
+    button.innerHTML = '💬';
+    button.style.backgroundColor = primaryColor;
     return button;
   }
 
   function createChatbotWindow() {
     const chatbotWindow = document.createElement('div');
     chatbotWindow.className = 'chatbot-window';
+    chatbotWindow.style.borderColor = primaryColor;
 
-    // Create Header
     const header = document.createElement('div');
     header.className = 'chatbot-header';
+    header.style.backgroundColor = primaryColor;
     header.innerHTML = `
       <h3 class="chatbot-header-title">${chatbotTitle}</h3>
       <button class="chatbot-close-button">✕</button>
     `;
     chatbotWindow.appendChild(header);
 
-    // Close button functionality
     header.querySelector('.chatbot-close-button').addEventListener('click', () => {
       chatbotWindow.classList.remove('open');
+      document.querySelector('.chatbot-toggle-button').innerHTML = '💬';
     });
 
-    // Create Chat Window with Message List
     const chatWindow = document.createElement('div');
     chatWindow.className = 'chat-window';
     
@@ -75,16 +131,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     chatbotWindow.appendChild(chatWindow);
 
-    // Create Input Component
     const inputComponent = document.createElement('div');
     inputComponent.className = 'input-component';
     inputComponent.innerHTML = `
       <input type="text" class="input-box" placeholder="Type your message...">
-      <button class="send-button" disabled>
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
+      <button class="send-button" disabled style="background-color: ${primaryColor};">
+        Send
       </button>
     `;
     chatbotWindow.appendChild(inputComponent);
@@ -97,15 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendButton = document.querySelector('.send-button');
     const messageList = document.querySelector('.message-list');
 
-    // Enable/disable send button based on input
     inputBox.addEventListener('input', () => {
       sendButton.disabled = inputBox.value.trim() === '';
     });
 
-    // Send message on button click
     sendButton.addEventListener('click', () => sendMessage());
 
-    // Send message on Enter key
     inputBox.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && inputBox.value.trim() !== '') {
         e.preventDefault();
@@ -113,46 +162,49 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // Send welcome message
     setTimeout(() => {
       addMessage('Hi there! How can I help you today?', 'bot');
     }, 500);
 
-    // Function to send message
     function sendMessage() {
       const message = inputBox.value.trim();
       if (message === '') return;
       
-      // Add user message to chat
       addMessage(message, 'user');
-      
-      // Clear input
+
       inputBox.value = '';
       sendButton.disabled = true;
       
-      // Show typing indicator
       const typingIndicator = document.createElement('div');
       typingIndicator.className = 'typing-indicator';
       typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+      typingIndicator.style.backgroundColor = '#40444b';
+      typingIndicator.style.borderColor = '#40444b';
+      
       messageList.appendChild(typingIndicator);
-      
-      // Scroll to bottom
+
       scrollToBottom();
-      
-      // Send message to API
+
       fetchBotResponse(message, typingIndicator);
     }
 
-    // Function to add message to chat
     function addMessage(text, sender) {
       const messageElement = document.createElement('div');
       messageElement.className = `message ${sender}-message`;
       messageElement.textContent = text;
+      
+      if (sender === 'user') {
+        messageElement.style.backgroundColor = primaryColor;
+        messageElement.style.borderColor = primaryColor;
+      } else {
+        messageElement.style.backgroundColor = '#40444b';
+        messageElement.style.borderColor = '#40444b';
+      }
+      
       messageList.appendChild(messageElement);
       scrollToBottom();
     }
 
-    // Function to fetch bot response
     function fetchBotResponse(message, typingIndicator) {
       const headers = new Headers({
         'Content-Type': 'application/json',
@@ -195,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // Scroll chat to bottom
     function scrollToBottom() {
       const chatWindow = document.querySelector('.chat-window');
       chatWindow.scrollTop = chatWindow.scrollHeight;

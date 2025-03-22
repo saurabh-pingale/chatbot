@@ -1,10 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import styles from './Chatbot.module.css';
-
-interface StaticSliderProps {
-  color: string | null;
-  onSelectOption: (option: string) => void;
-}
+import { StaticSliderProps } from 'app/common/types';
+import styles from './styles/Chatbot.module.css';
 
 const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -19,19 +15,20 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
     "Shipping policy"
   ];
 
-  useEffect(() => {
-    const checkScroll = () => {
-      if (!sliderRef.current) return;
-      
-      const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
-      setShowLeftButton(scrollLeft > 10);
-      setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
-    };
+  const checkScroll = () => {
+    if (!sliderRef.current) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+    setShowLeftButton(scrollLeft > 10);
+    setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
+  };
 
+  useEffect(() => {
     const sliderElement = sliderRef.current;
+    
     if (sliderElement) {
       sliderElement.addEventListener('scroll', checkScroll);
-      // Initial check
+  
       checkScroll();
       
       window.addEventListener('resize', checkScroll);

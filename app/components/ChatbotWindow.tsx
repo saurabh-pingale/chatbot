@@ -1,28 +1,13 @@
-import { sendMessageToDeepSeek } from "app/services/deepseek";
 import { useState } from "react";
+import { sendMessageToDeepSeek } from "app/services/deepseek";
 import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
-import styles from './Chatbot.module.css'
-import TypingLoader from "./TypingLoader";
 import StaticSlider from "./StaticSlider";
-
-interface ChatbotWindowProps {
-  onClose: () => void;
-  color: string | null;
-}
-
-interface Product {
-  title: string;
-  price: string;
-  image: string;
-  url: string;
-}
-
-interface Message {
-  text: string;
-  sender: 'user' | 'bot';
-  products?: Product[];
-}
+import TypingLoader from "./TypingLoader";
+import { ChatbotWindowProps } from "app/common/types";
+import { Message } from "app/common/types";
+import { Product } from "app/common/types";
+import styles from './styles/Chatbot.module.css';
 
 export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
   const [messages, setMessages] = useState<Array<Message>>([]);

@@ -1,21 +1,5 @@
 import axios from "axios";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
-interface Product {
-  title: string;
-  price: string;
-  image: string;
-  url: string;
-}
-
-interface DeepSeekResponse {
-  answer: string;
-  products?: Product[];
-}
+import { DeepSeekResponse } from "app/common/types";
 
 export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSeekResponse> => {
   if (!userMessage.trim()) {

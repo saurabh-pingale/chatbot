@@ -1,20 +1,11 @@
-import styles from './Chatbot.module.css';
-
-interface ChatbotToggleButtonProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  color: string | null;
-}
+import { ChatbotToggleButtonProps } from 'app/common/types';
+import styles from './styles/Chatbot.module.css';
 
 export const ChatbotToggleButton = ({ isOpen, onToggle, color }: ChatbotToggleButtonProps) => {
-  const handleClick = () => { 
-    onToggle(); 
-  };
-
   return (
     <button 
       className={styles.chatbotToggleButton} 
-      onClick={handleClick}
+      onClick={() => onToggle()}
       style={{ backgroundColor: color || "#008080" }}
     >
       {isOpen ? '×' : '💬'}

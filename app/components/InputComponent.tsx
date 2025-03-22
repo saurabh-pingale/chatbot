@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-import styles from './Chatbot.module.css'
-
-interface InputComponentProps {
-  onSendMessage: (message: string) => void;
-  color: string | null;
-}
+import { InputComponentProps } from 'app/common/types';
+import styles from './styles/Chatbot.module.css';
 
 const InputComponent: React.FC<InputComponentProps> = ({ onSendMessage, color }) => {
   const [input, setInput] = useState('');

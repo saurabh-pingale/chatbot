@@ -5,36 +5,8 @@ import { queryEmbeddings } from "./services/pinecone/pineconeService";
 import { processProducts } from "./processors/productProcessor";
 import { validateAndProcessJson } from "./processors/jsonProcessor";
 import { createDeepseekPrompt, generateLLMResponse } from "./services/llm/deepseekService";
+import { verifyAppProxySignature } from "./utils/shopifyProxyUtils";
 import { DeepseekRequestBody } from "./types";
-import crypto from "crypto";
-
-// Function to verify the Shopify proxy signature
-function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boolean {
-  const { signature, ...params } = Object.fromEntries(query.entries());
-  
-  if (!signature) return false;
-  
-  // Sort parameters alphabetically
-  const sortedParams = Object.keys(params)
-    .sort()
-    .reduce((acc, key) => {
-      acc[key] = params[key];
-      return acc;
-    }, {} as Record<string, string>);
-  
-  // Create the signature message
-  const signatureMessage = Object.keys(sortedParams)
-    .map(key => `${key}=${sortedParams[key]}`)
-    .join('');
-  
-  // Calculate the HMAC
-  const hmac = crypto
-    .createHmac('sha256', apiSecret)
-    .update(signatureMessage)
-    .digest('hex');
-  
-  return hmac === signature;
-}
 
 export const loader: LoaderFunction = async ({ request }) => {
   // For GET requests through the App Proxy
@@ -90,17 +62,25 @@ export const action: ActionFunction = async ({ request }) => {
       return json({ error: "User message is missing" }, { status: 400 });
     }
 
+    // Extract shopId from the shopifyStore URL or use it directly if provided
+    // If not available, fall back to a default namespace
+    const shopId = shopifyStore 
+      ? shopifyStore.replace(/^https?:\/\//, '').replace(/\.myshopify\.com.*$/, '')
+      : 'default';
+
+
     // Process JSON data if it's from the training page
     if (isTrainingPage) {
       try {
         const jsonData = JSON.parse(userMessage);
-        const response = await validateAndProcessJson(jsonData);
+        const response = await validateAndProcessJson(jsonData, shopId);
         return json({ answer: response });
       } catch (jsonError) {
         return json({ answer: "Please provide a valid JSON input to train the LLM." });
       }
     }
 
+    
     // Detect query type and set appropriate parameters
     // Improved regex patterns for better detection
     const isShowAllProductsQuery = /\b(?:show|list|display)\b.*?\b(?:products|snowboards|items)\b/i.test(userMessage);
@@ -121,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
     // Step 2: Query Pinecone with appropriate parameters
     // Use larger topK for product queries to ensure good coverage
     const topK = isProductQuery ? 20 : 5;
-    const results = await queryEmbeddings(embeddings, topK);
+    const results = await queryEmbeddings(embeddings, topK, shopId);
     console.log("Pinecone Result:", results);
 
     // Better error handling if Pinecone returns no results
@@ -175,7 +155,7 @@ export const action: ActionFunction = async ({ request }) => {
       })
       .join("\n");
 
-console.log("Enhanced Context:", contextTexts);
+    console.log("Enhanced Context:", contextTexts);
     
     const fullPrompt = createDeepseekPrompt(userMessage, contextTexts);
     console.log("Prompt:", fullPrompt);

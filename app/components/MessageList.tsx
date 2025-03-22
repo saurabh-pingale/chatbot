@@ -1,17 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import styles from './Chatbot.module.css';
 import ProductSlider from './ProductSlider';
-
-interface Message {
-  text: string;
-  sender: 'user' | 'bot';
-  products?: Array<{ title: string; price: string; image: string; url: string }>;
-}
-
-interface MessageListProps {
-  messages: Message[];
-  color?: string | null;
-}
+import { MessageListProps } from 'app/common/types';
+import styles from './styles/Chatbot.module.css';
 
 const MessageList: React.FC<MessageListProps> = ({ messages, color }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,7 +18,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, color }) => {
             {msg.text}
           </div>
           {msg.sender === 'bot' && msg.products && msg.products.length > 0 && (
-            <ProductSlider products={msg.products} color={color} />
+            <ProductSlider products={msg.products} color={color ?? null} />
           )}
         </div>
       ))}
