@@ -57,7 +57,6 @@ export default function Settings() {
   const { session } = useLoaderData<{ session: { shop: string } }>();
 
   useEffect(() => {
-    console.log("Session:", session);
     if(session?.shop) {
       localStorage.setItem("shopId", session.shop);
     }

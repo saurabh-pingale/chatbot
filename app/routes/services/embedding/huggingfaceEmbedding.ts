@@ -12,5 +12,8 @@ export const generateEmbeddings = async (text: string): Promise<number[]> => {
 
   const embeddings = Array.from(output.data as number[]);
 
-  return padVector(embeddings, 1024);
+  const norm = Math.sqrt(embeddings.reduce((sum, val) => sum + val * val, 0));
+  const normalizeEmbeddings = embeddings.map(val => val / norm);
+
+  return padVector(normalizeEmbeddings, 1024);
 };

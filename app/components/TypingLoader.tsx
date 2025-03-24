@@ -1,14 +1,13 @@
 import React from 'react';
-import { TypingLoaderProps } from 'app/common/types';
 import styles from './styles/Chatbot.module.css';
 
-const TypingLoader: React.FC<TypingLoaderProps> = ({ color }) => {
+const TypingLoader: React.FC = () => {
   return (
     <div className={`${styles.message} ${styles.bot} ${styles.typingLoader}`}
-    style={{ backgroundColor: color || '#40444b', borderColor: color || '#40444b' }}>
-      <div className={styles.dot} style={{ backgroundColor: color || "#008080" }}></div>
-      <div className={styles.dot} style={{ backgroundColor: color || "#008080" }}></div>
-      <div className={styles.dot} style={{ backgroundColor: color || "#008080" }}></div>
+    style={{ backgroundColor: '#40444b', borderColor: '#40444b' }}>
+      <div className={styles.dot} style={{ backgroundColor: "#008080" }}></div>
+      <div className={styles.dot} style={{ backgroundColor: "#008080" }}></div>
+      <div className={styles.dot} style={{ backgroundColor: "#008080" }}></div>
     </div>
   );
 };

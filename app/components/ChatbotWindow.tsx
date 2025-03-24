@@ -53,7 +53,7 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
       </div>
       <div className={styles.chatbotMessages}>
         <MessageList messages={messages} color={color}/>
-        {isLoading && <TypingLoader color={color} />}
+        {isLoading && <TypingLoader />}
       </div>
       <StaticSlider color={color} onSelectOption={handleSelectOption} />
       <InputComponent onSendMessage={handleSendMessage} color={color} />

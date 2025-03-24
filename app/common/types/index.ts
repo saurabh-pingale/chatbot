@@ -55,13 +55,9 @@ export interface StaticSliderProps {
 };
 
 export interface ProductCardProps {
-  product: Product[];
+  product: Product;
   color?: string | null;
 };
-
-export interface TypingLoaderProps {
-    color: string | null;
-}
 
 export interface DeepSeekResponse {
   answer: string;

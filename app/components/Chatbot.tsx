@@ -13,7 +13,7 @@ export default function Chatbot() {
   
   const fetchColor = async () =>{
     let shopId: string | null = localStorage.getItem("shopId") || null ;
-    console.log("Shop ID:", shopId);
+    
     if(!shopId) {
       shopId = data?.session?.shop || null;
       console.error("No shopId available");

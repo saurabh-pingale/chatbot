@@ -5,7 +5,6 @@ export function verifyAppProxySignature(query: URLSearchParams, apiSecret: strin
 
   if (!signature) return false;
 
-  // Sort parameters alphabetically
   const sortedParams = Object.keys(params)
     .sort()
     .reduce((acc, key) => {

@@ -30,7 +30,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   try {
     const color = await getColorPreference(shopId);
-    console.log("Color:", color);
     return json({ color });
   } catch (error) {
     console.error("Error in loader:", error);
@@ -38,19 +37,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 }
 
-export const testSupabaseConnection = async () => {
-  try {
-    const { data, error } = await supabase.from('data').select('*').limit(1);
-    
-    return { success: !error, data, error };
-  } catch (e) {
-    console.error("Supabase connection test failed:", e);
-    return { success: false, error: e };
-  }
-};
-
 export const saveColorPreference = async (shopId: string, color: string) => {
-  console.log("Saving color preference for shop:", shopId, "Color:", color);
   try {
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -92,8 +79,6 @@ export const saveColorPreference = async (shopId: string, color: string) => {
 
 export const getColorPreference = async (shopId: string) => {
   try {
-    console.log(`Fetching color preference for shop: ${shopId}`);
-
     const { data, error } = await supabase
       .from('data')
       .select('color')
