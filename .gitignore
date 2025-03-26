@@ -13,8 +13,8 @@ database.sqlite
 .env
 .env.*
 
-
-
+venv
+__pycache__
 
 
 /extensions/*/dist

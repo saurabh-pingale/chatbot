@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("Mounting----------------------------------------------------------------");
   const container = document.getElementById('shopify-chatbot');
   if (!container) return;
 

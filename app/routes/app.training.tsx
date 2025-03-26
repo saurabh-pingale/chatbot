@@ -1,85 +1,87 @@
-import { useEffect, useState } from "react";
-import { useLoaderData } from "@remix-run/react";
-import { json, LoaderFunction } from "@remix-run/node";
-import { authenticate } from "app/shopify.server";
+import { useEffect, useRef, useState } from "react";
+import { useFetcher } from "@remix-run/react";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import styles from '../components/styles/training.module.css';
+import { authenticate } from "app/shopify.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-  return json({ session });
+  return json({ shop: session.shop });
 };
+
+export const action: ActionFunction = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
+  const body = await request.json();
+
+  const headers = new Headers(request.headers);
+
+  headers.set("Authorization", `Bearer ${session.accessToken}`);
+  headers.set("X-Shopify-Shop", session.shop);
+  
+  const response = await fetch("http://localhost:8000/deepseek", {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify(body)
+  });
+  
+  return json(await response.json());
+};
+
 
 export default function TrainingPage() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
-  const { session } = useLoaderData<{ session: { shop: string, accessToken: string } }>();
+  const fetcher: any = useFetcher();
+  const processingRef = useRef(false);
 
   useEffect(() => {
     setMessages([{ sender: "bot", text: "Fetch the products by clicking on the 'Fetch Products' button or provide a JSON input to train the LLM with the products." }]);
   }, []);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || processingRef.current) return;
+    processingRef.current = true;
 
     setMessages((prev) => [...prev, { sender: "user", text: input }]);
 
     try {
-      try {
-        JSON.parse(input);
-      } catch (jsonError) {
-        setMessages((prev) => [...prev, { sender: "bot", text: "Please provide a valid JSON input to train the LLM." }]);
-        setInput("");
-        return;
-      }
+      JSON.parse(input); 
       
-      const response = await fetch("/deepseek", {
+      fetcher.submit({
+        messages: JSON.stringify([{ role: "user", content: input }]),
+        isTrainingPage: "true"
+      }, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: input }],
-          isTrainingPage: true,
-          shopifyStore: session.shop,
-          shopifyAccessToken: session.accessToken,
-        }),
+        encType: "application/json"
       });
-
-      const data = await response.json();
-      setMessages((prev) => [...prev, { sender: "bot", text: data.answer }]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "An error occurred. Please try again." }]);
+    } catch (jsonError) {
+      setMessages((prev) => [...prev, { sender: "bot", text: "Please provide a valid JSON input to train the LLM." }]);
+      setInput("");
+      processingRef.current = false;
     }
-
-    setInput("");
   };
 
   const handleFetchProducts = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
-    try {
-      const response = await fetch("/deepseek", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          isTrainingPage: true,
-          shopifyStore: session.shop,
-          shopifyAccessToken: session.accessToken,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      setMessages((prev) => [...prev, { sender: "bot", text: "Products fetched and embeddings stored successfully!" }]);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "Failed to fetch products. Please try again." }]);
-    }
+    
+    fetcher.submit({
+      isTrainingPage: "true"
+    }, {
+      method: "POST",
+      encType: "application/json",
+      preventScrollReset: true,
+      unstable_flushSync: true
+    });
   };
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      setMessages((prev) => [...prev, { sender: "bot", text: fetcher.data.answer }]);
+      processingRef.current = false;
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <div className={styles.container}>

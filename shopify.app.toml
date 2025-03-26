@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "67b60e150ad6ac22d3e9033198b5a89f"
-application_url = "https://agreement-rpm-alias-susan.trycloudflare.com"
+application_url = "https://bradley-gras-annoying-dust.trycloudflare.com"
 embedded = true
 name = "test-app"
 handle = "test-app-11683"
@@ -27,13 +27,13 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://agreement-rpm-alias-susan.trycloudflare.com/auth/callback",
-  "https://agreement-rpm-alias-susan.trycloudflare.com/auth/shopify/callback",
-  "https://agreement-rpm-alias-susan.trycloudflare.com/api/auth/callback"
+  "https://bradley-gras-annoying-dust.trycloudflare.com/auth/callback",
+  "https://bradley-gras-annoying-dust.trycloudflare.com/auth/shopify/callback",
+  "https://bradley-gras-annoying-dust.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://agreement-rpm-alias-susan.trycloudflare.com"
+url = "https://bradley-gras-annoying-dust.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

@@ -7,7 +7,7 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSe
   }
 
   try {
-    const response = await axios.post("/deepseek", {
+    const response = await axios.post("http:localhost:8000/deepseek", {
       messages: [{ role: "user", content: userMessage }],
     });
 
