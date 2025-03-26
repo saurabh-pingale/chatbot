@@ -6,7 +6,7 @@ async def process_products(shopify_store: str, shopify_access_token: str) -> Non
     try:
         products = await fetch_shopify_products(shopify_store, shopify_access_token)
         embeddings = await generate_products_embeddings(products)
-        await store_embeddings(embeddings)
+        await store_embeddings(embeddings, namespace=shopify_store)
     except Exception as error:
         print(f"Error processing products: {error}")
         raise ValueError("Failed to process products")

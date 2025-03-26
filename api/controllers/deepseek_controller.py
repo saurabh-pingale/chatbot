@@ -10,43 +10,10 @@ from services.pinecone.pinecone_service import query_embeddings
 from services.llm.deepseek_service import create_deepseek_prompt, generate_llm_response
 from services.shopify.session_service import ShopifySessionService
 from utils.shopify_proxy_utils import verify_app_proxy_signature
+from utils.shopify_header_utils import get_shopify_session_for_training, get_shop_namespace
 from schemas.models import DeepseekRequestBody
 
 router = APIRouter(prefix="/deepseek", tags=["deepseek"])
-
-async def get_shopify_session_for_training(
-    request: Request,
-    body: DeepseekRequestBody
-) -> Optional[dict]:
-   
-    if not body.isTrainingPage:
-        return None
-        
-    try:
-        auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
-        shop_header = request.headers.get("x-shopify-shop") or request.headers.get("X-Shopify-Shop")
-        
-        if not auth_header or not shop_header:
-            raise HTTPException(
-                status_code=401,
-                detail="Authentication required for training operations",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
-            
-        session_service = ShopifySessionService()
-        return await session_service.get_current_session(
-            request,
-            authorization=auth_header,
-            x_shopify_shop=shop_header
-        )
-    except HTTPException as e:
-        raise e
-    except Exception:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication for training operations",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
 
 @router.post("")
 async def deepseek_endpoint(
@@ -63,7 +30,7 @@ async def deepseek_endpoint(
 
     try:
         if body.isTrainingPage:
-            session = await get_shopify_session_for_training(request, body)
+            session = await get_shopify_session_for_training(request, is_training_page=body.isTrainingPage)
             shopify_store = session["shop"]
             shopify_access_token = session["access_token"]
 
@@ -71,7 +38,7 @@ async def deepseek_endpoint(
                 user_message = body.messages[-1].get("content")
                 try: 
                     json_data = json.loads(user_message)
-                    response = await validate_and_process_json(json_data)
+                    response = await validate_and_process_json(json_data, namespace=shopify_store)
                     return {"answer": response}
                 except json.JSONDecodeError:
                     return {"answer": "Please provide a valid JSON input to train the LLM."}
@@ -86,8 +53,9 @@ async def deepseek_endpoint(
         if not user_message:
             raise HTTPException(status_code=400, detail="Messages are required for chat requests")
 
+        namespace = get_shop_namespace(request)
         user_message_embeddings = await generate_embeddings(user_message)
-        query_results = await query_embeddings(user_message_embeddings)
+        query_results = await query_embeddings(user_message_embeddings, namespace=namespace)
 
         products = [
             {
@@ -106,7 +74,7 @@ async def deepseek_endpoint(
             for r in query_results 
             if r and r.metadata
         )
-        
+
         full_prompt = create_deepseek_prompt(user_message, context_texts)
         llm_response = await generate_llm_response(full_prompt, products)
         

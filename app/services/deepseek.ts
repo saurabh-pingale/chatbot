@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { DeepSeekResponse } from "app/common/types";
 
 export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSeekResponse> => {
@@ -7,9 +7,19 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSe
   }
 
   try {
+    const shop = window.shopify.config.shop;
+    const config: AxiosRequestConfig = {
+      headers: shop ? {
+        'X-Shopify-Shop': shop,
+        'Content-Type': 'application/json'
+      } : undefined
+    };
+
     const response = await axios.post("http:localhost:8000/deepseek", {
-      messages: [{ role: "user", content: userMessage }],
-    });
+        messages: [{ role: "user", content: userMessage }]
+      },
+      config
+    );
 
     if (!response.data || !response.data.answer) {
       throw new Error("No valid response from DeepSeek");

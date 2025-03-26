@@ -12,7 +12,7 @@ export default function Chatbot() {
   const data = useLoaderData<LoaderData>();
   
   const fetchColor = async () =>{
-    let shopId: string | null = localStorage.getItem("shopId") || null ;
+    let shopId: string | null = window.shopify.config.shop || null;
     
     if(!shopId) {
       shopId = data?.session?.shop || null;
