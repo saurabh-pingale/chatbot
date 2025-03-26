@@ -1,14 +1,13 @@
 import os
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 import json
 from typing import Optional
 
 from processors.json_processor import validate_and_process_json
 from processors.product_processor import process_products
-from services.embedding.embedding_service import generate_embeddings
-from services.pinecone.pinecone_service import query_embeddings
 from services.llm.deepseek_service import create_deepseek_prompt, generate_llm_response
 from services.shopify.session_service import ShopifySessionService
+from services.elasticsearch.product_service import ElasticSearchService
 from utils.shopify_proxy_utils import verify_app_proxy_signature
 from schemas.models import DeepseekRequestBody
 
@@ -86,26 +85,23 @@ async def deepseek_endpoint(
         if not user_message:
             raise HTTPException(status_code=400, detail="Messages are required for chat requests")
 
-        user_message_embeddings = await generate_embeddings(user_message)
-        query_results = await query_embeddings(user_message_embeddings)
+        es_service = ElasticSearchService()
+        es_results = await es_service.search_products(user_message)
 
         products = [
             {
-                "id": r.id,
-                "product": r.metadata.text.split(',')[0] if r.metadata.text else "",
-                "url": r.metadata.url,
-                "image": r.metadata.image
+                "id": hit["_id"],
+                "product": hit["_source"]["title"],
+                "url": hit["_source"]["url"],
+                "image": hit["_source"]["image_url"]
             }
-            for r in query_results
-            if r and r.metadata
-        ]
-        products = [p for p in products if p["product"] and p["url"]]
+            for hit in es_results["hits"]["hits"]
+        ] if es_results.get("hits", {}).get("hits") else []
 
         context_texts = "\n".join(
-            f"Product: {r.metadata.text.split('  ')[0]}." 
-            for r in query_results 
-            if r and r.metadata
-        )
+            f"Product: {hit['_source']['title']} - {hit['_source'].get('description', '')}"
+            for hit in es_results["hits"]["hits"]
+        ) if es_results.get("hits", {}).get("hits") else ""
         
         full_prompt = create_deepseek_prompt(user_message, context_texts)
         llm_response = await generate_llm_response(full_prompt, products)
