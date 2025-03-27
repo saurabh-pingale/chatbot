@@ -5,33 +5,38 @@ from schemas.models import ShopifyProduct
 
 async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) -> List[ShopifyProduct]:
     query = """
-    query {
-      products(first: 10) {
-        edges {
-          node {
-            id
-            title
-            description
-            handle
-            onlineStoreUrl
-            variants(first: 1) {
-              edges {
-                node {
-                  price
+      query {
+        products(first: 10) {
+          edges {
+            node {
+              id
+              title
+              description
+              handle
+              onlineStorePreviewUrl
+              variants(first: 1) {
+                edges {
+                  node {
+                    price
+                  }
+                }
+              }
+              media(first: 1) {
+                edges {
+                  node {
+                    id
+                    preview {
+                      image {
+                        url
+                      }
+                    }
+                  }
                 }
               }
             }
-            images(first: 1) {
-              edges {
-                node {
-                  src
-                }
-              }
-            }  
           }
         }
       }
-    }
     """
 
     try:
@@ -51,13 +56,18 @@ async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) 
             products = []
             for edge in data["data"]["products"]["edges"]:
                 node = edge["node"]
+
+                image_url = ""
+                if node["media"]["edges"]:
+                    image_url = node["media"]["edges"][0]["node"]["preview"]["image"]["url"]
+
                 products.append(ShopifyProduct(
                     id=node["id"],
                     title=node["title"],
-                    description=node.get("description") or "No description available",
-                    url=node.get("onlineStoreUrl") or f"https://{shopify_store}/products/{node['handle']}",
-                    price=node["variants"]["edges"][0]["node"]["price"] if node["variants"]["edges"] else "Price not available",
-                    image=node["images"]["edges"][0]["node"]["src"] if node["images"]["edges"] else "https://via.placeholder.com/150"
+                    description=node.get("description", ""),
+                    url=node.get("onlineStorePreviewUrl"),
+                    price=node["variants"]["edges"][0]["node"]["price"],
+                    image=image_url
                 ))
 
             return products

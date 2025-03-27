@@ -60,19 +60,14 @@ async def generate_llm_response(prompt: str, products: List[Dict] = []) -> LLMRe
                 if 'show' in lower_user_message or 'list' in lower_user_message:
                     include = True
                 else:
-                    product_name = product['product'].lower().split('no description')[0].strip()
+                    product_name = product['title'].lower().strip()
                     include = product_name in lower_user_message
                 
                 if include:
-                    product_parts = product['product'].split('No description available')
-                    title = product_parts[0].strip()
-                    price_part = product_parts[1].strip() if len(product_parts) > 1 else ''
-                    price = f"${price_part}" if price_part else 'Price not available'
-                    
                     transformed_products.append({
                         "id": product["id"],
-                        "title": title,
-                        "price": price,
+                        "title": product["title"],
+                        "price": product["price"],
                         "url": product["url"],
                         "image": product["image"]
                     })

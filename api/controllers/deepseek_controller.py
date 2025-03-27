@@ -1,14 +1,12 @@
 import os
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 import json
-from typing import Optional
 
 from processors.json_processor import validate_and_process_json
 from processors.product_processor import process_products
 from services.embedding.embedding_service import generate_embeddings
 from services.pinecone.pinecone_service import query_embeddings
 from services.llm.deepseek_service import create_deepseek_prompt, generate_llm_response
-from services.shopify.session_service import ShopifySessionService
 from utils.shopify_proxy_utils import verify_app_proxy_signature
 from utils.shopify_header_utils import get_shopify_session_for_training, get_shop_namespace
 from schemas.models import DeepseekRequestBody
@@ -60,17 +58,18 @@ async def deepseek_endpoint(
         products = [
             {
                 "id": r.id,
-                "product": r.metadata.text.split(',')[0] if r.metadata.text else "",
+                "title": r.metadata.title,
+                "price": r.metadata.price,
                 "url": r.metadata.url,
                 "image": r.metadata.image
             }
             for r in query_results
             if r and r.metadata
         ]
-        products = [p for p in products if p["product"] and p["url"]]
+        products = [p for p in products if p["title"] and p["url"]]
 
         context_texts = "\n".join(
-            f"Product: {r.metadata.text.split('  ')[0]}." 
+            f"Product: {r.metadata.title}." 
             for r in query_results 
             if r and r.metadata
         )

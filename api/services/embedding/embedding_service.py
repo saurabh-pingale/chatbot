@@ -12,8 +12,10 @@ async def generate_product_embedding(product: ShopifyProduct) -> ProductEmbeddin
         values=embedding,
         metadata={
             "text": text,
+            "title": product.title,
             "url": product.url,
             "image": product.image,
+            "price": product.price
         }
     )
 

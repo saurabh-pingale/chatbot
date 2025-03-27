@@ -27,7 +27,11 @@ export const ChatbotWindow = ({ onClose, color }: ChatbotWindowProps) => {
       const response = await sendMessageToDeepSeek(userMessage);
 
       const validProducts = response.products?.filter(p => 
-        p && p.title && p.price && p.image && p.url
+        p &&
+        p.title && 
+        (p.price !== 'Price not available') && 
+        (p.image !== 'Image not available') && 
+        p.url
       );
 
       addMessage(

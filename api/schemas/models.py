@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class ShopifyProduct(BaseModel):
     id: str
@@ -7,7 +7,7 @@ class ShopifyProduct(BaseModel):
     description: Optional[str]
     url: Optional[str]
     price: str
-    image: str
+    image: str = Field(default="")
 
 class ProductEmbedding(BaseModel):
     id: str
@@ -16,8 +16,10 @@ class ProductEmbedding(BaseModel):
 
 class VectorMetadata(BaseModel):
     text: str
+    title: str
     url: str
     image: str
+    price: str
 
 class Vector(BaseModel):
     id: str
