@@ -21,12 +21,12 @@ export const getColorPreference = async (shopId, primaryColor) => {
   };
   
   export const applyColorToChatbot = (color) => {
-    const chatbotElements = document.querySelectorAll('.chatbot-toggle-button, .chatbot-header, .send-button, .user-message');
+    const chatbotElements = document.querySelectorAll('.chatbot-toggle-button, .chatbot-header, .send-button');
     chatbotElements.forEach((element) => {
       element.style.backgroundColor = color;
     });
   
-    const borderElements = document.querySelectorAll('.chatbot-window, .user-message');
+    const borderElements = document.querySelectorAll('.chatbot-window');
     borderElements.forEach((element) => {
       element.style.borderColor = color;
     });

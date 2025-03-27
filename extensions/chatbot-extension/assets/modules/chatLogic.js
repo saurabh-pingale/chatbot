@@ -49,14 +49,6 @@ export function initChat(primaryColor) {
       messageElement.className = `message ${sender}-message`;
       messageElement.textContent = text;
       
-      if (sender === 'user') {
-        messageElement.style.backgroundColor = primaryColor;
-        messageElement.style.borderColor = primaryColor;
-      } else {
-        messageElement.style.backgroundColor = '#40444b';
-        messageElement.style.borderColor = '#40444b';
-      }
-      
       messageList.appendChild(messageElement);
       scrollToBottom();
     }

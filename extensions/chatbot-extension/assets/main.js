@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('shopify-chatbot');
   if (!container) return;
 
-  const primaryColor = container.dataset.primaryColor || '#008080';
-  const textColor = container.dataset.textColor || '#f8f8f8';
-  const chatbotTitle = container.dataset.title || 'Store Assistant';
+  const primaryColor = '#008080';
+  const textColor = '#f8f8f8';
+  const chatbotTitle = 'Store Assistant';
 
   container.style.setProperty('--primary-color', primaryColor);
   container.style.setProperty('--text-color', textColor);
