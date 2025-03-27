@@ -13,14 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
   container.style.setProperty('--primary-color', primaryColor);
   container.style.setProperty('--text-color', textColor);
 
-  // Initialize chatbot UI
   const toggleButton = createToggleButton(primaryColor);
   container.appendChild(toggleButton);
 
   const chatbotWindow = createChatbotWindow(primaryColor, chatbotTitle);
   container.appendChild(chatbotWindow);
 
-  // Set up toggle functionality
   toggleButton.addEventListener('click', () => {
     chatbotWindow.classList.toggle('open');
     if (chatbotWindow.classList.contains('open')) {
@@ -34,13 +32,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Set up close button
   chatbotWindow.querySelector('.chatbot-close-button').addEventListener('click', () => {
     chatbotWindow.classList.remove('open');
     document.querySelector('.chatbot-toggle-button').innerHTML = '💬';
   });
 
-  // Initialize chat and color preference
   initChat(primaryColor);
   initColorPreference(primaryColor);
 });
