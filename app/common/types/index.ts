@@ -63,3 +63,7 @@ export interface DeepSeekResponse {
   answer: string;
   products?: Product[];
 }
+
+export interface TypingLoaderProps {
+  color?: string | null;
+}
