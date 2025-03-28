@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-from urllib.parse import parse_qs
 
 def verify_app_proxy_signature(query_params: dict, api_secret: str) -> bool:
     signature = query_params.get("signature")

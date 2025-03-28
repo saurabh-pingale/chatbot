@@ -27,7 +27,8 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSe
 
     return {
       answer: response.data.answer,
-      products: Array.isArray(response.data.products) ? response.data.products : []
+      products: Array.isArray(response.data.products) ? response.data.products : [],
+      categories: Array.isArray(response.data.categories) ? response.data.categories : []
     };
   } catch (error) {
     console.error("Error communicating with DeepSeek:", error);

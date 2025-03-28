@@ -5,6 +5,7 @@ class ShopifyProduct(BaseModel):
     id: str
     title: str
     description: Optional[str]
+    category: str
     url: Optional[str]
     price: str
     image: str = Field(default="")
@@ -17,6 +18,8 @@ class ProductEmbedding(BaseModel):
 class VectorMetadata(BaseModel):
     text: str
     title: str
+    description: str
+    category: str
     url: str
     image: str
     price: str
@@ -35,3 +38,4 @@ class DeepseekRequestBody(BaseModel):
 class LLMResponse(BaseModel):
     response: str
     products: Optional[List[Dict[str, Any]]] = None
+    categories: Optional[List[Dict[str, Any]]] = None

@@ -8,7 +8,7 @@ async def get_shopify_session_for_training(
     auth_header: Optional[str] = None,
     shop_header: Optional[str] = None
 ) -> Optional[Dict]:
-    """Get Shopify session for training operations"""
+    
     if not is_training_page:
         return None
         

@@ -1,4 +1,3 @@
-import os
 import httpx
 from typing import List
 from schemas.models import ShopifyProduct
@@ -12,6 +11,9 @@ async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) 
               id
               title
               description
+              category {
+                name
+              }
               handle
               onlineStorePreviewUrl
               variants(first: 1) {
@@ -65,6 +67,7 @@ async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) 
                     id=node["id"],
                     title=node["title"],
                     description=node.get("description", ""),
+                    category=node["category"]["name"] if node.get("category") else None,
                     url=node.get("onlineStorePreviewUrl"),
                     price=node["variants"]["edges"][0]["node"]["price"],
                     image=image_url

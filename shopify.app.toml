@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "67b60e150ad6ac22d3e9033198b5a89f"
-application_url = "https://liable-movement-complexity-worship.trycloudflare.com"
+application_url = "https://hint-angel-dennis-diamond.trycloudflare.com"
 embedded = true
 name = "test-app"
 handle = "test-app-11683"
@@ -27,13 +27,13 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://liable-movement-complexity-worship.trycloudflare.com/auth/callback",
-  "https://liable-movement-complexity-worship.trycloudflare.com/auth/shopify/callback",
-  "https://liable-movement-complexity-worship.trycloudflare.com/api/auth/callback"
+  "https://hint-angel-dennis-diamond.trycloudflare.com/auth/callback",
+  "https://hint-angel-dennis-diamond.trycloudflare.com/auth/shopify/callback",
+  "https://hint-angel-dennis-diamond.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://liable-movement-complexity-worship.trycloudflare.com"
+url = "https://hint-angel-dennis-diamond.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

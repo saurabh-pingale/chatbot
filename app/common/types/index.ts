@@ -26,6 +26,7 @@ export interface Message {
   text: string;
   sender: 'user' | 'bot';
   products?: Product[];
+  categories?: string[]; 
 }
 
 export interface InputComponentProps {
@@ -37,11 +38,13 @@ export interface Messages {
   text: string;
   sender: 'user' | 'bot';
   products?: Array<{ title: string; price: string; image: string; url: string }>;
+  categories?: string[];
 }
 
 export interface MessageListProps {
   messages: Messages[];
   color?: string | null;
+  onSendMessage: (message: string) => void;
 };
   
 export interface ProductSliderProps {
@@ -62,6 +65,7 @@ export interface ProductCardProps {
 export interface DeepSeekResponse {
   answer: string;
   products?: Product[];
+  categories?: string[]; 
 }
 
 export interface TypingLoaderProps {

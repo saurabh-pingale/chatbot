@@ -3,7 +3,7 @@ from services.embedding.embedding_service import generate_products_embeddings
 from services.pinecone.pinecone_service import store_embeddings
 from schemas.models import ShopifyProduct
 
-async def validate_and_process_json(json_data: Any, namespace: Optional[str] = None) -> str:
+async def handle_product_embeddings_from_json(json_data: Any, namespace: Optional[str] = None) -> str:
     try:
         if not isinstance(json_data, list):
             raise ValueError("Invalid JSON format. Expected an array of products.")

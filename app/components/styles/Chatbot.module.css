@@ -289,3 +289,31 @@
 .chatbotBottom {
   background-color: #ffffff;
 }
+
+.categoryButtonsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.categoryButton {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.categoryButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.categoryButton:active {
+  transform: translateY(0);
+}

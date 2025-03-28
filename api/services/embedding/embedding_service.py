@@ -4,7 +4,7 @@ from schemas.models import ShopifyProduct, ProductEmbedding
 from .huggingface_embedding import generate_embeddings
 
 async def generate_product_embedding(product: ShopifyProduct) -> ProductEmbedding:
-    text = f"{product.title} {product.description} {product.price}"
+    text = f"{product.title} {product.description} {product.price} {product.category}"
     embedding = await generate_embeddings(text)
     
     return ProductEmbedding(
@@ -13,6 +13,8 @@ async def generate_product_embedding(product: ShopifyProduct) -> ProductEmbeddin
         metadata={
             "text": text,
             "title": product.title,
+            "description": product.description,
+            "category": product.category,
             "url": product.url,
             "image": product.image,
             "price": product.price

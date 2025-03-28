@@ -18,11 +18,11 @@ async def store_embeddings(embeddings: List[ProductEmbedding], namespace: Option
     
     vectors = [
         {
-            "id": emb.id,
-            "values": emb.values,
-            "metadata": emb.metadata
+            "id": embedding.id,
+            "values": embedding.values,
+            "metadata": embedding.metadata
         }
-        for emb in embeddings
+        for embedding in embeddings
     ]
     
     index.upsert(vectors=vectors, namespace=namespace)
@@ -36,8 +36,8 @@ async def query_embeddings(
 
     index = pc.Index(INDEX_NAME)
         
-    norm = (sum(val ** 2 for val in vector)) ** 0.5
-    normalized_vector = [val / norm for val in vector] if norm > 0 else vector
+    norm = (sum(value ** 2 for value in vector)) ** 0.5
+    normalized_vector = [value / norm for value in vector] if norm > 0 else vector
 
     try:
         results = index.query(
@@ -60,3 +60,15 @@ async def query_embeddings(
     except Exception as e:
         print(f"Error querying Pinecone: {e}")
         return []
+    
+
+async def get_categories_from_query(query: str, namespace: Optional[str] = None) -> List[str]:
+    results = await query_embeddings(query, top_k=20, namespace=namespace)
+    print(f"Result in Pinecone: {results}")
+    
+    categories = set()
+    for vector in results:
+        if vector.metadata and vector.metadata.category:
+            categories.add(vector.metadata.category)
+    
+    return sorted(list(categories))
