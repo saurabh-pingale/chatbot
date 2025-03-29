@@ -9,7 +9,7 @@ async def generate_embeddings(text: str) -> List[float]:
     global extractor
     if not extractor:
         extractor = pipeline("feature-extraction", 
-                             model="sentence-transformers/all-MiniLM-L6-v2",
+                             model="sentence-transformers/all-MiniLM-L6-v2", #TODO - Use BAAI/bge-small-en-v1.5 or all-MiniLM-L6-v2 instead of all-MiniLM-L6-v2
                              device="cpu")
     
     output = extractor(text, pooling="mean", normalize=True)
