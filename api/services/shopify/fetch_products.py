@@ -1,6 +1,6 @@
 import httpx
 from typing import List
-from schemas.models import ShopifyProduct
+from schemas.models import ShopifyProduct, ShopifyCollection
 
 async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) -> List[ShopifyProduct]:
     query = """
@@ -34,6 +34,17 @@ async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) 
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+        collections(first: 10) {
+          edges {
+            node {
+              id
+              title
+              productsCount{
+                count
               }
             }
           }
@@ -73,7 +84,16 @@ async def fetch_shopify_products(shopify_store: str, shopify_access_token: str) 
                     image=image_url
                 ))
 
-            return products
+            collections = []
+            for edge in data["data"]["collections"]["edges"]:
+                node = edge["node"]
+                collections.append(ShopifyCollection(
+                    id=node["id"],
+                    title=node["title"],
+                    products_count=node["productsCount"]["count"]
+                ))
+
+            return products, collections
     except Exception as error:
         print(f"Error fetching products: {error}")
         raise ValueError("Failed to fetch products from Shopify")

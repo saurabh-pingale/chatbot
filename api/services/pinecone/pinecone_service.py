@@ -59,9 +59,7 @@ async def query_embeddings(
         ]
     except Exception as e:
         print(f"Error querying Pinecone: {e}")
-        return []
-    
-
+        return []    
 async def get_categories_from_query(query: str, namespace: Optional[str] = None) -> List[str]:
     results = await query_embeddings(query, top_k=20, namespace=namespace)
     print(f"Result in Pinecone: {results}")

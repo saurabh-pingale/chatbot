@@ -39,3 +39,11 @@ class LLMResponse(BaseModel):
     response: str
     products: Optional[List[Dict[str, Any]]] = None
     categories: Optional[List[Dict[str, Any]]] = None
+
+class ShopifyCollection(BaseModel):
+    id: str
+    title: str
+    products_count: int
+
+    class Config:
+        populate_by_name = True

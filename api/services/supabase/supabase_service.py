@@ -1,7 +1,8 @@
 import os
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from schemas.models import ShopifyProduct, ShopifyCollection
 
 load_dotenv()
 
@@ -25,3 +26,50 @@ async def get_color_preference_db(shop_id: str) -> Optional[str]:
     except Exception as error:
         print(f"Supabase error in get_color_preference: {error}")
         raise error
+
+
+async def store_collections(collections: List[ShopifyCollection]) -> List[dict]:
+    try:
+        supabase_collections = [
+            {
+                "title": collection.title,
+                "products_count": collection.products_count
+            }
+            for collection in collections
+        ]
+        
+        response = supabase.table("collections").upsert(
+            supabase_collections,
+            on_conflict="title"
+        ).execute()
+        
+        return response.data 
+        
+    except Exception as error:
+        print(f"Supabase error in store_collections: {error}")
+        raise
+
+async def store_products(products: List[ShopifyProduct], collection_id_map: dict) -> None:
+    try:
+        supabase_products = []
+        for product in products:
+            col_id = collection_id_map.get(product.category)
+            product_data = {
+                "title": product.title,
+                "description": product.description,
+                "category": product.category,
+                "url": product.url,
+                "price": float(product.price) if product.price else None,
+                "image": product.image,
+                "collection_id":  col_id if col_id else None
+            }
+            supabase_products.append(product_data)
+        
+        response = supabase.table("products").upsert(
+            supabase_products,
+            on_conflict="title,category" 
+        ).execute()
+        
+    except Exception as error:
+        print(f"Supabase error in store_products: {error}")
+        raise
