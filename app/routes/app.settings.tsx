@@ -1,7 +1,7 @@
 import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { saveColorPreference, testSupabaseConnection } from "./supabase";
+import { saveColorPreference } from "./supabase";
 import { useEffect, useState } from "react";
 import {
   Page,
@@ -36,11 +36,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   try {
-    const connTest = await testSupabaseConnection();
-    if (!connTest.success) {
-      return json({ error: "Database connection failed" }, { status: 500 });
-    }
-
     await saveColorPreference(session.shop, color);
     return json({ success: true, color });
   } catch (error) {
