@@ -77,6 +77,7 @@ async def generate_llm_response(prompt: str, products: List[Dict] = []) -> LLMRe
         print(f"Error generating response: {error}")
         return LLMResponse(response="We are currently not avilable, try again later!")
 
+#TODO -  You are an expert Shopify assistant. Based on the user query and the retrieved store data, provide a concise, accurate, and structured response. Use this format: [Answer]. If the query is unclear or data is missing, say: [Unable to answer due to insufficient information].
 def create_deepseek_prompt(user_message: str, context_texts: Optional[str] = None) -> str:
     return f"""
         You are a product assistant for our online store. Redirect ALL conversations to product queries.
@@ -154,8 +155,8 @@ def create_deepseek_prompt(user_message: str, context_texts: Optional[str] = Non
         Bad Example (Generic Response):
         User: What's the weather today?
         Assistant: Sorry, I only handle product queries. Ask about: 
-          Smartwatches
-          Fitness trackers
+          Smartwatches #TODO - these should be dynamic 
+          Fitness trackers #TODO - these should be dynamic 
 
         Invalid Example (Leaks Thinking):
         User: Show jackets
