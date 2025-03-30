@@ -1,7 +1,9 @@
-import os
 from langfuse import Langfuse
 from langfuse.decorators import observe
 from typing import Dict, Any, Optional
+
+from app.constants import LANGFUSE_HOST
+from app.config import LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
 
 class LangfuseTracker:
     _instance = None
@@ -15,9 +17,9 @@ class LangfuseTracker:
     def _initialize(self):
         try:
             self.client = Langfuse(
-                public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-                secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-                host="https://cloud.langfuse.com"
+                public_key=LANGFUSE_PUBLIC_KEY,
+                secret_key=LANGFUSE_SECRET_KEY,
+                host=LANGFUSE_HOST
             )
         except Exception as e:
             print(f"Langfuse initialization error: {e}")

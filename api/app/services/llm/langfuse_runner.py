@@ -1,7 +1,7 @@
 import asyncio
 from dotenv import load_dotenv
-from deepseek_service import generate_llm_response, create_deepseek_prompt
-from services.llm.langfuse_observation_module import langfuse_tracker
+from app.services.LLM_service import generate_llm_response, create_deepseek_prompt
+from app.external_service.langfuse_observations import langfuse_tracker
 
 load_dotenv()
 

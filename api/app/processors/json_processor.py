@@ -1,6 +1,6 @@
 from typing import Any, Optional
 from services.embedding.embedding_service import generate_products_embeddings
-from services.pinecone.pinecone_service import store_embeddings
+from app.dbhandlers.rag_pipeline_handler import store_embeddings
 from schemas.models import ShopifyProduct
 
 async def handle_product_embeddings_from_json(json_data: Any, namespace: Optional[str] = None) -> str:

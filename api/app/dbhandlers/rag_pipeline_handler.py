@@ -1,20 +1,9 @@
-import os
-from pinecone import Pinecone
-from dotenv import load_dotenv
 from typing import List, Optional
-from schemas.models import ProductEmbedding, Vector, VectorMetadata
-
-load_dotenv()
-
-try:
-    pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
-except KeyError:
-    raise RuntimeError("PINECONE_API_KEY environment variable not set")
-
-INDEX_NAME = 'chatbot'
+from app.constants import PC, PC_INDEX_NAME
+from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
 
 async def store_embeddings(embeddings: List[ProductEmbedding], namespace: Optional[str]) -> None:
-    index = pc.Index(INDEX_NAME)
+    index = PC.Index(PC_INDEX_NAME)
     
     vectors = [
         {
@@ -34,8 +23,7 @@ async def query_embeddings(
         includes_values: bool = False
     ) -> List[Vector]:
 
-    index = pc.Index(INDEX_NAME)
-        
+    index = PC.Index(PC_INDEX_NAME)
     norm = (sum(value ** 2 for value in vector)) ** 0.5
     normalized_vector = [value / norm for value in vector] if norm > 0 else vector
 
@@ -59,10 +47,10 @@ async def query_embeddings(
         ]
     except Exception as e:
         print(f"Error querying Pinecone: {e}")
-        return []    
+        return []
+
 async def get_categories_from_query(query: str, namespace: Optional[str] = None) -> List[str]:
     results = await query_embeddings(query, top_k=20, namespace=namespace)
-    print(f"Result in Pinecone: {results}")
     
     categories = set()
     for vector in results:

@@ -1,6 +1,6 @@
 from services.shopify.fetch_products import fetch_shopify_products
 from services.embedding.embedding_service import generate_products_embeddings
-from services.pinecone.pinecone_service import store_embeddings
+from app.dbhandlers.rag_pipeline_handler import store_embeddings
 from services.supabase.supabase_service import store_products, store_collections
 
 async def fetch_generate_store_product_embeddings(shopify_store: str, shopify_access_token: str) -> None:

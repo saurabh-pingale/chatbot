@@ -1,7 +1,7 @@
 import asyncio
 from typing import List
 from schemas.models import ShopifyProduct, ProductEmbedding
-from .huggingface_embedding import generate_embeddings
+from ...external_service.generate_embeddings import generate_embeddings
 
 async def generate_product_embedding(product: ShopifyProduct) -> ProductEmbedding:
     text = f"{product.title} {product.description} {product.price} {product.category}"

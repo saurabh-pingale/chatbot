@@ -17,9 +17,9 @@ class ShopifySessionService:
         x_shopify_shop: Optional[str] = Header(None)
     ) -> dict:
         auth_header = authorization or request.headers.get("authorization") or request.headers.get("Authorization")
-        shop_header = x_shopify_shop or request.headers.get("x-shopify-shop") or request.headers.get("X-Shopify-Shop")
+        shop_domain = x_shopify_shop or request.headers.get("x-shopify-shop") or request.headers.get("X-Shopify-Shop")
         
-        if not auth_header or not shop_header:
+        if not auth_header or not shop_domain:
             raise HTTPException(
                 status_code=401,
                 detail="Missing authentication headers",
@@ -41,21 +41,21 @@ class ShopifySessionService:
                 if not all(claim in decoded for claim in required_claims):
                     raise ValueError("Missing required token claims")
                     
-                if decoded.get('dest') != shop_header:
+                if decoded.get('dest') != shop_domain:
                     raise ValueError("Shop domain mismatch")
                 
                 if datetime.utcnow() > datetime.fromtimestamp(decoded['exp']):
                     raise ValueError("Token expired")
                 
                 return {
-                    "shop": shop_header,
+                    "shop": shop_domain,
                     "access_token": decoded.get('access_token') or token,
                     "expires_at": datetime.fromtimestamp(decoded['exp'])
                 }
             
             except JWTError:
                 return {
-                    "shop": shop_header,
+                    "shop": shop_domain,
                     "access_token": token,
                     "expires_at": datetime.utcnow() + timedelta(hours=1)
                 }
@@ -66,3 +66,4 @@ class ShopifySessionService:
                 detail=f"Invalid session: {str(e)}",
                 headers={"WWW-Authenticate": "Bearer"}
             )
+        

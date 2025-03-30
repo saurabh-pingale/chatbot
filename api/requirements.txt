@@ -6,7 +6,8 @@ passlib[bcrypt]
 python-dotenv
 transformers
 sentence-transformers
-pinecone-client
+pinecone
 supabase
 requests
 numpy
+langfuse
