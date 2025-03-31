@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from app.services.rag_pipeline_service import RagPipelineService
+from app.services.store_admin_service import StoreAdminService
+from app.dbhandlers.store_admin_handler import StoreAdminHandler
 
-class CustomFastAPI(FastAPI):
-    """Custom FastAPI class to attach services."""
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.rag_pipeline_service = RagPipelineService()
+class CustmFastAPI(FastAPI):
+    #Service
+    rag_pipeline_service = RagPipelineService
+    store_admin_service = StoreAdminService
+    
+    #DbHandlers
+    store_admin_handler = StoreAdminHandler

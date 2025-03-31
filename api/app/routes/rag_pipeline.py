@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Request
 
 from app.middleware.auth import require_auth
-from services.rag_pipeline_service import process_de_request
 from app.models.api.rag_pipeline import ErrorResponse, RagPipelineRequestBody, RagPipelineResponse
-from app.custom_fastapi import CustomFastAPI
+from app.main import app
 
-router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
+rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
 
-@router.post(
+@rag_pipeline_router.post(
     "/conversation",
     summary="Process RAG pipeline conversation request",
     response_model=RagPipelineResponse,
@@ -22,7 +21,6 @@ async def conversation(
     request: Request,
     body: RagPipelineRequestBody,
 ):
-    app = CustomFastAPI()
     body = request.json()
     namespace = body["namespace"]
     contents = body["contents"]
