@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 HUGGING_FACE_API_KEY = os.getenv("HUGGING_FACE_API_KEY")
@@ -14,3 +17,4 @@ SHOPIFY_API_KEY = os.getenv("SHOPIFY_API_KEY")
 #Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+DATABASE_URL = os.getenv("DATABASE_URL")

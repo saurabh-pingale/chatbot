@@ -26,7 +26,7 @@ class LangfuseTracker:
             self.client = None
 
     @observe()
-    def track_llm_response(
+    def track_llm_interaction(
         self, 
         prompt: str, 
         response: str, 

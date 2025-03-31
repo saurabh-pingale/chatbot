@@ -8,7 +8,6 @@ class RagPipelineHandler:
     def __init__(self):
         self.index = PC.Index(PC_INDEX_NAME)
 
-    #TODO - Does it require ?
     async def store_embeddings(
         self, embeddings: List[ProductEmbedding], namespace: Optional[str]
     ) -> None:
@@ -60,16 +59,4 @@ class RagPipelineHandler:
             print(f"Error querying Pinecone: {e}")
             return []
 
-    #TODO - Does it require ?
-    async def get_categories_from_query(
-        self, query: str, namespace: Optional[str] = None
-    ) -> List[str]:
-        """Retrieves categories from a query."""
-        results = await self.query_embeddings(query, top_k=20, namespace=namespace)
-
-        categories = set()
-        for vector in results:
-            if vector.metadata and vector.metadata.category:
-                categories.add(vector.metadata.category)
-
-        return sorted(list(categories))
+    
