@@ -1,9 +1,11 @@
 from typing import List, Dict, Optional
 from app.models.api.store_admin import Collection, Product
 
+from app.dbhandlers.store_admin_handler import StoreAdminHandler
+
 class StoreAdminService:
     def __init__(self):
-        self.db_handler = SupabaseDBHandler()
+        self.db_handler = StoreAdminHandler()
 
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetch color preference from DB via handler."""

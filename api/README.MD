@@ -35,3 +35,63 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
+## Project Structure
+
+The project follows a modular structure to keep the code clean and maintainable.
+
+### Routes
+
+* Defines API endpoints and handles request validation.
+* It should only contain route definitions and not business logic.
+
+**Example:**
+
+```python
+@router.get("/items")
+def get_items():
+    return {"message": "List of items"}
+```
+
+### Services
+
+Contains business logic, separate from route definitions. It processes data and interacts with DB handlers when necessary.
+
+**Example:**
+
+```python
+class ItemService:
+    def get_items(self):
+        return ["item1", "item2"]
+```
+
+### DB Handlers
+
+Handles direct database queries and interactions. It abstracts database logic from services.
+
+**Example:**
+
+```python
+class ItemHandler:
+    def fetch_items(self):
+        return db.query("SELECT * FROM items")
+```
+
+### Custom FastAPI
+
+A wrapper around FastAPI to allow easy attachment of services and handlers for cleaner initialization.
+
+```python
+class CustomFastAPI(FastAPI):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+```
+This ensures proper modularization and separation of concerns in the application.
+
+## Docker
+
+### Run docker
+
+```
+docker build -t fastapi-app .
+docker run -p 8000:8000 fastapi-app
+```

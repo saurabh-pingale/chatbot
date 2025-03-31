@@ -47,3 +47,4 @@ class Product(BaseModel):
     url: Optional[str]
     price: str
     image: str = Field(default="")
+
