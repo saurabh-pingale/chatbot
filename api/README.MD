@@ -49,7 +49,8 @@ The project follows a modular structure to keep the code clean and maintainable.
 ```python
 @router.get("/items")
 def get_items():
-    return {"message": "List of items"}
+    items = app.services.get_items()
+    return {"data": items}
 ```
 
 ### Services
@@ -60,8 +61,12 @@ Contains business logic, separate from route definitions. It processes data and 
 
 ```python
 class ItemService:
-    def get_items(self):
-        return ["item1", "item2"]
+    def get_items(self, data):
+        item1 = data["item1"]
+        item2 = data["item2"]
+        response = app.handlers.fetch_items(item1, item2) #query
+        data = clean_response(response)
+        return data
 ```
 
 ### DB Handlers
@@ -81,9 +86,13 @@ class ItemHandler:
 A wrapper around FastAPI to allow easy attachment of services and handlers for cleaner initialization.
 
 ```python
-class CustomFastAPI(FastAPI):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class CustmFastAPI(FastAPI):
+    #Service
+    rag_pipeline_service = RagPipelineService
+    store_admin_service = StoreAdminService
+    
+    #DbHandlers
+    store_admin_handler = StoreAdminHandler
 ```
 This ensures proper modularization and separation of concerns in the application.
 

@@ -1,23 +1,8 @@
 from app.custom_fastapi import CustmFastAPI
 
-# DBHandlers
-from app.dbhandlers.store_admin_handler import StoreAdminHandler
-
-# Services
-from app.services.rag_pipeline_service import RAGPipelineService
-from app.services.store_admin_service import StoreAdminService
-
-# Routes
 from app.routes import init_routes
-
-def init_handlers(app: CustmFastAPI):
-    """Initialize handlers in the app state."""
-    app.store_admin_handler = StoreAdminHandler()
-
-def init_services(app: CustmFastAPI):
-    """Initialize services in the app state."""
-    app.rag_pipeline_service = RAGPipelineService()
-    app.store_admin_service = StoreAdminService()
+from app.services import init_services
+from app.dbhandlers import init_handlers
 
 def create_app() -> CustmFastAPI:
     app = CustmFastAPI(__name__)

@@ -15,6 +15,7 @@ from app.utils.rag_pipeline_utils import (
     get_transformed_products,
     is_product_query,
 )
+from app.main import app
 
 class RagPipelineService:
 
@@ -27,7 +28,7 @@ class RagPipelineService:
                 )
 
             user_message_embeddings = await generate_embeddings(contents)
-            query_response = await query_embeddings(
+            query_response = await app.rag_pipeline_handler.query_embeddings(
                 user_message_embeddings, namespace=namespace
             )
 

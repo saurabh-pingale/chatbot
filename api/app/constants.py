@@ -1,4 +1,3 @@
-import os
 from pinecone import Pinecone
 from app.config import PINECONE_API_KEY
 
