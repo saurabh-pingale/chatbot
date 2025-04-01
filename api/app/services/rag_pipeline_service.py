@@ -16,7 +16,10 @@ from app.utils.rag_pipeline_utils import (
     is_product_query,
 )
 from app.utils.logger import logger
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 class RagPipelineService:
     def __init__(self):

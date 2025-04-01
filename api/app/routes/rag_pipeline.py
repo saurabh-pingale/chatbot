@@ -3,7 +3,11 @@ from fastapi import APIRouter, Request, Depends
 from app.middleware.auth import require_auth
 from app.models.api.rag_pipeline import ErrorResponse, RagPipelineRequestBody, RagPipelineResponse
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from app.services.rag_pipeline_service import RagPipelineService
+=======
+from app.utils.logger import logger
+>>>>>>> Stashed changes
 =======
 from app.utils.logger import logger
 >>>>>>> Stashed changes
@@ -42,5 +46,9 @@ async def conversation(
         return await app.rag_pipeline_service.conversation(namespace, contents)
     except Exception as e:
         logger.error("Error in conversation endpoint: %s", str(e), exc_info=True)
+<<<<<<< Updated upstream
+        raise HTTPException(status_code=500, detail="Failed to get conversation")
+>>>>>>> Stashed changes
+=======
         raise HTTPException(status_code=500, detail="Failed to get conversation")
 >>>>>>> Stashed changes

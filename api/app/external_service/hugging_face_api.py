@@ -3,6 +3,9 @@ import httpx
 =======
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
 from app.utils.logger import logger
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
