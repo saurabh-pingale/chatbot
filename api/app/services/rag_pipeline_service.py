@@ -29,9 +29,12 @@ class RagPipelineService:
                     status_code=400, detail="Messages are required for chat requests"
                 )
 
-            user_message_embeddings = await generate_embeddings(contents)
+            # user_message_embeddings = await generate_embeddings(contents)
+            # query_response = await self.rag_handler.query_embeddings(
+            #     user_message_embeddings, namespace=namespace
+            # )
             query_response = await self.rag_handler.query_embeddings(
-                user_message_embeddings, namespace=namespace
+                namespace=namespace
             )
 
             products = extract_products_from_response(query_response)

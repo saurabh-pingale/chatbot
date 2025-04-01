@@ -5,13 +5,9 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 python-dotenv
-transformers
-sentence-transformers
 pinecone
 supabase
 requests
 numpy
-langfuse
-FlagEmbedding
 sql
 sqlalchemy
