@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, HTTPException
 
+from app.utils.app_utils import get_app
 from app.middleware.auth import require_auth
 from app.models.api.rag_pipeline import ErrorResponse, RagPipelineRequestBody, RagPipelineResponse
-from app.services.rag_pipeline_service import RagPipelineService
 
-rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
+rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag-pipeline"])
 
 @rag_pipeline_router.post(
     "/conversation",
@@ -20,11 +20,12 @@ rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
 async def conversation(
     request: Request,
     body: RagPipelineRequestBody,
-    rag_service: RagPipelineService = Depends(lambda: request.app.rag_pipeline_service)
 ):
-    print(f"Shop: {request.shop}")
-    body = request.json()
-    namespace = body["namespace"]
-    contents = body["contents"]
-
-    return await rag_service.conversation(namespace, contents)
+    try:
+        body = request.json()
+        namespace = body["namespace"]
+        contents = body["contents"]
+        app = get_app()
+        return await app.rag_pipeline_service.conversation(namespace, contents)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to get conversation")

@@ -30,6 +30,7 @@ class StoreAdminHandler:
                 return None
             return data.color
         except SQLAlchemyError as error:
+            session.rollback()
             print(f"Database error in get_color_preference: {error}")
             raise error
         finally:
@@ -80,6 +81,7 @@ class StoreAdminHandler:
                 )
                 session.commit
         except Exception as error:
+            session.rollback()
             print(f"Supabase error in store_products: {error}")
             raise error
         finally:

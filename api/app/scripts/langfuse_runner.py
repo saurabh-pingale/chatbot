@@ -1,6 +1,5 @@
-import asyncio
-from dotenv import load_dotenv
 import sys
+import asyncio
 from pathlib import Path
 from app.services.rag_pipeline_service import RagPipelineService
 from app.utils.prompt import create_prompt
@@ -8,8 +7,6 @@ from app.external_service.langfuse_observations import langfuse_tracker
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
-
-load_dotenv()
 
 rag_service = RagPipelineService()
 async def run_langfuse_tracking():
@@ -41,8 +38,8 @@ async def run_langfuse_tracking():
     ]
 
     context_texts = "\n".join([
-        f"Product {p['id']}: {p['title']} - Price: ${p['price']} - Available at: {p['url']}"
-        for p in products
+        f"Product {product['id']}: {product['title']} - Price: ${product['price']} - Available at: {product['url']}"
+        for product in products
     ])
 
     test_queries = [
@@ -63,13 +60,12 @@ async def run_langfuse_tracking():
     ]
 
     for query in test_queries:
-        print(f"\n--- Running Query: {query} ---")
+        print(f"\n--- Running Query: {query} ---\n")
         
         prompt = create_prompt(query, context_texts)
         
         try:
             response = await rag_service.generate_llm_response(prompt, products)
-            
             print("Generated Response:", response.response)
 
             token_efficiency = langfuse_tracker.calculate_token_efficiency(response.response)
