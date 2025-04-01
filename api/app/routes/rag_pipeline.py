@@ -1,20 +1,9 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, HTTPException
 
+from app.utils.app_utils import get_app
 from app.middleware.auth import require_auth
 from app.models.api.rag_pipeline import ErrorResponse, RagPipelineRequestBody, RagPipelineResponse
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-from app.services.rag_pipeline_service import RagPipelineService
-=======
 from app.utils.logger import logger
->>>>>>> Stashed changes
-=======
-from app.utils.logger import logger
->>>>>>> Stashed changes
-=======
-from app.utils.logger import logger
->>>>>>> Stashed changes
 
 rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
 
@@ -32,16 +21,7 @@ rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag","pipeline"])
 async def conversation(
     request: Request,
     body: RagPipelineRequestBody,
-    rag_service: RagPipelineService = Depends(lambda: request.app.rag_pipeline_service)
 ):
-<<<<<<< Updated upstream
-    print(f"Shop: {request.shop}")
-    body = request.json()
-    namespace = body["namespace"]
-    contents = body["contents"]
-
-    return await rag_service.conversation(namespace, contents)
-=======
     try:
         body = request.json()
         namespace = body["namespace"]
@@ -50,13 +30,5 @@ async def conversation(
         return await app.rag_pipeline_service.conversation(namespace, contents)
     except Exception as e:
         logger.error("Error in conversation endpoint: %s", str(e), exc_info=True)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         raise HTTPException(status_code=500, detail="Failed to get conversation")
->>>>>>> Stashed changes
-=======
-        raise HTTPException(status_code=500, detail="Failed to get conversation")
->>>>>>> Stashed changes
-=======
-        raise HTTPException(status_code=500, detail="Failed to get conversation")
->>>>>>> Stashed changes
+

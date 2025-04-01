@@ -1,6 +1,7 @@
 from typing import List
-from fastapi import APIRouter, Request, HTTPException, Depends
-from app.services.store_admin_service import StoreAdminService
+from fastapi import APIRouter, Request, HTTPException
+
+from app.utils.app_utils import get_app
 from app.models.api.store_admin import (
     CollectionRequest,
     CollectionResponse,
@@ -24,13 +25,11 @@ store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def get_color_preference(
-    request: Request,
-    store_service: StoreAdminService = Depends(lambda: request.app.store_admin_service)
-):
+async def get_color_preference(request: Request):
     shopId = request.shop.shop_domain
     try:
-        color = await store_service.get_color_preference_db(shopId)
+        app = get_app()
+        color = await app.store_admin_service.get_color_preference(shopId)
         return {"color": color}
     except Exception as error:
         logger.error("Error in get_color_preference: %s", str(error), exc_info=True)
@@ -49,9 +48,8 @@ async def get_color_preference(
 async def collections(collections: List[CollectionRequest]):
     """Stores Shopify collections in the database."""
     try:
-        stored_collections = await store_service.store_collections(
-            collections
-        )
+        app = get_app()
+        stored_collections = await app.store_admin_service.store_collections(collections)
         return CollectionResponse(
             message="Collections stored successfully", data=stored_collections
         )
@@ -69,15 +67,11 @@ async def collections(collections: List[CollectionRequest]):
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def products(
-    request: StoreProductsRequest,
-    store_service: StoreAdminService = Depends(lambda: request.app.store_admin_service)
-):
+async def products(request: StoreProductsRequest):
     """Stores Shopify products in the database and links them to collections."""
     try:
-        await store_service.store_products(
-            request.products, request.collection_id_map
-        )
+        app = get_app()
+        await app.store_admin_service.store_products(request.products, request.collection_id_map)
         return StoreProductsResponse(message="Products stored successfully")
     except Exception as error:
         logger.error("Error in products endpoint: %s", str(error), exc_info=True)
