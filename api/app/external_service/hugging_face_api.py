@@ -2,8 +2,8 @@ import httpx
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
 from app.utils.logger import logger
 
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = "sk-6f4adb59d3784402b44d86de27a6297e"
+DEEPSEEK_API_URL = DEEPSEEK_API_URL
+DEEPSEEK_API_KEY = DEEPSEEK_API_KEY
 
 async def generate_text_from_huggingface(prompt: str) -> str:
     headers = {
