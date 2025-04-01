@@ -1,19 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
+import LeftSliderButton from './LeftSliderButton';
+import RightSliderButton from './RightSliderButton';
 import { StaticSliderProps } from 'app/common/types';
 import styles from './styles/Chatbot.module.css';
+import SliderOption from './SliderOption';
 
 const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showLeftButton, setShowLeftButton] = useState(false);
   const [showRightButton, setShowRightButton] = useState(true);
-
-  const options = [
-    "How do I use the product?",
-    "What's the price?",
-    "Is there a warranty?",
-    "How to return?",
-    "Shipping policy"
-  ];
 
   const checkScroll = () => {
     if (!sliderRef.current) return;
@@ -52,49 +47,26 @@ const StaticSlider: React.FC<StaticSliderProps> = ({ color, onSelectOption }) =>
     });
   };
 
-  const handleOptionClick = (option: string) => {
-    onSelectOption(option);
-  };
-
   const themeColor = color || '#008080';
 
   return (
     <div className={styles.staticSliderContainer}>
       <div className={styles.staticSlider} ref={sliderRef}>
-        {options.map((option, index) => (
-          <button 
-            key={index} 
-            className={styles.sliderOption}
-            onClick={() => handleOptionClick(option)}
-            style={{ 
-              boxShadow: `0 2px 4px rgba(0, 0, 0, 0.2)` 
-            }}
-          >
-            {option}
-          </button>
-        ))}
+        <SliderOption onClick={onSelectOption} />
       </div>
       
       {showLeftButton && (
-        <button 
-          className={`${styles.sliderButton} ${styles.sliderLeftButton}`}
-          onClick={() => scroll('left')}
-          style={{ backgroundColor: themeColor }}
-          aria-label="Scroll left"
-        >
-          &lt;
-        </button>
+        <LeftSliderButton 
+        onClick={() => scroll('left')} 
+        color={themeColor} 
+      />
       )}
       
       {showRightButton && (
-        <button 
-          className={`${styles.sliderButton} ${styles.sliderRightButton}`}
-          onClick={() => scroll('right')}
-          style={{ backgroundColor: themeColor }}
-          aria-label="Scroll right"
-        >
-          &gt;
-        </button>
+        <RightSliderButton 
+        onClick={() => scroll('right')} 
+        color={themeColor} 
+      />
       )}
     </div>
   );

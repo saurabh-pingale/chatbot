@@ -5,6 +5,7 @@ from pathlib import Path
 from app.services.rag_pipeline_service import RagPipelineService
 from app.utils.prompt import create_prompt
 from app.external_service.langfuse_observations import langfuse_tracker
+from app.utils.logger import logger
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
@@ -76,7 +77,7 @@ async def run_langfuse_tracking():
             print("Efficiency Metrics:", token_efficiency)
         
         except Exception as e:
-            print(f"Error processing query '{query}': {e}")
+            logger.error("Error processing query %s", str(e), exc_info=True)
 
 if __name__ == "__main__":
     asyncio.run(run_langfuse_tracking())

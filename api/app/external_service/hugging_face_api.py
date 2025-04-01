@@ -1,4 +1,9 @@
 import httpx
+<<<<<<< Updated upstream
+=======
+from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
+from app.utils.logger import logger
+>>>>>>> Stashed changes
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_API_KEY = "sk-6f4adb59d3784402b44d86de27a6297e"
@@ -29,5 +34,5 @@ async def generate_text_from_huggingface(prompt: str) -> str:
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
     except Exception as error:
-        print(f"Error in Mistral Inference: {error}")
+        logger.error("Error in Mistral Inference: %s", str(error), exc_info=True)
         return ""
