@@ -32,7 +32,12 @@ class StoreAdminHandler:
         except SQLAlchemyError as error:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             print(f"Database error in get_color_preference: {error}")
+=======
+            session.rollback()
+            logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
+>>>>>>> Stashed changes
 =======
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
@@ -92,7 +97,12 @@ class StoreAdminHandler:
         except Exception as error:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             print(f"Supabase error in store_products: {error}")
+=======
+            session.rollback()
+            logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
+>>>>>>> Stashed changes
 =======
             session.rollback()
             logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
