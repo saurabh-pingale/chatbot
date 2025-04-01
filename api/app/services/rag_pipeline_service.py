@@ -4,8 +4,8 @@ from typing import List, Dict, Any
 from app.utils.prompt import create_prompt
 from app.models.api.rag_pipeline import LLMResponse
 from app.dbhandlers.rag_pipeline_handler import RagPipelineHandler
-from app.external_service.langfuse_tracker import track_llm_interaction
-from app.external_service.generate_embeddings import generate_embeddings
+# from app.external_service.langfuse_tracker import track_llm_interaction
+# from app.external_service.generate_embeddings import generate_embeddings
 from app.external_service.hugging_face_api import generate_text_from_huggingface
 from app.utils.rag_pipeline_utils import (
     clean_response_from_llm,
@@ -67,7 +67,7 @@ class RagPipelineService:
 
         cleaned_response = clean_response_from_llm(response)
 
-        track_llm_interaction(prompt, cleaned_response, user_message)
+        # track_llm_interaction(prompt, cleaned_response, user_message)
 
         if is_product_query(user_message, products):
             transformed_products = filter_products_for_display(products, user_message)
