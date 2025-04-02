@@ -33,6 +33,9 @@ class RagPipelineService:
             query_response = await self.rag_pipeline_handler.query_embeddings(
                 user_message_embeddings, namespace=namespace
             )
+            query_response = await self.rag_handler.query_embeddings(
+                namespace=namespace
+            )
 
             products = extract_products_from_response(query_response)
             context_texts = format_context_texts(query_response)

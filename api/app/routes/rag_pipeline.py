@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 
 from app.utils.app_utils import get_app
+from app.utils.app_utils import get_app
 from app.middleware.auth import require_auth
 from app.models.api.rag_pipeline import ErrorResponse, RagPipelineRequestBody, RagPipelineResponse
 from app.services.rag_pipeline_service import RagPipelineService
@@ -26,11 +27,6 @@ async def conversation(
     request: Request,
     body: RagPipelineRequestBody,
 ):
-    body = request.json()
-    namespace = body["namespace"]
-    contents = body["contents"]
-    app = get_app()
-
     try:
         body = request.json()
         namespace = body["namespace"]

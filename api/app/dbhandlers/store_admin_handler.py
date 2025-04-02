@@ -1,8 +1,8 @@
 from typing import Optional, List, Dict
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+
 from app.models.db.store_admin import Base, Data, DBCollection, DBProduct
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
@@ -31,13 +31,8 @@ class StoreAdminHandler:
             return data.color
         except SQLAlchemyError as error:
             session.rollback()
-            print(f"Database error in get_color_preference: {error}")
-            session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
-            session.rollback()
-            logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
-            session.rollback()
-            logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
+
             raise error
         finally:
             session.close()
@@ -87,12 +82,6 @@ class StoreAdminHandler:
                 )
                 session.commit
         except Exception as error:
-            session.rollback()
-            print(f"Supabase error in store_products: {error}")
-            session.rollback()
-            logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
-            session.rollback()
-            logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
             session.rollback()
             logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
             raise error
