@@ -10,6 +10,7 @@ from app.models.api.store_admin import (
     StoreProductsRequest,
     StoreProductsResponse,
 )
+from app.utils.logger import logger
 
 store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
 
@@ -30,7 +31,7 @@ async def get_color_preference(request: Request):
         color = await app.store_admin_service.get_color_preference(shopId)
         return {"color": color}
     except Exception as error:
-        print(f"Error in get_color_preference: {error}")
+        logger.error("Error in get_color_preference: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch color preference")
 
 
@@ -51,7 +52,8 @@ async def collections(collections: List[CollectionRequest]):
         return CollectionResponse(
             message="Collections stored successfully", data=stored_collections
         )
-    except Exception:
+    except Exception as error:
+        logger.error("Error in collections endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store collections")
 
 
@@ -70,5 +72,6 @@ async def products(request: StoreProductsRequest):
         app = get_app()
         await app.store_admin_service.store_products(request.products, request.collection_id_map)
         return StoreProductsResponse(message="Products stored successfully")
-    except Exception:
+    except Exception as error:
+        logger.error("Error in products endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store products")

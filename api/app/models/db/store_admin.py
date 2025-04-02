@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import relationship
+from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
@@ -10,17 +11,21 @@ class Data(Base):
     shop_id = Column(String, primary_key=True)
     color = Column(String)
 
-class Collection(Base):
+class DBCollection(Base):
     __tablename__ = 'collections'
     
     id = Column(Integer, primary_key=True)
     title = Column(String, unique=True)
     products_count = Column(Integer)
     
-    products = relationship("Product", back_populates="collection")
+    products = relationship("DBProduct", back_populates="collection")
 
-class Product(Base):
+class DBProduct(Base):
     __tablename__ = 'products'
+    __table_args__ = (
+        UniqueConstraint('title', 'category', name='uq_title_category'),
+        {'sqlite_autoincrement': True, 'extend_existing': True}
+    )
     
     id = Column(Integer, primary_key=True)
     title = Column(String)
@@ -31,9 +36,5 @@ class Product(Base):
     image = Column(String)
     collection_id = Column(Integer, ForeignKey('collections.id'))
     
-    collection = relationship("Collection", back_populates="products")
+    collection = relationship("DBCollection", back_populates="products")
     
-    __table_args__ = (
-        {'sqlite_autoincrement': True},
-        {'unique_constraint': ['title', 'category']}
-    )

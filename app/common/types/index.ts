@@ -71,3 +71,23 @@ export interface DeepSeekResponse {
 export interface TypingLoaderProps {
   color?: string | null;
 }
+
+export interface CategoryButtonsProps {
+  categories: string[];
+  color?: string;
+  onSelectCategory: (category: string) => void;
+}
+
+export interface SliderOptionProps {
+  onClick: (option: string) => void;
+}
+
+export interface LeftSliderButtonProps {
+  onClick: () => void;
+  color: string;
+}
+
+export interface RightSliderButtonProps {
+  onClick: () => void;
+  color: string;
+}

@@ -59,7 +59,7 @@ export const ChatbotWindow = ({ color }: ChatbotWindowProps) => {
   return (
     <div className={styles.chatbotPopup} style={{ borderColor: color || "#008080" }}>
       <div className={styles.chatbotHeader} style={{ backgroundColor: color || "#008080"}}>
-        <span>Bot Name</span>
+        <span>Store Assistant</span>
       </div>
       <div className={styles.chatbotMessages}>
         <MessageList messages={messages} color={color} onSendMessage={handleSendMessage}/>
