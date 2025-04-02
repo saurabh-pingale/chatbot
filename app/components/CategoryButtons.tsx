@@ -1,11 +1,7 @@
 import React from 'react';
+import { CategoryButtonsProps } from '../common/types/index';
 import styles from './styles/Chatbot.module.css';
 
-interface CategoryButtonsProps {
-  categories: string[];
-  color?: string;
-  onSelectCategory: (category: string) => void;
-}
 
 const CategoryButtons: React.FC<CategoryButtonsProps> = ({ 
   categories, 

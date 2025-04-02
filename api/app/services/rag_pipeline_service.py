@@ -15,7 +15,14 @@ from app.utils.rag_pipeline_utils import (
     filter_products_for_display,
     is_product_query,
 )
+from app.utils.logger import logger
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 class RagPipelineService:
     def __init__(self):
@@ -49,7 +56,7 @@ class RagPipelineService:
         except HTTPException:
             raise
         except Exception as error:
-            print(f"Error processing request: {error}")
+            logger.error("Error processing request: %s", str(error), exc_info=True)
             raise HTTPException(
                 status_code=500, detail="Failed to process your request"
             )

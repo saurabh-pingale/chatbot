@@ -1,7 +1,6 @@
 import re
 from typing import List, Dict, Any
 
-
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
     """Extracts and filters products from query results."""
     products = [
