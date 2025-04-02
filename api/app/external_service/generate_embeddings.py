@@ -1,17 +1,26 @@
 import numpy as np
-from FlagEmbedding import FlagModel
+from transformers import pipeline
 from typing import List
-from app.utils.vector_utils import pad_vector
+from utils.vector_utils import pad_vector
 
-model = FlagModel(
-    'BAAI/bge-small-en-v1.5',
-    query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
-    use_fp16=False 
+extractor = pipeline(
+    "feature-extraction", 
+    model="sentence-transformers/all-MiniLM-L6-v2", 
+    device="cpu"
 )
 
+#TODO - Have doubt will sit and refactor
 async def generate_embeddings(text: str) -> List[float]:
-    embeddings = model.encode(text)
-    
+    output = extractor(text, pooling="mean", normalize=True)
+
+    if hasattr(output, 'tolist'):
+        embeddings = output.tolist()
+    else:
+        embeddings = output[0] if isinstance(output, list) else output
+
+    if isinstance(embeddings, list) and isinstance(embeddings[0], list):
+        embeddings = embeddings[0]
+
     embeddings = np.array(embeddings)
     
     norm = np.linalg.norm(embeddings)

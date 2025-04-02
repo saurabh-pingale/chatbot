@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+
 from app import create_app
 
 app = create_app()

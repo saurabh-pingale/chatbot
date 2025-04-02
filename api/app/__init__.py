@@ -1,26 +1,11 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.custom_fastapi import CustmFastAPI
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-from app.utils.logger import logger
 from app.custom_fastapi import CustmFastAPI
->>>>>>> Stashed changes
 
-def create_app() -> 'CustmFastAPI':
-    from app.custom_fastapi import CustmFastAPI
-    from app.routes import init_routes
-    from app.services import init_services
-    from app.dbhandlers import init_handlers
-    
-    app = CustmFastAPI()
+from app.routes import init_routes
+from app.services import init_services
+from app.dbhandlers import init_handlers
+
+def create_app() -> CustmFastAPI:
+    app = CustmFastAPI(__name__)
 
     init_handlers(app)
     init_services(app)

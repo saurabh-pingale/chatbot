@@ -1,6 +1,7 @@
 import re
 from typing import List, Dict, Any
 
+
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
     """Extracts and filters products from query results."""
     products = [
@@ -82,7 +83,8 @@ def is_product_query(user_message: str, products: List[Dict]) -> bool:
     return False
 
 
-def filter_products_for_display(products: List[Dict], user_message: str) -> List[Dict]:
+# TODO - What it does based on it rename function
+def get_transformed_products(products: List[Dict], user_message: str) -> List[Dict]:
     lower_user_message = user_message.lower()
     transformed_products = []
 
