@@ -1,0 +1,9 @@
+from app.custom_fastapi import CustmFastAPI
+
+from app.services.rag_pipeline_service import RagPipelineService
+from app.services.store_admin_service import StoreAdminService
+
+def init_services(app: CustmFastAPI):
+    """Initialize services in the app state."""
+    app.rag_pipeline_service = RagPipelineService()
+    app.store_admin_service = StoreAdminService()
