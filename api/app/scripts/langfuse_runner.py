@@ -1,10 +1,18 @@
 import asyncio
 from dotenv import load_dotenv
-from app.services.LLM_service import generate_llm_response, create_deepseek_prompt
+import sys
+from pathlib import Path
+from app.services.rag_pipeline_service import RagPipelineService
+from app.utils.prompt import create_prompt
 from app.external_service.langfuse_observations import langfuse_tracker
+from app.utils.logger import logger
+
+project_root = Path(__file__).parent.parent.parent
+sys.path.append(str(project_root))
 
 load_dotenv()
 
+rag_service = RagPipelineService()
 async def run_langfuse_tracking():
     products = [
         {
@@ -58,10 +66,10 @@ async def run_langfuse_tracking():
     for query in test_queries:
         print(f"\n--- Running Query: {query} ---")
         
-        prompt = create_deepseek_prompt(query, context_texts)
+        prompt = create_prompt(query, context_texts)
         
         try:
-            response = await generate_llm_response(prompt, products)
+            response = await rag_service.generate_llm_response(prompt, products)
             
             print("Generated Response:", response.response)
 
@@ -69,7 +77,7 @@ async def run_langfuse_tracking():
             print("Efficiency Metrics:", token_efficiency)
         
         except Exception as e:
-            print(f"Error processing query '{query}': {e}")
+            logger.error("Error processing query %s", str(e), exc_info=True)
 
 if __name__ == "__main__":
     asyncio.run(run_langfuse_tracking())
