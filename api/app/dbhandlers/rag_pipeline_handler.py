@@ -1,6 +1,7 @@
 from typing import List, Optional
 from app.constants import PC, PC_INDEX_NAME
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
+from app.utils.logger import logger
 
 class RagPipelineHandler:
     """Handles embedding storage and querying."""
@@ -8,7 +9,6 @@ class RagPipelineHandler:
     def __init__(self):
         self.index = PC.Index(PC_INDEX_NAME)
 
-    #TODO - Does it require ?
     async def store_embeddings(
         self, embeddings: List[ProductEmbedding], namespace: Optional[str]
     ) -> None:
@@ -57,19 +57,7 @@ class RagPipelineHandler:
                 if match.get("metadata")
             ]
         except Exception as e:
-            print(f"Error querying Pinecone: {e}")
+            logger.error("Error querying Pinecone: %s", str(e), exc_info=True)
             return []
 
-    #TODO - Does it require ?
-    async def get_categories_from_query(
-        self, query: str, namespace: Optional[str] = None
-    ) -> List[str]:
-        """Retrieves categories from a query."""
-        results = await self.query_embeddings(query, top_k=20, namespace=namespace)
-
-        categories = set()
-        for vector in results:
-            if vector.metadata and vector.metadata.category:
-                categories.add(vector.metadata.category)
-
-        return sorted(list(categories))
+    

@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional
 
 from app.constants import LANGFUSE_HOST
 from app.config import LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
+from app.utils.logger import logger
 
 class LangfuseTracker:
     _instance = None
@@ -22,11 +23,11 @@ class LangfuseTracker:
                 host=LANGFUSE_HOST
             )
         except Exception as e:
-            print(f"Langfuse initialization error: {e}")
+            logger.error("Langfuse initialization error: %s", str(e), exc_info=True)
             self.client = None
 
     @observe()
-    def track_llm_response(
+    def track_llm_interaction(
         self, 
         prompt: str, 
         response: str, 

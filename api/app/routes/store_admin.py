@@ -1,8 +1,6 @@
 from typing import List
-from fastapi import APIRouter, Request, HTTPException
-
-from app.main import app
-from app.services.store_admin_service import get_color_preference_db
+from fastapi import APIRouter, Request, HTTPException, Depends
+from app.services.store_admin_service import StoreAdminService
 from app.models.api.store_admin import (
     CollectionRequest,
     CollectionResponse,
@@ -11,6 +9,7 @@ from app.models.api.store_admin import (
     StoreProductsRequest,
     StoreProductsResponse,
 )
+from app.utils.logger import logger
 
 store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
 
@@ -27,13 +26,14 @@ store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
 )
 async def get_color_preference(
     request: Request,
+    store_service: StoreAdminService = Depends(lambda: request.app.store_admin_service)
 ):
     shopId = request.shop.shop_domain
     try:
-        color = await get_color_preference_db(shopId)
+        color = await store_service.get_color_preference_db(shopId)
         return {"color": color}
     except Exception as error:
-        print(f"Error in get_color_preference: {error}")
+        logger.error("Error in get_color_preference: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch color preference")
 
 
@@ -49,13 +49,14 @@ async def get_color_preference(
 async def collections(collections: List[CollectionRequest]):
     """Stores Shopify collections in the database."""
     try:
-        stored_collections = await app.store_admin_service.store_collections(
+        stored_collections = await store_service.store_collections(
             collections
         )
         return CollectionResponse(
             message="Collections stored successfully", data=stored_collections
         )
-    except Exception:
+    except Exception as error:
+        logger.error("Error in collections endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store collections")
 
 
@@ -68,12 +69,16 @@ async def collections(collections: List[CollectionRequest]):
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def products(request: StoreProductsRequest):
+async def products(
+    request: StoreProductsRequest,
+    store_service: StoreAdminService = Depends(lambda: request.app.store_admin_service)
+):
     """Stores Shopify products in the database and links them to collections."""
     try:
-        await app.store_admin_service.store_products(
+        await store_service.store_products(
             request.products, request.collection_id_map
         )
         return StoreProductsResponse(message="Products stored successfully")
-    except Exception:
+    except Exception as error:
+        logger.error("Error in products endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store products")
