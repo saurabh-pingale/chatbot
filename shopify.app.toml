@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "67b60e150ad6ac22d3e9033198b5a89f"
-application_url = "https://view-networks-renewal-productive.trycloudflare.com"
+application_url = "https://james-taxation-threshold-ca.trycloudflare.com"
 embedded = true
 name = "test-app"
 handle = "test-app-11683"
@@ -27,13 +27,13 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://view-networks-renewal-productive.trycloudflare.com/auth/callback",
-  "https://view-networks-renewal-productive.trycloudflare.com/auth/shopify/callback",
-  "https://view-networks-renewal-productive.trycloudflare.com/api/auth/callback"
+  "https://james-taxation-threshold-ca.trycloudflare.com/auth/callback",
+  "https://james-taxation-threshold-ca.trycloudflare.com/auth/shopify/callback",
+  "https://james-taxation-threshold-ca.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://view-networks-renewal-productive.trycloudflare.com"
+url = "https://james-taxation-threshold-ca.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

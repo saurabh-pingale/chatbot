@@ -28,9 +28,10 @@ async def conversation(
     body: RagPipelineRequestBody,
 ):
     try:
-        body = request.json()
+        body = await request.json()
         namespace = body["namespace"]
         contents = body["contents"]
+
         app = get_app()
         return await app.rag_pipeline_service.conversation(namespace, contents)
     except Exception as e:

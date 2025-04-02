@@ -37,3 +37,7 @@ class StoreAdminService:
             for product in products
         ]
         await self.db_handler.store_products(formatted_products)
+
+    async def store_session_analytics(self, session_data: Dict) -> bool:
+        """Process and store session analytics data"""
+        return await self.db_handler.store_session_data(session_data)

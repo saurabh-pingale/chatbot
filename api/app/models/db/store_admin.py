@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
@@ -39,3 +39,18 @@ class DBProduct(Base):
     
     collection = relationship("DBCollection", back_populates="products")
     
+class ChatbotAnalytics(Base):
+    __tablename__ = 'chatbot_analytics'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    store_id = Column(String, ForeignKey('users.id'))  
+    email = Column(String)
+    country = Column(String)
+    region = Column(String)
+    city = Column(String)
+    ip = Column(String)
+    chat_interactions = Column(Integer, default=0)
+    first_interaction = Column(DateTime)
+    last_interaction = Column(DateTime)
+    products_added_to_cart = Column(Integer, default=0)
+    products_purchased = Column(Integer, default=0)

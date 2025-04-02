@@ -1,4 +1,5 @@
 import { fetchBotResponse } from './apiHandler'
+import { trackUserInteraction } from './trackingService';
 
 export function initChat(primaryColor) {
     const inputBox = document.querySelector('.input-box');
@@ -27,6 +28,7 @@ export function initChat(primaryColor) {
       if (message === '') return;
       
       addMessage(message, 'user');
+      trackUserInteraction('chat_interactions');
   
       inputBox.value = '';
       sendButton.disabled = true;
