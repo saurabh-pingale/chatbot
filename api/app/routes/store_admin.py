@@ -14,7 +14,6 @@ from app.utils.logger import logger
 
 store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
 
-
 @store_admin_router.get(
     "/color-preference",
     summary="Color preference for shopify store admin",

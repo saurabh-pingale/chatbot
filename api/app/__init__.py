@@ -1,3 +1,5 @@
+from app.custom_fastapi import CustmFastAPI
+
 from app.utils.logger import logger
 from app.custom_fastapi import CustmFastAPI
 

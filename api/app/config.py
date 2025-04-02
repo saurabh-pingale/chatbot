@@ -18,6 +18,8 @@ SHOPIFY_API_KEY = os.getenv("SHOPIFY_API_KEY")
 #Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+#Database
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 #Deepseek

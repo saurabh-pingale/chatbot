@@ -9,5 +9,7 @@ pinecone
 supabase
 requests
 numpy
+langfuse
+FlagEmbedding
 sql
 sqlalchemy

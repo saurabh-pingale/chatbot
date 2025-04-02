@@ -5,6 +5,7 @@ from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
+#TODO - change naming of the file, is it related store_admin or rag-pipeline
 class Data(Base):
     __tablename__ = 'data'
     

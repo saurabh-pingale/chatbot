@@ -32,6 +32,7 @@ class StoreAdminHandler:
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
+
             raise error
         finally:
             session.close()

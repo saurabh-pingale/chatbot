@@ -9,6 +9,7 @@ class RagPipelineHandler:
     def __init__(self):
         self.index = PC.Index(PC_INDEX_NAME)
 
+    #TODO - Is it require ?
     async def store_embeddings(
         self, embeddings: List[ProductEmbedding], namespace: Optional[str]
     ) -> None:
