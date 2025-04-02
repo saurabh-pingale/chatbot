@@ -82,7 +82,7 @@ def is_product_query(user_message: str, products: List[Dict]) -> bool:
     return False
 
 
-def filter_products_for_display(products: List[Dict], user_message: str) -> List[Dict]:
+def filter_relevant_products(products: List[Dict], user_message: str) -> List[Dict]:
     lower_user_message = user_message.lower()
     transformed_products = []
 

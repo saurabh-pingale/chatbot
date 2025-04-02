@@ -1,7 +1,4 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.custom_fastapi import CustmFastAPI
+from app.custom_fastapi import CustmFastAPI
 
 from app.dbhandlers.store_admin_handler import StoreAdminHandler
 from app.dbhandlers.rag_pipeline_handler import RagPipelineHandler

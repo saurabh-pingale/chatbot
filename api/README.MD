@@ -35,6 +35,20 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
+### Run the application
+
+#### To run the application, follow these steps:
+
+Navigate to the api directory:
+
+```
+cd api
+```
+Run the application using Uvicorn:
+```
+python main.py
+```
+
 ## Project Structure
 
 The project follows a modular structure to keep the code clean and maintainable.
