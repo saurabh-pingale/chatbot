@@ -1,4 +1,4 @@
-import { createProductSlider } from './productService.js';
+import { createProductSlider } from '../productService.js';
 
 export function addMessage(text, sender, products = [], primaryColor) {
   const messageList = document.querySelector('.message-list');
@@ -13,6 +13,7 @@ export function addMessage(text, sender, products = [], primaryColor) {
     messageElement.style.backgroundColor = primaryColor;
     messageElement.style.borderColor = primaryColor;
   } else {
+    //TODO - Shift these colors to color.js
     messageElement.style.backgroundColor = '#40444b';
     messageElement.style.borderColor = '#40444b';
   }

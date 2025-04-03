@@ -1,5 +1,5 @@
-import { addMessage } from './messageService.js';
-import { getShopId } from './colorHandling.js';
+import { addMessage } from '../services/messageService.js';
+import { getShopId } from './color.handlers.js';
 
 export function fetchBotResponse(message, typingIndicator, primaryColor) {
   const shopId = getShopId();

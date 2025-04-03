@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('shopify-chatbot');
         if (!container) return;
 
+        //TODO - Create a file color.js in constants folder and move it and import from it
         const primaryColor = '#008080';
         const textColor = '#f8f8f8';
         const chatbotTitle = 'Store Assistant';

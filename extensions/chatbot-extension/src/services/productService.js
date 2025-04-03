@@ -1,4 +1,4 @@
-import { addToCart, openCartDrawer } from './cartService.js';
+import { addToCart, openCartDrawer } from './services/cartService.js';
 
 export function createProductSlider(products, primaryColor) {
   const slider = document.createElement('div');

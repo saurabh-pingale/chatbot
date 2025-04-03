@@ -1,6 +1,6 @@
-import { initChat } from './chatLogic';
+import { initChat } from '../modules/chatLogic';
 import { trackUserInteraction } from './trackingService';
-import { initializeUserSession, isValidEmail, fetchUserIP, fetchUserLocation, hasSubmittedEmail } from './userService';
+import { initializeUserSession, isValidEmail, fetchUserIP, fetchUserLocation, hasSubmittedEmail } from '../services/userService';
 
 export function setupToggleButtonHandler(toggleButton, emailCollectionScreen, chatbotWindow, primaryColor) {
     toggleButton.addEventListener('click', () => {
@@ -43,7 +43,7 @@ export function setupEmailSubmissionHandler(emailCollectionScreen, chatbotWindow
                 location: locationData
             });
 
-            localStorage.setItem('chatbotUserData', JSON.stringify({
+            localStorage.setItem(LOCAL_STORAGE.CHATBOT_USER_DATA, JSON.stringify({
                 email,
                 first_interaction: userData.first_interaction || new Date().toISOString()
             }));
