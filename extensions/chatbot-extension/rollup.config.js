@@ -3,9 +3,9 @@ import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
 export default {
-  input: 'assets/main.js',
+  input: 'src/main.js',
   output: {
-    file: 'assets/chatbot.js',
+    file: 'src/chatbot.js',
     format: 'iife',
     name: 'Chatbot'
   },

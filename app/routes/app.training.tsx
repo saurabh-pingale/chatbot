@@ -1,41 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { useFetcher } from "@remix-run/react";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import styles from '../components/styles/training.module.css';
-import { authenticate } from "app/shopify.server";
+import { json } from "@remix-run/node";
+import { authenticate } from "../shopify.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-  return json({ shop: session.shop });
-};
-
-export const action: ActionFunction = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
-  const body = await request.json();
-
-  const headers = new Headers(request.headers);
-
-  headers.set("Authorization", `Bearer ${session.accessToken}`);
-  headers.set("X-Shopify-Shop", session.shop);
-  
-  const response = await fetch("http://localhost:8000/deepseek", {
-    method: "POST",
-    headers: headers,
-    body: JSON.stringify(body)
+  return json({ 
+    shop: session.shop,
+    accessToken: session.accessToken 
   });
-  
-  return json(await response.json());
 };
-
 
 export default function TrainingPage() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
-  const fetcher: any = useFetcher();
+  const fetcher = useFetcher();
   const processingRef = useRef(false);
+  const { shop, accessToken } = useLoaderData();
 
   useEffect(() => {
-    setMessages([{ sender: "bot", text: "Fetch the products by clicking on the 'Fetch Products' button or provide a JSON input to train the LLM with the products." }]);
+    setMessages([{ 
+      sender: "bot", 
+      text: "Fetch the products by clicking on the 'Fetch Products' button or provide a JSON input to train the LLM with the products." 
+    }]);
   }, []);
 
   const handleSend = async () => {
@@ -55,7 +43,10 @@ export default function TrainingPage() {
         encType: "application/json"
       });
     } catch (jsonError) {
-      setMessages((prev) => [...prev, { sender: "bot", text: "Please provide a valid JSON input to train the LLM." }]);
+      setMessages((prev) => [...prev, { 
+        sender: "bot", 
+        text: "Please provide a valid JSON input to train the LLM." 
+      }]);
       setInput("");
       processingRef.current = false;
     }
@@ -66,14 +57,30 @@ export default function TrainingPage() {
     processingRef.current = true;
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
-    fetcher.submit({
-      isTrainingPage: "true"
-    }, {
-      method: "POST",
-      encType: "application/json",
-      preventScrollReset: true,
-      unstable_flushSync: true
-    });
+    try {
+      const response = await fetch("http://localhost:8000/shopify-sync/sync-products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Store": shop, 
+          "X-Shopify-Access-Token": accessToken 
+        },
+        body: JSON.stringify({ namespace: shop })
+      });
+
+      const result = await response.json();
+      setMessages((prev) => [...prev, { 
+        sender: "bot", 
+        text: result.message || "Products fetched successfully!" 
+      }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { 
+        sender: "bot", 
+        text: "Failed to fetch products. Please try again." 
+      }]);
+    } finally {
+      processingRef.current = false;
+    }
   };
 
   useEffect(() => {
@@ -95,34 +102,46 @@ export default function TrainingPage() {
           <div className={styles.chatHeader}>
             <h3>Training Chat</h3>
           </div>
-        <div className={styles.chatWindow}>
-          {messages.map((msg, index) => (
-            <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
-              {msg.text}
-            </div>
-          ))}
-        </div>
-        <div className={styles.inputArea}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your query..."
-          />
-        <button onClick={handleSend} className={styles.sendButton}>Send</button>
-        </div>
+          <div className={styles.chatWindow}>
+            {messages.map((msg, index) => (
+              <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
+                {msg.text}
+              </div>
+            ))}
+          </div>
+          <div className={styles.inputArea}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your query..."
+            />
+            <button 
+              onClick={handleSend} 
+              className={styles.sendButton}
+              disabled={fetcher.state !== "idle"}
+            >
+              {fetcher.state !== "idle" ? "Sending..." : "Send"}
+            </button>
+          </div>
         </div>
 
-      <div className={styles.trainingSection}>
-        <div className={styles.trainingHeader}>
+        <div className={styles.trainingSection}>
+          <div className={styles.trainingHeader}>
             <h3>Training Options</h3>
-        </div>
-        <div className={styles.trainingContent}>
-          <p>Fetch your store's products to train the SmartBot</p>
-          <button onClick={handleFetchProducts} className={styles.fetchButton}>Fetch Products</button>
+          </div>
+          <div className={styles.trainingContent}>
+            <p>Fetch your store's products to train the SmartBot</p>
+            <button 
+              onClick={handleFetchProducts} 
+              className={styles.fetchButton}
+              disabled={processingRef.current}
+            >
+              {processingRef.current ? "Fetching..." : "Fetch Products"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

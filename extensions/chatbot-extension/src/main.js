@@ -1,50 +1,37 @@
-import { initColorPreference } from './modules/colorHandling';
-import { createToggleButton, createChatbotWindow, createEmailCollectionScreen } from './modules/uiElements';
-import { initChat } from './modules/chatLogic';
-import { initCartDrawer } from './modules/cartService';
-import { hasSubmittedEmail } from './modules/userService';
-import { setupTrackingListeners } from './modules/trackingService';
-import { 
-    setupToggleButtonHandler, 
-    setupEmailSubmissionHandler, 
-    setupCloseButtonHandlers 
-} from './modules/eventHandlers';
+import { COLORS } from './constants/colors.constants';
+import { createChatPage } from './pages/ChatPage/ChatPage';
+import { createEmailGatePage } from './pages/EmailGatePage/EmailGatePage';
+import { initChatModule } from './modules/chat/chat.module'; 
+import { initCartModule } from './modules/cart/cart.module'; 
+import { initColorTheme } from './modules/color/color.module';
+import { hasSubmittedEmail } from './modules/user/session.module';
+import { setupTracking } from './modules/user/tracking.module'; 
+import { createToggleButton } from './components/ui/ToggleButton/ToggleButton';
 
-document.addEventListener('DOMContentLoaded', function() {
-    try{
-        const container = document.getElementById('shopify-chatbot');
-        if (!container) return;
+document.addEventListener('DOMContentLoaded', async () => {
+    const container = document.getElementById('shopify-chatbot');
+    if (!container) {
+        console.error('Chatbot container not found');
+        return;
+    }
 
-        //TODO - Create a file color.js in constants folder and move it and import from it
-        const primaryColor = '#008080';
-        const textColor = '#f8f8f8';
-        const chatbotTitle = 'Store Assistant';
+    container.style.setProperty('--primary-color', COLORS.PRIMARY);
+    container.style.setProperty('--text-color', COLORS.TEXT);
 
-        container.style.setProperty('--primary-color', primaryColor);
-        container.style.setProperty('--text-color', textColor);
+    const primaryColor = await initColorTheme();
 
-        const toggleButton = createToggleButton(primaryColor);
-        container.appendChild(toggleButton);
+    const toggleButton = createToggleButton(primaryColor); 
+    const chatPage = createChatPage('Store Assistant', primaryColor); 
+    const emailPage = createEmailGatePage('Store Assistant'); 
+    
+    initCartModule();
+    setupTracking(); 
 
-        const emailCollectionScreen = createEmailCollectionScreen(primaryColor, chatbotTitle);
-        container.appendChild(emailCollectionScreen);
+    const mainContent = hasSubmittedEmail() ? chatPage : emailPage;
+    container.appendChild(toggleButton);
+    container.appendChild(mainContent);
 
-        const chatbotWindow = createChatbotWindow(primaryColor, chatbotTitle);
-        container.appendChild(chatbotWindow);
-
-        initCartDrawer();
-
-        if (hasSubmittedEmail()) {
-            initChat(primaryColor);
-        }
-
-        setupToggleButtonHandler(toggleButton, emailCollectionScreen, chatbotWindow, primaryColor);
-        setupEmailSubmissionHandler(emailCollectionScreen, chatbotWindow, toggleButton, primaryColor);
-        setupCloseButtonHandlers(emailCollectionScreen, chatbotWindow, toggleButton);
-
-        initColorPreference(primaryColor);
-        setupTrackingListeners();
-    } catch (error) {
-        console.error("Initialization error:", error);
+    if (hasSubmittedEmail()) {
+        initChatModule(primaryColor);
     }
 });

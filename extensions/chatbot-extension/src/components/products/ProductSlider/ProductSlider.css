@@ -1,0 +1,11 @@
+.product-slider {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  
+  .product-slider::-webkit-scrollbar {
+    display: none;
+  }
