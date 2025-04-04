@@ -19,19 +19,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.style.setProperty('--text-color', COLORS.TEXT);
 
     const primaryColor = await initColorTheme();
-
     const toggleButton = createToggleButton(primaryColor); 
-    const chatPage = createChatPage('Store Assistant', primaryColor); 
-    const emailPage = createEmailGatePage('Store Assistant'); 
+    container.appendChild(toggleButton);
+
+    function renderContent() {
+        const existingContent = container.querySelector('.chat-page, .email-gate-page');
+        if (existingContent) container.removeChild(existingContent);
+
+        const mainContent = hasSubmittedEmail() ? createChatPage('Store Assistant', primaryColor) : createEmailGatePage('Store Assistant');
+        container.appendChild(mainContent);
+
+        if (hasSubmittedEmail()) {
+            initChatModule(primaryColor);
+        }
+    }
+
+    renderContent();
+
+    window.chatbotRenderContent = renderContent;
     
     initCartModule();
     setupTracking(); 
-
-    const mainContent = hasSubmittedEmail() ? chatPage : emailPage;
-    container.appendChild(toggleButton);
-    container.appendChild(mainContent);
-
-    if (hasSubmittedEmail()) {
-        initChatModule(primaryColor);
-    }
 });

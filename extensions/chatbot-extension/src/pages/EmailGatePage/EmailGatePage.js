@@ -23,8 +23,7 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
   const errorMessage = page.querySelector('.error-message');
   const startButton = page.querySelector('.start-chat-button');
   const closeButton = page.querySelector('.chatbot-close-button');
-
-  startButton.addEventListener('click', async () => {
+    startButton.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     
     if (!isValidEmail(email)) {
@@ -36,9 +35,9 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
     try {
       await initializeUserSession(email);
       
-      page.classList.remove('open');
-      document.querySelector('.chatbot-window').classList.add('open');
-      document.querySelector('.input-box').focus();
+      if (window.chatbotRenderContent) {
+        window.chatbotRenderContent();
+      }
       
     } catch (error) {
       console.error('Session initialization failed:', error);

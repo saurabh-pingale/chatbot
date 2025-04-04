@@ -20,12 +20,13 @@ export async function fetchBotResponse(message, shopId) {
     'Accept': 'application/json'
   });
 
-  const response = await fetch(API.CHAT_ENDPOINT, {
+  const URL = `${CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
+
+  const response = await fetch(URL, {
     method: 'POST',
     headers,
     body: JSON.stringify({ 
       messages: [{ role: "user", content: message }],
-      namespace: shopId
     })
   });
 

@@ -2,5 +2,13 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { forwardRequestToBackend } from "./api.server";
 
 export async function action({ request }: ActionFunctionArgs) {
-  return forwardRequestToBackend('/rag-pipeline/conversation', request);
+  const url = new URL(request.url);
+  const shopDomain = url.searchParams.get('shop');
+
+  let forwardUrl = '/rag-pipeline/conversation';
+  if (shopDomain) {
+    forwardUrl += `?shopId=${encodeURIComponent(shopDomain)}`;
+  }
+
+  return forwardRequestToBackend(forwardUrl, request);
 }

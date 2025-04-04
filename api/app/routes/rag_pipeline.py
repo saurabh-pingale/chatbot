@@ -29,8 +29,9 @@ async def conversation(
 ):
     try:
         body = await request.json()
-        namespace = body["namespace"]
         contents = body["messages"][0]["content"]
+
+        namespace = request.query_params.get("shopId")
 
         app = get_app()
         return await app.rag_pipeline_service.conversation(namespace, contents)
