@@ -22,15 +22,15 @@ rag_pipeline_router = APIRouter(prefix="/rag-pipeline", tags=["rag-pipeline"])
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-@require_auth
+# @require_auth
 async def conversation(
     request: Request,
-    body: RagPipelineRequestBody,
+    # body: RagPipelineRequestBody,
 ):
     try:
         body = await request.json()
         namespace = body["namespace"]
-        contents = body["contents"]
+        contents = body["messages"][0]["content"]
 
         app = get_app()
         return await app.rag_pipeline_service.conversation(namespace, contents)

@@ -91,7 +91,8 @@ async def store_chatbot_session(request: Request, session_data: Dict):
     """Endpoint to store chatbot session analytics"""
     try:
         app = get_app()
-        session_data['store_id'] = request.shop.shop_domain
+        shop_id = request.query_params.get("shopId")
+        session_data['store_id'] = shop_id
         success = await app.analytics_service.store_session_analytics(session_data)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to store analytics")

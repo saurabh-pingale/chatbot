@@ -1,0 +1,21 @@
+.message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    max-width: 80%;
+    word-wrap: break-word;
+    display: inline-block;
+    color: white;
+  }
+  
+  .user-message {
+    align-self: flex-end;
+    text-align: right;
+    border-top-right-radius: 0;
+  }
+  
+  .bot-message {
+    align-self: flex-start;
+    text-align: left;
+    border-top-left-radius: 0;
+  }
