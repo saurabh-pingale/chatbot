@@ -17,7 +17,6 @@ export function updateSessionData(data) {
       ...data             
     });
     sessionStorage.setItem(LOCAL_STORAGE.CHATBOT_SESSION_DATA, serialized);
-    console.log('Session updated:', serialized); 
     return true;
   } catch (error) {
     console.error('Failed to update session:', error);
