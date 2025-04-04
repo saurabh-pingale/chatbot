@@ -1,7 +1,7 @@
 import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { saveColorPreference } from "./supabase";
+import { saveColorPreference } from "./supabaseApi";
 import { useEffect, useState } from "react";
 import {
   Page,

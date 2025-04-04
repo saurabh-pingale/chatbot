@@ -27,13 +27,15 @@ class ProductEmbedding(BaseModel):
     metadata: Dict[str, Any]
 
 class VectorMetadata(BaseModel):
-    text: str
+    text: Optional[str] = None
     title: str
     description: str
     category: str
+    type: str
     url: str
     image: str
     price: str
+    variant_id: str
 
 class Vector(BaseModel):
     id: str

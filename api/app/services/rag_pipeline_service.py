@@ -14,6 +14,7 @@ from app.utils.rag_pipeline_utils import (
     format_context_texts,
     filter_relevant_products,
     is_product_query,
+    extract_categories
 )
 from app.utils.logger import logger
 
@@ -31,10 +32,7 @@ class RagPipelineService:
 
             user_message_embeddings = await generate_embeddings(contents)
             query_response = await self.rag_pipeline_handler.query_embeddings(
-                user_message_embeddings, namespace=namespace
-            )
-            query_response = await self.rag_handler.query_embeddings(
-                namespace=namespace
+                vector=user_message_embeddings, namespace=namespace
             )
 
             products = extract_products_from_response(query_response)
@@ -43,10 +41,12 @@ class RagPipelineService:
             full_prompt = create_prompt(contents, context_texts)
             llm_response = await self.generate_llm_response(full_prompt, products)
 
+            category_names = [cat["name"] for cat in llm_response.categories] if llm_response.categories else []
+
             return {
                 "answer": llm_response.response,
                 "products": llm_response.products or [],
-                "categories": llm_response.categories or [],
+                "categories": category_names,
             }
 
         except HTTPException:
@@ -59,7 +59,8 @@ class RagPipelineService:
 
     async def generate_llm_response(
         self,
-        prompt: str, products: List[Dict] = []
+        prompt: str, 
+        products: List[Dict] = []
     ) -> LLMResponse:
         user_message = extract_user_message_from_prompt(prompt)
 
@@ -71,6 +72,7 @@ class RagPipelineService:
 
         if is_product_query(user_message, products):
             transformed_products = filter_relevant_products(products, user_message)
-            return LLMResponse(response=cleaned_response, products=transformed_products)
+            categories = extract_categories(transformed_products) 
+            return LLMResponse(response=cleaned_response, products=transformed_products, categories=categories)
         else:
-            return LLMResponse(response=cleaned_response, products=[])
+            return LLMResponse(response=cleaned_response, products=[], categories=[])

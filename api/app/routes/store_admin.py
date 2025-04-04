@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Request, HTTPException
 
 from app.utils.app_utils import get_app
@@ -25,7 +25,8 @@ store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
     },
 )
 async def get_color_preference(request: Request):
-    shopId = request.shop.shop_domain
+    # shopId = request.shop.shop_domain
+    shopId = request.query_params.get("shopId")
     try:
         app = get_app()
         color = await app.store_admin_service.get_color_preference(shopId)
@@ -75,3 +76,27 @@ async def products(request: StoreProductsRequest):
     except Exception as error:
         logger.error("Error in products endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store products")
+
+@store_admin_router.post(
+    "/chatbot-session",
+    summary="Store chatbot session analytics",
+    response_model=dict,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        401: {"model": ErrorResponse, "description": "Unauthorized access"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def store_chatbot_session(request: Request, session_data: Dict):
+    """Endpoint to store chatbot session analytics"""
+    try:
+        app = get_app()
+        shop_id = request.query_params.get("shopId")
+        session_data['store_id'] = shop_id
+        success = await app.analytics_service.store_session_analytics(session_data)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to store analytics")
+        return {"message": "Analytics stored successfully"}
+    except Exception as error:
+        logger.error("Error in store_chatbot_session: %s", str(error), exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to process analytics")

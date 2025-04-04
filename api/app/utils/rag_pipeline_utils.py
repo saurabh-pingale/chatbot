@@ -60,48 +60,96 @@ def extract_user_message_from_prompt(prompt: str) -> str:
 
 def is_product_query(user_message: str, products: List[Dict]) -> bool:
     """
-    Checks if the user message indicates a product-related query.
+    Checks if the user message specifically asks for products or categories.
+    Returns False for generic product requests.
     """
-    lower_user_message = user_message.lower()
+    lower_user_message = user_message.lower().strip()
 
-    # Check for common product-related phrases
-    if any(
+    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"]
+    if lower_user_message in greetings:
+        return False
+
+    product_phrases = [
+        "product", "item", "merchandise", "goods",
+        "show me the", "where can i find", "looking for",
+        "do you have", "recommend some", "suggest some",
+        "what are the", "which are the", "price of", "cost of",
+        "buy", "purchase", "shop for", "find me"
+    ]
+
+    category_phrases = [
+        "in the", "from the", "under", "category", "type of", "kind of",
+        "brand", "make", "model"
+    ]
+
+
+    product_name_match = any(
+        product["title"].lower() in lower_user_message
+        for product in products
+    )
+
+    category_name_match = any(
+        product["category"].lower() in lower_user_message
+        for product in products
+    )
+
+    specific_product_request = any(
+        phrase in lower_user_message for phrase in product_phrases
+    )
+
+    category_request = (
+        any(indicator in lower_user_message for indicator in category_phrases) and
+        any(term in lower_user_message for term in ["product", "item"])
+    )
+  
+    is_generic = any(
         phrase in lower_user_message
-        for phrase in ["product", "show me", "list", "items"]
-    ):
-        return True
-
-    # Check if the user message contains any product name
-    for product in products:
-        product_name = (
-            product.get("product", "").lower().split("no description")[0].strip()
-        )
-        if product_name in lower_user_message:
-            return True
-
-    return False
+        for phrase in ["show me products", "list products", "all products", "every product"]
+    )
+    
+    return (product_name_match or 
+            category_name_match or 
+            specific_product_request or 
+            category_request) and not is_generic
 
 
 def filter_relevant_products(products: List[Dict], user_message: str) -> List[Dict]:
+    """
+    Filters products based on the user message, only including relevant ones.
+    """
     lower_user_message = user_message.lower()
-    transformed_products = []
-
+    relevant_products = []
+    
+    mentioned_products = [
+        product["title"].lower() 
+        for product in products 
+        if product["title"].lower() in lower_user_message
+    ]
+    
+    mentioned_categories = [
+        product["category"].lower() 
+        for product in products 
+        if product["category"].lower() in lower_user_message
+    ]
+    
     for product in products:
-        include = False
-        if "show" in lower_user_message or "list" in lower_user_message:
-            include = True
-        else:
-            product_name = product["title"].lower().strip()
-            include = product_name in lower_user_message
+        product_name = product["title"].lower()
+        product_category = product["category"].lower()
+        
+        if (product_name in mentioned_products or 
+            product_category in mentioned_categories):
+            relevant_products.append({
+                "id": product["id"],
+                "title": product["title"],
+                "price": product["price"],
+                "url": product["url"],
+                "image": product["image"],
+                "category": product["category"]
+            })
+    
+    return relevant_products
 
-        if include:
-            transformed_products.append(
-                {
-                    "id": product["id"],
-                    "title": product["title"],
-                    "price": product["price"],
-                    "url": product["url"],
-                    "image": product["image"],
-                }
-            )
-    return transformed_products
+def extract_categories(transformed_products):
+    unique_categories = list({p.get("category", "") for p in transformed_products})
+    categories = [{"name": cat} for cat in unique_categories if cat] 
+    return categories
