@@ -12,7 +12,7 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
       <button class="chatbot-close-button">✕</button>
     </div>
     <div class="email-collection-content">
-      <p>Please enter your email to start chatting</p>
+      <p>Please enter your email to start chatting12390</p>
       <input type="email" class="email-input" placeholder="Your email address" required>
       <div class="error-message hidden">Please enter a valid email address</div>
       <button class="start-chat-button" style="background-color: ${COLORS.PRIMARY}">Start Chat</button>

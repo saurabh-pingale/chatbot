@@ -4,9 +4,7 @@ import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
 import StaticSlider from "./StaticSlider";
 import TypingLoader from "./TypingLoader";
-import { ChatbotWindowProps } from "app/common/types";
-import { Message } from "app/common/types";
-import { Product } from "app/common/types";
+import type { ChatbotWindowProps, Message, Product } from "app/common/types";
 import styles from './styles/Chatbot.module.css';
 
 export const ChatbotWindow = ({ color }: ChatbotWindowProps) => {
@@ -59,7 +57,7 @@ export const ChatbotWindow = ({ color }: ChatbotWindowProps) => {
   return (
     <div className={styles.chatbotPopup} style={{ borderColor: color || "#008080" }}>
       <div className={styles.chatbotHeader} style={{ backgroundColor: color || "#008080"}}>
-        <span>Store Assistant</span>
+        <span>Store Assistant123</span>
       </div>
       <div className={styles.chatbotMessages}>
         <MessageList messages={messages} color={color} onSendMessage={handleSendMessage}/>
