@@ -2,6 +2,7 @@ import { fetchBotResponse } from '../api/api.module';
 import { addMessage } from '../../services/message.service';
 import { createTypingIndicator } from '../../components/chat/TypingIndicator/TypingIndicator';
 import { getShopId } from '../../utils/shopify.utils';
+import { COLORS } from '../../constants/colors.constants';
 
 export function initChatModule(primaryColor) {
   const inputBox = document.querySelector('.input-box');
@@ -14,20 +15,20 @@ export function initChatModule(primaryColor) {
     addMessage(message, 'user', [], primaryColor);
     inputBox.value = '';
     
-    const typingIndicator = createTypingIndicator();
+    const typingIndicator = createTypingIndicator(primaryColor);
     document.querySelector('.message-list').appendChild(typingIndicator);
 
     try {
       const { answer, products } = await fetchBotResponse(message, getShopId());
 
-      addMessage(answer, 'bot', products || [], primaryColor); 
+      addMessage(answer, 'bot', products || [], COLORS.BOT_TEXT); 
     } catch(error) {
       console.error('Chat error:', error);
       addMessage(
         error.message || 'Sorry, something went wrong.', 
         'bot', 
         [], 
-        primaryColor
+        COLORS.BOT_TEXT
       );
     } finally {
       typingIndicator.remove();
@@ -46,6 +47,6 @@ export function initChatModule(primaryColor) {
   sendButton.addEventListener('click', handleSend);
 
   setTimeout(() => {
-    addMessage('Hi there! How can I help you today?', 'bot', [], primaryColor);
+    addMessage('Hi there! How can I help you today?', 'bot', [], COLORS.BOT_TEXT);
   }, 500);
 }

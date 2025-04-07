@@ -20,7 +20,7 @@ export async function fetchBotResponse(message, shopId) {
     'Accept': 'application/json'
   });
 
-  const URL = `${CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
+  const URL = `${API.CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
 
   const response = await fetch(URL, {
     method: 'POST',

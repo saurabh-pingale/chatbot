@@ -43,7 +43,7 @@
   
   .cart-drawer.open {
     transform: translateY(0);
-    display: block;
+    display: block !important;
   }
   
   .cart-drawer-header {
@@ -224,22 +224,28 @@
     margin-bottom: 10px;
     padding: 8px;
     border-radius: 5px;
+    border: 2px solid #e0e0e0;
     max-width: 80%;
     word-wrap: break-word;
     display: inline-block;
-    color: white;
+    color: #f8f8f8;
   }
   
   .user-message {
+    background-color: #f0f0f0 !important;
+    color: #333;
     align-self: flex-end;
     text-align: right;
     border-top-right-radius: 0;
   }
   
   .bot-message {
+    background-color: #f0f0f0 !important;
+    color: #333;
     align-self: flex-start;
     text-align: left;
     border-top-left-radius: 0;
+    border: none !important;
   }
 
   .message-list {
@@ -500,4 +506,18 @@
   
   .email-input.invalid {
     border-color: #ff4757;
+  }
+
+  .skip-button {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    background-color: transparent;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .skip-button:hover {
+    background-color: #f0f0f0;
   }

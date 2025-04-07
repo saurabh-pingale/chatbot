@@ -8,8 +8,9 @@ export function createCartDrawer() {
         <button class="cart-drawer-close">×</button>
       </div>
       <div class="cart-drawer-content"></div>
-      <a href="/checkout" class="checkout-button">Checkout</a>
+      <button class="checkout-button">Checkout</button>
     `;
     
+    drawer.style.display = 'none';
     return drawer;
   }

@@ -12,6 +12,14 @@ export function createProductCard(product, primaryColor) {
     
     const btn = card.querySelector('.add-to-cart-button');
     btn.style.backgroundColor = primaryColor;
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      card.dispatchEvent(new CustomEvent('addToCart', {
+          detail: product,
+          bubbles: true
+      }));
+    });
     
     return card;
   }

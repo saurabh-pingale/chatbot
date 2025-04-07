@@ -5,3 +5,4 @@ export function createToggleButton(primaryColor) {
     button.style.backgroundColor = primaryColor;
     return button;
   }
+

@@ -7,11 +7,10 @@ export function createChatHeader(primaryColor, title) {
   
   header.innerHTML = `
     <h3 class="chatbot-header-title">${title}</h3>
-    <button class="chatbot-close-button">✕</button>
   `;
   
   const cartIcon = createCartIcon();
-  header.insertBefore(cartIcon, header.querySelector('.chatbot-close-button'));
+  header.appendChild(cartIcon);
   
   return header;
 }

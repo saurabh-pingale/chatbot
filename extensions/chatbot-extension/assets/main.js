@@ -1,13 +1,14 @@
 import { COLORS } from './constants/colors.constants';
-import { createChatPage } from './pages/ChatPage/ChatPage';
-import { createEmailGatePage } from './pages/EmailGatePage/EmailGatePage';
 import { initChatModule } from './modules/chat/chat.module'; 
-import { initCartModule } from './modules/cart/cart.module'; 
 import { initColorTheme } from './modules/color/color.module';
-import { hasSubmittedEmail } from './modules/user/session.module';
-import { setupTracking } from './modules/user/tracking.module'; 
 import { createToggleButton } from './components/ui/ToggleButton/ToggleButton';
+import { hasSubmittedEmail } from './modules/user/session.module';
+import { initCartModule } from './modules/cart/cart.module';
+import { renderContent } from './modules/content/content.module';
+import { setupTracking } from './modules/user/tracking.module';
 
+let currentContent = null;
+let isOpen = false;
 document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('shopify-chatbot');
     if (!container) {
@@ -22,22 +23,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toggleButton = createToggleButton(primaryColor); 
     container.appendChild(toggleButton);
 
-    function renderContent() {
-        const existingContent = container.querySelector('.chat-page, .email-gate-page');
-        if (existingContent) container.removeChild(existingContent);
-
-        const mainContent = hasSubmittedEmail() ? createChatPage('Store Assistant', primaryColor) : createEmailGatePage('Store Assistant');
-        container.appendChild(mainContent);
-
-        if (hasSubmittedEmail()) {
+    window.chatbotRenderContent = (shouldOpen) => {
+        currentContent = renderContent(container, primaryColor, shouldOpen);
+        if (shouldOpen && hasSubmittedEmail()) {
             initChatModule(primaryColor);
         }
-    }
 
-    renderContent();
+        if (currentContent.classList.contains('chat-page')) {
+            initCartModule();
+        }
+        return currentContent;
+    };
 
-    window.chatbotRenderContent = renderContent;
+    currentContent = renderContent(container, primaryColor, false);
     
-    initCartModule();
-    setupTracking(); 
+    toggleButton.addEventListener('click', () => {
+        isOpen = !isOpen;
+        
+        if (isOpen) {
+            currentContent.classList.remove('hidden');
+                currentContent.classList.add('open');
+                if (hasSubmittedEmail()) {
+                    initChatModule(primaryColor);
+                    document.querySelector('.input-box')?.focus();
+                }
+
+                if (currentContent.classList.contains('chat-page')) {
+                    initCartModule();
+                }
+        } else {
+            currentContent.classList.remove('open');
+            currentContent.classList.add('hidden');
+        }
+        
+        toggleButton.innerHTML = isOpen ? 'x' : '💬';
+    });
+
+    setupTracking();
 });

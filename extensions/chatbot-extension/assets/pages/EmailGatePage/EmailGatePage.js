@@ -1,29 +1,29 @@
-import { COLORS } from '../../constants/colors.constants';
 import { isValidEmail } from '../../utils/helpers';
 import { initializeUserSession } from '../../modules/user/session.module';
 
-export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
+export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryColor) {
   const page = document.createElement('div');
   page.className = 'email-gate-page';
   
   page.innerHTML = `
-    <div class="chatbot-header" style="background-color: ${COLORS.PRIMARY}">
+    <div class="chatbot-header" style="background-color: ${primaryColor}">
       <h3 class="chatbot-header-title">${chatbotTitle}</h3>
-      <button class="chatbot-close-button">✕</button>
     </div>
     <div class="email-collection-content">
-      <p>Please enter your email to start chatting12390</p>
+      <p>Please enter your email to start chatting</p>
       <input type="email" class="email-input" placeholder="Your email address" required>
       <div class="error-message hidden">Please enter a valid email address</div>
-      <button class="start-chat-button" style="background-color: ${COLORS.PRIMARY}">Start Chat</button>
+      <button class="start-chat-button" style="background-color: ${primaryColor}">Start Chat</button>
+      <button class="skip-button">Skip</button> 
     </div>
   `;
 
   const emailInput = page.querySelector('.email-input');
   const errorMessage = page.querySelector('.error-message');
   const startButton = page.querySelector('.start-chat-button');
-  const closeButton = page.querySelector('.chatbot-close-button');
-    startButton.addEventListener('click', async () => {
+  const skipButton = page.querySelector('.skip-button');
+
+  startButton.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     
     if (!isValidEmail(email)) {
@@ -36,7 +36,7 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
       await initializeUserSession(email);
       
       if (window.chatbotRenderContent) {
-        window.chatbotRenderContent();
+        window.chatbotRenderContent(true);
       }
       
     } catch (error) {
@@ -52,8 +52,13 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant') {
     }
   });
 
-  closeButton.addEventListener('click', () => {
-    page.classList.remove('open');
+  skipButton.addEventListener('click', async () => {
+    const anonymousId = `Anonymous_${Date.now()}`;
+    await initializeUserSession(anonymousId);
+
+    if (window.chatbotRenderContent) {
+      window.chatbotRenderContent(true);
+    }
   });
   
   return page;
