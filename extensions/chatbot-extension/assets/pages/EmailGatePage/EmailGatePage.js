@@ -10,11 +10,21 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryCol
       <h3 class="chatbot-header-title">${chatbotTitle}</h3>
     </div>
     <div class="email-collection-content">
-      <p>Please enter your email to start chatting</p>
-      <input type="email" class="email-input" placeholder="Your email address" required>
-      <div class="error-message hidden">Please enter a valid email address</div>
-      <button class="start-chat-button" style="background-color: ${primaryColor}">Start Chat</button>
-      <button class="skip-button">Skip</button> 
+      <p>
+        To get started with our chat assistant, please enter your email address. This helps us 
+        personalize your experience
+      </p>
+      <input 
+        type="email" 
+        class="email-input" 
+        placeholder="Your email address" 
+        required
+        aria-label="Email address"
+        aria-describedby="email-error"
+        >
+      <div id="email-error" class="error-message hidden">Please enter a valid email address</div>
+      <button class="start-chat-button" style="background-color: ${primaryColor}">Continue to Chat</button>
+      <button class="skip-button">Continue as Guest</button> 
     </div>
   `;
 
