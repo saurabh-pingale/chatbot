@@ -1,12 +1,13 @@
 import { createCartDrawer } from '../components/cart/CartDrawer/cartDrawer';
 import { createCartItem } from '../components/cart/CartItem/CartItem';
 import { LOCAL_STORAGE } from '../constants/storage.constants';
-import { extractVariantId } from '../utils/shopify.utils';
-import { clearStoreCart, addItemsToStoreCart } from '../modules/api/cartSync.module';
+import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
+import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cartSync.module';
 
 let autoCloseTimer = null;
 let drawerInstance = null;
 let currentChatPage = null;
+let isSyncing = false;
 
 function ensureCartDrawerExists() {
   if (!drawerInstance) {
@@ -57,6 +58,7 @@ function ensureCartDrawerExists() {
 export function initCartService() {
   ensureCartDrawerExists();
   loadCartFromStorage();
+  setupCartListeners();
 }
 
 export function openCartDrawer() {
@@ -75,6 +77,17 @@ export function closeCartDrawer() {
   drawerInstance.classList.add('auto-close');
 }
 
+function setupCartItemEventListeners(cartItemElement, item) {
+  cartItemElement.querySelector('.minus').addEventListener('click', () => {
+    addToCart(item, -1);
+  });
+  
+  cartItemElement.querySelector('.plus').addEventListener('click', () => {
+    addToCart(item, 1);
+  });
+}
+
+
 export function updateCartDrawer(items) {
   ensureCartDrawerExists();
   
@@ -90,6 +103,7 @@ export function updateCartDrawer(items) {
 
   items.forEach(item => {
     const cartItemElement = createCartItem(item);
+    setupCartItemEventListeners(cartItemElement, item);
     fragment.appendChild(cartItemElement);
   });
 
@@ -124,7 +138,7 @@ export function getCartItems() {
   }
 }
 
-export async function addToCart(product) {
+export async function addToCart(product, quantityChange = 1) {
   if (!product.variant_id) {
     console.error('Cannot add to cart - product missing variant_id', product);
     return;
@@ -143,13 +157,17 @@ export async function addToCart(product) {
   });
   
   if (existing) {
-    existing.quantity += 1;
-  } else {
+    existing.quantity += quantityChange;
+    if (existing.quantity <= 0) {
+      items.splice(items.indexOf(existing), 1);
+    }
+  } else if(quantityChange > 0){
     items.push({
       ...product,
-      quantity: 1,
+      quantity: quantityChange,
       variant_id: variantId,
-      id: variantId
+      id: variantId,
+      properties: product.properties || { chatbot_added: true }
     });
   }
   
@@ -163,21 +181,35 @@ export function clearCart() {
 }
 
 async function syncWithStoreCart(items) {
+  if (isSyncing) return true;
+  isSyncing = true;
+
   try {
+    const storeCart = await getStoreCart();
+    const storeItems = storeCart?.items || [];
+
+    const needsSync = !arraysEqual(
+      items.map(i => ({ id: i.id, qty: i.quantity })),
+      storeItems.map(i => ({ id: i.id, qty: i.quantity }))
+    );
+
+    if (!needsSync) return true;
+
     const clearSuccess = await clearStoreCart();
     if (!clearSuccess) {
       return false;
     }
 
-    if (items.length === 0) {
-      return true;
-    }
+    if (items.length === 0) return true;
+    
 
     const addSuccess = await addItemsToStoreCart(items);
     return addSuccess;
   } catch (error) {
     console.error('Error syncing cart:', error);
     return false;
+  } finally {
+    isSyncing = false;
   }
 }
 
@@ -199,4 +231,66 @@ function resetAutoCloseTimer() {
 function loadCartFromStorage() {
   updateCartDrawer(getCartItems());
   updateCartCount();
+}
+
+function setupCartListeners() {
+  document.addEventListener('cart:requestComplete', (event) => handleCartUpdate(event));
+  document.addEventListener('cart:updated', (event) => handleCartUpdate(event));
+  document.addEventListener('cart:change', (event) => handleCartUpdate(event));
+
+  let lastCartToken = null;
+  let lastItemCount = 0;
+
+  setInterval(async () => {
+    try {
+      const storeCart = await getStoreCart();
+ 
+      const currentItemCount = storeCart?.item_count || 0;
+      
+      if (storeCart?.token !== lastCartToken || currentItemCount !== lastItemCount) {
+        lastCartToken = storeCart?.token;
+        lastItemCount = currentItemCount;
+
+        handleCartUpdate({ detail: { response: storeCart } });
+      }
+    } catch (error) {
+      console.error('Error polling cart:', error);
+    }
+  }, 2000);
+};
+
+async function handleCartUpdate(event) {
+  try {
+    const storeCart = event.detail?.response || await getStoreCart();
+    
+    if (storeCart) {
+      await handleStoreCartUpdate(storeCart);
+    }
+  } catch (error) {
+    console.error('Error handling cart update:', error);
+  }
+}
+
+async function handleStoreCartUpdate(storeCart) {
+  if (isSyncing) return;
+
+  const items = storeCart.items.map(item => ({
+    id: item.id,
+    variant_id: `gid://shopify/ProductVariant/${item.id}`,
+    title: item.title,
+    price: item.price,
+    image: item.image,
+    quantity: item.quantity,
+    properties: item.properties || {}
+  }));
+
+  const currentItems = getCartItems();
+
+  const currentItemsSimplified = currentItems.map(i => ({ id: i.id, qty: i.quantity }));
+  const storeItemsSimplified = items.map(i => ({ id: i.id, qty: i.quantity }));
+
+   if (!arraysEqual(storeItemsSimplified, currentItemsSimplified)) {
+    console.log('Cart changed in store, updating local cart');
+    persistCart(items);
+  }
 }

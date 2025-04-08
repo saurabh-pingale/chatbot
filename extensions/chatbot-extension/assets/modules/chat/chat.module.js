@@ -45,8 +45,4 @@ export function initChatModule(primaryColor) {
   });
   
   sendButton.addEventListener('click', handleSend);
-
-  setTimeout(() => {
-    addMessage('Hi there! How can I help you today?', 'bot', [], COLORS.BOT_TEXT);
-  }, 500);
 }
