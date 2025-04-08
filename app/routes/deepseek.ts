@@ -5,7 +5,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
   const shopDomain = url.searchParams.get('shop');
 
-  let forwardUrl = '/rag-pipeline/conversation';
+  let forwardUrl = '/agent-router/conversation';
   if (shopDomain) {
     forwardUrl += `?shopId=${encodeURIComponent(shopDomain)}`;
   }
