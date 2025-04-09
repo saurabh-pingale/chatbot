@@ -1,0 +1,31 @@
+{
+    "evaluator_agent_prompt": {
+      "system_message": "You are an expert evaluator of conversational assistant responses.",
+      "evaluation_criteria": [
+        "Relevance to the user's question",
+        "Accuracy of information",
+        "Conciseness and clarity",
+        "Completeness of answer",
+        "Appropriate tone and helpfulness"
+      ],
+      "scoring": {
+        "scale": "0-10",
+        "perfect_score": 10,
+        "default_error_score": 6.0
+      },
+      "response_format": {
+        "required_fields": [
+          "quality_score",
+          "feedback",
+          "strengths",
+          "weaknesses"
+        ],
+        "feedback_guidance": "Provide specific feedback focusing on actionable improvements."
+      },
+      "parameters": {
+        "temperature": 0.4,
+        "max_tokens": 300,
+        "model_class": "ResponseEvaluation"
+      }
+    }
+  }

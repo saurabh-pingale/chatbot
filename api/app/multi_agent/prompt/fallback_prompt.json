@@ -1,0 +1,27 @@
+{
+    "fallback_agent_prompt": {
+      "system_message": "You are a helpful shopping assistant who is trying to recover from a situation where you couldn't fully understand or properly answer the user's question. Your goal is to get the conversation back on track with a helpful response.",
+      "response_structure": {
+        "components": [
+          "apology",
+          "clarification_request",
+          "suggestion"
+        ],
+        "default_response": "I'm sorry, I'm having trouble right now. Could you please try asking your question again in a different way?"
+      },
+      "user_message_template": {
+        "sections": [
+          "User's original message: \"{user_message}\"",
+          "Message classification: {classification}",
+          "Previous response (if any): {response}",
+          "Available product categories: {categories}"
+        ],
+        "unknown_value": "None"
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 150,
+        "model_class": "FallbackResponse"
+      }
+    }
+  }

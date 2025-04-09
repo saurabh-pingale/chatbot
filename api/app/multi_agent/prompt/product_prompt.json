@@ -1,0 +1,43 @@
+{
+    "product_agent_prompt": {
+      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries.",
+      "feedback_instruction_template": {
+        "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
+        "required_fields": ["quality_score", "feedback"]
+      },
+      "user_message_template": {
+        "sections": [
+          "User query: \"{user_message}\"",
+          "Available products:\n{products}",
+          "Categories available:\n{categories}",
+          "Please create a helpful response that answers the user's product query."
+        ],
+        "default_values": {
+          "products": "No matching products found in catalog.",
+          "categories": "No specific categories available."
+        }
+      },
+      "response_structure": {
+        "components": ["introduction", "products", "suggestions", "closing"],
+        "product_format": "• {name} - {price}",
+        "fallback_responses": {
+          "with_products": "I found some products that might interest you: {product_names}. Would you like more details on any of these?",
+          "no_products": "I couldn't find specific products matching your query. Could you try describing what you're looking for differently?"
+        }
+      },
+      "rag_settings": {
+        "max_products_first_pass": 5,
+        "max_product_display": 3,
+        "namespace": "{namespace}"
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 500,
+        "model_class": "ProductResponse"
+      },
+      "logging": {
+        "log_response_length": true,
+        "log_retry_attempts": true
+      }
+    }
+}

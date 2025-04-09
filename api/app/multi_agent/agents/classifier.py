@@ -1,45 +1,54 @@
+import json
+from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.external_service.hugging_face_api import generate_text_from_huggingface
-from app.utils.rag_pipeline_utils import clean_response_from_llm
+from app.multi_agent.pydantic_ai_client import DeepseekAIClient 
+from app.models.api.agent_router import MessageClassification
 from app.utils.logger import logger
 
 class ClassifierAgent(Agent):
     """Classifies the user input to determine which agent should handle it"""
-    
+    def __init__(self):
+        prompt_path = Path(__file__).parent.parent / "prompt" / "classifier_prompt.json"
+
+        # Load the prompt configuration from JSON
+        with open(prompt_path) as f:
+            self.prompt_config = json.load(f)['classifier_agent_prompt']
+        
+        # Prepare system message with examples
+        self.system_message = self.prompt_config['system_message'] + "\n\nExamples:\n"
+        for example in self.prompt_config['examples']:
+            self.system_message += f"- \"{example['user_message']}\" -> {example['classification']}\n"
+
     async def process(self, context: AgentContext) -> AgentContext:
-        prompt = f"""
-        Classify the following user message as either 'greeting' or 'product'. 
-        Reply with ONLY 'greeting' or 'product'.
-        
-        Examples:
-        User: "Hello there"
-        Classification: greeting
-        
-        User: "Show me your laptops"
-        Classification: product
-        
-        User: "Do you have any discount on phones?"
-        Classification: product
-        
-        User: "How are you doing today?"
-        Classification: greeting
-        
-        User message: "{context.user_message}"
-        Classification:
-        """
-        
-        response = await generate_text_from_huggingface(prompt)
-        classification = clean_response_from_llm(response).lower().strip()
-        
-        # Ensure we get a valid classification
-        if classification not in ["greeting", "product"]:
-            # Default to product if unclear
-            if any(term in context.user_message.lower() for term in ["price", "cost", "buy", "purchase", "product", "item"]):
-                classification = "product"
+        try:
+            result = await DeepseekAIClient.generate(
+                model_class=MessageClassification,
+                user_message=context.user_message,
+                system_message=self.system_message,
+                temperature=self.prompt_config['parameters']['temperature']  
+            )
+
+            context.classification = result.classification.value
+            context.metadata["classification_confidence"] = result.confidence
+            context.metadata["classification_reasoning"] = result.reasoning
+
+            logger.info(f"Message classified as: {context.classification}")
+            logger.info(f"Classification confidence: {result.confidence}")
+            logger.info(f"Classification reasoning: {result.reasoning}")
+
+            return context
+
+        except Exception as e:
+            logger.error(f"Error in ClassifierAgent: {str(e)}", exc_info=True)
+            
+            # Fallback classification using JSON config
+            if any(term in context.user_message.lower() 
+                  for term in self.prompt_config['parameters']['fallback_logic']['product_terms']):
+                context.classification = "product"
             else:
-                classification = "greeting"
-        
-        context.classification = classification
-        logger.info(f"Message classified as: {classification}")
-        return context
+                context.classification = self.prompt_config['parameters']['fallback_logic']['default_classification']
+                
+            logger.info(f"Fallback classification: {context.classification}")
+            context.metadata["error"] = f"Classification error: {str(e)}"
+            return context   

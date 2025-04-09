@@ -1,0 +1,266 @@
+import json
+import httpx
+import hashlib
+from typing import TypeVar, Type, Dict, Any, Optional, List, Union, Callable, Tuple
+from pydantic import BaseModel
+from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
+from app.utils.logger import logger
+from functools import lru_cache
+from datetime import datetime, timedelta
+import threading
+
+T = TypeVar('T', bound=BaseModel)
+
+class CacheEntry:
+    """Class to hold cached responses with timestamps for expiration"""
+    def __init__(self, data: Any, ttl_seconds: int = 3600):
+        self.data = data
+        self.timestamp = datetime.now()
+        self.ttl_seconds = ttl_seconds
+        
+    def is_expired(self) -> bool:
+        """Check if the cache entry has expired"""
+        return datetime.now() > self.timestamp + timedelta(seconds=self.ttl_seconds)
+
+class DeepseekAIClient:
+    """
+    Client for generating structured responses from Deepseek API 
+    using Pydantic models for validation and structure with caching support
+    """
+    # Class-level cache dictionary
+    _cache: Dict[str, CacheEntry] = {}
+    _cache_lock = threading.RLock()  # Thread-safe operations
+    
+    @staticmethod
+    def _generate_cache_key(
+        model_class: Type[T], 
+        user_message: str, 
+        system_message: Optional[str] = None,
+        temperature: float = 0.3,
+        max_tokens: int = 1000,
+        top_p: float = 0.9,
+        schema_instructions: Optional[str] = None
+    ) -> str:
+        """
+        Generate a unique cache key for the request parameters
+        
+        Returns:
+            A hash string to use as cache key
+        """
+        # Create a dictionary of all parameters that affect the response
+        cache_dict = {
+            "model_class": model_class.__name__,
+            "user_message": user_message,
+            "system_message": system_message,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "top_p": top_p,
+            "schema_instructions": schema_instructions,
+            "schema": json.dumps(model_class.model_json_schema())
+        }
+        
+        # Convert to a stable string and hash it
+        cache_str = json.dumps(cache_dict, sort_keys=True)
+        return hashlib.md5(cache_str.encode('utf-8')).hexdigest()
+    
+    @staticmethod
+    def clear_cache() -> None:
+        """Clear the entire cache"""
+        with DeepseekAIClient._cache_lock:
+            DeepseekAIClient._cache.clear()
+            logger.info("Cache cleared")
+    
+    @staticmethod
+    def get_cache_stats() -> Dict[str, int]:
+        """Get cache statistics"""
+        with DeepseekAIClient._cache_lock:
+            total = len(DeepseekAIClient._cache)
+            expired = sum(1 for entry in DeepseekAIClient._cache.values() if entry.is_expired())
+            
+        return {
+            "total_entries": total,
+            "active_entries": total - expired,
+            "expired_entries": expired
+        }
+    
+    @staticmethod
+    def remove_expired_entries() -> int:
+        """Remove expired entries from cache and return count of removed items"""
+        with DeepseekAIClient._cache_lock:
+            keys_to_remove = [
+                key for key, entry in DeepseekAIClient._cache.items() 
+                if entry.is_expired()
+            ]
+            
+            for key in keys_to_remove:
+                del DeepseekAIClient._cache[key]
+                
+            logger.debug(f"Removed {len(keys_to_remove)} expired cache entries")
+            return len(keys_to_remove)
+    
+    @staticmethod
+    async def generate(
+        model_class: Type[T],
+        user_message: str,
+        system_message: Optional[str] = None,
+        temperature: float = 0.3,
+        max_tokens: int = 1000,
+        top_p: float = 0.9,
+        schema_instructions: Optional[str] = None,
+        cache_ttl: int = 3600,  # Cache TTL in seconds, default 1 hour
+        bypass_cache: bool = False  # Option to bypass cache for fresh results
+    ) -> T:
+        """
+        Generate structured data from the Deepseek API based on a Pydantic model
+        with caching support
+        
+        Args:
+            model_class: Pydantic model class to structure the response
+            user_message: User message or prompt
+            system_message: Optional system message
+            temperature: Sampling temperature (higher = more creative)
+            max_tokens: Maximum tokens to generate
+            top_p: Nucleus sampling parameter
+            schema_instructions: Optional custom instructions for schema usage
+            cache_ttl: Time-to-live for cache entries in seconds
+            bypass_cache: Whether to bypass the cache and force a fresh API call
+            
+        Returns:
+            Instance of the provided Pydantic model
+        """
+        # Generate cache key
+        cache_key = DeepseekAIClient._generate_cache_key(
+            model_class, user_message, system_message, 
+            temperature, max_tokens, top_p, schema_instructions
+        )
+        
+        # Try to get from cache if not bypassing
+        if not bypass_cache:
+            with DeepseekAIClient._cache_lock:
+                if cache_key in DeepseekAIClient._cache:
+                    cache_entry = DeepseekAIClient._cache[cache_key]
+                    
+                    # Check if entry is still valid
+                    if not cache_entry.is_expired():
+                        logger.info(f"Cache hit for {model_class.__name__}")
+                        return cache_entry.data
+                    else:
+                        # Remove expired entry
+                        del DeepseekAIClient._cache[cache_key]
+                        logger.debug(f"Removed expired cache entry for {model_class.__name__}")
+        
+        # Clean cache occasionally (10% chance)
+        if hash(cache_key) % 10 == 0:
+            DeepseekAIClient.remove_expired_entries()
+        
+        # Get model schema
+        schema = model_class.model_json_schema()
+        schema_str = json.dumps(schema, indent=2)
+        
+        # Create messages
+        messages = []
+        
+        # Add system message if provided
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        
+        # Add schema instructions
+        schema_prompt = schema_instructions or f"""
+        You must respond in valid JSON format according to this schema:
+        {schema_str}
+        
+        Your response must ONLY contain the JSON object, nothing else.
+        The JSON must be valid and match the schema exactly.
+        """
+        
+        # Add schema instruction as a system message
+        messages.append({"role": "system", "content": schema_prompt})
+        
+        # Add user message
+        messages.append({"role": "user", "content": user_message})
+        
+        # Make API call
+        try:
+            logger.info(f"Calling Deepseek API with {len(messages)} messages")
+            headers = {
+                "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "deepseek-chat",
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "top_p": top_p,
+                "stream": False,
+                "response_format": {"type": "json_object"}  # Force JSON response
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    DEEPSEEK_API_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=60.0
+                )
+                response.raise_for_status()
+                json_response = response.json()
+                
+                # Extract generated content
+                content = json_response["choices"][0]["message"]["content"]
+                logger.debug(f"Raw response from API: {content}")
+                
+                # Clean the response - sometimes models add backticks or other text
+                content = DeepseekAIClient._clean_json_response(content)
+                
+                # Parse as JSON and validate with the model
+                try:
+                    parsed_data = json.loads(content)
+                    result = model_class.model_validate(parsed_data)
+                    
+                    # Store in cache
+                    with DeepseekAIClient._cache_lock:
+                        DeepseekAIClient._cache[cache_key] = CacheEntry(
+                            data=result, 
+                            ttl_seconds=cache_ttl
+                        )
+                    logger.debug(f"Cached response for {model_class.__name__}")
+                    
+                    return result
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON: {e}")
+                    logger.error(f"Invalid JSON content: {content}")
+                    raise ValueError(f"Model returned invalid JSON: {e}")
+                except Exception as e:
+                    logger.error(f"Failed to validate model: {e}")
+                    logger.error(f"Content: {content}")
+                    raise ValueError(f"Failed to validate response against model: {e}")
+                
+        except Exception as e:
+            logger.error(f"Error calling Deepseek API: {e}", exc_info=True)
+            raise
+    
+    @staticmethod
+    def _clean_json_response(content: str) -> str:
+        """
+        Clean a JSON response from the API
+        - Remove markdown code blocks
+        - Remove any text before or after the JSON object
+        """
+        # Remove markdown code blocks
+        if content.startswith("```json"):
+            content = content.replace("```json", "", 1)
+        if content.startswith("```"):
+            content = content.replace("```", "", 1)
+        if content.endswith("```"):
+            content = content.rstrip("```")
+            
+        # Try to find JSON object boundaries
+        start_idx = content.find("{")
+        end_idx = content.rfind("}")
+        
+        if start_idx != -1 and end_idx != -1:
+            content = content[start_idx:end_idx+1]
+            
+        return content.strip()

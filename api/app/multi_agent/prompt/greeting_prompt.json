@@ -1,0 +1,29 @@
+{
+    "greeting_agent_prompt": {
+      "base_system_message": "You are a friendly shopping assistant. Your task is to provide a warm greeting and encourage the user to ask about products.",
+      "feedback_instruction_template": {
+        "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
+        "required_fields": ["quality_score", "feedback"]
+      },
+      "category_mention_template": "Consider mentioning these example categories: {categories}",
+      "response_structure": {
+        "components": ["welcome_message", "product_prompt", "category_mention"],
+        "default_response": "Hello! How can I help you with our products today?"
+      },
+      "cache_settings": {
+        "default_ttl": 3600,
+        "with_categories_ttl": 1800,
+        "bypass_cache_on_retry": true
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 150,
+        "model_class": "GreetingResponse"
+      },
+      "logging": {
+        "include_response_structure": true,
+        "include_cache_status": true,
+        "log_retry_attempts": true
+      }
+    }
+}
