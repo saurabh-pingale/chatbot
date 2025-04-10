@@ -41,8 +41,11 @@ class GreetingAgent(Agent):
                     )
                     previous_response = f"Previous response: {context.response}\n\n"
 
+            # Build conversation history context
+            history_context = self._build_history_context(context)
+
             # Build system message
-            system_message = self.prompt_config['base_system_message']
+            system_message = self.prompt_config['base_system_message'].format(history=history_context)
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
             if categories_str:
@@ -92,3 +95,17 @@ class GreetingAgent(Agent):
             context.metadata["error"] = f"Greeting agent error: {str(e)}"
             context.response = self.prompt_config['response_structure']['default_response']
             return context
+
+    def _build_history_context(self, context: AgentContext) -> str:
+        """Format conversation history for the prompt"""
+        if not context.conversation_history:
+            return "No previous conversation"
+        
+        history_lines = []
+        for msg in context.conversation_history:
+            if msg.get("user"):
+                history_lines.append(f"User: {msg['user']}")
+            if msg.get("agent"):
+                history_lines.append(f"Assistant: {msg['agent']}")
+        
+        return "\n".join(history_lines[-4:])  # Show last 4 exchanges

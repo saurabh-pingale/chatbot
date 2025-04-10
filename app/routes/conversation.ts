@@ -5,7 +5,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
   const shopDomain = url.searchParams.get('shop');
 
-  let forwardUrl = '/agent-router/conversation';
+  let forwardUrl = '/conversation-router/conversation';
   if (shopDomain) {
     forwardUrl += `?shopId=${encodeURIComponent(shopDomain)}`;
   }

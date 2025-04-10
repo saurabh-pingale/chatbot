@@ -1,6 +1,7 @@
 {
     "product_agent_prompt": {
-      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries.",
+      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries. Consider the full conversation context when responding.\n\nConversation Context:\n{history}",
+      "history_template": "User: {user}\nAssistant: {agent}\n",
       "feedback_instruction_template": {
         "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
         "required_fields": ["quality_score", "feedback"]

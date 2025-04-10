@@ -45,7 +45,7 @@ class ProductAgent(Agent):
             # Generate embeddings for the query (only if first attempt or we need fresh data)
             if not context.products or context.attempts == 0:
                 # Generate embeddings for the query
-                user_message_embeddings = await EmbeddingService.create_embeddings(context.user_message)
+                user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
 
                 # Query vector database
                 query_response = await EmbeddingService.get_embeddings(
@@ -56,15 +56,11 @@ class ProductAgent(Agent):
                 # Extract products and format context
                 products = extract_products_from_response(query_response)
                 context_texts = format_context_texts(query_response)
+                
+                # Simply assign products to context
+                context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
+                context.categories = extract_categories(products) if products else []
 
-                # Update product data in context (keep the product data if retry)
-                if is_product_query(context.user_message, products):
-                    context.products = filter_relevant_products(products, context.user_message)
-                    context.categories = extract_categories(context.products)
-                else:
-                    # Even if not a direct product query, we'll keep some products in context
-                    context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
-                    context.categories = extract_categories(products) if products else []
             else:
                 # Reuse existing product data for retries
                 context_texts = [p.get("description", "") for p in context.products if p.get("description")]
@@ -73,13 +69,16 @@ class ProductAgent(Agent):
             product_data = []
             for p in context.products:
                 product_data.append({
-                    "name": p.get("name", "Unknown Product"),
+                    "name": p.get("title", "Unknown Product"),
                     "price": p.get("price", "N/A"),
                     "description": p.get("description", "")
                 })
 
+            # Build conversation history context
+            history_context = self._build_history_context(context)
+
             # Build system message
-            system_message = self.prompt_config['base_system_message']
+            system_message = self.prompt_config['base_system_message'].format(history=history_context)
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
@@ -88,11 +87,7 @@ class ProductAgent(Agent):
                 section.format(
                     user_message=context.user_message,
                     products=str(product_data) if product_data else self.prompt_config['user_message_template']['default_values']['products'],
-                    categories=(
-                        [cat["name"] for cat in context.categories] 
-                        if context.categories 
-                        else self.prompt_config['user_message_template']['default_values']['categories']
-                    )
+                    categories=str(context.categories) if context.categories else self.prompt_config['user_message_template']['default_values']['categories']
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             ])
@@ -143,3 +138,19 @@ class ProductAgent(Agent):
                 context.response = self.prompt_config['response_structure']['fallback_responses']['no_products']
                 
             return context
+
+    def _build_history_context(self, context: AgentContext) -> str:
+        """Format conversation history focusing on product-related exchanges"""
+        if not context.conversation_history:
+            return "No previous conversation about products"
+        
+        product_relevant = []
+        for msg in context.conversation_history:
+            if any(term in msg.get("user", "").lower() 
+                  for term in ["product", "item", "buy", "price"]):
+                if msg.get("user"):
+                    product_relevant.append(f"User: {msg['user']}")
+                if msg.get("agent"):
+                    product_relevant.append(f"Assistant: {msg['agent']}")
+        
+        return "\n".join(product_relevant[-6:]) if product_relevant else "No relevant product history"

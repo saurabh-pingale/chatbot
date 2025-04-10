@@ -27,7 +27,7 @@ async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
     embeddings = []
     for product in products:
         embedding_text = f"Product: {product.title}. Description: {product.description}. Category: {product.category}. Price: {product.price}"
-        embedding_values = await EmbeddingService.create_embeddings(embedding_text)
+        embedding_values = EmbeddingService.create_embeddings(embedding_text)
         
         embeddings.append(ProductEmbedding(
             id=product.id,

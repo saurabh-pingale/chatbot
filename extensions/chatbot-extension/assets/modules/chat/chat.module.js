@@ -1,10 +1,11 @@
-import { fetchBotResponse } from '../api/api.module';
+import { fetchBotResponse, resetConversationHistory } from '../api/api.module';
 import { addMessage } from '../../services/message.service';
 import { createTypingIndicator } from '../../components/chat/TypingIndicator/TypingIndicator';
 import { getShopId } from '../../utils/shopify.utils';
 import { COLORS } from '../../constants/colors.constants';
 
 export function initChatModule(primaryColor) {
+  resetConversationHistory();
   const inputBox = document.querySelector('.input-box');
   const sendButton = document.querySelector('.send-button');
   
@@ -19,7 +20,7 @@ export function initChatModule(primaryColor) {
     document.querySelector('.message-list').appendChild(typingIndicator);
 
     try {
-      const { answer, products } = await fetchBotResponse(message, getShopId());
+      const { answer, products, history } = await fetchBotResponse(message, getShopId());
 
       addMessage(answer, 'bot', products || [], COLORS.BOT_TEXT); 
     } catch(error) {

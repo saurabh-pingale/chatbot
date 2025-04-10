@@ -1,6 +1,6 @@
 {
     "evaluator_agent_prompt": {
-      "system_message": "You are an expert evaluator of conversational assistant responses.",
+      "system_message": "Evaluate responses considering the full conversation context. Score based on consistency with previous interactions.\n\nConversation Context:\n{history}",
       "evaluation_criteria": [
         "Relevance to the user's question",
         "Accuracy of information",

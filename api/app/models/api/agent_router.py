@@ -6,7 +6,8 @@ from enum import Enum
 class AgentRouterResponse(BaseModel):
     answer: str
     products: List[Dict[str, Any]] = []
-    categories: List[str] = []
+    categories: List[str] = Field(default_factory=list)
+    history: List[Dict] = [] 
 
 class ErrorResponse(BaseModel):
     detail: str

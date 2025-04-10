@@ -4,7 +4,7 @@ from app.utils.app_utils import get_app
 from app.utils.logger import logger
 from app.models.api.store_admin import ErrorResponse
 
-analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
+analytics_router = APIRouter(prefix="/analytics_router", tags=["analytics_router"])
 
 @analytics_router.post(
     "/analytics",

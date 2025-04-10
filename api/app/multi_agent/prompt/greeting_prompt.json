@@ -1,6 +1,7 @@
 {
     "greeting_agent_prompt": {
-      "base_system_message": "You are a friendly shopping assistant. Your task is to provide a warm greeting and encourage the user to ask about products.",
+      "base_system_message": "You are a friendly shopping assistant. Your task is to provide a warm greeting and encourage the user to ask about products. Consider the full conversation history when responding.\n\nConversation History:\n{history}",
+      "history_template": "User: {user}\nAssistant: {agent}\n",
       "feedback_instruction_template": {
         "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
         "required_fields": ["quality_score", "feedback"]

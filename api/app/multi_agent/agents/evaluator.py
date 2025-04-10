@@ -36,10 +36,14 @@ class EvaluatorAgent(Agent):
                 logger.warning("EvaluatorAgent: No response to evaluate")
                 return context
 
+            # Build full conversation context for evaluation
+            full_context = self._build_evaluation_context(context)
+
             user_message = (
-                f"User query: \"{context.user_message}\"\n\n"
+                f"Full Conversation Context:\n{full_context}\n\n"
+                f"Latest user query: \"{context.user_message}\"\n\n"
                 f"Assistant response: \"{context.response}\"\n\n"
-                "Evaluate this response according to the criteria."
+                "Evaluate this response considering the full conversation flow."
             )
 
             evaluation = await DeepseekAIClient.generate(
@@ -74,3 +78,17 @@ class EvaluatorAgent(Agent):
             context.metadata["feedback"] = "Evaluation error occurred."
             context.attempts += 1
             return context
+
+    def _build_evaluation_context(self, context: AgentContext) -> str:
+        """Build complete conversation context for evaluation"""
+        if not context.conversation_history:
+            return "New conversation"
+        
+        lines = []
+        for msg in context.conversation_history:
+            if msg.get("user"):
+                lines.append(f"User: {msg['user']}")
+            if msg.get("agent"):
+                lines.append(f"Assistant: {msg['agent']}")
+        
+        return "\n".join(lines)

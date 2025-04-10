@@ -3,7 +3,7 @@ from app.services.products_service import ProductsService
 from app.utils.app_utils import get_app
 from app.utils.logger import logger
 
-products_router = APIRouter(prefix="/create", tags=["products"])
+products_router = APIRouter(prefix="/products_router", tags=["products_router"])
 
 @products_router.post(
     "/create",
