@@ -21,7 +21,6 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
     
     return [product for product in products if product["title"] and product["url"]]
 
-
 def format_context_texts(query_results: List[Any]) -> str:
     """Formats context texts from query results."""
     return "\n".join(
@@ -31,127 +30,43 @@ def format_context_texts(query_results: List[Any]) -> str:
         if result and result.metadata
     )
 
-
-def clean_response_from_llm(response: str) -> str:
-    cleaned_response = response
-    cleaned_response = re.sub(
-        r"<\/?think>|<\/?reasoning>", "", cleaned_response, flags=re.IGNORECASE
-    )
-    cleaned_response = re.sub(
-        r"^\s*\n", "", cleaned_response, flags=re.MULTILINE
-    ).strip()
-
-    if "</think>" in cleaned_response or len(cleaned_response) > 300:
-        last_paragraph = (
-            cleaned_response.split("\n\n")[-1]
-            if "\n\n" in cleaned_response
-            else cleaned_response
-        )
-        cleaned_response = last_paragraph.strip()
-
-    return cleaned_response
-
-
-def extract_user_message_from_prompt(prompt: str) -> str:
-    """
-    Extracts the user message from the prompt.
-    If the prompt contains 'Question:', it extracts the content after it.
-    Otherwise, returns the original prompt.
-    """
-    user_message_match = re.search(r"Question:\s*(.*?)(?:\n|$)", prompt)
-    return user_message_match.group(1) if user_message_match else prompt
-
-
-def is_product_query(user_message: str, products: List[Dict]) -> bool:
-    """
-    Checks if the user message specifically asks for products or categories.
-    Returns False for generic product requests.
-    """
-    lower_user_message = user_message.lower().strip()
-
-    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"]
-    if lower_user_message in greetings:
-        return False
-
-    product_phrases = [
-        "product", "item", "merchandise", "goods",
-        "show me the", "where can i find", "looking for",
-        "do you have", "recommend some", "suggest some",
-        "what are the", "which are the", "price of", "cost of",
-        "buy", "purchase", "shop for", "find me"
-    ]
-
-    category_phrases = [
-        "in the", "from the", "under", "category", "type of", "kind of",
-        "brand", "make", "model"
-    ]
-
-
-    product_name_match = any(
-        product["title"].lower() in lower_user_message
-        for product in products
-    )
-
-    category_name_match = any(
-        product["category"].lower() in lower_user_message
-        for product in products
-    )
-
-    specific_product_request = any(
-        phrase in lower_user_message for phrase in product_phrases
-    )
-
-    category_request = (
-        any(indicator in lower_user_message for indicator in category_phrases) and
-        any(term in lower_user_message for term in ["product", "item"])
-    )
-  
-    is_generic = any(
-        phrase in lower_user_message
-        for phrase in ["show me products", "list products", "all products", "every product"]
-    )
-    
-    return (product_name_match or 
-            category_name_match or 
-            specific_product_request or 
-            category_request) and not is_generic
-
-
-def filter_relevant_products(products: List[Dict], user_message: str) -> List[Dict]:
-    """
-    Filters products based on the user message, only including relevant ones.
-    """
-    lower_user_message = user_message.lower()
-    relevant_products = []
-    
-    mentioned_products = [
-        product["title"].lower() 
-        for product in products 
-        if product["title"].lower() in lower_user_message
-    ]
-    
-    mentioned_categories = [
-        product["category"].lower() 
-        for product in products 
-        if product["category"].lower() in lower_user_message
-    ]
-    
-    for product in products:
-        product_name = product["title"].lower()
-        product_category = product["category"].lower()
-        
-        if (product_name in mentioned_products or 
-            product_category in mentioned_categories):
-            relevant_products.append({
-                "id": product["id"],
-                "title": product["title"],
-                "price": product["price"],
-                "url": product["url"],
-                "image": product["image"],
-                "category": product["category"],
-                "variant_id": product.get("variant_id", "")
-            })
-    
-    return relevant_products
 def extract_categories(transformed_products):
     return list({str(p.get("category", "")) for p in transformed_products if p.get("category")})
+
+def extract_essential_filters(user_message: str) -> Dict[str, Any]:
+    """Extract only price range filters that require structured filtering."""
+    filters = {}
+    lower_message = user_message.lower()
+    
+    # Extract only price information
+    price_patterns = [
+        # Less than/under patterns
+        (r'(?:under|less than|below|not more than|cheaper than|at most)\s*\$?(\d+(?:\.\d+)?)', "max_price", 1),
+        # Greater than/over patterns
+        (r'(?:over|more than|above|at least|higher than|minimum|starting at|from)\s*\$?(\d+(?:\.\d+)?)', "min_price", 1),
+        # Price range patterns
+        (r'\$?(\d+(?:\.\d+)?)\s*(?:-|to)\s*\$?(\d+(?:\.\d+)?)', ["min_price", "max_price"], [1, 2]),
+        (r'between\s*\$?(\d+(?:\.\d+)?)\s*and\s*\$?(\d+(?:\.\d+)?)', ["min_price", "max_price"], [1, 2]),
+        # Exact price patterns
+        (r'(?:price|cost)(?:\s+is|\s*:\s*)\s*\$?(\d+(?:\.\d+)?)', "exact_price", 1),
+        (r'(?:exactly|precisely|just)\s*\$?(\d+(?:\.\d+)?)', "exact_price", 1)
+    ]
+    
+    for pattern, key, group in price_patterns:
+        match = re.search(pattern, lower_message)
+        if match:
+            if isinstance(key, list):
+                # Handle multiple capture groups (like price ranges)
+                for i, k in enumerate(key):
+                    filters[k] = float(match.group(group[i]))
+            else:
+                # Handle single capture group
+                filters[key] = float(match.group(group))
+    
+    # Convert exact price to a narrow range if specified
+    if "exact_price" in filters:
+        exact = filters.pop("exact_price")
+        filters["min_price"] = exact * 0.95  # 5% tolerance
+        filters["max_price"] = exact * 1.05  # 5% tolerance
+    
+    return filters

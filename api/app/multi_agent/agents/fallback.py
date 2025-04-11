@@ -20,17 +20,21 @@ class FallbackAgent(Agent):
 
     async def process(self, context: AgentContext) -> AgentContext:
         try:
+            # Safely handle categories - check type first
+            categories_text = self.prompt_config['user_message_template']['unknown_value']
+            if context.categories:
+                if isinstance(context.categories[0], dict):  # If it's a list of dicts
+                    categories_text = ", ".join([cat.get("name", "") for cat in context.categories])
+                elif isinstance(context.categories[0], str):  # If it's a list of strings
+                    categories_text = ", ".join(context.categories)        
+
             # Prepare user message from template
             user_message = "\n\n".join(
                 section.format(
                     user_message=context.user_message,
                     classification=context.classification or self.prompt_config['user_message_template']['unknown_value'],
                     response=context.response or self.prompt_config['user_message_template']['unknown_value'],
-                    categories=(
-                        [cat["name"] for cat in context.categories] 
-                        if context.categories 
-                        else self.prompt_config['user_message_template']['unknown_value']
-                    )
+                    categories=categories_text
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             )

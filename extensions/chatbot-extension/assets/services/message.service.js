@@ -26,4 +26,25 @@ export function addMessage(text, sender, products = [], primaryColor) {
   }
 
   messageList.appendChild(messageWrapper);
+
+  if (!window.isLoadingHistory) {
+    saveMessageToSession(text, sender, products);
+  }
+}
+
+function saveMessageToSession(text, sender, products) {
+  try {
+    const existingMessages = JSON.parse(sessionStorage.getItem('chatMessages') || '[]');
+
+    existingMessages.push({
+      text,
+      sender,
+      products,
+      timestamp: new Date().toISOString()
+    });
+
+    sessionStorage.setItem('chatMessages', JSON.stringify(existingMessages));
+  } catch (error) {
+    console.error('Error saving message to session storage:', error);
+  }
 }

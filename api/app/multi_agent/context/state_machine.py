@@ -42,6 +42,8 @@ class StateMachine:
             return AgentState.PROCESSING_GREETING
         elif context.classification == "product":
             return AgentState.PROCESSING_PRODUCT
+        elif context.classification == "order":
+            return AgentState.PROCESSING_ORDER
 
         # Fallback if we can't determine which processing state to return to
         return AgentState.FALLBACK

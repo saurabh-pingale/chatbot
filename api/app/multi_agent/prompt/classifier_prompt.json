@@ -1,6 +1,6 @@
 {
     "classifier_agent_prompt": {
-      "system_message": "You are a classifier that determines if a user message is a greeting or a product query.",
+      "system_message": "You are a classifier that determines if a user message is a greeting, a product query, or an order-related query.",
       "examples": [
         {
           "user_message": "Hello there",
@@ -29,6 +29,26 @@
         {
           "user_message": "What's the price of the new iPhone?",
           "classification": "product"
+        },
+        {
+          "user_message": "When will my order arrive?",
+          "classification": "order"
+        },
+        {
+          "user_message": "I want to return an item",
+          "classification": "order"
+        },
+        {
+          "user_message": "How do I track my package?",
+          "classification": "order"
+        },
+        {
+          "user_message": "Tell me about your shipping policies",
+          "classification": "order"
+        },
+        {
+          "user_message": "I need to cancel my order",
+          "classification": "order"
         }
       ],
       "parameters": {
@@ -36,6 +56,7 @@
         "model_class": "MessageClassification",
         "fallback_logic": {
           "product_terms": ["price", "cost", "buy", "purchase", "product", "item"],
+          "order_terms": ["order", "shipping", "delivery", "return", "track", "package", "refund", "cancel"],
           "default_classification": "greeting"
         }
       }

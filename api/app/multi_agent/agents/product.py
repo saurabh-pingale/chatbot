@@ -6,9 +6,8 @@ from app.services.embeddings_service import EmbeddingService
 from app.utils.rag_pipeline_utils import (
     extract_products_from_response,
     format_context_texts,
-    filter_relevant_products,
-    is_product_query,
-    extract_categories
+    extract_categories,
+    extract_essential_filters
 )
 from app.multi_agent.pydantic_ai_client import DeepseekAIClient
 from app.models.api.agent_router import ProductResponse
@@ -44,13 +43,19 @@ class ProductAgent(Agent):
 
             # Generate embeddings for the query (only if first attempt or we need fresh data)
             if not context.products or context.attempts == 0:
+                # Extract essential filters (primarily price ranges)
+                essential_filters = extract_essential_filters(context.user_message)
+
+                essential_filters["namespace"] = context.namespace
+
                 # Generate embeddings for the query
                 user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
 
                 # Query vector database
                 query_response = await EmbeddingService.get_embeddings(
-                    vector=user_message_embeddings, 
-                    namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace)
+                    vector=user_message_embeddings,
+                    namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
+                    metadata_filters=essential_filters
                 )
 
                 # Extract products and format context
@@ -71,7 +76,8 @@ class ProductAgent(Agent):
                 product_data.append({
                     "name": p.get("title", "Unknown Product"),
                     "price": p.get("price", "N/A"),
-                    "description": p.get("description", "")
+                    "description": p.get("description", ""),
+                    "category": p.get("category", "")
                 })
 
             # Build conversation history context
