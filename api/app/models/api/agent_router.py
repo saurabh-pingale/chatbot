@@ -23,6 +23,7 @@ class ClassificationType(str, Enum):
     """Enum for message classification types"""
     GREETING = "greeting"
     PRODUCT = "product"
+    ORDER = "order"
 
 class MessageClassification(BaseModel):
     """Schema for message classification"""
@@ -122,4 +123,12 @@ class ProductResponse(BaseModel):
     closing: Optional[str] = Field(
         None,
         description="Optional closing remark or follow-up question"
+    )
+
+class OrderResponse(BaseModel):
+    """Response model for order-related queries"""
+    response_text: str = Field(..., description="The detailed response to the user's order query")
+    requires_support: bool = Field(
+        default=True, 
+        description="Whether the user needs to contact support for further assistance"
     )

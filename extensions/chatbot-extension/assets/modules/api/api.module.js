@@ -2,10 +2,6 @@ import { API } from '../../constants/api.constants';
 
 let conversationHistory = [];
 
-export function resetConversationHistory() {
-  conversationHistory = [];
-}
-
 export async function sendSessionData(sessionData) {
   try {
     const response = await fetch(API.SESSION_ENDPOINT, {
@@ -22,7 +18,7 @@ export async function sendSessionData(sessionData) {
 
 export async function fetchBotResponse(message, shopId) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -35,6 +31,8 @@ export async function fetchBotResponse(message, shopId) {
     timestamp: new Date().toISOString()
   };
   conversationHistory.push(newMessage);
+
+  sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
 
   const URL = `${API.CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
 
@@ -61,6 +59,8 @@ export async function fetchBotResponse(message, shopId) {
     if (conversationHistory.length > 0) {
       conversationHistory[conversationHistory.length - 1].agent = data.answer;
       conversationHistory[conversationHistory.length - 1].timestamp = new Date().toISOString();
+
+      sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
     }
 
     return {
@@ -75,5 +75,14 @@ export async function fetchBotResponse(message, shopId) {
     } else {
       throw error;
     }
+  }
+}
+
+export function resetConversationHistory(history = []) {
+  conversationHistory = history;
+  if (history.length === 0) {
+    sessionStorage.removeItem('conversationHistory');
+  } else {
+    sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
   }
 }

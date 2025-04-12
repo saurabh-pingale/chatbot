@@ -4,10 +4,54 @@ import { createTypingIndicator } from '../../components/chat/TypingIndicator/Typ
 import { getShopId } from '../../utils/shopify.utils';
 import { COLORS } from '../../constants/colors.constants';
 
+let messagesLoaded = false;
+
+export function loadChatHistoryFromSession(primaryColor) {
+  if (messagesLoaded) {
+    return;
+  }
+
+  try {
+    const savedMessages = sessionStorage.getItem('chatMessages');
+    if (savedMessages) {
+      window.isLoadingHistory = true;
+
+      const messages = JSON.parse(savedMessages);
+      messages.forEach(message => {
+        addMessage(
+          message.text, 
+          message.sender, 
+          message.products || [], 
+          message.sender === 'user' ? primaryColor : COLORS.BOT_TEXT
+        );
+      });
+      window.isLoadingHistory = false;
+      messagesLoaded = true;
+    }
+  } catch (error) {
+    window.isLoadingHistory = false;
+    console.error('Error loading chat history from session storage:', error);
+  }
+}
+
 export function initChatModule(primaryColor) {
-  resetConversationHistory();
+  const savedHistory = sessionStorage.getItem('conversationHistory');
+  if (savedHistory) {
+    try {
+      const parsedHistory = JSON.parse(savedHistory);
+      resetConversationHistory(parsedHistory);
+    } catch (error) {
+      console.error('Error parsing conversation history:', error);
+      resetConversationHistory();
+    }
+  } else {
+    resetConversationHistory(); 
+  }
+
   const inputBox = document.querySelector('.input-box');
   const sendButton = document.querySelector('.send-button');
+
+  loadChatHistoryFromSession(primaryColor);
   
   const handleSend = async () => {
     const message = inputBox.value.trim();

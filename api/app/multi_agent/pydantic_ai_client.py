@@ -244,23 +244,55 @@ class DeepseekAIClient:
     @staticmethod
     def _clean_json_response(content: str) -> str:
         """
-        Clean a JSON response from the API
+        Clean a JSON response from the API with enhanced error handling:
         - Remove markdown code blocks
         - Remove any text before or after the JSON object
+        - Attempt to repair malformed JSON (missing brackets)
         """
         # Remove markdown code blocks
         if content.startswith("```json"):
-            content = content.replace("```json", "", 1)
+            content = content[7:]  # Remove ```json prefix
         if content.startswith("```"):
-            content = content.replace("```", "", 1)
+            content = content[3:]  # Remove ``` prefix
         if content.endswith("```"):
-            content = content.rstrip("```")
-            
-        # Try to find JSON object boundaries
-        start_idx = content.find("{")
-        end_idx = content.rfind("}")
+            content = content[:-3]  # Remove ``` suffix
         
-        if start_idx != -1 and end_idx != -1:
-            content = content[start_idx:end_idx+1]
+        # Find JSON object boundaries
+        start_idx = content.find('{')
+        end_idx = content.rfind('}')
+        
+        if start_idx == -1 or end_idx == -1:
+            return content.strip()  # Return as-is if no JSON found
+        
+        content = content[start_idx:end_idx+1]
+        
+        # Attempt to repair common malformations
+        try:
+            # Quick validation parse
+            json.loads(content)
+            return content
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON needs repair: {e}")
             
-        return content.strip()
+            # Case 1: Missing closing brackets for arrays/objects
+            open_braces = content.count('{')
+            close_braces = content.count('}')
+            open_brackets = content.count('[')
+            close_brackets = content.count(']')
+            
+            # Add missing closing brackets
+            while open_braces > close_braces:
+                content += '}'
+                close_braces += 1
+                
+            while open_brackets > close_brackets:
+                content += ']'
+                close_brackets += 1
+                
+            # Final validation
+            try:
+                json.loads(content)
+                return content
+            except json.JSONDecodeError:
+                logger.error("Could not repair JSON, returning raw content")
+                return content.strip()

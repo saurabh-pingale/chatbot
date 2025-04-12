@@ -42,13 +42,20 @@ class ClassifierAgent(Agent):
         except Exception as e:
             logger.error(f"Error in ClassifierAgent: {str(e)}", exc_info=True)
             
-            # Fallback classification using JSON config
+            # Enhanced fallback classification using JSON config
+            fallback_logic = self.prompt_config['parameters']['fallback_logic']
+            
+            # Check for order-related terms first
             if any(term in context.user_message.lower() 
-                  for term in self.prompt_config['parameters']['fallback_logic']['product_terms']):
+                  for term in fallback_logic.get('order_terms', [])):
+                context.classification = "order"
+            # Then check for product-related terms
+            elif any(term in context.user_message.lower() 
+                     for term in fallback_logic.get('product_terms', [])):
                 context.classification = "product"
             else:
-                context.classification = self.prompt_config['parameters']['fallback_logic']['default_classification']
+                context.classification = fallback_logic.get('default_classification', 'greeting')
                 
             logger.info(f"Fallback classification: {context.classification}")
             context.metadata["error"] = f"Classification error: {str(e)}"
-            return context   
+            return context  

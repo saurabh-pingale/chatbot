@@ -1,6 +1,6 @@
 {
     "product_agent_prompt": {
-      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries. Consider the full conversation context when responding.\n\nConversation Context:\n{history}",
+      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queriesincluding handling requests for specific categories, price ranges, features, and other product attributes. Consider the full conversation context when responding.\n\nConversation Context:\n{history}",
       "history_template": "User: {user}\nAssistant: {agent}\n",
       "feedback_instruction_template": {
         "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
@@ -11,7 +11,7 @@
           "User query: \"{user_message}\"",
           "Available products:\n{products}",
           "Categories available:\n{categories}",
-          "Please create a helpful response that answers the user's product query."
+          "Please create a helpful response that answers the user's product query. If the query is about specific categories, price ranges, or product features, focus your response on those aspects. If no relevant products are found, suggest alternatives or ask for clarification."
         ],
         "default_values": {
           "products": "No matching products found in catalog.",
@@ -23,7 +23,7 @@
         "product_format": "• {name} - {price}",
         "fallback_responses": {
           "with_products": "I found some products that might interest you: {product_names}. Would you like more details on any of these?",
-          "no_products": "I couldn't find specific products matching your query. Could you try describing what you're looking for differently?"
+          "no_products": "I couldn't find specific products matching your query. Could you try describing what you're looking for differently? Or perhaps specify a different category or price range?"
         }
       },
       "rag_settings": {
