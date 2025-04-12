@@ -13,6 +13,7 @@ class ProductsService:
     async def create(self, namespace: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
         try:
+            logger.info(f"Shopify Store: {self.shopify_service.shopify_store}, Access Token: {self.shopify_service.shopify_access_token}")
             products, collections = await get_products_from_admin( self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
         
             products_embeddings = await create_product_embeddings(products)
