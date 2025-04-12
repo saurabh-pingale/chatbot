@@ -1,5 +1,6 @@
 import { LOCAL_STORAGE } from '../../constants/storage.constants';
 import { getShopId } from '../../utils/shopify.utils';
+import { API } from '../../constants/api.constants';
 
 export function trackEvent(eventName, metadata = {}) {
   const session = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.CHATBOT_SESSION_DATA)) || {};
@@ -23,7 +24,7 @@ export function setupTracking() {
   window.addEventListener('beforeunload', () => {
     const session = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.CHATBOT_SESSION_DATA));
     if (session) {
-      navigator.sendBeacon(`/apps/chatbot-api/store-session?shopId=${encodeURIComponent(shopId)}`, JSON.stringify(session));
+      navigator.sendBeacon(`${API.ANALYTICS_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`, JSON.stringify(session));
     }
   });
 }

@@ -1,32 +1,34 @@
+import json
+from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.dbhandlers.rag_pipeline_handler import RagPipelineHandler
-from app.external_service.generate_embeddings import generate_embeddings
-from app.external_service.hugging_face_api import generate_text_from_huggingface
+from app.services.embeddings_service import EmbeddingService
 from app.utils.rag_pipeline_utils import (
-    clean_response_from_llm,
     extract_products_from_response,
     format_context_texts,
     filter_relevant_products,
     is_product_query,
     extract_categories
 )
+from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.models.api.agent_router import ProductResponse
 from app.utils.logger import logger
 
 class ProductAgent(Agent):
     """Handles product-related queries"""
-    
     def __init__(self):
-        self.rag_pipeline_handler = RagPipelineHandler()
+        prompt_path = Path(__file__).parent.parent / "prompt" / "product_prompt.json"
+
+        with open(prompt_path) as f:
+            self.prompt_config = json.load(f)['product_agent_prompt']
     
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            # Check if we have feedback from previous attempts
+            # Handle feedback from previous attempts
             feedback_instruction = ""
             previous_response = ""
 
             if context.feedback_history:
-                # Get the most recent feedback for this agent
                 recent_feedback = next(
                     (fb for fb in reversed(context.feedback_history) 
                      if fb["agent"] == "EvaluatorAgent"),
@@ -34,125 +36,121 @@ class ProductAgent(Agent):
                 )
                 
                 if recent_feedback:
-                    feedback_instruction = f"""
-                    Previous response was rated {recent_feedback['quality_score']}/10.
-                    Feedback: {recent_feedback['feedback']}
-                    
-                    IMPORTANT: Use this feedback to improve your response. Make specific changes 
-                    to address the issues mentioned in the feedback.
-                    """
+                    feedback_instruction = self.prompt_config['feedback_instruction_template']['template'].format(
+                        quality_score=recent_feedback['quality_score'],
+                        feedback=recent_feedback['feedback']
+                    )
                     previous_response = f"Previous response: {context.response}\n\n"
 
             # Generate embeddings for the query (only if first attempt or we need fresh data)
             if not context.products or context.attempts == 0:
                 # Generate embeddings for the query
-                user_message_embeddings = await generate_embeddings(context.user_message)
+                user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
 
                 # Query vector database
-                query_response = await self.rag_pipeline_handler.query_embeddings(
+                query_response = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings, 
-                    namespace=context.namespace
+                    namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace)
                 )
 
                 # Extract products and format context
                 products = extract_products_from_response(query_response)
                 context_texts = format_context_texts(query_response)
+                
+                # Simply assign products to context
+                context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
+                context.categories = extract_categories(products) if products else []
 
-                # Update product data in context (keep the product data if retry)
-                if is_product_query(context.user_message, products):
-                    context.products = filter_relevant_products(products, context.user_message)
-                    context.categories = extract_categories(context.products)
-                else:
-                    # Even if not a direct product query, we'll keep some products in context
-                    context.products = products[:5] if products else []
-                    context.categories = extract_categories(products) if products else []
             else:
                 # Reuse existing product data for retries
                 context_texts = [p.get("description", "") for p in context.products if p.get("description")]
 
-            # Create different prompts based on whether this is a retry
-            if context.attempts > 0:
-                prompt = f"""
-                You are a shopping assistant. Your previous response to the product query needs improvement.
-                
-                {feedback_instruction}
-                
-                User query: "{context.user_message}"
-                {previous_response}
-                
-                Product information:
-                {format_context_texts(context.products)}
-                
-                Create an improved response that:
-                1. Directly addresses the user's query about products
-                2. Provides accurate information based on the product data
-                3. Is concise but complete
-                4. Recommends specific products when appropriate
-                """
-            else:        
-                # Create prompt and get LLM response
-                prompt = f"""
-                You are a specialized product search assistant for a Shopify store. Your sole purpose is to help users find and learn about products based on their queries.
+            # Convert context products to JSON-serializable format for the prompt
+            product_data = []
+            for p in context.products:
+                product_data.append({
+                    "name": p.get("title", "Unknown Product"),
+                    "price": p.get("price", "N/A"),
+                    "description": p.get("description", "")
+                })
 
-                AVAILABLE PRODUCT DATA: {context_texts or 'NO CATALOG PROVIDED'}
+            # Build conversation history context
+            history_context = self._build_history_context(context)
 
-                RESPONSE GUIDELINES:
+            # Build system message
+            system_message = self.prompt_config['base_system_message'].format(history=history_context)
+            if feedback_instruction:
+                system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
-                1. For product queries:
-                   - List ONLY products that match the query from the provided catalog
-                   - Format product listings consistently as:
-                     "Here are [N] matching products:
-                     • [Product Name] - [Price]
-                     • [Product Name] - [Price]
-                     Let me know if you'd like details on any!"
-                   - Include EXACTLY matching product names and prices from the catalog
-                   - Format prices exactly as shown in the catalog (e.g., ₹XXX.XX)
-                   - Limit to maximum 5 products
-                   - NEVER invent products or details not in the catalog
+            # Build user message
+            user_message = "\n\n".join([
+                section.format(
+                    user_message=context.user_message,
+                    products=str(product_data) if product_data else self.prompt_config['user_message_template']['default_values']['products'],
+                    categories=str(context.categories) if context.categories else self.prompt_config['user_message_template']['default_values']['categories']
+                )
+                for section in self.prompt_config['user_message_template']['sections']
+            ])
 
-                2. If no matching products found:
-                   - Response format: "I couldn't find matches. Try these categories: [Category1], [Category2]"
-                   - Suggest only categories that exist in the catalog
-                   - Do not apologize excessively
+            result = await DeepseekAIClient.generate(
+                model_class=ProductResponse,
+                user_message=user_message,
+                system_message=system_message,
+                temperature=self.prompt_config['parameters']['temperature'],
+                max_tokens=self.prompt_config['parameters']['max_tokens']
+            )
 
-                3. For generic product inquiries:
-                   - Suggest 2-3 popular product categories from the catalog
-                   - Format: "We have a wide range of products. Are you looking for [Category1], [Category2], or [Category3]?"
+            # Convert structured response to text
+            response_text = result.introduction
 
-                4. Response must ALWAYS be:
-                   - Concise (3-5 bullet points max for products)
-                   - Free of explanations of your reasoning
-                   - Without self-references ("I", "we")
-                   - Free of unnecessary symbols except price indicators
+            if result.products:
+                response_text += f"\n\nHere are {len(result.products)} matching products:"
+                for product in result.products:
+                    response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"
 
-                5. If catalog data is empty:
-                   - Respond ONLY with: "No product catalog available"
+            if result.suggestions:
+                response_text += "\n\n" if not result.products else ""
+                response_text += result.suggestions
 
-                6. For off-topic queries:
-                   - Response: "I apologize, I don't have information on this..."
-                   - Do not elaborate further
+            if result.closing:
+                response_text += f"\n\n{result.closing}"
 
-                User: {context.user_message}
-                Assistant:
-                """
+            context.response = response_text
 
-             # Add feedback instruction if available
-            if feedback_instruction and context.attempts == 0:
-                prompt = f"{feedback_instruction}\n\n{prompt}"
-
-            llm_response = await generate_text_from_huggingface(prompt)
-            cleaned_response = clean_response_from_llm(llm_response)
-            
-            # Update context with products and response
-            context.response = cleaned_response
-            
-            # Log if this is a retry
-            if context.attempts > 0:
+            if self.prompt_config['logging']['log_response_length']:
+                logger.info(f"ProductAgent generated response of {len(context.response)} chars")
+            if self.prompt_config['logging']['log_retry_attempts'] and context.attempts > 0:
                 logger.info(f"ProductAgent RETRY #{context.attempts} generated improved response")
             
             return context
-            
+
         except Exception as e:
             logger.error(f"Error in ProductAgent: {str(e)}", exc_info=True)
             context.metadata["error"] = f"Product agent error: {str(e)}"
+            
+            # Fallback response
+            if context.products:
+                product_names = [p.get("name", "product") for p in context.products[:self.prompt_config['rag_settings']['max_product_display']]]
+                context.response = self.prompt_config['response_structure']['fallback_responses']['with_products'].format(
+                    product_names=", ".join(product_names)
+                )
+            else:
+                context.response = self.prompt_config['response_structure']['fallback_responses']['no_products']
+                
             return context
+
+    def _build_history_context(self, context: AgentContext) -> str:
+        """Format conversation history focusing on product-related exchanges"""
+        if not context.conversation_history:
+            return "No previous conversation about products"
+        
+        product_relevant = []
+        for msg in context.conversation_history:
+            if any(term in msg.get("user", "").lower() 
+                  for term in ["product", "item", "buy", "price"]):
+                if msg.get("user"):
+                    product_relevant.append(f"User: {msg['user']}")
+                if msg.get("agent"):
+                    product_relevant.append(f"Assistant: {msg['agent']}")
+        
+        return "\n".join(product_relevant[-6:]) if product_relevant else "No relevant product history"

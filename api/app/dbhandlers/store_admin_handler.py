@@ -6,7 +6,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.db.store_admin import Base, Data, DBCollection, DBProduct
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
-from app.utils.store_admin_utils import handle_anonymous_user, handle_email_user
 from app.utils.logger import logger
 
 class StoreAdminHandler:
@@ -86,26 +85,5 @@ class StoreAdminHandler:
             session.rollback()
             logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
             raise error
-        finally:
-            session.close()
-
-    async def store_session_data(self, session_data: Dict) -> bool:
-        """Stores chatbot session analytics data"""
-        session = self.Session()
-        try:
-            email = session_data.get('email', '')
-            is_anonymous = email.startswith('Anonymous_')
-
-            if is_anonymous: 
-                handle_anonymous_user(session, session_data)
-            else:
-                handle_email_user(session, session_data)
-
-            session.commit()
-            return True
-        except SQLAlchemyError as error:
-            session.rollback()
-            logger.error("Database error in store_session_data: %s", str(error), exc_info=True)
-            return False
         finally:
             session.close()

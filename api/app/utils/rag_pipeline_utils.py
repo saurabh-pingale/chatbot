@@ -3,19 +3,22 @@ from typing import List, Dict, Any
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
     """Extracts and filters products from query results."""
-    products = [
-        {
-            "id": result.id,
-            "title": result.metadata.title,
-            "price": result.metadata.price,
-            "url": result.metadata.url,
-            "image": result.metadata.image,
-            "category": getattr(result.metadata, "category", "None"),
-            "variant_id": getattr(result.metadata, "variant_id", ""),
-        }
-        for result in query_results
-        if result and result.metadata
-    ]
+    products = []
+    for result in query_results:
+        if result and hasattr(result, 'metadata') and result.metadata:
+            # Extract all available metadata fields
+            product = {
+                "id": getattr(result, 'id', None),
+                "title": getattr(result.metadata, 'title', None),
+                "description": getattr(result.metadata, 'description', None), 
+                "price": getattr(result.metadata, 'price', None),
+                "url": getattr(result.metadata, 'url', None),
+                "image": getattr(result.metadata, 'image', None),
+                "category": getattr(result.metadata, 'category', None),
+                "variant_id": getattr(result.metadata, 'variant_id', None),
+            }
+            products.append(product)
+    
     return [product for product in products if product["title"] and product["url"]]
 
 
@@ -150,8 +153,5 @@ def filter_relevant_products(products: List[Dict], user_message: str) -> List[Di
             })
     
     return relevant_products
-
 def extract_categories(transformed_products):
-    unique_categories = list({p.get("category", "") for p in transformed_products})
-    categories = [{"name": cat} for cat in unique_categories if cat] 
-    return categories
+    return list({str(p.get("category", "")) for p in transformed_products if p.get("category")})

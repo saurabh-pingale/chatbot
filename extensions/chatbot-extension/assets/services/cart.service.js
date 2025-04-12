@@ -256,7 +256,7 @@ function setupCartListeners() {
     } catch (error) {
       console.error('Error polling cart:', error);
     }
-  }, 2000);
+  }, 20000);
 };
 
 async function handleCartUpdate(event) {

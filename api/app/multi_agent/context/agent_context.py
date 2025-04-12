@@ -16,6 +16,7 @@ class AgentContext:
     namespace: str = "" 
     metadata: Dict[str, Any] = None
     feedback_history: List[Dict[str, Any]] = None
+    conversation_history: List[Dict[str, Any]] = None
     
     def __post_init__(self):
         if self.products is None:
@@ -26,6 +27,8 @@ class AgentContext:
             self.metadata = {}
         if self.feedback_history is None:
             self.feedback_history = []
+        if self.conversation_history is None:
+            self.conversation_history = []
 
     def add_feedback(self, agent_name: str, quality_score: float, feedback: str):
         """Add feedback to the feedback history"""

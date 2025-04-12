@@ -3,7 +3,7 @@ from app.constants import PC, PC_INDEX_NAME
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
 from app.utils.logger import logger
 
-class RagPipelineHandler:
+class EmbeddingsHandler:
     """Handles embedding storage and querying."""
 
     def __init__(self):

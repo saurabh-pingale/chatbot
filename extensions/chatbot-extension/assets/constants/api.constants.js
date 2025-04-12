@@ -1,6 +1,6 @@
 export const API = {
     IP_ADDRESS: 'https://api.ipify.org?format=json',
     USER_LOCATION: 'https://ipapi.co',
-    CHAT_ENDPOINT: '/apps/chatbot-api/deepseek',
-    SESSION_ENDPOINT: '/apps/chatbot-api/store-session'
+    CHAT_ENDPOINT: '/apps/chatbot-api/conversation',
+    ANALYTICS_ENDPOINT: '/apps/chatbot-api/analytics'
   };

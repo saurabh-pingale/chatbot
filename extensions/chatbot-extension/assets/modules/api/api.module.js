@@ -1,5 +1,11 @@
 import { API } from '../../constants/api.constants';
 
+let conversationHistory = [];
+
+export function resetConversationHistory() {
+  conversationHistory = [];
+}
+
 export async function sendSessionData(sessionData) {
   try {
     const response = await fetch(API.SESSION_ENDPOINT, {
@@ -15,31 +21,59 @@ export async function sendSessionData(sessionData) {
 }
 
 export async function fetchBotResponse(message, shopId) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   });
 
+  const newMessage = {
+    id: conversationHistory.length,
+    user: message,
+    agent: "",
+    timestamp: new Date().toISOString()
+  };
+  conversationHistory.push(newMessage);
+
   const URL = `${API.CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
 
-  const response = await fetch(URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ 
-      messages: [{ role: "user", content: message }],
-    })
-  });
+  try {
+    const response = await fetch(URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ 
+        messages: conversationHistory,
+      }),
+      signal: controller.signal
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get bot response');
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to get bot response');
+    }
+
+    const data = await response.json();
+
+    // Update the last message with agent's response
+    if (conversationHistory.length > 0) {
+      conversationHistory[conversationHistory.length - 1].agent = data.answer;
+      conversationHistory[conversationHistory.length - 1].timestamp = new Date().toISOString();
+    }
+
+    return {
+      answer: data.answer,
+      products: data.products || [],
+      history: data.hisory || conversationHistory
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    } else {
+      throw error;
+    }
   }
-
-  const data = await response.json();
-
-  return {
-    answer: data.answer,
-    products: data.products || []
-  };
-
 }

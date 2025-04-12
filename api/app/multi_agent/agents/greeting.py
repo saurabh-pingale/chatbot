@@ -1,75 +1,111 @@
+import json
+from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.external_service.hugging_face_api import generate_text_from_huggingface
-from app.utils.rag_pipeline_utils import clean_response_from_llm
 from app.utils.logger import logger
+from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.models.api.agent_router import GreetingResponse
 
 class GreetingAgent(Agent):
     """Handles greeting messages and general conversation"""
+    def __init__(self):
+        prompt_path = Path(__file__).parent.parent / "prompt" / "greeting_prompt.json"
+        # Load prompt configuration
+        with open(prompt_path) as f:
+            self.prompt_config = json.load(f)['greeting_agent_prompt']
     
     async def process(self, context: AgentContext) -> AgentContext:
-        # Extract categories if available
-        categories_str = ""
-        if context.categories and len(context.categories) > 0:
-            category_names = [cat["name"] for cat in context.categories if cat["name"]]
-            categories_str = ", ".join(category_names[:3])  # Limit to 3 categories
+        try:
+            # Extract categories if available
+            categories_str = ""
+            if context.categories and len(context.categories) > 0:
+                category_names = [cat["name"] for cat in context.categories if cat["name"]]
+                categories_str = ", ".join(category_names[:3])  # Limit to 3 categories
 
-        # Check if we have feedback from previous attempts
-        feedback_instruction = ""
-        previous_response = ""
+            # Check if we have feedback from previous attempts
+            feedback_instruction = ""
+            previous_response = ""
 
-        if context.feedback_history:
-            # Get the most recent feedback
-            recent_feedback = next(
-                (fb for fb in reversed(context.feedback_history) 
-                 if fb["agent"] == "EvaluatorAgent"),
-                None
+            if context.feedback_history and context.attempts > 0:
+                # Get the most recent feedback
+                recent_feedback = next(
+                    (fb for fb in reversed(context.feedback_history) 
+                     if fb["agent"] == "EvaluatorAgent"),
+                    None
+                )
+
+                if recent_feedback:
+                    feedback_instruction = self.prompt_config['feedback_instruction_template']['template'].format(
+                        quality_score=recent_feedback['quality_score'],
+                        feedback=recent_feedback['feedback']
+                    )
+                    previous_response = f"Previous response: {context.response}\n\n"
+
+            # Build conversation history context
+            history_context = self._build_history_context(context)
+
+            # Build system message
+            system_message = self.prompt_config['base_system_message'].format(history=history_context)
+            if feedback_instruction:
+                system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
+            if categories_str:
+                system_message += f"\n\n{self.prompt_config['category_mention_template'].format(categories=categories_str)}"
+            
+            # Determine cache settings
+            bypass_cache = (
+                context.attempts > 0 and 
+                self.prompt_config['cache_settings']['bypass_cache_on_retry']
             )
-            
-            if recent_feedback:
-                feedback_instruction = f"""
-                Previous response was rated {recent_feedback['quality_score']}/10.
-                Feedback: {recent_feedback['feedback']}
-                
-                IMPORTANT: Use this feedback to improve your response. Make specific changes 
-                to address the issues mentioned in the feedback.
-                """
-                previous_response = f"Previous response: {context.response}\n\n"
-        if context.attempts > 0:
-            prompt = f"""
-            You are a friendly shopping assistant. Your previous greeting response needs improvement.
-            
-            {feedback_instruction}
-            
-            User message: "{context.user_message}"
-            {previous_response}
-            
-            Create an improved response that is:
-            - Brief (1-2 sentences)
-            - Welcoming
-            - Prompt the user to ask about products
-            {f'- Mention these example categories: {categories_str}' if categories_str else ''}
-            """
-        else:
-            prompt = f"""
-            You are a friendly shopping assistant. Respond to this greeting in a warm, 
-            welcoming way and encourage the user to ask about products.
+            cache_ttl = (
+                self.prompt_config['cache_settings']['with_categories_ttl'] if categories_str
+                else self.prompt_config['cache_settings']['default_ttl']
+            )
 
-            Your response must be:
-            - Brief (1-2 sentences)
-            - Welcoming
-            - Prompt the user to ask about products
-            {f'- Mention these example categories: {categories_str}' if categories_str else ''}
+            response = await DeepseekAIClient.generate(
+                model_class=GreetingResponse,
+                user_message=context.user_message,
+                system_message=system_message,
+                temperature=self.prompt_config['parameters']['temperature'],
+                max_tokens=self.prompt_config['parameters']['max_tokens'],
+                bypass_cache=bypass_cache,
+                cache_ttl=cache_ttl
+            )
 
-            {feedback_instruction}
+            # Build final response
+            context.response = f"{response.welcome_message} {response.product_prompt}"
+            if response.category_mention:
+                context.response += f" {response.category_mention}"
 
-            User message: "{context.user_message}"
-            """
+            # Store whether this was a cache hit in metadata for monitoring
+            context.metadata["cache_hit"] = not bypass_cache
+
+            logger.info(f"GreetingAgent processed message: {context.user_message}")
+            logger.info(f"Generated response: {context.response}")
+            
+            if self.prompt_config['logging']['include_response_structure']:
+                logger.info(f"Response structure: {response.model_dump_json()}")
+            if self.prompt_config['logging']['include_cache_status']:
+                logger.info(f"Cache status: {'bypassed' if bypass_cache else 'enabled'}")
+            if self.prompt_config['logging']['log_retry_attempts'] and context.attempts > 0:
+                logger.info(f"GreetingAgent RETRY #{context.attempts} generated improved response")
+
+            return context
+        except Exception as e:
+            logger.error(f"Error in GreetingAgent: {str(e)}", exc_info=True)
+            context.metadata["error"] = f"Greeting agent error: {str(e)}"
+            context.response = self.prompt_config['response_structure']['default_response']
+            return context
+
+    def _build_history_context(self, context: AgentContext) -> str:
+        """Format conversation history for the prompt"""
+        if not context.conversation_history:
+            return "No previous conversation"
         
-        response = await generate_text_from_huggingface(prompt)
-        context.response = clean_response_from_llm(response)
-
-        if context.attempts > 0:
-            logger.info(f"GreetingAgent RETRY #{context.attempts} generated improved response")
-
-        return context
+        history_lines = []
+        for msg in context.conversation_history:
+            if msg.get("user"):
+                history_lines.append(f"User: {msg['user']}")
+            if msg.get("agent"):
+                history_lines.append(f"Assistant: {msg['agent']}")
+        
+        return "\n".join(history_lines[-4:])  # Show last 4 exchanges

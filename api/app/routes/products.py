@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Request, HTTPException, Header
-from app.services.shopify_sync_service import ShopifySyncService
+from app.services.products_service import ProductsService
 from app.utils.app_utils import get_app
 from app.utils.logger import logger
 
-shopify_sync_router = APIRouter(prefix="/shopify-sync", tags=["shopify-sync"])
+products_router = APIRouter(prefix="/products_router", tags=["products_router"])
 
-@shopify_sync_router.post(
-    "/sync-products",
+@products_router.post(
+    "/create",
     summary="Sync products from Shopify to Vector DB",
     responses={
         500: {"description": "Internal server error"},
     },
 )
-async def sync_products(
+async def create(
     request: Request,
     x_shopify_store: str = Header(..., alias="X-Shopify-Store"),
     x_shopify_access_token: str = Header(..., alias="X-Shopify-Access-Token")
@@ -26,7 +26,7 @@ async def sync_products(
             )
 
         app = get_app()
-        shopify_sync_service = ShopifySyncService(
+        products_service = ProductsService(
             shopify_store=x_shopify_store,
             shopify_access_token=x_shopify_access_token
         )
@@ -34,7 +34,7 @@ async def sync_products(
         body = await request.json()
         namespace = body.get("namespace", x_shopify_store)
         
-        result = await shopify_sync_service.sync_products_to_vector_db(namespace)
+        result = await products_service.create(namespace)
         return result
         
     except Exception as e:

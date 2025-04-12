@@ -58,7 +58,7 @@ export default function TrainingPage() {
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
-      const response = await fetch("http://localhost:8000/shopify-sync/sync-products", {
+      const response = await fetch("http://localhost:8000/products_router/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
