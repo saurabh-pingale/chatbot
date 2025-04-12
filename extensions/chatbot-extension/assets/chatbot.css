@@ -678,6 +678,29 @@ body {
   }
 }
 
+button .circular-loader {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.button-loader .loader-path {
+  stroke: white;
+}
+
+button:has(.circular-loader) {
+  color: transparent !important;
+  position: relative;
+}
+
+button:has(.circular-loader) * {
+  opacity: 0;
+}
+
+button:has(.circular-loader) .circular-loader {
+  opacity: 1;
+}
+
+
 .cart-icon-loader {
   position: absolute;
   top: 50%;

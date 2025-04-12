@@ -11,6 +11,7 @@ class AgentContext:
     products: List[Dict[str, Any]] = None
     categories: List[Dict[str, Any]] = None
     quality_score: Optional[float] = None
+    confidence_score = None
     attempts: int = 0
     max_attempts: int = 3
     namespace: str = "" 

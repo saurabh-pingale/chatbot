@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient 
+from app.multi_agent.huggingface_client import HuggingFaceClient 
 from app.models.api.agent_router import MessageClassification
 from app.utils.logger import logger
 
@@ -20,14 +20,27 @@ class ClassifierAgent(Agent):
         for example in self.prompt_config['examples']:
             self.system_message += f"- \"{example['user_message']}\" -> {example['classification']}\n"
 
+        self.system_message += (
+            "\nRespond with a JSON object containing 'classification', 'confidence' (0-1), "
+            "and 'reasoning'. Example:\n"
+            "{\n"
+            "  \"classification\": \"product\",\n"
+            "  \"confidence\": 0.95,\n"
+            "  \"reasoning\": \"The user asked about product availability\"\n"
+            "}"
+        )
+
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            result = await DeepseekAIClient.generate(
+            result = await HuggingFaceClient().generate(
                 model_class=MessageClassification,
                 user_message=context.user_message,
                 system_message=self.system_message,
-                temperature=self.prompt_config['parameters']['temperature']  
+                temperature=self.prompt_config['parameters']['temperature'],
+                 max_new_tokens=200  
             )
+
+            logger.info(f"Result: {result}")
 
             context.classification = result.classification.value
             context.metadata["classification_confidence"] = result.confidence

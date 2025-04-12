@@ -12,3 +12,8 @@ class Agent(ABC):
     @property
     def name(self) -> str:
         return self.__class__.__name__
+    
+    def calculate_confidence(self, context: AgentContext) -> float:
+        """Default confidence calculation, can be overridden by specific agents"""
+        return 1.0
+    

@@ -10,7 +10,7 @@ class GreetingAgent(Agent):
     """Handles greeting messages and general conversation"""
     def __init__(self):
         prompt_path = Path(__file__).parent.parent / "prompt" / "greeting_prompt.json"
-        # Load prompt configuration
+    
         with open(prompt_path) as f:
             self.prompt_config = json.load(f)['greeting_agent_prompt']
     
@@ -94,6 +94,7 @@ class GreetingAgent(Agent):
             logger.error(f"Error in GreetingAgent: {str(e)}", exc_info=True)
             context.metadata["error"] = f"Greeting agent error: {str(e)}"
             context.response = self.prompt_config['response_structure']['default_response']
+            context.confidence_score = 0.0
             return context
 
     def _build_history_context(self, context: AgentContext) -> str:

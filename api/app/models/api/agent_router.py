@@ -132,3 +132,7 @@ class OrderResponse(BaseModel):
         default=True, 
         description="Whether the user needs to contact support for further assistance"
     )
+
+class ConfidenceResponse(BaseModel):
+    """Model for confidence score responses"""
+    confidence_score: float = Field(..., description="Confidence score from 0 to 1 indicating how well the response addresses the user's needs")

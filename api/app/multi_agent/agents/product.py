@@ -123,6 +123,15 @@ class ProductAgent(Agent):
 
             context.response = response_text
 
+            # Extract confidence score and clean the response
+            context.response, confidence_score = self._extract_confidence_score(context.response)
+            context.confidence_score = confidence_score
+            context.metadata["confidence_score"] = confidence_score
+
+            logger.info(f"ProductAgent processed message: {context.user_message}")
+            logger.info(f"Generated response: {context.response}")
+            logger.info(f"Confidence score: {confidence_score}")
+
             if self.prompt_config['logging']['log_response_length']:
                 logger.info(f"ProductAgent generated response of {len(context.response)} chars")
             if self.prompt_config['logging']['log_retry_attempts'] and context.attempts > 0:
@@ -133,6 +142,7 @@ class ProductAgent(Agent):
         except Exception as e:
             logger.error(f"Error in ProductAgent: {str(e)}", exc_info=True)
             context.metadata["error"] = f"Product agent error: {str(e)}"
+            context.confidence_score = 0.0
             
             # Fallback response
             if context.products:
@@ -160,3 +170,22 @@ class ProductAgent(Agent):
                     product_relevant.append(f"Assistant: {msg['agent']}")
         
         return "\n".join(product_relevant[-6:]) if product_relevant else "No relevant product history"
+
+    def _extract_confidence_score(self, response_text: str) -> float:
+        """Extract confidence score from the response text"""
+        try:
+            import re
+            confidence_pattern = r'<confidence>(0\.\d+)</confidence>'
+            match = re.search(confidence_pattern, response_text)
+
+            if match:
+                confidence_score = float(match.group(1))
+    
+                response_text_cleaned = re.sub(confidence_pattern, '', response_text).strip()
+
+                return response_text_cleaned, confidence_score
+            else:
+                return response_text, 0.7
+        except Exception as e:
+            logger.error(f"Error extracting confidence score: {str(e)}")
+            return response_text, 0.7

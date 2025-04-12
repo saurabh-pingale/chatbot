@@ -12,6 +12,7 @@ class StateMachine:
         self.transitions: Dict[Tuple[AgentState, str], AgentState] = {}
         self.state = AgentState.INIT
         self.previous_states: List[AgentState] = []
+        self.confidence_threshold = 0.6
     
     def register_agent(self, state: AgentState, agent: Agent) -> None:
         """Register an agent for a particular state"""
@@ -76,6 +77,21 @@ class StateMachine:
                         context.quality_score,
                         context.metadata.get("feedback", "")
                     )
+
+                 # handling for Greeting Agent - skip evaluation and go directly to COMPLETE
+                if self.state == AgentState.PROCESSING_GREETING:
+                    logger.info("Processing greeting, skipping evaluation")
+                    self.state = AgentState.COMPLETE
+                    context.metadata["skipped_evaluation"] = True
+                    break
+
+                 # Check if we should skip evaluation based on confidence score
+                if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER) and \
+                   context.confidence_score is not None and context.confidence_score >= self.confidence_threshold:
+                    logger.info(f"High confidence score ({context.confidence_score}), skipping evaluation")
+                    self.state = AgentState.COMPLETE
+                    context.metadata["skipped_evaluation"] = True
+                    break
                 
                 # Determine the next state based on the context
                 condition = self._determine_transition_condition(context)
