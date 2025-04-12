@@ -1,3 +1,5 @@
+import { createLoader } from "../../ui/Loader/Loader";
+
 export function createProductCard(product, primaryColor) {
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -13,12 +15,31 @@ export function createProductCard(product, primaryColor) {
     const btn = card.querySelector('.add-to-cart-button');
     btn.style.backgroundColor = primaryColor;
 
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      card.dispatchEvent(new CustomEvent('addToCart', {
-          detail: product,
-          bubbles: true
-      }));
+
+      btn.disabled = true;
+      const loader = createLoader();
+      loader.classList.add('button-loader');
+      btn.appendChild(loader);
+      btn.innerHTML = '';
+      btn.appendChild(loader);
+
+      try {
+        await new Promise((resolve) => {
+            card.dispatchEvent(new CustomEvent('addToCart', {
+                detail: product,
+                bubbles: true,
+                composed: true
+            }));
+            
+            setTimeout(resolve, 1000);
+        });
+    } finally {
+        btn.removeChild(loader);
+        btn.innerHTML = 'Add to Cart';
+        btn.disabled = false;
+    }
     });
     
     return card;

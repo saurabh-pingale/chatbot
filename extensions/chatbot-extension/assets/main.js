@@ -6,6 +6,7 @@ import { hasSubmittedEmail } from './modules/user/session.module';
 import { initCartModule } from './modules/cart/cart.module';
 import { renderContent } from './modules/content/content.module';
 import { setupTracking } from './modules/user/tracking.module';
+import { createLoader } from './components/ui/Loader/Loader';
 
 let currentContent = null;
 let isOpen = false;
@@ -16,10 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const colorLoader = createLoader();
+    container.appendChild(colorLoader);
+
     container.style.setProperty('--primary-color', COLORS.PRIMARY);
     container.style.setProperty('--text-color', COLORS.TEXT);
 
     const primaryColor = await initColorTheme();
+    container.removeChild(colorLoader);
+    
     const toggleButton = createToggleButton(primaryColor); 
     container.appendChild(toggleButton);
 

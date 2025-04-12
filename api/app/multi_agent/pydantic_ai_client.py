@@ -1,11 +1,10 @@
 import json
 import httpx
 import hashlib
-from typing import TypeVar, Type, Dict, Any, Optional, List, Union, Callable, Tuple
+from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
 from app.utils.logger import logger
-from functools import lru_cache
 from datetime import datetime, timedelta
 import threading
 
@@ -196,6 +195,8 @@ class DeepseekAIClient:
                 "stream": False,
                 "response_format": {"type": "json_object"}  # Force JSON response
             }
+
+            logger.info(f"Payload: {payload}")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -206,13 +207,16 @@ class DeepseekAIClient:
                 )
                 response.raise_for_status()
                 json_response = response.json()
+
+                logger.info(f"Json Response: {json_response}")
                 
                 # Extract generated content
                 content = json_response["choices"][0]["message"]["content"]
-                logger.debug(f"Raw response from API: {content}")
+                logger.info(f"Raw response from API: {content}")
                 
                 # Clean the response - sometimes models add backticks or other text
                 content = DeepseekAIClient._clean_json_response(content)
+                logger.info(f"Cleaned response: {content}")
                 
                 # Parse as JSON and validate with the model
                 try:

@@ -3,6 +3,7 @@ import { createCartItem } from '../components/cart/CartItem/CartItem';
 import { LOCAL_STORAGE } from '../constants/storage.constants';
 import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cartSync.module';
+import { createLoader } from '../components/ui/Loader/Loader';
 
 let autoCloseTimer = null;
 let drawerInstance = null;
@@ -32,8 +33,10 @@ function ensureCartDrawerExists() {
       const button = e.target;
       const originalText = button.textContent;
 
+      const loader = createLoader();
+      button.innerHTML = '';
+      button.appendChild(loader);
       button.disabled = true;
-      button.textContent = 'Processing...';
 
       try {
         const items = getCartItems();
@@ -48,8 +51,9 @@ function ensureCartDrawerExists() {
         console.error('Checkout error:', error);
         alert('An error occurred during checkout.');
       } finally {
-        button.disabled = false;
+        button.removeChild(loader);
         button.textContent = originalText;
+        button.disabled = false;
       }
     });
   }
@@ -184,6 +188,15 @@ async function syncWithStoreCart(items) {
   if (isSyncing) return true;
   isSyncing = true;
 
+  const cartIcons = document.querySelectorAll('.chatbot-cart-icon');
+  const loaders = [];
+  cartIcons.forEach(icon => {
+    const loader = createLoader();
+    loader.classList.add('cart-icon-loader');
+    icon.appendChild(loader);
+    loaders.push({icon, loader});
+  });
+
   try {
     const storeCart = await getStoreCart();
     const storeItems = storeCart?.items || [];
@@ -209,6 +222,9 @@ async function syncWithStoreCart(items) {
     console.error('Error syncing cart:', error);
     return false;
   } finally {
+    loaders.forEach(({icon, loader}) => {
+      icon.removeChild(loader);
+    });
     isSyncing = false;
   }
 }
