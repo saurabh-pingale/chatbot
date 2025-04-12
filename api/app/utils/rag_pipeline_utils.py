@@ -11,6 +11,7 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
             "url": result.metadata.url,
             "image": result.metadata.image,
             "category": getattr(result.metadata, "category", "None"),
+            "variant_id": getattr(result.metadata, "variant_id", ""),
         }
         for result in query_results
         if result and result.metadata
@@ -144,7 +145,8 @@ def filter_relevant_products(products: List[Dict], user_message: str) -> List[Di
                 "price": product["price"],
                 "url": product["url"],
                 "image": product["image"],
-                "category": product["category"]
+                "category": product["category"],
+                "variant_id": product.get("variant_id", "")
             })
     
     return relevant_products

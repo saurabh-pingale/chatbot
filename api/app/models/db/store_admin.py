@@ -1,11 +1,10 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
-#TODO - change naming of the file, is it related store_admin or rag-pipeline
 class Data(Base):
     __tablename__ = 'data'
     
@@ -45,6 +44,9 @@ class ChatbotAnalytics(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     store_id = Column(String, ForeignKey('users.id'))  
     email = Column(String)
+    is_anonymous = Column(Boolean, default=False)
+    anonymous_count = Column(Integer, default=0)  
+    total_users = Column(Integer, default=0) 
     country = Column(String)
     region = Column(String)
     city = Column(String)

@@ -3,9 +3,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.db.store_admin import Base, Data, DBCollection, DBProduct, ChatbotAnalytics
+from app.models.db.store_admin import Base, Data, DBCollection, DBProduct
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
+from app.utils.store_admin_utils import handle_anonymous_user, handle_email_user
 from app.utils.logger import logger
 
 class StoreAdminHandler:
@@ -92,20 +93,14 @@ class StoreAdminHandler:
         """Stores chatbot session analytics data"""
         session = self.Session()
         try:
-            analytics_record = ChatbotAnalytics(
-                store_id=session_data.get('store_id'),
-                email=session_data.get('email'),
-                country=session_data.get('location', {}).get('country'),
-                region=session_data.get('location', {}).get('region'),
-                city=session_data.get('location', {}).get('city'),
-                ip=session_data.get('ip'),
-                chat_interactions=session_data.get('total_chat_interactions', 0),
-                first_interaction=session_data.get('first_interaction'),
-                last_interaction=session_data.get('session_end'),
-                products_added_to_cart=session_data.get('total_products_added_to_cart', 0),
-                products_purchased=session_data.get('total_products_purchased', 0)
-            )
-            session.add(analytics_record)
+            email = session_data.get('email', '')
+            is_anonymous = email.startswith('Anonymous_')
+
+            if is_anonymous: 
+                handle_anonymous_user(session, session_data)
+            else:
+                handle_email_user(session, session_data)
+
             session.commit()
             return True
         except SQLAlchemyError as error:
