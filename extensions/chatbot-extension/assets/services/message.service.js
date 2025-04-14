@@ -1,6 +1,7 @@
 import { createMessage } from '../components/chat/Message/Message';
 import { createProductSlider } from '../components/products/ProductSlider/ProductSlider';
 import { addToCart } from '../modules/cart/cart.module';
+import { storeConversation } from './websocket.service';
 
 export function addMessage(text, sender, products = [], primaryColor) {
   const messageList = document.querySelector('.message-list');
@@ -29,6 +30,16 @@ export function addMessage(text, sender, products = [], primaryColor) {
 
   if (!window.isLoadingHistory) {
     saveMessageToSession(text, sender, products);
+    
+    if (sender === 'bot') {
+      const messages = JSON.parse(sessionStorage.getItem('chatMessages') || '[]');
+      if (messages.length >= 2) {
+        const lastUserMessage = messages.filter(m => m.sender === 'user').pop();
+        if (lastUserMessage) {
+          storeConversation(lastUserMessage.text, text);
+        }
+      }
+    }
   }
 }
 

@@ -21,10 +21,21 @@ export function trackEvent(eventName, metadata = {}) {
 
 export function setupTracking() {
   const shopId = getShopId();
+  console.log("Shop ID:", shopId);
   window.addEventListener('beforeunload', () => {
     const session = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.CHATBOT_SESSION_DATA));
+    console.log("Analytics Data:", session);
     if (session) {
-      navigator.sendBeacon(`${API.ANALYTICS_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`, JSON.stringify(session));
+      const headers = {
+        type: 'application/json',
+      };
+
+      const blob = new Blob([JSON.stringify({
+        shopId: shopId,
+        sessionData: session
+      })], headers);
+
+      navigator.sendBeacon(`${API.ANALYTICS_ENDPOINT}`, blob);
     }
   });
 }

@@ -3,9 +3,9 @@ import { addMessage } from '../../services/message.service';
 import { createTypingIndicator } from '../../components/chat/TypingIndicator/TypingIndicator';
 import { getShopId } from '../../utils/shopify.utils';
 import { COLORS } from '../../constants/colors.constants';
+import { initWebSocket, closeWebSocket } from '../../services/websocket.service';
 
 let messagesLoaded = false;
-
 export function loadChatHistoryFromSession(primaryColor) {
   if (messagesLoaded) {
     return;
@@ -51,6 +51,15 @@ export function initChatModule(primaryColor) {
   const inputBox = document.querySelector('.input-box');
   const sendButton = document.querySelector('.send-button');
 
+  const shopId = getShopId();
+  const userId = localStorage.getItem('userId') || '1'; 
+  initWebSocket(shopId, userId);
+  console.log('Initializing WebSocket with:', { shopId, userId });
+
+  window.addEventListener('beforeunload', () => {
+    closeWebSocket();
+  });
+
   loadChatHistoryFromSession(primaryColor);
   
   const handleSend = async () => {
@@ -70,7 +79,7 @@ export function initChatModule(primaryColor) {
     } catch(error) {
       console.error('Chat error:', error);
       addMessage(
-        error.message || 'Sorry, something went wrong.', 
+        'Sorry, something went wrong! Can you please try again later.', 
         'bot', 
         [], 
         COLORS.BOT_TEXT

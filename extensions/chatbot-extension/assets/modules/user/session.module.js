@@ -15,7 +15,10 @@ export async function initializeUserSession(email) {
       city: location.city || 'unknown',
       region: location.region || 'unknown',
       session_start: new Date().toISOString(),
-      interactions: 0
+      interactions: 0,
+      total_chat_interactions: 0,
+      products_added_to_cart: 0,
+      cart_items: []
     };
 
     const storageSuccess = updateSessionData(sessionData);

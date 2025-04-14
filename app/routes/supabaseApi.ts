@@ -11,41 +11,45 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const saveColorPreference = async (shopId: string, color: string) => {
   try {
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('shop_id')
-      .eq('shop_id', shopId)
+    const { data: storeData, error: storeError } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('id', shopId)
       .single();
 
-    if (userError && userError.code !== 'PGRST116') { 
-      console.error("Error checking users table:", userError);
-      throw new Error(`Error checking users table: ${JSON.stringify(userError)}`);
+    if (storeError && storeError.code !== 'PGRST116') { 
+      console.error("Error checking stores table:", storeError);
+      throw new Error(`Error checking stores table: ${JSON.stringify(storeError)}`);
     }
 
-    if (!userData) {
+    if (!storeData) {
       const { error: insertError } = await supabase
-        .from('users')
-        .insert([{ shop_id: shopId, shop_name: shopId }]); 
+        .from('stores')
+        .insert([{ 
+          id: shopId, 
+          store_name: shopId,
+          preffered_color: color 
+        }]);
 
       if (insertError) {
-        console.error("Error inserting into users table:", insertError);
-        throw new Error(`Error inserting into users table: ${JSON.stringify(insertError)}`);
+        console.error("Error inserting into stores table:", insertError);
+        throw new Error(`Error inserting into stores table: ${JSON.stringify(insertError)}`);
+      }
+    } else {
+      const { error: updateError } = await supabase
+        .from('stores')
+        .update({ preffered_color: color })
+        .eq('id', shopId);
+
+      if (updateError) {
+        console.error("Error updating stores table:", updateError);
+        throw new Error(`Error updating stores table: ${JSON.stringify(updateError)}`);
       }
     }
 
-    const { data, error } = await supabase
-      .from('data')
-      .upsert([{ shop_id: shopId, color }], { onConflict: "shop_id" });
-
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Supabase error: ${JSON.stringify(error)}`);
-      }
-
-    return data;
+    return { success: true };
   } catch (error: any) {
     console.error("Error in saveColorPreference:", error);
     throw new Error(`Failed to save color preference: ${error.message || "Unknown error"}`);
   }
 };
-

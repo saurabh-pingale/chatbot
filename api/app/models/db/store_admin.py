@@ -1,15 +1,21 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
-class Data(Base):
-    __tablename__ = 'data'
+class DBStore(Base):
+    __tablename__ = 'stores'
     
-    shop_id = Column(String, primary_key=True)
-    color = Column(String)
+    id = Column(String, primary_key=True)
+    created_at = Column(DateTime)
+    store_name = Column(String)
+    store_description = Column(Text)
+    preffered_color = Column(String)
+    updated_at = Column(DateTime)
+    region = Column(String)
+    country = Column(String)
 
 class DBCollection(Base):
     __tablename__ = 'collections'
@@ -38,21 +44,21 @@ class DBProduct(Base):
     
     collection = relationship("DBCollection", back_populates="products")
     
-class ChatbotAnalytics(Base):
-    __tablename__ = 'chatbot_analytics'
+# class ChatbotAnalytics(Base):
+#     __tablename__ = 'chatbot_analytics'
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    store_id = Column(String, ForeignKey('users.id'))  
-    email = Column(String)
-    is_anonymous = Column(Boolean, default=False)
-    anonymous_count = Column(Integer, default=0)  
-    total_users = Column(Integer, default=0) 
-    country = Column(String)
-    region = Column(String)
-    city = Column(String)
-    ip = Column(String)
-    chat_interactions = Column(Integer, default=0)
-    first_interaction = Column(DateTime)
-    last_interaction = Column(DateTime)
-    products_added_to_cart = Column(Integer, default=0)
-    products_purchased = Column(Integer, default=0)
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     store_id = Column(String, ForeignKey('stores.id'))  
+#     email = Column(String)
+#     is_anonymous = Column(Boolean, default=False)
+#     anonymous_count = Column(Integer, default=0)  
+#     total_users = Column(Integer, default=0) 
+#     country = Column(String)
+#     region = Column(String)
+#     city = Column(String)
+#     ip = Column(String)
+#     chat_interactions = Column(Integer, default=0)
+#     first_interaction = Column(DateTime)
+#     last_interaction = Column(DateTime)
+#     products_added_to_cart = Column(Integer, default=0)
+#     products_purchased = Column(Integer, default=0)

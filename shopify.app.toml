@@ -3,7 +3,7 @@
 client_id = "82de5a9b4e203504a893c74b77a2460a"
 name = "test-chatbot"
 handle = "test-chatbot-5"
-application_url = "https://cdf2-2401-4900-79df-f0a2-f16b-c6ed-4e4c-ae88.ngrok-free.app"
+application_url = "https://f156-106-216-253-183.ngrok-free.app"
 embedded = true
 
 [build]
@@ -18,13 +18,13 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://cdf2-2401-4900-79df-f0a2-f16b-c6ed-4e4c-ae88.ngrok-free.app/auth/callback",
-  "https://cdf2-2401-4900-79df-f0a2-f16b-c6ed-4e4c-ae88.ngrok-free.app/auth/shopify/callback",
-  "https://cdf2-2401-4900-79df-f0a2-f16b-c6ed-4e4c-ae88.ngrok-free.app/api/auth/callback"
+  "https://f156-106-216-253-183.ngrok-free.app/auth/callback",
+  "https://f156-106-216-253-183.ngrok-free.app/auth/shopify/callback",
+  "https://f156-106-216-253-183.ngrok-free.app/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://cdf2-2401-4900-79df-f0a2-f16b-c6ed-4e4c-ae88.ngrok-free.app"
+url = "https://f156-106-216-253-183.ngrok-free.app"
 subpath = "chatbot-api"
 prefix = "apps"
 

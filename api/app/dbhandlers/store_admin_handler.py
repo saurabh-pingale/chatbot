@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.db.store_admin import Base, Data, DBCollection, DBProduct
+from app.models.db.store_admin import Base, DBStore, DBCollection, DBProduct
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
@@ -24,11 +24,11 @@ class StoreAdminHandler:
         """Fetches color preference for a given shop ID."""
         session = self.Session()
         try:
-            data = session.query(Data).filter_by(shop_id=shop_id).first()
+            store = session.query(DBStore).filter_by(id=shop_id).first()
             if not data:
                 print(f"No color preference found for shop: {shop_id}, returning default")
                 return None
-            return data.color
+            return store.preffered_color
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)

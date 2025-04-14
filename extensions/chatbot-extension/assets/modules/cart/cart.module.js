@@ -42,7 +42,8 @@ export function addToCart(product) {
     image: product.image || '',
     title: product.title || '',
     price: product.price || '',
-    quantity: product.quantity
+    quantity: product.quantity,
+    source: 'chatbot'
   };
   
   serviceAddToCart(cartProduct);

@@ -253,36 +253,25 @@ function setupCartListeners() {
   document.addEventListener('cart:requestComplete', (event) => handleCartUpdate(event));
   document.addEventListener('cart:updated', (event) => handleCartUpdate(event));
   document.addEventListener('cart:change', (event) => handleCartUpdate(event));
+  let lastCartToken = null;
+  let lastItemCount = 0;
 
-  document.addEventListener('click', async (event) => {
-    // Check if it's a Shopify cart form submit or item removal
-    const cartActionButton = event.target.closest('[data-cart-action]');
-    if (cartActionButton) {
-      setTimeout(async () => {
-        const cartIcons = document.querySelectorAll('.chatbot-cart-icon');
-        const loaders = [];
+  setInterval(async () => {
+    try {
+      const storeCart = await getStoreCart();
+ 
+      const currentItemCount = storeCart?.item_count || 0;
+      
+      if (storeCart?.token !== lastCartToken || currentItemCount !== lastItemCount) {
+        lastCartToken = storeCart?.token;
+        lastItemCount = currentItemCount;
 
-        cartIcons.forEach(icon => {
-          const loader = createLoader();
-          loader.classList.add('cart-icon-loader');
-          icon.appendChild(loader);
-          loaders.push({icon, loader});
-        });
-        
-        try {
-          const storeCart = await getStoreCart();
-          if (storeCart) {
-            await handleStoreCartUpdate(storeCart);
-          }
-        } finally {
-          loaders.forEach(({icon, loader}) => {
-            icon.removeChild(loader);
-          });
-        }
-      }, 500);
+        handleCartUpdate({ detail: { response: storeCart } });
+      }
+    } catch (error) {
+      console.error('Error polling cart:', error);
     }
-  }, { capture: true });
-  
+  }, 8000);  
 };
 
 async function handleCartUpdate(event) {

@@ -1,39 +1,69 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Request, HTTPException, Depends
+from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
-from app.models.api.agent_router import AgentRouterResponse, ErrorResponse
+from app.models.api.conversation import ConversationListResponse, ErrorResponse
+from app.utils.connection_handler import ConnectionManager
 from app.utils.logger import logger
 
-conversation_router = APIRouter(prefix="/conversation-router", tags=["conversation-router"])
+manager = ConnectionManager()
 
-@conversation_router.post(
-    "/conversation",
-    summary="Process conversation through the agent router with feedback support",
-    response_model=AgentRouterResponse,
+conversation_router = APIRouter(prefix="/conversation_router", tags=["conversation_router"])
+ws_router = APIRouter(tags=["websocket"])
+
+@ws_router.websocket("/ws/conversation/{shop_id}/{user_id}")
+async def websocket_conversation(websocket: WebSocket, shop_id: str, user_id: str):
+    """WebSocket endpoint for conversation storage."""
+    logger.info(f"WebSocket connection attempt for shop_id: {shop_id}, user_id: {user_id}")
+    await manager.connect(websocket, shop_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+
+            if data.get("type") == "store_conversation":
+                app = get_app()
+                conversation_data = {
+                    "user_query": data.get("user_query", ""),
+                    "agent_response": data.get("agent_response", ""),
+                    "user_id": int(user_id),
+                    "store_id": int(shop_id)
+                }
+                
+                try:
+                    conversation_id = await app.conversation_service.store_conversation(conversation_data)
+                    await websocket.send_json({
+                        "type": "conversation_stored",
+                        "success": True,
+                        "conversation_id": conversation_id
+                    })
+                    logger.info(f"Conversation stored with ID: {conversation_id}")
+                except Exception as e:
+                    logger.error(f"Error storing conversation: {str(e)}")
+                    await websocket.send_json({
+                        "type": "conversation_stored",
+                        "success": False,
+                        "error": str(e)
+                    })
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, shop_id)
+    except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}")
+        manager.disconnect(websocket, shop_id)
+
+@conversation_router.get(
+    "/{user_id}/{store_id}",
+    response_model=ConversationListResponse,
     responses={
         400: {"model": ErrorResponse, "description": "Invalid request"},
-        401: {"model": ErrorResponse, "description": "Unauthorized access"},
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-
-async def conversation(request: Request):
+async def get_conversations(user_id: int, store_id: int, request: Request):
+    """Get conversations for a specific user and store."""
     try:
-        body = await request.json()
-        contents = body["messages"]
-
-        # Extract the last user message
-        last_message = next(
-            (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
-            None
-        )
-        user_message = last_message["user"] if last_message else ""
-        
-        namespace = request.query_params.get("shopId")
         app = get_app()
-        
-        # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        return await app.agent_router_service.process_message(namespace, user_message, contents)
-    except Exception as e:
-        logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get conversation")
+        conversations = await app.conversation_service.get_user_conversations(user_id, store_id)
+        return {"conversations": conversations}
+    except Exception as error:
+        logger.error(f"Error in get_conversations: {str(error)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch conversations")

@@ -700,7 +700,6 @@ button:has(.circular-loader) .circular-loader {
   opacity: 1;
 }
 
-
 .cart-icon-loader {
   position: absolute;
   top: 50%;
