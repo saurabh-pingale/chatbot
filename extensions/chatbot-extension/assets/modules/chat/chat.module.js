@@ -1,4 +1,5 @@
-import { fetchBotResponse, resetConversationHistory } from '../api/api.module';
+import { fetchBotResponse } from '../api/api.module';
+import { resetConversationHistory } from '../../utils/session.utils';
 import { addMessage } from '../../services/message.service';
 import { createTypingIndicator } from '../../components/chat/TypingIndicator/TypingIndicator';
 import { getShopId } from '../../utils/shopify.utils';
@@ -22,7 +23,7 @@ export function loadChatHistoryFromSession(primaryColor) {
           message.text, 
           message.sender, 
           message.products || [], 
-          message.sender === 'user' ? primaryColor : COLORS.BOT_TEXT
+          message.sender === 'user' ? primaryColor : COLORS.GRAY_500
         );
       });
       window.isLoadingHistory = false;
@@ -66,14 +67,14 @@ export function initChatModule(primaryColor) {
     try {
       const { answer, products, history } = await fetchBotResponse(message, getShopId());
 
-      addMessage(answer, 'bot', products || [], COLORS.BOT_TEXT); 
+      addMessage(answer, 'bot', products || [], COLORS.GRAY_500); 
     } catch(error) {
       console.error('Chat error:', error);
       addMessage(
         error.message || 'Sorry, something went wrong.', 
         'bot', 
         [], 
-        COLORS.BOT_TEXT
+        COLORS.GRAY_500
       );
     } finally {
       typingIndicator.remove();

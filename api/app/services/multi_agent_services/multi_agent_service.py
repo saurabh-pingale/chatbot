@@ -21,7 +21,7 @@ class MultiAgentService:
         StateMachineService.register_agents(self.state_machine)
         StateMachineService.register_transitions(self.state_machine)
     
-    async def process_message(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
+    async def generate_agent_response(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
         """Process a user message through the multi-agent system"""
         try:
             # Reset state machine

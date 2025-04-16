@@ -5,12 +5,6 @@ from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
-class Data(Base):
-    __tablename__ = 'data'
-    
-    shop_id = Column(String, primary_key=True)
-    color = Column(String)
-
 class DBCollection(Base):
     __tablename__ = 'collections'
     

@@ -22,18 +22,18 @@ async def conversation(request: Request):
         body = await request.json()
         contents = body["messages"]
 
-        # Extract the last user message
         last_message = next(
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
         )
-        user_message = last_message["user"] if last_message else ""
+
+        user_message = last_message["user"] if last_message else None 
         
         namespace = request.query_params.get("shopId")
         app = get_app()
-        
+
         # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        return await app.agent_router_service.process_message(namespace, user_message, contents)
+        return await app.agent_router_service.generate_agent_response(namespace, user_message, contents)
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get conversation")

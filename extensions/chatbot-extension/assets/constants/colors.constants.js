@@ -1,9 +1,9 @@
 export const COLORS = {
-    PRIMARY: '#008080',
-    TEXT: '#f8f8f8',
-    BOT_TEXT: '#333',
-    BOT_MESSAGE: '#40444b',
-    ERROR: '#ff4757',
-    SUCCESS: '#4CAF50',
-    WARNING: '#FFA500'
-  };
+  TEAL_400: '#008080',        
+  WHITE_100: '#f8f8f8',        
+  GRAY_500: '#333',        
+  GRAY_600: '#40444b',        
+  RED_500: '#ff4757',   
+  GREEN_500: '#4CAF50',   
+  ORANGE_500: '#FFA500'   
+};

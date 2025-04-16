@@ -41,10 +41,13 @@
     "isbot": "^5.1.0",
     "node-fetch": "^3.3.2",
     "onnxruntime-web": "^1.21.0",
+    "pg": "^8.14.1",
     "prisma": "^6.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^11.0.5",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.22",
     "vite-tsconfig-paths": "^5.0.1"
   },
   "devDependencies": {

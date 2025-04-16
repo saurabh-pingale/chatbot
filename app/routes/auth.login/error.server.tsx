@@ -2,7 +2,7 @@ import type { LoginError } from "@shopify/shopify-app-remix/server";
 import { LoginErrorType } from "@shopify/shopify-app-remix/server";
 
 interface LoginErrorMessage {
-  shop?: string;
+  shop?: string | null;
 }
 
 export function loginErrorMessage(loginErrors: LoginError): LoginErrorMessage {
@@ -11,6 +11,6 @@ export function loginErrorMessage(loginErrors: LoginError): LoginErrorMessage {
   } else if (loginErrors?.shop === LoginErrorType.InvalidShop) {
     return { shop: "Please enter a valid shop domain to log in" };
   }
-
-  return {};
+  
+  return { shop: null };
 }
