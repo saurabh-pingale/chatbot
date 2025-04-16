@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+#TODO - Don't use DBConversation, in all places use ConversationModel, other places as well
 class DBConversation(Base):
     __tablename__ = "conversations"
 

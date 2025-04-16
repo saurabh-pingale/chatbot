@@ -22,13 +22,15 @@ async def agent_conversation(request: Request):
         body = await request.json()
         contents = body["messages"]
 
+        #TODO - Instead of commenting, extract last message, why can't you just change last_message to extract_last_message ?
         # Extract the last user message
         last_message = next(
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
         )
-        user_message = last_message["user"] if last_message else ""
+        user_message = last_message["user"] if last_message else "" #TODO - Use null instead of ""
         
+        #TODO - You are getting shopId right, why are you mentioning namespace instead of shopId, in vector params you mention it, other places use shopId
         namespace = request.query_params.get("shopId")
         app = get_app()
         

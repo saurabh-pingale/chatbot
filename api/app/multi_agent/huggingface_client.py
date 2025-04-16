@@ -13,6 +13,7 @@ class HuggingFaceClient:
     """Client for interacting with Hugging Face's Inference API"""
     
     def __init__(self):
+        #TODO - Shift these api urls to api constants
         self.model_name = "mistralai/Mistral-7B-Instruct-v0.3"
         self.api_url = f"https://api-inference.huggingface.co/models/{self.model_name}"
         self.api_token = HUGGINGFACE_API

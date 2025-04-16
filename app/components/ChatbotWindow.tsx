@@ -27,6 +27,7 @@ export const ChatbotWindow = ({ color }: ChatbotWindowProps) => {
     setIsLoading(true);
     
     try {
+      //TODO - Why we are using sendMessageToDeepSeek, we are using deepseek in backend right by creating wrapping to fastapi
       const response = await sendMessageToDeepSeek(userMessage);
 
       const validProducts = response.products?.filter(product => 
