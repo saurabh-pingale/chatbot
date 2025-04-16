@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.db.store_admin import Base, Data, DBCollection, DBProduct
+from app.models.db.store_admin import Base, DBStore, DBCollection, DBProduct
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
@@ -24,11 +24,11 @@ class StoreAdminHandler:
         """Fetches color preference for a given shop ID."""
         session = self.Session()
         try:
-            data = session.query(Data).filter_by(shop_id=shop_id).first()
-            if not data:
+            store = session.query(DBStore).filter_by(id=shop_id).first()
+            if not store:
                 print(f"No color preference found for shop: {shop_id}, returning default")
                 return None
-            return data.color
+            return store.preferred_color
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
@@ -38,26 +38,45 @@ class StoreAdminHandler:
             session.close()
 
     async def store_collections(self, collections: List[CollectionModel]) -> List[dict]:
-        """Stores collections in the database."""
+        """Stores collections in the database using bulk operations."""
         session = self.Session()
         try:
             result = []
-            #TODO - Use bulk create instead of looping collections, if there are 3 lakh collections, we can't loop and wait for 1000 minutes
-            #Check tutorial and use something like createMany or insertMany
+    
+            titles = [c.title for c in collections]
+            existing_collections = session.query(DBCollection).filter(DBCollection.title.in_(titles)).all()
+            existing_map = {c.title: c for c in existing_collections}
+
+            to_insert = []
             for collection in collections:
-                db_collection = session.merge(
-                    DBCollection(
+                if collection.title in existing_map:
+                    existing_map[collection.title].products_count = collection.products_count
+                    result.append({
+                        "title": collection.title,
+                        "products_count": collection.products_count,
+                        "id": existing_map[collection.title].id
+                    })
+                else:
+                    new_collection = DBCollection(
                         title=collection.title,
                         products_count=collection.products_count
                     )
-                )
-                result.append({
-                    "title": db_collection.title,
-                    "products_count": db_collection.products_count,
-                    "id": db_collection.id
-                })
+                    to_insert.append(new_collection)
+
+            if to_insert:
+                session.bulk_save_objects(to_insert)
+                session.flush()
+
+                for obj in to_insert:
+                    result.append({
+                        "title": obj.title,
+                        "products_count": obj.products_count,
+                        "id": obj.id
+                    })
+
             session.commit()
             return result
+
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in store_collections: %s", str(error), exc_info=True)
@@ -65,25 +84,29 @@ class StoreAdminHandler:
         finally:
             session.close()
 
+
     async def store_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
-        """Stores products in the database and links them to collections."""
+        """Stores products in the database and links them to collections using bulk insert."""
         session = self.Session()
         try:
-            #TODO - if there are 3 lakh products, we can't loop and wait for hours, use bulk insert or bulk create check tutorials
+            product_objs = []
+    
             for product in products:
                 col_id = collection_id_map.get(product.category)
-                session.merge(
-                    DBProduct(
-                        title= product.title,
-                        description= product.description,
-                        category= product.category,
-                        url= product.url,
-                        price= float(product.price) if product.price else None,
-                        image= product.image,
-                        collection_id= col_id if col_id else None
-                    )
+                product_obj = DBProduct(
+                    title=product.title,
+                    description=product.description,
+                    category=product.category,
+                    url=product.url,
+                    price=float(product.price) if product.price else None,
+                    image=product.image,
+                    collection_id=col_id if col_id else None
                 )
-                session.commit
+                product_objs.append(product_obj)
+    
+            session.bulk_save_objects(product_objs)
+            session.commit()
+    
         except Exception as error:
             session.rollback()
             logger.error("Supabase error in store_products: %s", str(error), exc_info=True)

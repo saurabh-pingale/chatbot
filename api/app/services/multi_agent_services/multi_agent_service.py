@@ -8,7 +8,6 @@ from app.multi_agent.context.state_machine import StateMachine
 from app.services.multi_agent_services.state_machine_service import StateMachineService
 from app.utils.logger import logger
 
-#TODO - Learn Redux in react, because state machine and redux works mostly similar, so that any improvements needed you can easily do it.
 class MultiAgentService:
     """Service that coordinates the multi-agent system"""
     
@@ -22,7 +21,7 @@ class MultiAgentService:
         StateMachineService.register_agents(self.state_machine)
         StateMachineService.register_transitions(self.state_machine)
     
-    async def process_message(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
+    async def generate_agent_response(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
         """Process a user message through the multi-agent system"""
         try:
             # Reset state machine

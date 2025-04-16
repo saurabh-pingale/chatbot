@@ -91,3 +91,12 @@ export interface RightSliderButtonProps {
   onClick: () => void;
   color: string;
 }
+
+export interface LoaderData {
+  shop: string; 
+  accessToken: string;
+}
+
+export interface FetcherResponse {
+  answer: string;
+}

@@ -1,6 +1,6 @@
-//TODO - Are we using this fie, If not using please remove all these unuse files from codebase
 import axios, { AxiosRequestConfig } from "axios";
 import { DeepSeekResponse } from "app/common/types";
+import { API } from "app/constants/api.constants";
 
 export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSeekResponse> => {
   if (!userMessage.trim()) {
@@ -16,7 +16,7 @@ export const sendMessageToDeepSeek = async (userMessage: string): Promise<DeepSe
       } : undefined
     };
 
-    const response = await axios.post("http:localhost:8000/deepseek", {
+    const response = await axios.post(`${API.BACKEND_URL}/${API.AGENT_CONVERSATION}`, {
         messages: [{ role: "user", content: userMessage }]
       },
       config

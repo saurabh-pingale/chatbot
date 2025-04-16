@@ -1,12 +1,6 @@
-import { json } from "@remix-run/node"; 
-
+import { API } from "app/constants/api.constants";
 export async function forwardRequestToBackend(path: string, request: Request) {
-  const backendUrl = process.env.FASTAPI_BACKEND_URL;
-  if (!backendUrl) {
-    throw new Error("FASTAPI_BACKEND_URL is not set");
-  }
-
-  const fullUrl = `${backendUrl}${path}`;
+  const fullUrl = `${API.BACKEND_URL}${path}`;
 
   const headers = new Headers(request.headers);
   
@@ -21,7 +15,8 @@ export async function forwardRequestToBackend(path: string, request: Request) {
     });
 
     if (response.headers.get('content-type')?.includes('application/json')) {
-      return json(await response.json(), {
+      const data = await response.json();
+      return new Response(JSON.stringify(data), {
         status: response.status,
         headers: {
           'Content-Type': 'application/json',
@@ -38,10 +33,16 @@ export async function forwardRequestToBackend(path: string, request: Request) {
     });
   } catch (error) {
     console.error('Proxy request failed:', error);
-    //This "json" is depreciated, please correct it
-    return json(
-      { error: 'Failed to process request', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    const errorData = {
+      error: 'Failed to process request',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    };
+    
+    return new Response(JSON.stringify(errorData), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }

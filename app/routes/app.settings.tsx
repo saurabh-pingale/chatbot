@@ -1,7 +1,7 @@
 import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { saveColorPreference } from "./supabaseApi";
+import { saveColorPreference } from "./save_color_preference";
 import { useEffect, useState } from "react";
 import {
   Page,
@@ -14,6 +14,7 @@ import {
   Box,
   Banner,
   Tooltip,
+  TextField,
 } from "@shopify/polaris";
 import { ActionResponse } from "./types";
 
@@ -48,6 +49,8 @@ export default function Settings() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showErrorBanner, setShowErrorBanner] = useState(false);
+  const [supportEmail, setSupportEmail] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
   const fetcher = useFetcher<ActionResponse>();
   const { session } = useLoaderData<{ session: { shop: string } }>();
 
@@ -175,7 +178,7 @@ export default function Settings() {
               </BlockStack>
             </Card>
           </Layout.Section>
-          
+
           <Layout.Section variant="oneThird">
             <Card>
               <BlockStack gap="200">
