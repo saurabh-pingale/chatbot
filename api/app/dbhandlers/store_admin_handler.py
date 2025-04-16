@@ -24,11 +24,12 @@ class StoreAdminHandler:
         """Fetches color preference for a given shop ID."""
         session = self.Session()
         try:
-            store = session.query(DBStore).filter_by(id=shop_id).first()
-            if not data:
+            store = self.supabase.from_("stores").select("id, preffered_color").eq("store_name", shop_id).single().execute()
+            if not store:
                 print(f"No color preference found for shop: {shop_id}, returning default")
                 return None
-            return store.preffered_color
+
+            return store["data"]["preffered_color"]
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
@@ -43,12 +44,17 @@ class StoreAdminHandler:
         try:
             result = []
             for collection in collections:
-                db_collection = session.merge(
-                    DBCollection(
+                db_collection = session.query(DBCollection).filter_by(title=collection.title).first()
+                if db_collection:
+                    db_collection.products_count = collection.products_count
+                else:
+                    db_collection = DBCollection(
                         title=collection.title,
                         products_count=collection.products_count
                     )
-                )
+                    session.add(db_collection)
+                    session.flush()
+
                 result.append({
                     "title": db_collection.title,
                     "products_count": db_collection.products_count,
@@ -77,10 +83,10 @@ class StoreAdminHandler:
                         url= product.url,
                         price= float(product.price) if product.price else None,
                         image= product.image,
-                        collection_id= col_id if col_id else None
+                        collection_id= col_id
                     )
                 )
-                session.commit
+                session.commit()
         except Exception as error:
             session.rollback()
             logger.error("Supabase error in store_products: %s", str(error), exc_info=True)

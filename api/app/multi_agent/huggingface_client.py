@@ -1,8 +1,9 @@
-from typing import Type, TypeVar, Any, Dict
-from pydantic import BaseModel
+import re
+import time
 import json
 import requests
-import re
+from typing import Type, TypeVar, Any, Dict
+from pydantic import BaseModel
 from app.utils.logger import logger
 from app.config import HUGGINGFACE_API
 
@@ -33,6 +34,8 @@ class HuggingFaceClient:
     ) -> str:
         """Call the Hugging Face API directly"""
         try:
+            start_time = time.time() 
+
             # Format prompt for Mistral model
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
             
@@ -53,7 +56,11 @@ class HuggingFaceClient:
                 json=payload,
                 timeout=60
             )
-            
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            logger.info(f"Hugging Face API call took {elapsed_time:.2f} seconds")
+                  
             if response.status_code != 200:
                 error_msg = f"API request failed with status {response.status_code}: {response.text}"
                 logger.error(error_msg)

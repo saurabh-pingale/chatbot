@@ -1,21 +1,39 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
-Base = declarative_base()
+from app.models.db.base import Base
 
 class DBStore(Base):
     __tablename__ = 'stores'
     
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     created_at = Column(DateTime)
     store_name = Column(String)
-    store_description = Column(Text)
-    preffered_color = Column(String)
+    store_description = Column(Text, nullable=True)
+    preffered_color = Column(String, nullable=True)
     updated_at = Column(DateTime)
-    region = Column(String)
-    country = Column(String)
+    region = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+
+    conversations = relationship("DBConversation", back_populates="store")
+    users = relationship("DBUser", back_populates="store")
+
+class DBUser(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime)
+    email = Column(Text)
+    city = Column(Text, nullable=True)
+    region = Column(Text, nullable=True) 
+    country = Column(Text, nullable=True) 
+    ip_address = Column(Text, nullable=True)
+    updated_at = Column(DateTime)
+    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False)
+
+    conversations = relationship("DBConversation", back_populates="user")
+    store = relationship("DBStore", back_populates="users")
 
 class DBCollection(Base):
     __tablename__ = 'collections'

@@ -4,6 +4,7 @@ import { LOCAL_STORAGE } from '../constants/storage.constants';
 import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cartSync.module';
 import { createLoader } from '../components/ui/Loader/Loader';
+import { trackEvent } from '../modules/user/tracking.module';
 
 let autoCloseTimer = null;
 let drawerInstance = null;
@@ -84,10 +85,18 @@ export function closeCartDrawer() {
 function setupCartItemEventListeners(cartItemElement, item) {
   cartItemElement.querySelector('.minus').addEventListener('click', () => {
     addToCart(item, -1);
+
+    trackEvent('products_added_to_cart', {
+      cart_items: getCartItems()
+    });
   });
   
   cartItemElement.querySelector('.plus').addEventListener('click', () => {
     addToCart(item, 1);
+
+    trackEvent('products_added_to_cart', {
+      cart_items: getCartItems()
+    });
   });
 }
 
@@ -189,12 +198,8 @@ async function syncWithStoreCart(items) {
   isSyncing = true;
 
   const cartIcons = document.querySelectorAll('.chatbot-cart-icon');
-  const loaders = [];
   cartIcons.forEach(icon => {
-    const loader = createLoader();
-    loader.classList.add('cart-icon-loader');
-    icon.appendChild(loader);
-    loaders.push({icon, loader});
+    icon.classList.add('cart-icon-hidden');
   });
 
   try {
@@ -222,8 +227,8 @@ async function syncWithStoreCart(items) {
     console.error('Error syncing cart:', error);
     return false;
   } finally {
-    loaders.forEach(({icon, loader}) => {
-      icon.removeChild(loader);
+    cartIcons.forEach(icon => {
+      icon.classList.remove('cart-icon-hidden');
     });
     isSyncing = false;
   }

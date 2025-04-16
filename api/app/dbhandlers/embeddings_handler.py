@@ -1,10 +1,14 @@
+import time 
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
+from app.utils.lru_cache import LRUCache
 from app.utils.logger import logger
+
+query_cache = LRUCache(capacity=100) 
 
 class EmbeddingsHandler:
     """Handles embedding storage and querying."""
@@ -54,6 +58,19 @@ class EmbeddingsHandler:
         metadata_filters: Optional[Dict[str, Any]] = None,
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
+
+        # Generate a cache key for the current query
+        query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}"
+
+        start_time = time.perf_counter()
+
+        # Check if results are already cached
+        cached_result = query_cache.get(query_key)
+        if cached_result:
+            elapsed_time = time.perf_counter() - start_time
+            logger.info(f"Query result served from cache in {elapsed_time:.4f} seconds.")
+            return cached_result
+
         norm = (sum(value**2 for value in vector)) ** 0.5
         normalized_vector = [value / norm for value in vector] if norm > 0 else vector
         
@@ -119,7 +136,10 @@ class EmbeddingsHandler:
                         score=match.score 
                     )
                 )
-            
+
+            query_cache.put(query_key, results)
+            elapsed_time = time.perf_counter() - start_time
+            logger.info(f"Query result served from Qdrant in {elapsed_time:.4f} seconds.")
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)

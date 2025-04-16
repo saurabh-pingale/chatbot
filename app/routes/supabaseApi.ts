@@ -14,7 +14,7 @@ export const saveColorPreference = async (shopId: string, color: string) => {
     const { data: storeData, error: storeError } = await supabase
       .from('stores')
       .select('id')
-      .eq('id', shopId)
+      .eq('store_name', shopId)
       .single();
 
     if (storeError && storeError.code !== 'PGRST116') { 
@@ -26,7 +26,6 @@ export const saveColorPreference = async (shopId: string, color: string) => {
       const { error: insertError } = await supabase
         .from('stores')
         .insert([{ 
-          id: shopId, 
           store_name: shopId,
           preffered_color: color 
         }]);
@@ -39,7 +38,7 @@ export const saveColorPreference = async (shopId: string, color: string) => {
       const { error: updateError } = await supabase
         .from('stores')
         .update({ preffered_color: color })
-        .eq('id', shopId);
+        .eq('store_name', shopId);
 
       if (updateError) {
         console.error("Error updating stores table:", updateError);

@@ -1,6 +1,7 @@
 import json
 import httpx
 import hashlib
+import time
 from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
@@ -189,6 +190,8 @@ class DeepseekAIClient:
                 "response_format": {"type": "json_object"}
             }
             
+            start_time = time.perf_counter()
+
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     DEEPSEEK_API_URL,
@@ -197,6 +200,12 @@ class DeepseekAIClient:
                     timeout=60.0
                 )
                 response.raise_for_status()
+
+                end_time = time.perf_counter()
+
+                duration = end_time - start_time
+                logger.info(f"Deepseek API call took {duration:.2f} seconds")
+
                 json_response = response.json()
                 
                 # Extract generated content

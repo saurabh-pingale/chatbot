@@ -641,21 +641,23 @@ body {
 }
 
 .circular-loader {
-  width: 24px;
-  height: 24px;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;  
 }
 
 .circular-loader-svg {
   animation: rotate 1.5s linear infinite;
-  width: 100%;
-  height: 100%;
+  width: 24px;
+  height: 24px;
 }
 
 .loader-path {
-  stroke: var(--primary-color);
   stroke-dasharray: 150, 200;
-  stroke-dashoffset: 0;
+  stroke-dashoffset: -10;
   animation: dash 1.5s ease-in-out infinite;
 }
 
@@ -678,43 +680,8 @@ body {
   }
 }
 
-button .circular-loader {
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.button-loader .loader-path {
-  stroke: white;
-}
-
-button:has(.circular-loader) {
-  color: transparent !important;
-  position: relative;
-}
-
-button:has(.circular-loader) * {
+.cart-icon-hidden {
   opacity: 0;
-}
-
-button:has(.circular-loader) .circular-loader {
-  opacity: 1;
-}
-
-.cart-icon-loader {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-}
-
-.cart-icon-loader .circular-loader-svg {
-  width: 16px;
-  height: 16px;
-}
-
-.cart-icon-loader .loader-path {
-  stroke: white;
-  stroke-width: 2;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }

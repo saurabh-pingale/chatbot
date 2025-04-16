@@ -4,7 +4,8 @@ import { createTypingIndicator } from '../../components/chat/TypingIndicator/Typ
 import { getShopId } from '../../utils/shopify.utils';
 import { COLORS } from '../../constants/colors.constants';
 import { initWebSocket, closeWebSocket } from '../../services/websocket.service';
-
+import { trackEvent } from '../user/tracking.module';
+ 
 let messagesLoaded = false;
 export function loadChatHistoryFromSession(primaryColor) {
   if (messagesLoaded) {
@@ -52,9 +53,10 @@ export function initChatModule(primaryColor) {
   const sendButton = document.querySelector('.send-button');
 
   const shopId = getShopId();
-  const userId = localStorage.getItem('userId') || '1'; 
-  initWebSocket(shopId, userId);
+  const sessionData = JSON.parse(sessionStorage.getItem('chatbotSessionData') || '{}');
+  const userId = sessionData.email; 
   console.log('Initializing WebSocket with:', { shopId, userId });
+  initWebSocket(shopId, userId);
 
   window.addEventListener('beforeunload', () => {
     closeWebSocket();
@@ -66,6 +68,8 @@ export function initChatModule(primaryColor) {
     const message = inputBox.value.trim();
     if (!message) return;
     
+    trackEvent('interactions', {});
+
     addMessage(message, 'user', [], primaryColor);
     inputBox.value = '';
     

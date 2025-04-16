@@ -10,16 +10,11 @@ export async function initWebSocket(shopId, userId) {
   }
 
   try {
-    const response = await fetch(`/apps/chatbot-api/ws/${shopId}/${userId}`);
-    console.log("Fetch Response:", response);
-    if (!response.ok) {
-      throw new Error('Failed to get WebSocket endpoint');
-    }
-    
-    const data = await response.json();
-    console.log("Websocket endpoint data:", data);
-    const wsUrl = data.wsEndpoint;
-    
+    const backendHost = "d800d2abedfcbd7a8a3c03d022818a8e.serveo.net";
+    const protocol = "wss";
+    console.log("Protocol:", protocol)
+    const wsUrl = `${protocol}://${backendHost}/ws/conversation/${encodeURIComponent(shopId)}/${userId}`;
+    console.log("wsUrl:", wsUrl);
     websocket = new WebSocket(wsUrl);
     
     websocket.onopen = () => {

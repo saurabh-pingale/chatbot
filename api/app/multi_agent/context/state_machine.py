@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Any, Optional, List, Tuple
 from app.multi_agent.context.agent_state import AgentState
 from app.multi_agent.context.agent_context import AgentContext
@@ -53,6 +54,8 @@ class StateMachine:
         """Execute the state machine until completion or error"""
         max_transitions = 15  # Safety limit to prevent infinite loops
         transitions = 0
+
+        overall_start_time = time.perf_counter()
         
         while self.state not in (AgentState.COMPLETE, AgentState.ERROR) and transitions < max_transitions:
             current_agent = self.agents.get(self.state)
@@ -67,8 +70,13 @@ class StateMachine:
                 # Store previous state before processing
                 self.push_state()
 
+                agent_start_time = time.perf_counter()
+
                 # Process with current agent
                 context = await current_agent.process(context)
+
+                agent_end_time = time.perf_counter()
+                logger.info(f"Agent '{current_agent.name}' processing took {agent_end_time - agent_start_time:.4f} seconds")
 
                  # Store feedback if available
                 if "feedback" in context.metadata and context.quality_score is not None:
@@ -116,6 +124,9 @@ class StateMachine:
             context.metadata["final_state"] = "error"
         else:
             context.metadata["final_state"] = "complete"
+
+        overall_end_time = time.perf_counter()
+        logger.info(f"Total state machine execution took {overall_end_time - overall_start_time:.4f} seconds")
             
         return context
     

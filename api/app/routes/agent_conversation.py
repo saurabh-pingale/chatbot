@@ -1,3 +1,4 @@
+import time
 from fastapi import APIRouter, Request, HTTPException
 
 from app.utils.app_utils import get_app
@@ -19,10 +20,11 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
 
 async def agent_conversation(request: Request):
     try:
+        start_time = time.perf_counter()
+
         body = await request.json()
         contents = body["messages"]
 
-        # Extract the last user message
         last_message = next(
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
@@ -33,7 +35,13 @@ async def agent_conversation(request: Request):
         app = get_app()
         
         # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        return await app.agent_router_service.process_message(namespace, user_message, contents)
+        response = await app.agent_router_service.process_message(namespace, user_message, contents)
+
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        logger.info(f"Agent conversation processing took {elapsed_time:.4f} seconds")
+        
+        return dummy_response
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get conversation")
