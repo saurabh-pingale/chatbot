@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.db.store_admin import Base, DBStore, DBCollection, DBProduct
+from app.models.db.store_admin import Base, DBStore, DBCollection, ProductModel
 from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
