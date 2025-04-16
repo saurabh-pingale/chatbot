@@ -5,16 +5,16 @@ from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
-class DBCollection(Base):
+class CollectionModel(Base):
     __tablename__ = 'collections'
     
     id = Column(Integer, primary_key=True)
     title = Column(String, unique=True)
     products_count = Column(Integer)
     
-    products = relationship("DBProduct", back_populates="collection")
+    products = relationship("ProductModel", back_populates="collection")
 
-class DBProduct(Base):
+class ProductModel(Base):
     __tablename__ = 'products'
     __table_args__ = (
         UniqueConstraint('title', 'category', name='uq_title_category'),
@@ -30,7 +30,7 @@ class DBProduct(Base):
     image = Column(String)
     collection_id = Column(Integer, ForeignKey('collections.id'))
     
-    collection = relationship("DBCollection", back_populates="products")
+    collection = relationship("CollectionModel", back_populates="products")
     
 class ChatbotAnalytics(Base):
     __tablename__ = 'chatbot_analytics'
