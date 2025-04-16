@@ -34,7 +34,7 @@ export function addMessage(text, sender, products = [], primaryColor) {
 
 function saveMessageToSession(text, sender, products) {
   try {
-    const existingMessages = JSON.parse(sessionStorage.getItem('chatMessages') || '[]'); //TODO - It should be '[]' or [] ?
+    const existingMessages = JSON.parse(sessionStorage.getItem('chatMessages') || '[]');
 
     existingMessages.push({
       text,

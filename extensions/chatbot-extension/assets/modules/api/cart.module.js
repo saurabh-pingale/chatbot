@@ -1,10 +1,8 @@
 import { extractVariantId } from '../../utils/shopify.utils';
+import { SHOPIFY_API } from '../../constants/api.constants';
 
-//TODO - Shift these api urls to api module contants file
-//TODO -  File name is cart sync, what "sync" means ?, can you make it cart.module.js
-//TODO - Each function in frontend will sync with backend, because of that we can't keep sync in all places
 export async function clearStoreCart() {
-  const response = await fetch('/cart/clear.js', {
+  const response = await fetch(SHOPIFY_API.CLEAR_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,8 +40,8 @@ export async function addItemsToStoreCart(items) {
     console.error('No valid items to add after filtering');
     return false;
   }
-  //TODO - Shift these api urls to api module contants file
-  const response = await fetch('/cart/add.js', {
+  
+  const response = await fetch(SHOPIFY_API.ADD_TO_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -64,8 +62,7 @@ export async function addItemsToStoreCart(items) {
 }
 
 export async function getStoreCart() {
-  //TODO - Shift these api urls to api module contants file
-  const response = await fetch('/cart.js', {
+  const response = await fetch(SHOPIFY_API.GET_CART, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -90,7 +87,7 @@ export async function updateStoreCartItems(items) {
     properties: item.properties || { chatbot_added: true }
   }));
 
-  const response = await fetch('/cart/update.js', {
+  const response = await fetch(SHOPIFY_API.UPDATE_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

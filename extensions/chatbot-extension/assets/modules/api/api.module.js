@@ -18,8 +18,7 @@ export async function sendSessionData(sessionData) {
 
 export async function fetchBotResponse(message, shopId) {
   const controller = new AbortController();
-  //TODO - 120 seconds looks more ?
-  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds 
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds 
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -56,7 +55,6 @@ export async function fetchBotResponse(message, shopId) {
 
     const data = await response.json();
 
-    // Update the last message with agent's response
     if (conversationHistory.length > 0) {
       conversationHistory[conversationHistory.length - 1].agent = data.answer;
       conversationHistory[conversationHistory.length - 1].timestamp = new Date().toISOString();
@@ -76,15 +74,5 @@ export async function fetchBotResponse(message, shopId) {
     } else {
       throw error;
     }
-  }
-}
-
-//TODO - In api module file, why reusable or session storage function is there ?
-export function resetConversationHistory(history = []) {
-  conversationHistory = history;
-  if (history.length === 0) {
-    sessionStorage.removeItem('conversationHistory');
-  } else {
-    sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
   }
 }

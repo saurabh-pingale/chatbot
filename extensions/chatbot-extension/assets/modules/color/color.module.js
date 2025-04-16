@@ -3,16 +3,16 @@ import { getShopId } from '../../utils/shopify.utils';
 
 export async function fetchColorPreference() {
   const shopId = getShopId();
-  if (!shopId) return COLORS.PRIMARY;
+  if (!shopId) return COLORS.TEAL_400;
 
   try {
-    const response = await fetch(`/apps/chatbot-api/supabase?shopId=${encodeURIComponent(shopId)}`);
+    const response = await fetch(`/apps/chatbot-api/color-preference?shopId=${encodeURIComponent(shopId)}`);
     if (!response.ok) throw new Error('Failed to fetch color');
     const data = await response.json();
-    return data.color || COLORS.PRIMARY;
+    return data.color || COLORS.TEAL_400;
   } catch (error) {
     console.error("Color fetch error:", error);
-    return COLORS.PRIMARY;
+    return COLORS.TEAL_400;
   }
 }
 

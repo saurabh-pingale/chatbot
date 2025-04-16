@@ -11,9 +11,8 @@ export async function fetchUserIP() {
 }
 
 export async function fetchUserLocation(ip) {
-  if (ip === 'unknown') return { country: 'unknown', city: null };
-  //TODO - if (!ip) return { country: null, city: null };
-  
+  if (ip === 'unknown') return { country: 'unknown', city: null, region: null };
+
   try {
     const response = await fetch(`${API.USER_LOCATION}/${ip}/json/`);
     const data = await response.json();
@@ -24,6 +23,6 @@ export async function fetchUserLocation(ip) {
     };
   } catch (error) {
     console.error('Location fetch failed:', error);
-    return { country: null, city: null};
+    return { country: null, city: null, region: null};
   }
 }
