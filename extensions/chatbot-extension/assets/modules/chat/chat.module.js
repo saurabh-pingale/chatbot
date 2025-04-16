@@ -64,9 +64,11 @@ export function initChatModule(primaryColor) {
 
   loadChatHistoryFromSession(primaryColor);
   
-  const handleSend = async () => {
-    const message = inputBox.value.trim();
+  const handleSend = async (messageFromQuery) => {
+    const message = messageFromQuery || inputBox.value.trim();
     if (!message) return;
+
+    if(!messageFromQuery) inputBox.value = '';
     
     trackEvent('interactions', {});
 
@@ -77,7 +79,7 @@ export function initChatModule(primaryColor) {
     document.querySelector('.message-list').appendChild(typingIndicator);
 
     try {
-      const { answer, products, history } = await fetchBotResponse(message, getShopId());
+      const { answer, products } = await fetchBotResponse(message, getShopId());
 
       addMessage(answer, 'bot', products || [], COLORS.BOT_TEXT); 
     } catch(error) {
@@ -93,6 +95,8 @@ export function initChatModule(primaryColor) {
       inputBox.focus();
     }
   };
+
+  window.sendChatMessage = handleSend;
 
   inputBox.addEventListener('input', () => {
     sendButton.disabled = inputBox.value.trim() === '';

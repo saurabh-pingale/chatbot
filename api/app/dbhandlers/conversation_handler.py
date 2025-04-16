@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
-from app.models.db.conversation import Base, DBConversation
+from app.models.db.conversation import DBConversation
 from app.models.db.store_admin import DBStore, DBUser
 from app.config import DATABASE_URL
 from app.utils.logger import logger
