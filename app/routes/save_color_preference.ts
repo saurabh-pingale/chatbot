@@ -1,54 +1,34 @@
-import { createClient } from '@supabase/supabase-js';
+import { getRepository } from 'typeorm';
+import { Store } from './db/entity/Store';
+import { createDatabaseConnection } from './db/database';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase URL and Key must be provided in the environment variables.");
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-//TODO - don't use supbase use some other ORM like typeorm etc
 export const saveColorPreference = async (shopId: string, color: string) => {
+  let connection;
   try {
-    const { data: storeData, error: storeError } = await supabase
-      .from('stores')
-      .select('id')
-      .eq('store_name', shopId)
-      .single();
+    connection = await createDatabaseConnection();
 
-    if (storeError && storeError.code !== 'PGRST116') { 
-      console.error("Error checking stores table:", storeError);
-      throw new Error(`Error checking stores table: ${JSON.stringify(storeError)}`);
-    }
+    const storeRepository = getRepository(Store);
 
-    if (!storeData) {
-      const { error: insertError } = await supabase
-        .from('stores')
-        .insert([{  
-          store_name: shopId,
-          preferred_color: color 
-        }]);
+    let store = await storeRepository.findOne({ where: { store_name: shopId } });
 
-      if (insertError) {
-        console.error("Error inserting into stores table:", insertError);
-        throw new Error(`Error inserting into stores table: ${JSON.stringify(insertError)}`);
-      }
+    if (!store) {
+      store = new Store();
+      store.store_name = shopId;
+      store.preferred_color = color;
+
+      await storeRepository.save(store);
     } else {
-      const { error: updateError } = await supabase
-        .from('stores')
-        .update({ preferred_color: color })
-        .eq('store_name', shopId);
-
-      if (updateError) {
-        console.error("Error updating stores table:", updateError);
-        throw new Error(`Error updating stores table: ${JSON.stringify(updateError)}`);
-      }
+      store.preferred_color = color;
+      await storeRepository.save(store);
     }
 
     return { success: true };
   } catch (error: any) {
     console.error("Error in saveColorPreference:", error);
     throw new Error(`Failed to save color preference: ${error.message || "Unknown error"}`);
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
   }
 };
