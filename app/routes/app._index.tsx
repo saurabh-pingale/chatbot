@@ -23,12 +23,15 @@ export default function ChatbotIndex() {
     
     setIsTyping(true);
 
+    //TODO - Shift these things to shop admin page, where shop owner will decide what should add, based on it will fetch and show
+    //TODO - Try to give more control for shop owner
     setTimeout(() => {
       setDemoResponse("This is a sample response from your AI-powered chatbot. In the actual implementation, this would be generated based on your trained vectors.");
       setIsTyping(false);
     }, 1500);
   };
 
+  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const features = [
     "Trained with specialized vectors for accurate responses",
     "Answers product-specific questions instantly",
@@ -37,6 +40,7 @@ export default function ChatbotIndex() {
     "Customizable to match your brand voice"
   ];
 
+  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const exampleQuestions = [
     "How do I track my order?",
     "What's your return policy?",

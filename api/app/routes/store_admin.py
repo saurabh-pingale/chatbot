@@ -1,3 +1,4 @@
+#TODO - Check all these api's are syncing with swagger of /docs
 from typing import List
 from fastapi import APIRouter, Request, HTTPException
 
@@ -34,6 +35,7 @@ async def get_color_preference(request: Request):
     except Exception as error:
         logger.error("Error in get_color_preference: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch color preference")
+
 @store_admin_router.post(
     "/collections",
     response_model=CollectionResponse,
@@ -47,6 +49,8 @@ async def collections(collections: List[CollectionRequest]):
     """Stores Shopify collections in the database."""
     try:
         app = get_app()
+        #TODO - USE naming like create_collections instead of store_collections 
+        #TODO - Try to use names like get, create, update, delete i.e update_collections, create_collections etc
         stored_collections = await app.store_admin_service.store_collections(collections)
         return CollectionResponse(
             message="Collections stored successfully", data=stored_collections
@@ -54,6 +58,7 @@ async def collections(collections: List[CollectionRequest]):
     except Exception as error:
         logger.error("Error in collections endpoint: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to store collections")
+
 @store_admin_router.post(
     "/products",
     response_model=StoreProductsResponse,
@@ -67,6 +72,7 @@ async def products(request: StoreProductsRequest):
     """Stores Shopify products in the database and links them to collections."""
     try:
         app = get_app()
+        #TODO - USE naming like create_products instead of store_products 
         await app.store_admin_service.store_products(request.products, request.collection_id_map)
         return StoreProductsResponse(message="Products stored successfully")
     except Exception as error:

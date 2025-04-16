@@ -1,3 +1,4 @@
+//TODO - Supbase only for development purposes, in production we may not use supbase, please change file name accordingly
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -8,7 +9,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+//TODO - don't use supbase use some other ORM like typeorm etc
 export const saveColorPreference = async (shopId: string, color: string) => {
   try {
     const { data: userData, error: userError } = await supabase

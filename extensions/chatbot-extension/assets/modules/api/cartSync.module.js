@@ -1,5 +1,8 @@
 import { extractVariantId } from '../../utils/shopify.utils';
 
+//TODO - Shift these api urls to api module contants file
+//TODO -  File name is cart sync, what "sync" means ?, can you make it cart.module.js
+//TODO - Each function in frontend will sync with backend, because of that we can't keep sync in all places
 export async function clearStoreCart() {
   const response = await fetch('/cart/clear.js', {
     method: 'POST',
@@ -35,11 +38,11 @@ export async function addItemsToStoreCart(items) {
 
   const validItems = lineItems.filter(item => item.id);
   
-  if (validItems.length === 0) {
+  if (validItems?.length === 0 || !validItems?.length) {
     console.error('No valid items to add after filtering');
     return false;
   }
-
+  //TODO - Shift these api urls to api module contants file
   const response = await fetch('/cart/add.js', {
     method: 'POST',
     headers: {
@@ -61,6 +64,7 @@ export async function addItemsToStoreCart(items) {
 }
 
 export async function getStoreCart() {
+  //TODO - Shift these api urls to api module contants file
   const response = await fetch('/cart.js', {
     method: 'GET',
     headers: {

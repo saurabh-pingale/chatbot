@@ -8,6 +8,7 @@ from app.multi_agent.context.state_machine import StateMachine
 from app.services.multi_agent_services.state_machine_service import StateMachineService
 from app.utils.logger import logger
 
+#TODO - Learn Redux in react, because state machine and redux works mostly similar, so that any improvements needed you can easily do it.
 class MultiAgentService:
     """Service that coordinates the multi-agent system"""
     

@@ -38,6 +38,7 @@ export async function forwardRequestToBackend(path: string, request: Request) {
     });
   } catch (error) {
     console.error('Proxy request failed:', error);
+    //This "json" is depreciated, please correct it
     return json(
       { error: 'Failed to process request', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

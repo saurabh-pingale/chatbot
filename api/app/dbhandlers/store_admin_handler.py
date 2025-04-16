@@ -42,6 +42,8 @@ class StoreAdminHandler:
         session = self.Session()
         try:
             result = []
+            #TODO - Use bulk create instead of looping collections, if there are 3 lakh collections, we can't loop and wait for 1000 minutes
+            #Check tutorial and use something like createMany or insertMany
             for collection in collections:
                 db_collection = session.merge(
                     DBCollection(
@@ -67,6 +69,7 @@ class StoreAdminHandler:
         """Stores products in the database and links them to collections."""
         session = self.Session()
         try:
+            #TODO - if there are 3 lakh products, we can't loop and wait for hours, use bulk insert or bulk create check tutorials
             for product in products:
                 col_id = collection_id_map.get(product.category)
                 session.merge(

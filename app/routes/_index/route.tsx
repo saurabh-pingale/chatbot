@@ -1,3 +1,4 @@
+//TODO - Why i see, lot of unnecessary gaps b/w lines
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
@@ -26,7 +27,9 @@ export default function App() {
         <p className={styles.text}>
           A tagline about [your app] that describes your value proposition.
         </p>
+        {/* Instead of showForm, can you describe it more clear, something like isLogin or isAdmin etc ? */}
         {showForm && (
+          //TODO - Can you shift to other component, below one.
           <Form className={styles.form} method="post" action="/auth/login">
             <label className={styles.label}>
               <span>Shop domain</span>

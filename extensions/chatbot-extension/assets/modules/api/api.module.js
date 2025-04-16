@@ -18,7 +18,8 @@ export async function sendSessionData(sessionData) {
 
 export async function fetchBotResponse(message, shopId) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+  //TODO - 120 seconds looks more ?
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds 
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -78,6 +79,7 @@ export async function fetchBotResponse(message, shopId) {
   }
 }
 
+//TODO - In api module file, why reusable or session storage function is there ?
 export function resetConversationHistory(history = []) {
   conversationHistory = history;
   if (history.length === 0) {

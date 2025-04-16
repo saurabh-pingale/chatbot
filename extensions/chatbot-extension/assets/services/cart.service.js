@@ -98,7 +98,7 @@ export function updateCartDrawer(items) {
   const content = drawerInstance.querySelector('.cart-drawer-content');
   content.innerHTML = '';
 
-  if (items.length === 0) {
+  if (items?.length === 0 || !items?.length) {
     content.innerHTML = '<p>Your cart is empty</p>';
     return;
   }
@@ -144,6 +144,7 @@ export function getCartItems() {
 
 export async function addToCart(product, quantityChange = 1) {
   if (!product.variant_id) {
+    //TODO - Add alerts i.e alert('Cannot added to cart, Due to some technical issues')
     console.error('Cannot add to cart - product missing variant_id', product);
     return;
   }
@@ -165,6 +166,7 @@ export async function addToCart(product, quantityChange = 1) {
     if (existing.quantity <= 0) {
       items.splice(items.indexOf(existing), 1);
     }
+    //TODO - Quantity max - 10
   } else if(quantityChange > 0){
     items.push({
       ...product,
@@ -231,6 +233,7 @@ async function syncWithStoreCart(items) {
 
 function persistCart(items) {
   try {
+    //TODO - Are we using session storage or local storage ?
     localStorage.setItem(LOCAL_STORAGE.CART_ITEMS, JSON.stringify(items));
     updateCartDrawer(items);
     updateCartCount();
@@ -240,6 +243,7 @@ function persistCart(items) {
 }
 
 function resetAutoCloseTimer() {
+  //TODO - What is auto close ?
   if (autoCloseTimer) clearTimeout(autoCloseTimer);
   autoCloseTimer = setTimeout(closeCartDrawer, 5000);
 }
@@ -298,11 +302,12 @@ async function handleCartUpdate(event) {
 }
 
 async function handleStoreCartUpdate(storeCart) {
+  //TODO - isSyncing means ?
   if (isSyncing) return;
 
   const items = storeCart.items.map(item => ({
     id: item.id,
-    variant_id: `gid://shopify/ProductVariant/${item.id}`,
+    variant_id: `gid://shopify/ProductVariant/${item.id}`, //Shift these links to constants
     title: item.title,
     price: item.price,
     image: item.image,

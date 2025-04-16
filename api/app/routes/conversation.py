@@ -27,12 +27,15 @@ async def conversation(request: Request):
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
         )
-        user_message = last_message["user"] if last_message else ""
+        #TODO - Don't use "" instead use none or null or None etc
+        user_message = last_message["user"] if last_message else "" 
         
         namespace = request.query_params.get("shopId")
         app = get_app()
         
+        #TODO - Remove comments, if we are not using it.
         # return await app.conversation_service.get_conversation(namespace, user_message, contents)
+        #TODO - what is process means ?
         return await app.agent_router_service.process_message(namespace, user_message, contents)
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)

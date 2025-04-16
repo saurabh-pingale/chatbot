@@ -11,6 +11,6 @@ export function loginErrorMessage(loginErrors: LoginError): LoginErrorMessage {
   } else if (loginErrors?.shop === LoginErrorType.InvalidShop) {
     return { shop: "Please enter a valid shop domain to log in" };
   }
-
+  //TODO - If empty try to pass as null or none 
   return {};
 }

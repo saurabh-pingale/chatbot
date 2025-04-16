@@ -4,8 +4,11 @@ import styles from '../components/styles/training.module.css';
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
+//TODO -  Please fix the typescript issues
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
+  //TODO - Add some error handling like 
+  //if(session?.shop && session?.accessToken){ return json(...) } or return null something i.e json({shop: null, accessToken: null})
   return json({ 
     shop: session.shop,
     accessToken: session.accessToken 
@@ -17,6 +20,7 @@ export default function TrainingPage() {
   const [input, setInput] = useState("");
   const fetcher = useFetcher();
   const processingRef = useRef(false);
+  //TODO - Fix typescript issues
   const { shop, accessToken } = useLoaderData();
 
   useEffect(() => {
@@ -58,6 +62,7 @@ export default function TrainingPage() {
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
+      //TODO - Please move these localhost or api's to api modules files complete function i.e products = fetchProducts()
       const response = await fetch("http://localhost:8000/products_router/create", {
         method: "POST",
         headers: {
@@ -85,6 +90,8 @@ export default function TrainingPage() {
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
+      //TODO - Why i see the red swiling marks - 'fetcher.data' is of type 'unknown'.ts(18046)?
+      //Please fix these typscript issues in all places
       setMessages((prev) => [...prev, { sender: "bot", text: fetcher.data.answer }]);
       processingRef.current = false;
     }
