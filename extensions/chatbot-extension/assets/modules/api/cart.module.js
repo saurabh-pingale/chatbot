@@ -1,7 +1,8 @@
 import { extractVariantId } from '../../utils/shopify.utils';
+import { SHOPIFY_API } from '../../constants/api.constants';
 
 export async function clearStoreCart() {
-  const response = await fetch('/cart/clear.js', {
+  const response = await fetch(SHOPIFY_API.CLEAR_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,12 +36,12 @@ export async function addItemsToStoreCart(items) {
 
   const validItems = lineItems.filter(item => item.id);
   
-  if (validItems.length === 0) {
+  if (validItems?.length === 0 || !validItems?.length) {
     console.error('No valid items to add after filtering');
     return false;
   }
-
-  const response = await fetch('/cart/add.js', {
+  
+  const response = await fetch(SHOPIFY_API.ADD_TO_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -61,7 +62,7 @@ export async function addItemsToStoreCart(items) {
 }
 
 export async function getStoreCart() {
-  const response = await fetch('/cart.js', {
+  const response = await fetch(SHOPIFY_API.GET_CART, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ export async function updateStoreCartItems(items) {
     properties: item.properties || { chatbot_added: true }
   }));
 
-  const response = await fetch('/cart/update.js', {
+  const response = await fetch(SHOPIFY_API.UPDATE_CART, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

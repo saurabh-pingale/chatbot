@@ -59,12 +59,10 @@ class EmbeddingsHandler:
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
 
-        # Generate a cache key for the current query
         query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}"
 
         start_time = time.perf_counter()
 
-        # Check if results are already cached
         cached_result = query_cache.get(query_key)
         if cached_result:
             elapsed_time = time.perf_counter() - start_time
@@ -85,7 +83,6 @@ class EmbeddingsHandler:
                     )
                 )
             
-            # Only apply price filters from metadata_filters
             if metadata_filters:
                 if "min_price" in metadata_filters or "max_price" in metadata_filters:
                     price_range = {}
@@ -105,13 +102,11 @@ class EmbeddingsHandler:
             if filter_conditions:
                 query_filter = models.Filter(must=filter_conditions)
             
-            # Configure search parameters for better hybrid search
             search_params = models.SearchParams(
                 hnsw_ef=128, 
                 exact=False  
             )
             
-            # Execute hybrid search
             search_results = self.client.search(
                 collection_name=QDRANT_COLLECTION_NAME,
                 query_vector=normalized_vector,

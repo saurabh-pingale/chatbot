@@ -4,7 +4,7 @@ from sqlalchemy import UniqueConstraint
 
 from app.models.db.base import Base
 
-class DBStore(Base):
+class StoreModel(Base):
     __tablename__ = 'stores'
     
     id = Column(Integer, primary_key=True)
@@ -15,11 +15,13 @@ class DBStore(Base):
     updated_at = Column(DateTime)
     region = Column(String, nullable=True)
     country = Column(String, nullable=True)
+    support_email = Column(Text, nullable=True)
+    support_phone = Column(Text, nullable=True)
 
-    conversations = relationship("DBConversation", back_populates="store")
-    users = relationship("DBUser", back_populates="store")
+    conversations = relationship("ConversationModel", back_populates="store")
+    users = relationship("UserModel", back_populates="store")
 
-class DBUser(Base):
+class UserModel(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,8 +34,8 @@ class DBUser(Base):
     updated_at = Column(DateTime)
     store_id = Column(Integer, ForeignKey('stores.id'), nullable=False)
 
-    conversations = relationship("DBConversation", back_populates="user")
-    store = relationship("DBStore", back_populates="users")
+    conversations = relationship("ConversationModel", back_populates="user")
+    store = relationship("StoreModel", back_populates="users")
 
 class DBCollection(Base):
     __tablename__ = 'collections'
@@ -42,9 +44,9 @@ class DBCollection(Base):
     title = Column(String, unique=True)
     products_count = Column(Integer)
     
-    products = relationship("DBProduct", back_populates="collection")
+    products = relationship("ProductModel", back_populates="collection")
 
-class DBProduct(Base):
+class ProductModel(Base):
     __tablename__ = 'products'
     __table_args__ = (
         UniqueConstraint('title', 'category', name='uq_title_category'),
@@ -60,7 +62,7 @@ class DBProduct(Base):
     image = Column(String)
     collection_id = Column(Integer, ForeignKey('collections.id'))
     
-    collection = relationship("DBCollection", back_populates="products")
+    collection = relationship("CollectionModel", back_populates="products")
     
 # class ChatbotAnalytics(Base):
 #     __tablename__ = 'chatbot_analytics'

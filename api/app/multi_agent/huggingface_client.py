@@ -9,7 +9,6 @@ from app.config import HUGGINGFACE_API
 
 T = TypeVar('T', bound=BaseModel)
 
-#TODO - Implement PydanticAI
 class HuggingFaceClient:
     """Client for interacting with Hugging Face's Inference API"""
     
@@ -36,7 +35,6 @@ class HuggingFaceClient:
         try:
             start_time = time.time() 
 
-            # Format prompt for Mistral model
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
             
             payload = {
@@ -86,16 +84,13 @@ class HuggingFaceClient:
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON object from text response"""
         try:
-            # Look for JSON patterns
             json_match = re.search(r'(\{.*?\})', text, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 return json.loads(json_str)
             else:
-                # If no JSON is found, try to construct one from key-value text
                 logger.warning("No JSON object found in response, attempting to parse manually")
                 result = {}
-                # Look for key-value patterns like "key": "value" or key: value
                 kv_patterns = re.findall(r'["\']*(\w+)["\']*\s*[:=]\s*["\']*([^,}"\'\n]+)["\']*', text)
                 for key, value in kv_patterns:
                     result[key] = value.strip()
@@ -112,7 +107,7 @@ class HuggingFaceClient:
                 if field_name in data:
                     value = data[field_name]
                     field_type = field.annotation
-                    # Handle conversion based on field type
+                    
                     if field_type is float and isinstance(value, str):
                         try:
                             processed_data[field_name] = float(value)

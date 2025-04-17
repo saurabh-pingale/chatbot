@@ -41,7 +41,7 @@ async def agent_conversation(request: Request):
         elapsed_time = end_time - start_time
         logger.info(f"Agent conversation processing took {elapsed_time:.4f} seconds")
         
-        return dummy_response
+        return response
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get conversation")

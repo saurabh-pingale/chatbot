@@ -26,7 +26,6 @@ class StateMachine:
     def get_next_state(self, condition: str, context: AgentContext) -> AgentState:
         """Get the next state based on the current state and condition, and context"""
         if self.state == AgentState.EVALUATING and condition == "low_quality":
-            # Return to the previous processing state
             return self.get_previous_processing_state(context)
 
         next_state = self.transitions.get((self.state, condition))
@@ -47,12 +46,11 @@ class StateMachine:
         elif context.classification == "order":
             return AgentState.PROCESSING_ORDER
 
-        # Fallback if we can't determine which processing state to return to
         return AgentState.FALLBACK
     
     async def execute(self, context: AgentContext) -> AgentContext:
         """Execute the state machine until completion or error"""
-        max_transitions = 15  # Safety limit to prevent infinite loops
+        max_transitions = 15 
         transitions = 0
 
         overall_start_time = time.perf_counter()
@@ -67,18 +65,15 @@ class StateMachine:
             try:
                 logger.info(f"State machine current state: {self.state}")
 
-                # Store previous state before processing
                 self.push_state()
 
                 agent_start_time = time.perf_counter()
 
-                # Process with current agent
                 context = await current_agent.process(context)
 
                 agent_end_time = time.perf_counter()
                 logger.info(f"Agent '{current_agent.name}' processing took {agent_end_time - agent_start_time:.4f} seconds")
 
-                 # Store feedback if available
                 if "feedback" in context.metadata and context.quality_score is not None:
                     context.add_feedback(
                         current_agent.name, 
@@ -86,14 +81,12 @@ class StateMachine:
                         context.metadata.get("feedback", "")
                     )
 
-                 # handling for Greeting Agent - skip evaluation and go directly to COMPLETE
                 if self.state == AgentState.PROCESSING_GREETING:
                     logger.info("Processing greeting, skipping evaluation")
                     self.state = AgentState.COMPLETE
                     context.metadata["skipped_evaluation"] = True
                     break
 
-                 # Check if we should skip evaluation based on confidence score
                 if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER) and \
                    context.confidence_score is not None and context.confidence_score >= self.confidence_threshold:
                     logger.info(f"High confidence score ({context.confidence_score}), skipping evaluation")
@@ -101,7 +94,6 @@ class StateMachine:
                     context.metadata["skipped_evaluation"] = True
                     break
                 
-                # Determine the next state based on the context
                 condition = self._determine_transition_condition(context)
                 next_state = self.get_next_state(condition, context)
 
@@ -119,7 +111,6 @@ class StateMachine:
             context.metadata["error"] = "Maximum state transitions exceeded"
             self.state = AgentState.ERROR
         
-        # If we ended in an error state, add the final state to the context
         if self.state == AgentState.ERROR:
             context.metadata["final_state"] = "error"
         else:

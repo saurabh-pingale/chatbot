@@ -11,16 +11,13 @@ class FallbackAgent(Agent):
     def __init__(self):
         prompt_path = Path(__file__).parent.parent / "prompt" / "fallback_prompt.json"
 
-        # Load prompt configuration
         with open(prompt_path) as f:
             self.prompt_config = json.load(f)['fallback_agent_prompt']
         
-        # Prepare system message
         self.system_message = self.prompt_config['system_message']
 
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            # Safely handle categories - check type first
             categories_text = self.prompt_config['user_message_template']['unknown_value']
             if context.categories:
                 if isinstance(context.categories[0], dict):  # If it's a list of dicts
@@ -28,7 +25,6 @@ class FallbackAgent(Agent):
                 elif isinstance(context.categories[0], str):  # If it's a list of strings
                     categories_text = ", ".join(context.categories)        
 
-            # Prepare user message from template
             user_message = "\n\n".join(
                 section.format(
                     user_message=context.user_message,
@@ -47,7 +43,6 @@ class FallbackAgent(Agent):
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
 
-            # Construct response from components
             response_text = result.apology
             if result.clarification_request:
                 response_text += f" {result.clarification_request}"
@@ -61,6 +56,5 @@ class FallbackAgent(Agent):
         except Exception as e:
             logger.error(f"Error in FallbackAgent: {str(e)}", exc_info=True)
             
-            # Use default response from config
             context.response = self.prompt_config['response_structure']['default_response']
             return context

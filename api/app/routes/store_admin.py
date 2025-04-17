@@ -1,14 +1,9 @@
-from typing import List
 from fastapi import APIRouter, Request, HTTPException
 
 from app.utils.app_utils import get_app
 from app.models.api.store_admin import (
-    CollectionRequest,
-    CollectionResponse,
     ColorPreferenceResponse,
     ErrorResponse,
-    StoreProductsRequest,
-    StoreProductsResponse,
 )
 from app.utils.logger import logger
 

@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from app.models.db.base import Base
 
-class DBConversation(Base):
+class ConversationModel(Base):
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -15,5 +15,5 @@ class DBConversation(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
 
-    user = relationship("DBUser", back_populates="conversations")
-    store = relationship("DBStore", back_populates="conversations")
+    user = relationship("UserModel", back_populates="conversations")
+    store = relationship("StoreModel", back_populates="conversations")

@@ -10,7 +10,7 @@ export async function initWebSocket(shopId, userId) {
   }
 
   try {
-    const backendHost = "d800d2abedfcbd7a8a3c03d022818a8e.serveo.net";
+    const backendHost = "red-melons-love.loca.lt";
     const protocol = "wss";
     console.log("Protocol:", protocol)
     const wsUrl = `${protocol}://${backendHost}/ws/conversation/${encodeURIComponent(shopId)}/${userId}`;

@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import styles from '../components/styles/training.module.css';
-import { json } from "@remix-run/node";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
+import { fetchProducts } from "./api/products";
+import { FetcherResponse, LoaderData } from "app/common/types";
 
-export const loader = async ({ request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
+  if (!session?.shop || !session?.accessToken) {
+    return json({ shop: null, accessToken: null });
+  }
+
   return json({ 
     shop: session.shop,
     accessToken: session.accessToken 
@@ -15,9 +21,9 @@ export const loader = async ({ request }) => {
 export default function TrainingPage() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<FetcherResponse>();
   const processingRef = useRef(false);
-  const { shop, accessToken } = useLoaderData();
+  const { shop, accessToken } = useLoaderData<LoaderData>();
 
   useEffect(() => {
     setMessages([{ 
@@ -58,17 +64,7 @@ export default function TrainingPage() {
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
-      const response = await fetch("http://localhost:8000/products_router/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Store": shop, 
-          "X-Shopify-Access-Token": accessToken 
-        },
-        body: JSON.stringify({ namespace: shop })
-      });
-
-      const result = await response.json();
+      const result = await fetchProducts(shop, accessToken)
       setMessages((prev) => [...prev, { 
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
@@ -85,7 +81,8 @@ export default function TrainingPage() {
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
-      setMessages((prev) => [...prev, { sender: "bot", text: fetcher.data.answer }]);
+      const data = fetcher.data as FetcherResponse;
+      setMessages((prev) => [...prev, { sender: "bot", text: data.answer }]);
       processingRef.current = false;
     }
   }, [fetcher.data, fetcher.state]);
