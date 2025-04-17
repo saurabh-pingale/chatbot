@@ -25,17 +25,17 @@ async def agent_conversation(request: Request):
         body = await request.json()
         contents = body["messages"]
 
-        last_message = next(
+        extract_last_message = next(
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
         )
-        user_message = last_message["user"] if last_message else ""
+        user_message = extract_last_message["user"] if extract_last_message else None
         
-        namespace = request.query_params.get("shopId")
+        shopId = request.query_params.get("shopId")
         app = get_app()
         
         # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        response = await app.agent_router_service.process_message(namespace, user_message, contents)
+        response = await app.agent_router_service.process_message(shopId, user_message, contents)
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time

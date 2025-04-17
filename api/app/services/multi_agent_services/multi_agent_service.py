@@ -27,7 +27,7 @@ class MultiAgentService:
         StateMachineService.register_agents(self.state_machine)
         StateMachineService.register_transitions(self.state_machine)
     
-    async def generate_agent_response(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
+    async def generate_agent_response(self, shopId: str, user_message: str, contents: list) -> Dict[str, Any]:
         """Process a user message through the multi-agent system"""
         total_start = time.perf_counter()
         try:
@@ -38,7 +38,7 @@ class MultiAgentService:
             context_start = time.perf_counter()
             context = AgentContext(
                 user_message=user_message,
-                namespace=namespace,
+                namespace=shopId,
                 max_attempts=3,
                 conversation_history=contents
             )
