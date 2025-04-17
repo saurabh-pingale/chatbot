@@ -43,7 +43,6 @@ class ConversationHandler:
     async def get_conversations_by_user(self, user_id: int, store_id: int) -> List[Dict[str, Any]]:
         """Fetches conversations for a specific user and store."""
         session = self.Session()
-        #TODO - Use bulk insert in sqlalchemy something like insertMany
         try:
             conversations = session.query(DBConversation).filter_by(
                 user_id=user_id, store_id=store_id

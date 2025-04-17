@@ -20,7 +20,6 @@ async def websocket_conversation(websocket: WebSocket, shop_id: str, user_id: st
         while True:
             data = await websocket.receive_json()
 
-            #TODO - Why are you checking for store_conversation, we can create multiple sockets for different purposes
             if data.get("type") == "store_conversation":
                 app = get_app()
                 conversation_data = {
@@ -30,7 +29,6 @@ async def websocket_conversation(websocket: WebSocket, shop_id: str, user_id: st
                     "store_id": int(shop_id)
                 }
                 
-                #TODO - If socket is not store_conversation and conversation_data is null, where are you handling that failure part
                 try:
                     conversation_id = await app.conversation_service.store_conversation(conversation_data)
                     await websocket.send_json({

@@ -5,17 +5,16 @@ import requests
 import re
 from app.utils.logger import logger
 from app.config import HUGGINGFACE_API
+from app.constants import HUGGINGFACE_API_URL, HUGGINGFACE_MODEL_NAME
 
 T = TypeVar('T', bound=BaseModel)
 
-#TODO - Implement PydanticAI
 class HuggingFaceClient:
     """Client for interacting with Hugging Face's Inference API"""
     
     def __init__(self):
-        #TODO - Shift these api urls to api constants
-        self.model_name = "mistralai/Mistral-7B-Instruct-v0.3"
-        self.api_url = f"https://api-inference.huggingface.co/models/{self.model_name}"
+        self.model_name = HUGGINGFACE_MODEL_NAME
+        self.api_url = HUGGINGFACE_API_URL
         self.api_token = HUGGINGFACE_API
         if not self.api_token:
             raise ValueError("HUGGINGFACE_API_TOKEN environment variable not set")
@@ -34,7 +33,6 @@ class HuggingFaceClient:
     ) -> str:
         """Call the Hugging Face API directly"""
         try:
-            # Format prompt for Mistral model
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
             
             payload = {

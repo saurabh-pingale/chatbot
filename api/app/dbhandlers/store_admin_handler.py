@@ -25,13 +25,10 @@ class StoreAdminHandler:
         session = self.Session()
         try:
             store = session.query(DBStore).filter_by(id=shop_id).first()
-            #TODO -  Resolve this warning
-            # "data" is not definedPylancereportUndefinedVariable
-            if not data:
+            if not store:
                 print(f"No color preference found for shop: {shop_id}, returning default")
                 return None
-            #TODO - Use correct spelling - preferred color 
-            return store.preffered_color
+            return store.preferred_color
         except SQLAlchemyError as error:
             session.rollback()
             logger.error("Database error in get_color_preference: %s", str(error), exc_info=True)
@@ -44,7 +41,6 @@ class StoreAdminHandler:
         """Stores collections in the database."""
         session = self.Session()
         try:
-            #TODO - Use bulk insert i.e insertMany
             result = []
             for collection in collections:
                 db_collection = session.merge(
@@ -71,7 +67,6 @@ class StoreAdminHandler:
         """Stores products in the database and links them to collections."""
         session = self.Session()
         try:
-            #TODO - Use bulk insert i.e insertMany
             for product in products:
                 col_id = collection_id_map.get(product.category)
                 session.merge(

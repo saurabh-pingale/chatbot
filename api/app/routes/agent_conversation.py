@@ -22,20 +22,17 @@ async def agent_conversation(request: Request):
         body = await request.json()
         contents = body["messages"]
 
-        #TODO - Instead of commenting, extract last message, why can't you just change last_message to extract_last_message ?
-        # Extract the last user message
-        last_message = next(
+        extract_last_message = next(
             (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
             None
         )
-        user_message = last_message["user"] if last_message else "" #TODO - Use null instead of ""
+        user_message = extract_last_message["user"] if extract_last_message else None
         
-        #TODO - You are getting shopId right, why are you mentioning namespace instead of shopId, in vector params you mention it, other places use shopId
-        namespace = request.query_params.get("shopId")
+        shopId = request.query_params.get("shopId")
         app = get_app()
         
         # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        return await app.agent_router_service.process_message(namespace, user_message, contents)
+        return await app.agent_router_service.process_message(shopId, user_message, contents)
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get conversation")
