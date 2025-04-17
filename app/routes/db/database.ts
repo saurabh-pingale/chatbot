@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Store } from './entity/Store';
-import { parse } from 'pg-connection-string';
+import pkg from "pg-connection-string";
+const { parse } = pkg;
 
 export const createDatabaseConnection = async () => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -27,7 +28,7 @@ export const createDatabaseConnection = async () => {
     username: username,
     password: password,
     database: database,
-    synchronize: true, 
+    synchronize: false, 
     entities: [Store],
     ssl: { rejectUnauthorized: false }, 
     logging: true,

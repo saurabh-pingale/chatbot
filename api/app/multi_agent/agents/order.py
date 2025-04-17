@@ -4,6 +4,7 @@ from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
 from app.multi_agent.pydantic_ai_client import DeepseekAIClient
 from app.models.api.agent_router import OrderResponse
+from app.dbhandlers.store_admin_handler import StoreAdminHandler
 from app.utils.logger import logger
 
 class OrderAgent(Agent):
@@ -16,7 +17,6 @@ class OrderAgent(Agent):
     
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            # Handle feedback from previous attempts
             feedback_instruction = ""
             previous_response = ""
 
@@ -34,15 +34,12 @@ class OrderAgent(Agent):
                     )
                     previous_response = f"Previous response: {context.response}\n\n"
 
-            # Build conversation history context
             history_context = self._build_history_context(context)
 
-            # Build system message
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
-            # Build user message
             user_message = "\n\n".join([
                 section.format(
                     user_message=context.user_message,
@@ -50,6 +47,19 @@ class OrderAgent(Agent):
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             ])
+
+            store_handler = StoreAdminHandler()
+            store_contact = await store_handler.get_support_contact(context.namespace)
+
+            if store_contact and (store_contact.get("support_email") or store_contact.get("support_phone")):
+                support_contact_message = "For specific details about your order or to take further action, please contact our support team"
+                if store_contact.get("support_email"):
+                    support_contact_message += f" at {store_contact['support_email']}"
+                if store_contact.get("support_phone"):
+                    support_contact_message += f" or call us at {store_contact['support_phone']}"
+                support_contact_message += " with your order number ready."
+            else:
+                support_contact_message = self.prompt_config['support_contact_message']
 
             result = await DeepseekAIClient.generate(
                 model_class=OrderResponse,
@@ -59,16 +69,13 @@ class OrderAgent(Agent):
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
 
-            # Create response with contact information included
             response_text = result.response_text
             
-            # Add contact information for further assistance
             if result.requires_support:
                 response_text += f"\n\n{self.prompt_config['support_contact_message']}"
 
             context.response = response_text
 
-            # Extract confidence score and clean the response
             context.response, confidence_score = self._extract_confidence_score(context.response)
             context.confidence_score = confidence_score
             context.metadata["confidence_score"] = confidence_score
@@ -89,7 +96,6 @@ class OrderAgent(Agent):
             context.metadata["error"] = f"Order agent error: {str(e)}"
             context.confidence_score = 0.0
             
-            # Fallback response with contact information
             context.response = self.prompt_config['fallback_responses']['general_error'] + " " + self.prompt_config['support_contact_message']
                 
             return context

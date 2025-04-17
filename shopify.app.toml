@@ -3,7 +3,7 @@
 client_id = "805bcae4a3ca70062bf8b2037c5dd508"
 name = "test-chatbot"
 handle = "test-chatbot-7"
-application_url = "https://85fd-2401-4900-ac87-9c52-1c4f-a544-8bf2-9d7a.ngrok-free.app"
+application_url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
 embedded = true
 
 [webhooks]
@@ -15,13 +15,13 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://85fd-2401-4900-ac87-9c52-1c4f-a544-8bf2-9d7a.ngrok-free.app/auth/callback",
-  "https://85fd-2401-4900-ac87-9c52-1c4f-a544-8bf2-9d7a.ngrok-free.app/auth/shopify/callback",
-  "https://85fd-2401-4900-ac87-9c52-1c4f-a544-8bf2-9d7a.ngrok-free.app/api/auth/callback"
+  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/callback",
+  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/shopify/callback",
+  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://85fd-2401-4900-ac87-9c52-1c4f-a544-8bf2-9d7a.ngrok-free.app"
+url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
 subpath = "chatbot-api"
 prefix = "apps"
 

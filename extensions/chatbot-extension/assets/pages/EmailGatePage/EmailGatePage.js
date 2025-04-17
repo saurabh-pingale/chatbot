@@ -75,7 +75,7 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryCol
 
   skipButton.addEventListener('click', async () => {
     const originalText = skipButton.textContent;
-    const loader = createLoader();
+    const loader = createLoader('black');
     skipButton.innerHTML = '';
     skipButton.appendChild(loader);
     skipButton.disabled = true;

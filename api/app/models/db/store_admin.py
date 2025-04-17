@@ -1,11 +1,43 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
-Base = declarative_base()
+from app.models.db.base import Base
 
-class CollectionModel(Base):
+class StoreModel(Base):
+    __tablename__ = 'stores'
+    
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime)
+    store_name = Column(String)
+    store_description = Column(Text, nullable=True)
+    preffered_color = Column(String, nullable=True)
+    updated_at = Column(DateTime)
+    region = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+    support_email = Column(Text, nullable=True)
+    support_phone = Column(Text, nullable=True)
+
+    conversations = relationship("ConversationModel", back_populates="store")
+    users = relationship("UserModel", back_populates="store")
+
+class UserModel(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime)
+    email = Column(Text)
+    city = Column(Text, nullable=True)
+    region = Column(Text, nullable=True) 
+    country = Column(Text, nullable=True) 
+    ip_address = Column(Text, nullable=True)
+    updated_at = Column(DateTime)
+    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False)
+
+    conversations = relationship("ConversationModel", back_populates="user")
+    store = relationship("StoreModel", back_populates="users")
+
+class DBCollection(Base):
     __tablename__ = 'collections'
     
     id = Column(Integer, primary_key=True)
@@ -32,21 +64,21 @@ class ProductModel(Base):
     
     collection = relationship("CollectionModel", back_populates="products")
     
-class ChatbotAnalytics(Base):
-    __tablename__ = 'chatbot_analytics'
+# class ChatbotAnalytics(Base):
+#     __tablename__ = 'chatbot_analytics'
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    store_id = Column(String, ForeignKey('users.id'))  
-    email = Column(String)
-    is_anonymous = Column(Boolean, default=False)
-    anonymous_count = Column(Integer, default=0)  
-    total_users = Column(Integer, default=0) 
-    country = Column(String)
-    region = Column(String)
-    city = Column(String)
-    ip = Column(String)
-    chat_interactions = Column(Integer, default=0)
-    first_interaction = Column(DateTime)
-    last_interaction = Column(DateTime)
-    products_added_to_cart = Column(Integer, default=0)
-    products_purchased = Column(Integer, default=0)
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     store_id = Column(String, ForeignKey('stores.id'))  
+#     email = Column(String)
+#     is_anonymous = Column(Boolean, default=False)
+#     anonymous_count = Column(Integer, default=0)  
+#     total_users = Column(Integer, default=0) 
+#     country = Column(String)
+#     region = Column(String)
+#     city = Column(String)
+#     ip = Column(String)
+#     chat_interactions = Column(Integer, default=0)
+#     first_interaction = Column(DateTime)
+#     last_interaction = Column(DateTime)
+#     products_added_to_cart = Column(Integer, default=0)
+#     products_purchased = Column(Integer, default=0)
