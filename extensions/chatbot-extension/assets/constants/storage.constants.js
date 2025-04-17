@@ -1,5 +1,7 @@
 export const LOCAL_STORAGE = {
-    CHATBOT_USER_DATA: 'chatbotUserData',
-    CHATBOT_SESSION_DATA: 'chatbotSessionData',
-    CART_ITEMS: 'chatbotCartItems'
-  };
+  CART_ITEMS: 'chatbotCartItems'
+};
+
+export const SESSION_STORAGE = {
+  CHATBOT_SESSION_DATA: 'chatbotSessionData',  
+}

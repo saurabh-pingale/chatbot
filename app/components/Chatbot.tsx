@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLoaderData } from "@remix-run/react";
 import { ChatbotToggleButton } from "./ChatbotToggleButton";
 import { ChatbotWindow } from "./ChatbotWindow";
-import { getColorPreference } from "app/services/supabase";
+import { getColorPreference } from "app/routes/api/get_color_preference";
 import { constants } from "app/common/constants";
 import { LoaderData } from "app/common/types";
 

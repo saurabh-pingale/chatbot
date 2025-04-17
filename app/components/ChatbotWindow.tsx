@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendMessageToDeepSeek } from "app/services/deepseek";
+import { sendMessageToDeepSeek } from "app/routes/api/agent_conversation";
 import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
 import StaticSlider from "./StaticSlider";
@@ -27,6 +27,7 @@ export const ChatbotWindow = ({ color }: ChatbotWindowProps) => {
     setIsLoading(true);
     
     try {
+      //TODO - Why we are using sendMessageToDeepSeek, we are using deepseek in backend right by creating wrapping to fastapi
       const response = await sendMessageToDeepSeek(userMessage);
 
       const validProducts = response.products?.filter(product => 

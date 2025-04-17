@@ -23,7 +23,6 @@ class ProductAgent(Agent):
     
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            # Handle feedback from previous attempts
             feedback_instruction = ""
             previous_response = ""
 
@@ -41,36 +40,28 @@ class ProductAgent(Agent):
                     )
                     previous_response = f"Previous response: {context.response}\n\n"
 
-            # Generate embeddings for the query (only if first attempt or we need fresh data)
             if not context.products or context.attempts == 0:
-                # Extract essential filters (primarily price ranges)
                 essential_filters = extract_essential_filters(context.user_message)
 
                 essential_filters["namespace"] = context.namespace
 
-                # Generate embeddings for the query
                 user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
 
-                # Query vector database
                 query_response = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings,
                     namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
                     metadata_filters=essential_filters
                 )
 
-                # Extract products and format context
                 products = extract_products_from_response(query_response)
                 context_texts = format_context_texts(query_response)
                 
-                # Simply assign products to context
                 context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
                 context.categories = extract_categories(products) if products else []
 
             else:
-                # Reuse existing product data for retries
                 context_texts = [p.get("description", "") for p in context.products if p.get("description")]
 
-            # Convert context products to JSON-serializable format for the prompt
             product_data = []
             for p in context.products:
                 product_data.append({
@@ -80,15 +71,12 @@ class ProductAgent(Agent):
                     "category": p.get("category", "")
                 })
 
-            # Build conversation history context
             history_context = self._build_history_context(context)
 
-            # Build system message
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
-            # Build user message
             user_message = "\n\n".join([
                 section.format(
                     user_message=context.user_message,
@@ -106,7 +94,6 @@ class ProductAgent(Agent):
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
 
-            # Convert structured response to text
             response_text = result.introduction
 
             if result.products:
@@ -123,6 +110,14 @@ class ProductAgent(Agent):
 
             context.response = response_text
 
+            context.response, confidence_score = self._extract_confidence_score(context.response)
+            context.confidence_score = confidence_score
+            context.metadata["confidence_score"] = confidence_score
+
+            logger.info(f"ProductAgent processed message: {context.user_message}")
+            logger.info(f"Generated response: {context.response}")
+            logger.info(f"Confidence score: {confidence_score}")
+
             if self.prompt_config['logging']['log_response_length']:
                 logger.info(f"ProductAgent generated response of {len(context.response)} chars")
             if self.prompt_config['logging']['log_retry_attempts'] and context.attempts > 0:
@@ -133,8 +128,8 @@ class ProductAgent(Agent):
         except Exception as e:
             logger.error(f"Error in ProductAgent: {str(e)}", exc_info=True)
             context.metadata["error"] = f"Product agent error: {str(e)}"
+            context.confidence_score = 0.0
             
-            # Fallback response
             if context.products:
                 product_names = [p.get("name", "product") for p in context.products[:self.prompt_config['rag_settings']['max_product_display']]]
                 context.response = self.prompt_config['response_structure']['fallback_responses']['with_products'].format(
@@ -160,3 +155,22 @@ class ProductAgent(Agent):
                     product_relevant.append(f"Assistant: {msg['agent']}")
         
         return "\n".join(product_relevant[-6:]) if product_relevant else "No relevant product history"
+
+    def _extract_confidence_score(self, response_text: str) -> float:
+        """Extract confidence score from the response text"""
+        try:
+            import re
+            confidence_pattern = r'<confidence>(0\.\d+)</confidence>'
+            match = re.search(confidence_pattern, response_text)
+
+            if match:
+                confidence_score = float(match.group(1))
+    
+                response_text_cleaned = re.sub(confidence_pattern, '', response_text).strip()
+
+                return response_text_cleaned, confidence_score
+            else:
+                return response_text, 0.7
+        except Exception as e:
+            logger.error(f"Error extracting confidence score: {str(e)}")
+            return response_text, 0.7

@@ -36,24 +36,24 @@ class StateMachineService:
         state_machine.register_transition(AgentState.CLASSIFYING, "order", AgentState.PROCESSING_ORDER)
         state_machine.register_transition(AgentState.CLASSIFYING, "default", AgentState.FALLBACK)
         
-        # From PROCESSING_GREETING
+        # # From PROCESSING_GREETING
         state_machine.register_transition(AgentState.PROCESSING_GREETING, "processed", AgentState.EVALUATING)
         state_machine.register_transition(AgentState.PROCESSING_GREETING, "default", AgentState.FALLBACK)
         
-        # From PROCESSING_PRODUCT
+        # # From PROCESSING_PRODUCT
         state_machine.register_transition(AgentState.PROCESSING_PRODUCT, "processed", AgentState.EVALUATING)
         state_machine.register_transition(AgentState.PROCESSING_PRODUCT, "default", AgentState.FALLBACK)
 
-        # From PROCESSING_ORDER
+        # # From PROCESSING_ORDER
         state_machine.register_transition(AgentState.PROCESSING_ORDER, "processed", AgentState.EVALUATING)
         state_machine.register_transition(AgentState.PROCESSING_ORDER, "default", AgentState.FALLBACK)
         
-        # From EVALUATING
+        # # From EVALUATING
         state_machine.register_transition(AgentState.EVALUATING, "good_quality", AgentState.COMPLETE)
         state_machine.register_transition(AgentState.EVALUATING, "low_quality", AgentState.FALLBACK)
         state_machine.register_transition(AgentState.EVALUATING, "max_attempts", AgentState.FALLBACK)
         state_machine.register_transition(AgentState.EVALUATING, "default", AgentState.FALLBACK)
         
-        # From FALLBACK
+        # # From FALLBACK
         state_machine.register_transition(AgentState.FALLBACK, "complete", AgentState.COMPLETE)
         state_machine.register_transition(AgentState.FALLBACK, "default", AgentState.ERROR)

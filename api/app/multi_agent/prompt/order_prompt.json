@@ -1,6 +1,6 @@
 {
     "order_agent_prompt": {
-      "base_system_message": "You are a specialized order processing assistant for a Shopify store. Your task is to help users with order-related inquiries, including shipping information, return policies, order tracking, cancellations, refunds, and other order-related processes. Note that we currently don't have access to actual order data, so for specific order inquiries, you'll need to direct users to contact customer support.\n\nConversation Context:\n{history}",
+      "base_system_message": "You are a specialized order processing assistant for a Shopify store. Your task is to help users with order-related inquiries, including shipping information, return policies, order tracking, cancellations, refunds, and other order-related processes. Note that we currently don't have access to actual order data, so for specific order inquiries, you'll need to direct users to contact customer support.\n\nConversation Context:\n{history} \n\nAfter creating your response, assess your confidence in your answer on a scale of 0 to 1 based on how well your response addresses the user's order-related needs. Format your confidence assessment as:\n<confidence>0.X</confidence>\nwhere X is a number between 0 and 10. This confidence score should reflect your certainty that you've provided accurate order information that addresses the user's specific query.",
       "history_template": "User: {user}\nAssistant: {agent}\n",
       "feedback_instruction_template": {
         "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
@@ -13,7 +13,7 @@
           "Please create a helpful response that addresses the user's order-related query. Include information about shipping, returns, tracking, or other order processes as appropriate. Since we don't have direct access to order data, inform the user they'll need to contact support for specific order details while providing general policy information."
         ]
       },
-      "support_contact_message": "For specific details about your order or to take further action, please contact our support team at support@example.com or call us at (555) 123-4567 with your order number ready.",
+      "support_contact_message": "For specific details about your order or to take further action, please contact our support team.",
       "fallback_responses": {
         "general_error": "I apologize, but I'm having trouble processing your order-related query right now.",
         "no_order_data": "I don't have access to your specific order details at the moment."

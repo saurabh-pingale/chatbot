@@ -1,3 +1,4 @@
+import time
 from fastapi import HTTPException
 from typing import Dict, Any
 from datetime import datetime
@@ -12,8 +13,13 @@ class MultiAgentService:
     """Service that coordinates the multi-agent system"""
     
     def __init__(self):
+        init_start = time.perf_counter()
+
         self.state_machine = StateMachine()
         self._setup_state_machine()
+
+        init_end = time.perf_counter()
+        logger.info(f"[Timing] Agent system initialized in {init_end - init_start:.4f} seconds.")
     
     def _setup_state_machine(self):
         """Set up the state machine with agents and transitions"""
@@ -21,22 +27,29 @@ class MultiAgentService:
         StateMachineService.register_agents(self.state_machine)
         StateMachineService.register_transitions(self.state_machine)
     
-    async def process_message(self, namespace: str, user_message: str, contents: list) -> Dict[str, Any]:
+    async def generate_agent_response(self, shopId: str, user_message: str, contents: list) -> Dict[str, Any]:
         """Process a user message through the multi-agent system"""
+        total_start = time.perf_counter()
         try:
             # Reset state machine
             self.state_machine.state = AgentState.INIT
             
             # Create initial context
+            context_start = time.perf_counter()
             context = AgentContext(
                 user_message=user_message,
-                namespace=namespace,
+                namespace=shopId,
                 max_attempts=3,
                 conversation_history=contents
             )
+            context_end = time.perf_counter()
+            logger.info(f"[Timing] Context preparation took {context_end - context_start:.4f} seconds.")
             
             # Execute state machine
+            transition_start = time.perf_counter()
             result_context = await self.state_machine.execute(context)
+            transition_end = time.perf_counter()
+            logger.info(f"[Timing] State transitions took {transition_end - transition_start:.4f} seconds.")
 
             # Update the conversation history with the agent's response
             updated_history = self._update_conversation_history(
@@ -61,6 +74,9 @@ class MultiAgentService:
                 str(cat) for cat in (result_context.categories or [])
                 if str(cat).strip()
             ]
+
+            total_end = time.perf_counter()
+            logger.info(f"[Timing] Total processing time: {total_end - total_start:.4f} seconds.")
             
             # Return the response and any products/categories
             return {

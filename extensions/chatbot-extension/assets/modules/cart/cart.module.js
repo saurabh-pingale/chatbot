@@ -6,6 +6,7 @@ import {
   clearCart
 } from '../../services/cart.service';
 import { extractVariantId } from '../../utils/shopify.utils';
+import { trackEvent } from '../user/tracking.module';
 
 let cartInitialized = false;
 
@@ -42,10 +43,16 @@ export function addToCart(product) {
     image: product.image || '',
     title: product.title || '',
     price: product.price || '',
-    quantity: product.quantity
+    quantity: product.quantity,
+    source: 'chatbot'
   };
   
   serviceAddToCart(cartProduct);
+
+  trackEvent('products_added_to_cart', {
+    cart_items: getCartItems()
+  });
+
   return true;
 }
 

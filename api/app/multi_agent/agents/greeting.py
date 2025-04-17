@@ -10,24 +10,21 @@ class GreetingAgent(Agent):
     """Handles greeting messages and general conversation"""
     def __init__(self):
         prompt_path = Path(__file__).parent.parent / "prompt" / "greeting_prompt.json"
-        # Load prompt configuration
+    
         with open(prompt_path) as f:
             self.prompt_config = json.load(f)['greeting_agent_prompt']
     
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            # Extract categories if available
             categories_str = ""
             if context.categories and len(context.categories) > 0:
                 category_names = [cat["name"] for cat in context.categories if cat["name"]]
-                categories_str = ", ".join(category_names[:3])  # Limit to 3 categories
+                categories_str = ", ".join(category_names[:3])
 
-            # Check if we have feedback from previous attempts
             feedback_instruction = ""
             previous_response = ""
 
             if context.feedback_history and context.attempts > 0:
-                # Get the most recent feedback
                 recent_feedback = next(
                     (fb for fb in reversed(context.feedback_history) 
                      if fb["agent"] == "EvaluatorAgent"),
@@ -41,17 +38,14 @@ class GreetingAgent(Agent):
                     )
                     previous_response = f"Previous response: {context.response}\n\n"
 
-            # Build conversation history context
             history_context = self._build_history_context(context)
 
-            # Build system message
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
             if categories_str:
                 system_message += f"\n\n{self.prompt_config['category_mention_template'].format(categories=categories_str)}"
             
-            # Determine cache settings
             bypass_cache = (
                 context.attempts > 0 and 
                 self.prompt_config['cache_settings']['bypass_cache_on_retry']
@@ -71,12 +65,10 @@ class GreetingAgent(Agent):
                 cache_ttl=cache_ttl
             )
 
-            # Build final response
             context.response = f"{response.welcome_message} {response.product_prompt}"
             if response.category_mention:
                 context.response += f" {response.category_mention}"
 
-            # Store whether this was a cache hit in metadata for monitoring
             context.metadata["cache_hit"] = not bypass_cache
 
             logger.info(f"GreetingAgent processed message: {context.user_message}")
@@ -94,6 +86,7 @@ class GreetingAgent(Agent):
             logger.error(f"Error in GreetingAgent: {str(e)}", exc_info=True)
             context.metadata["error"] = f"Greeting agent error: {str(e)}"
             context.response = self.prompt_config['response_structure']['default_response']
+            context.confidence_score = 0.0
             return context
 
     def _build_history_context(self, context: AgentContext) -> str:
@@ -108,4 +101,4 @@ class GreetingAgent(Agent):
             if msg.get("agent"):
                 history_lines.append(f"Assistant: {msg['agent']}")
         
-        return "\n".join(history_lines[-4:])  # Show last 4 exchanges
+        return "\n".join(history_lines[-4:])

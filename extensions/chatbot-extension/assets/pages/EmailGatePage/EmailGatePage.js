@@ -1,5 +1,6 @@
 import { isValidEmail } from '../../utils/helpers';
 import { initializeUserSession } from '../../modules/user/session.module';
+import { createLoader } from '../../components/ui/Loader/Loader';
 
 export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryColor) {
   const page = document.createElement('div');
@@ -41,6 +42,12 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryCol
       emailInput.focus();
       return;
     }
+
+    const originalText = startButton.textContent;
+    const loader = createLoader();
+    startButton.innerHTML = '';
+    startButton.appendChild(loader);
+    startButton.disabled = true;
     
     try {
       await initializeUserSession(email);
@@ -53,6 +60,10 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryCol
       console.error('Session initialization failed:', error);
       errorMessage.textContent = 'Failed to start chat. Please try again.';
       errorMessage.classList.remove('hidden');
+
+      startButton.removeChild(loader);
+      startButton.textContent = originalText;
+      startButton.disabled = false;
     }
   });
 
@@ -63,11 +74,25 @@ export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryCol
   });
 
   skipButton.addEventListener('click', async () => {
-    const anonymousId = `Anonymous_${Date.now()}`;
-    await initializeUserSession(anonymousId);
+    const originalText = skipButton.textContent;
+    const loader = createLoader('black');
+    skipButton.innerHTML = '';
+    skipButton.appendChild(loader);
+    skipButton.disabled = true;
 
-    if (window.chatbotRenderContent) {
-      window.chatbotRenderContent(true);
+    try {
+      const anonymousId = `Anonymous_${Date.now()}`;
+      await initializeUserSession(anonymousId);
+
+      if (window.chatbotRenderContent) {
+          window.chatbotRenderContent(true);
+      }
+    } catch (error) {
+        console.error('Session initialization failed:', error);
+    
+        skipButton.removeChild(loader);
+        skipButton.textContent = originalText;
+        skipButton.disabled = false;
     }
   });
   

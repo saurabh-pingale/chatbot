@@ -11,11 +11,9 @@ class EvaluatorAgent(Agent):
     def __init__(self):
         prompt_path = Path(__file__).parent.parent / "prompt" / "evaluator_prompt.json"
 
-        # Load prompt configuration
         with open(prompt_path) as f:
             self.prompt_config = json.load(f)['evaluator_agent_prompt']
         
-        # Build system message
         self.system_message = (
             f"{self.prompt_config['system_message']}\n\n"
             "Evaluate the assistant's response to the user query based on these criteria:\n"
@@ -36,7 +34,6 @@ class EvaluatorAgent(Agent):
                 logger.warning("EvaluatorAgent: No response to evaluate")
                 return context
 
-            # Build full conversation context for evaluation
             full_context = self._build_evaluation_context(context)
 
             user_message = (
@@ -54,7 +51,6 @@ class EvaluatorAgent(Agent):
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
 
-            # Update context with evaluation results
             context.quality_score = evaluation.quality_score
             context.metadata["feedback"] = evaluation.feedback
             context.metadata["eval_strengths"] = evaluation.strengths
@@ -72,7 +68,6 @@ class EvaluatorAgent(Agent):
             
         except Exception as e:
             logger.error(f"Error in EvaluatorAgent: {str(e)}", exc_info=True)
-            # Use default score from config
             context.quality_score = self.prompt_config['scoring']['default_error_score']
             context.metadata["eval_error"] = str(e)
             context.metadata["feedback"] = "Evaluation error occurred."

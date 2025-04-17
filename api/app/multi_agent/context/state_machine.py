@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Any, Optional, List, Tuple
 from app.multi_agent.context.agent_state import AgentState
 from app.multi_agent.context.agent_context import AgentContext
@@ -12,6 +13,7 @@ class StateMachine:
         self.transitions: Dict[Tuple[AgentState, str], AgentState] = {}
         self.state = AgentState.INIT
         self.previous_states: List[AgentState] = []
+        self.confidence_threshold = 0.6
     
     def register_agent(self, state: AgentState, agent: Agent) -> None:
         """Register an agent for a particular state"""
@@ -24,7 +26,6 @@ class StateMachine:
     def get_next_state(self, condition: str, context: AgentContext) -> AgentState:
         """Get the next state based on the current state and condition, and context"""
         if self.state == AgentState.EVALUATING and condition == "low_quality":
-            # Return to the previous processing state
             return self.get_previous_processing_state(context)
 
         next_state = self.transitions.get((self.state, condition))
@@ -45,13 +46,14 @@ class StateMachine:
         elif context.classification == "order":
             return AgentState.PROCESSING_ORDER
 
-        # Fallback if we can't determine which processing state to return to
         return AgentState.FALLBACK
     
     async def execute(self, context: AgentContext) -> AgentContext:
         """Execute the state machine until completion or error"""
-        max_transitions = 15  # Safety limit to prevent infinite loops
+        max_transitions = 15 
         transitions = 0
+
+        overall_start_time = time.perf_counter()
         
         while self.state not in (AgentState.COMPLETE, AgentState.ERROR) and transitions < max_transitions:
             current_agent = self.agents.get(self.state)
@@ -63,21 +65,35 @@ class StateMachine:
             try:
                 logger.info(f"State machine current state: {self.state}")
 
-                # Store previous state before processing
                 self.push_state()
 
-                # Process with current agent
+                agent_start_time = time.perf_counter()
+
                 context = await current_agent.process(context)
 
-                 # Store feedback if available
+                agent_end_time = time.perf_counter()
+                logger.info(f"Agent '{current_agent.name}' processing took {agent_end_time - agent_start_time:.4f} seconds")
+
                 if "feedback" in context.metadata and context.quality_score is not None:
                     context.add_feedback(
                         current_agent.name, 
                         context.quality_score,
                         context.metadata.get("feedback", "")
                     )
+
+                if self.state == AgentState.PROCESSING_GREETING:
+                    logger.info("Processing greeting, skipping evaluation")
+                    self.state = AgentState.COMPLETE
+                    context.metadata["skipped_evaluation"] = True
+                    break
+
+                if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER) and \
+                   context.confidence_score is not None and context.confidence_score >= self.confidence_threshold:
+                    logger.info(f"High confidence score ({context.confidence_score}), skipping evaluation")
+                    self.state = AgentState.COMPLETE
+                    context.metadata["skipped_evaluation"] = True
+                    break
                 
-                # Determine the next state based on the context
                 condition = self._determine_transition_condition(context)
                 next_state = self.get_next_state(condition, context)
 
@@ -95,11 +111,13 @@ class StateMachine:
             context.metadata["error"] = "Maximum state transitions exceeded"
             self.state = AgentState.ERROR
         
-        # If we ended in an error state, add the final state to the context
         if self.state == AgentState.ERROR:
             context.metadata["final_state"] = "error"
         else:
             context.metadata["final_state"] = "complete"
+
+        overall_end_time = time.perf_counter()
+        logger.info(f"Total state machine execution took {overall_end_time - overall_start_time:.4f} seconds")
             
         return context
     

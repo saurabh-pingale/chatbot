@@ -21,8 +21,9 @@ async def store_session_analytics(request: Request, analytics_data: Dict):
     try:
         app = get_app()
         shop_id = request.query_params.get("shopId")
+        logger.info(f"Shop Id: {shop_id}")
         analytics_data['store_id'] = shop_id
-        success = await app.analytics_service.store_session_analytics(analytics_data)
+        success = await app.analytics_service.store_analytics(analytics_data)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to store analytics")
         return {"message": "Analytics stored successfully"}

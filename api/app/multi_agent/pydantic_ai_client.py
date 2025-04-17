@@ -1,11 +1,11 @@
 import json
 import httpx
 import hashlib
-from typing import TypeVar, Type, Dict, Any, Optional, List, Union, Callable, Tuple
+import time
+from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
 from app.utils.logger import logger
-from functools import lru_cache
 from datetime import datetime, timedelta
 import threading
 
@@ -108,7 +108,7 @@ class DeepseekAIClient:
         top_p: float = 0.9,
         schema_instructions: Optional[str] = None,
         cache_ttl: int = 3600,  # Cache TTL in seconds, default 1 hour
-        bypass_cache: bool = False  # Option to bypass cache for fresh results
+        bypass_cache: bool = False 
     ) -> T:
         """
         Generate structured data from the Deepseek API based on a Pydantic model
@@ -153,18 +153,14 @@ class DeepseekAIClient:
         if hash(cache_key) % 10 == 0:
             DeepseekAIClient.remove_expired_entries()
         
-        # Get model schema
         schema = model_class.model_json_schema()
         schema_str = json.dumps(schema, indent=2)
         
-        # Create messages
         messages = []
         
-        # Add system message if provided
         if system_message:
             messages.append({"role": "system", "content": system_message})
         
-        # Add schema instructions
         schema_prompt = schema_instructions or f"""
         You must respond in valid JSON format according to this schema:
         {schema_str}
@@ -173,13 +169,10 @@ class DeepseekAIClient:
         The JSON must be valid and match the schema exactly.
         """
         
-        # Add schema instruction as a system message
         messages.append({"role": "system", "content": schema_prompt})
         
-        # Add user message
         messages.append({"role": "user", "content": user_message})
         
-        # Make API call
         try:
             logger.info(f"Calling Deepseek API with {len(messages)} messages")
             headers = {
@@ -194,9 +187,11 @@ class DeepseekAIClient:
                 "max_tokens": max_tokens,
                 "top_p": top_p,
                 "stream": False,
-                "response_format": {"type": "json_object"}  # Force JSON response
+                "response_format": {"type": "json_object"}
             }
             
+            start_time = time.perf_counter()
+
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     DEEPSEEK_API_URL,
@@ -205,11 +200,16 @@ class DeepseekAIClient:
                     timeout=60.0
                 )
                 response.raise_for_status()
+
+                end_time = time.perf_counter()
+
+                duration = end_time - start_time
+                logger.info(f"Deepseek API call took {duration:.2f} seconds")
+
                 json_response = response.json()
                 
                 # Extract generated content
                 content = json_response["choices"][0]["message"]["content"]
-                logger.debug(f"Raw response from API: {content}")
                 
                 # Clean the response - sometimes models add backticks or other text
                 content = DeepseekAIClient._clean_json_response(content)
@@ -262,17 +262,29 @@ class DeepseekAIClient:
         end_idx = content.rfind('}')
         
         if start_idx == -1 or end_idx == -1:
-            return content.strip()  # Return as-is if no JSON found
+            return content.strip() 
         
         content = content[start_idx:end_idx+1]
         
         # Attempt to repair common malformations
         try:
-            # Quick validation parse
             json.loads(content)
             return content
         except json.JSONDecodeError as e:
             logger.warning(f"JSON needs repair: {e}")
+
+            if "Expecting ',' delimiter" in str(e) or "Expecting property name enclosed in double quotes" in str(e):
+                last_valid_pos = content.rfind("}")
+                if last_valid_pos > 0:
+                    brace_count = 1
+                    for i in range(last_valid_pos-1, 0, -1):
+                        if content[i] == '}':
+                            brace_count += 1
+                        elif content[i] == '{':
+                            brace_count -= 1
+                        if brace_count == 0:
+                            content = content[:last_valid_pos+1]
+                            break
             
             # Case 1: Missing closing brackets for arrays/objects
             open_braces = content.count('{')
@@ -289,7 +301,6 @@ class DeepseekAIClient:
                 content += ']'
                 close_brackets += 1
                 
-            # Final validation
             try:
                 json.loads(content)
                 return content

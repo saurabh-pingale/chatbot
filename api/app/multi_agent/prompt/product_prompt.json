@@ -1,6 +1,6 @@
 {
     "product_agent_prompt": {
-      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queriesincluding handling requests for specific categories, price ranges, features, and other product attributes. Consider the full conversation context when responding.\n\nConversation Context:\n{history}",
+      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries including handling requests for specific categories, price ranges, features, and other product attributes. Consider the full conversation context when responding.\n\nConversation Context:\n{history} \n\nFORMATTING RULES:\n- Always present lists of products or categories as bullet points\n- Use '•' for bullet points\n- Keep product listings concise with name and price\n- Separate different sections clearly with line breaks. \n\nAfter creating your response, assess your confidence in your answer on a scale of 0 to 1 based on how well your response addresses the user's product-related needs. Format your confidence assessment as:\n<confidence>0.X</confidence>\nwhere X is a number between 0 and 10. This confidence score should reflect your certainty that you've provided relevant product information that matches the user's query intentions.",
       "history_template": "User: {user}\nAssistant: {agent}\n",
       "feedback_instruction_template": {
         "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
@@ -33,7 +33,7 @@
       },
       "parameters": {
         "temperature": 0.7,
-        "max_tokens": 500,
+        "max_tokens": 1000,
         "model_class": "ProductResponse"
       },
       "logging": {

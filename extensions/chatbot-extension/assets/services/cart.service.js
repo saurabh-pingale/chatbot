@@ -2,12 +2,14 @@ import { createCartDrawer } from '../components/cart/CartDrawer/cartDrawer';
 import { createCartItem } from '../components/cart/CartItem/CartItem';
 import { LOCAL_STORAGE } from '../constants/storage.constants';
 import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
-import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cartSync.module';
+import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cart.module';
+import { createLoader } from '../components/ui/Loader/Loader';
+import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
 
-let autoCloseTimer = null;
+let cartDrawerAutoCloseTimer = null;
 let drawerInstance = null;
 let currentChatPage = null;
-let isSyncing = false;
+let isStoreCartUpdating = false;
 
 function ensureCartDrawerExists() {
   if (!drawerInstance) {
@@ -32,8 +34,10 @@ function ensureCartDrawerExists() {
       const button = e.target;
       const originalText = button.textContent;
 
+      const loader = createLoader();
+      button.innerHTML = '';
+      button.appendChild(loader);
       button.disabled = true;
-      button.textContent = 'Processing...';
 
       try {
         const items = getCartItems();
@@ -48,8 +52,9 @@ function ensureCartDrawerExists() {
         console.error('Checkout error:', error);
         alert('An error occurred during checkout.');
       } finally {
-        button.disabled = false;
+        button.removeChild(loader);
         button.textContent = originalText;
+        button.disabled = false;
       }
     });
   }
@@ -80,13 +85,20 @@ export function closeCartDrawer() {
 function setupCartItemEventListeners(cartItemElement, item) {
   cartItemElement.querySelector('.minus').addEventListener('click', () => {
     addToCart(item, -1);
+
+    trackEvent('products_added_to_cart', {
+      cart_items: getCartItems()
+    });
   });
   
   cartItemElement.querySelector('.plus').addEventListener('click', () => {
     addToCart(item, 1);
+
+    trackEvent('products_added_to_cart', {
+      cart_items: getCartItems()
+    });
   });
 }
-
 
 export function updateCartDrawer(items) {
   ensureCartDrawerExists();
@@ -94,7 +106,7 @@ export function updateCartDrawer(items) {
   const content = drawerInstance.querySelector('.cart-drawer-content');
   content.innerHTML = '';
 
-  if (items.length === 0) {
+  if (items?.length === 0 || !items?.length) {
     content.innerHTML = '<p>Your cart is empty</p>';
     return;
   }
@@ -140,6 +152,7 @@ export function getCartItems() {
 
 export async function addToCart(product, quantityChange = 1) {
   if (!product.variant_id) {
+    alert('Cannot add to cart, due to some technical issues');
     console.error('Cannot add to cart - product missing variant_id', product);
     return;
   }
@@ -158,13 +171,17 @@ export async function addToCart(product, quantityChange = 1) {
   
   if (existing) {
     existing.quantity += quantityChange;
+    if (existing.quantity > 10) {
+      existing.quantity = 10;
+    }
+
     if (existing.quantity <= 0) {
       items.splice(items.indexOf(existing), 1);
     }
   } else if(quantityChange > 0){
     items.push({
       ...product,
-      quantity: quantityChange,
+      quantity: Math.min(quantityChange, 10),
       variant_id: variantId,
       id: variantId,
       properties: product.properties || { chatbot_added: true }
@@ -181,8 +198,13 @@ export function clearCart() {
 }
 
 async function syncWithStoreCart(items) {
-  if (isSyncing) return true;
-  isSyncing = true;
+  if (isStoreCartUpdating) return true;
+  isStoreCartUpdating = true;
+
+  const cartIcons = document.querySelectorAll('.chatbot-cart-icon');
+  cartIcons.forEach(icon => {
+    icon.classList.add('cart-icon-hidden');
+  });
 
   try {
     const storeCart = await getStoreCart();
@@ -202,13 +224,15 @@ async function syncWithStoreCart(items) {
 
     if (items.length === 0) return true;
     
-
     const addSuccess = await addItemsToStoreCart(items);
     return addSuccess;
   } catch (error) {
     console.error('Error syncing cart:', error);
     return false;
   } finally {
+    cartIcons.forEach(icon => {
+      icon.classList.remove('cart-icon-hidden');
+    });
     isSyncing = false;
   }
 }
@@ -224,8 +248,8 @@ function persistCart(items) {
 }
 
 function resetAutoCloseTimer() {
-  if (autoCloseTimer) clearTimeout(autoCloseTimer);
-  autoCloseTimer = setTimeout(closeCartDrawer, 5000);
+  if (cartDrawerAutoCloseTimer) clearTimeout(cartDrawerAutoCloseTimer);
+  cartDrawerAutoCloseTimer = setTimeout(closeCartDrawer, 5000);
 }
 
 function loadCartFromStorage() {
@@ -237,7 +261,6 @@ function setupCartListeners() {
   document.addEventListener('cart:requestComplete', (event) => handleCartUpdate(event));
   document.addEventListener('cart:updated', (event) => handleCartUpdate(event));
   document.addEventListener('cart:change', (event) => handleCartUpdate(event));
-
   let lastCartToken = null;
   let lastItemCount = 0;
 
@@ -256,7 +279,7 @@ function setupCartListeners() {
     } catch (error) {
       console.error('Error polling cart:', error);
     }
-  }, 8000);
+  }, 8000);  
 };
 
 async function handleCartUpdate(event) {
@@ -272,11 +295,11 @@ async function handleCartUpdate(event) {
 }
 
 async function handleStoreCartUpdate(storeCart) {
-  if (isSyncing) return;
+  if (isCartSyncInProgress) return;
 
   const items = storeCart.items.map(item => ({
     id: item.id,
-    variant_id: `gid://shopify/ProductVariant/${item.id}`,
+    variant_id: `${SHOPIFY_PRODUCT_VARIANT_PREFIX}${item.id}`,
     title: item.title,
     price: item.price,
     image: item.image,

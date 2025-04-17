@@ -5,11 +5,9 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 python-dotenv
-pinecone
 supabase
 requests
 numpy
-langfuse
 FlagEmbedding
 sql
 sqlalchemy

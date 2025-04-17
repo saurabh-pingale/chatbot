@@ -8,13 +8,11 @@ class RagPipelineRequestBody(BaseModel):
     shopifyStore: Optional[str] = None
     shopifyAccessToken: Optional[str] = None
 
-
 # Response Model
 class RagPipelineResponse(BaseModel):
     answer: str
     products: Optional[List[Dict[str, str]]] = []
     categories: Optional[List[str]] = []
-
 
 # Error Response Model
 class ErrorResponse(BaseModel):
