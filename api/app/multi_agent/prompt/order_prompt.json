@@ -13,7 +13,7 @@
           "Please create a helpful response that addresses the user's order-related query. Include information about shipping, returns, tracking, or other order processes as appropriate. Since we don't have direct access to order data, inform the user they'll need to contact support for specific order details while providing general policy information."
         ]
       },
-      "support_contact_message": "For specific details about your order or to take further action, please contact our support team at support@example.com or call us at (555) 123-4567 with your order number ready.",
+      "support_contact_message": "For specific details about your order or to take further action, please contact our support team.",
       "fallback_responses": {
         "general_error": "I apologize, but I'm having trouble processing your order-related query right now.",
         "no_order_data": "I don't have access to your specific order details at the moment."

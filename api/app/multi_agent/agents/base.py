@@ -16,4 +16,3 @@ class Agent(ABC):
     def calculate_confidence(self, context: AgentContext) -> float:
         """Default confidence calculation, can be overridden by specific agents"""
         return 1.0
-    

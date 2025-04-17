@@ -1,7 +1,8 @@
 import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { saveColorPreference } from "./supabaseApi";
+import { saveColorPreference } from "./save_color_preference";
+import { saveSupportInfo } from "./save_support_info";
 import { useEffect, useState } from "react";
 import {
   Page,
@@ -14,6 +15,7 @@ import {
   Box,
   Banner,
   Tooltip,
+  TextField,
 } from "@shopify/polaris";
 import { ActionResponse } from "./types";
 
@@ -29,18 +31,28 @@ export const loader: LoaderFunction = async ({ request }) => {
 export const action: ActionFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();
-  const color = formData.get("color") as string;
 
-  if (!session.shop || !color) {
+  const color = formData.get("color") as string | null;
+  const supportEmail = formData.get("supportEmail") as string | null;
+  const supportPhone = formData.get("supportPhone") as string | null;
+
+  if (!session.shop || (!color && !supportEmail && !supportPhone)) {
     return json({ error: "Missing required fields" }, { status: 400 });
   }
 
   try {
-    await saveColorPreference(session.shop, color);
-    return json({ success: true, color });
+    if(color) {
+      await saveColorPreference(session.shop, color);
+    }
+    
+    if (supportEmail || supportPhone) {
+      await saveSupportInfo(session.shop, supportEmail || "", supportPhone || "");
+    }
+
+    return json({ success: true });
   } catch (error) {
     console.error("Error in action function:", error); 
-    return json({ error: "Failed to save color preference" }, { status: 500 });
+    return json({ error: "Failed to save save settings" }, { status: 500 });
   }
 };
 
@@ -48,6 +60,8 @@ export default function Settings() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showErrorBanner, setShowErrorBanner] = useState(false);
+  const [supportEmail, setSupportEmail] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
   const fetcher = useFetcher<ActionResponse>();
   const { session } = useLoaderData<{ session: { shop: string } }>();
 
@@ -87,6 +101,13 @@ export default function Settings() {
 
   const handleCancel = () => {
     setSelectedColor(null);
+  };
+
+  const handleSubmitSupportDetails = () => {
+    fetcher.submit(
+      { supportEmail, supportPhone },
+      { method: "post" }
+    );
   };
 
   const isLoading = fetcher.state === "submitting";
@@ -175,7 +196,7 @@ export default function Settings() {
               </BlockStack>
             </Card>
           </Layout.Section>
-          
+
           <Layout.Section variant="oneThird">
             <Card>
               <BlockStack gap="200">
@@ -194,6 +215,59 @@ export default function Settings() {
                   <li>UI elements</li>
                   <li>Chatbot interface</li>
                 </ul>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="500">
+                <BlockStack gap="200">
+                  <InlineStack align="center" gap="200">
+                    <Text as="h2" variant="headingLg">
+                      Support Contact Info
+                    </Text>
+                  </InlineStack>
+                  <Text variant="bodyMd" as="p">
+                    Provide your support email and phone number so your customers can contact you if needed.
+                  </Text>
+                </BlockStack>
+
+                <BlockStack gap="300">
+                  <TextField
+                    label="Support Email"
+                    type="email"
+                    value={supportEmail}
+                    onChange={(value) => setSupportEmail(value)}
+                    autoComplete="email"
+                  />
+                  <TextField
+                    label="Support Phone Number"
+                    type="tel"
+                    value={supportPhone}
+                    onChange={(value) => setSupportPhone(value)}
+                    autoComplete="tel"
+                  />
+                </BlockStack>
+
+                <InlineStack gap="200">
+                  <Button 
+                    variant="primary" 
+                    onClick={handleSubmitSupportDetails} 
+                    loading={isLoading}
+                  >
+                    Save Support Info
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setSupportEmail("");
+                      setSupportPhone("");
+                    }}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                </InlineStack>
               </BlockStack>
             </Card>
           </Layout.Section>

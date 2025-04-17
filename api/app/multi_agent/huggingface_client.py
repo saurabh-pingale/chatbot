@@ -1,8 +1,9 @@
-from typing import Type, TypeVar, Any, Dict
-from pydantic import BaseModel
+import re
+import time
 import json
 import requests
-import re
+from typing import Type, TypeVar, Any, Dict
+from pydantic import BaseModel
 from app.utils.logger import logger
 from app.config import HUGGINGFACE_API
 from app.constants import HUGGINGFACE_API_URL, HUGGINGFACE_MODEL_NAME
@@ -33,6 +34,8 @@ class HuggingFaceClient:
     ) -> str:
         """Call the Hugging Face API directly"""
         try:
+            start_time = time.time() 
+
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
             
             payload = {
@@ -52,7 +55,11 @@ class HuggingFaceClient:
                 json=payload,
                 timeout=60
             )
-            
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            logger.info(f"Hugging Face API call took {elapsed_time:.2f} seconds")
+                  
             if response.status_code != 200:
                 error_msg = f"API request failed with status {response.status_code}: {response.text}"
                 logger.error(error_msg)
@@ -78,16 +85,13 @@ class HuggingFaceClient:
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON object from text response"""
         try:
-            # Look for JSON patterns
             json_match = re.search(r'(\{.*?\})', text, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 return json.loads(json_str)
             else:
-                # If no JSON is found, try to construct one from key-value text
                 logger.warning("No JSON object found in response, attempting to parse manually")
                 result = {}
-                # Look for key-value patterns like "key": "value" or key: value
                 kv_patterns = re.findall(r'["\']*(\w+)["\']*\s*[:=]\s*["\']*([^,}"\'\n]+)["\']*', text)
                 for key, value in kv_patterns:
                     result[key] = value.strip()
@@ -104,7 +108,7 @@ class HuggingFaceClient:
                 if field_name in data:
                     value = data[field_name]
                     field_type = field.annotation
-                    # Handle conversion based on field type
+                    
                     if field_type is float and isinstance(value, str):
                         try:
                             processed_data[field_name] = float(value)

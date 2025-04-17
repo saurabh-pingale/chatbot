@@ -11,11 +11,9 @@ class ClassifierAgent(Agent):
     def __init__(self):
         prompt_path = Path(__file__).parent.parent / "prompt" / "classifier_prompt.json"
 
-        # Load the prompt configuration from JSON
         with open(prompt_path) as f:
             self.prompt_config = json.load(f)['classifier_agent_prompt']
         
-        # Prepare system message with examples
         self.system_message = self.prompt_config['system_message'] + "\n\nExamples:\n"
         for example in self.prompt_config['examples']:
             self.system_message += f"- \"{example['user_message']}\" -> {example['classification']}\n"
@@ -55,14 +53,11 @@ class ClassifierAgent(Agent):
         except Exception as e:
             logger.error(f"Error in ClassifierAgent: {str(e)}", exc_info=True)
             
-            # Enhanced fallback classification using JSON config
             fallback_logic = self.prompt_config['parameters']['fallback_logic']
             
-            # Check for order-related terms first
             if any(term in context.user_message.lower() 
                   for term in fallback_logic.get('order_terms', [])):
                 context.classification = "order"
-            # Then check for product-related terms
             elif any(term in context.user_message.lower() 
                      for term in fallback_logic.get('product_terms', [])):
                 context.classification = "product"

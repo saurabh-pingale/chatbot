@@ -1,6 +1,5 @@
 from enum import Enum, auto
 
-# Define states for the state machine
 class AgentState(Enum):
     INIT = auto()
     CLASSIFYING = auto()

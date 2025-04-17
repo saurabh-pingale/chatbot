@@ -6,23 +6,23 @@ export async function fetchUserIP() {
     return await response.json();
   } catch (error) {
     console.error('IP fetch failed:', error);
-    return { ip: 'unknown' };
+    return { ip: null };
   }
 }
 
 export async function fetchUserLocation(ip) {
-  if (ip === 'unknown') return { country: 'unknown', city: 'unknown' };
-  
+  if (ip === 'unknown') return { country: 'unknown', city: null, region: null };
+
   try {
     const response = await fetch(`${API.USER_LOCATION}/${ip}/json/`);
     const data = await response.json();
     return {
-      country: data.country_name || 'unknown',
-      city: data.city || 'unknown',
-      region: data.region || 'unknown'
+      country: data.country_name || null,
+      city: data.city || null,
+      region: data.region || null
     };
   } catch (error) {
     console.error('Location fetch failed:', error);
-    return { country: 'unknown', city: 'unknown' };
+    return { country: null, city: null, region: null};
   }
 }

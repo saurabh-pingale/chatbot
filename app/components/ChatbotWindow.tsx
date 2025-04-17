@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendMessageToDeepSeek } from "app/services/deepseek";
+import { sendMessageToDeepSeek } from "app/routes/api/agent_conversation";
 import MessageList from "./MessageList";
 import InputComponent from "./InputComponent";
 import StaticSlider from "./StaticSlider";
