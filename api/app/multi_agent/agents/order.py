@@ -50,6 +50,7 @@ class OrderAgent(Agent):
 
             store_handler = StoreAdminHandler()
             store_contact = await store_handler.get_support_contact(context.namespace)
+            logger.info(f"Contact Info: {store_contact}")
 
             if store_contact and (store_contact.get("support_email") or store_contact.get("support_phone")):
                 support_contact_message = "For specific details about your order or to take further action, please contact our support team"

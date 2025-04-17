@@ -76,3 +76,12 @@ export async function fetchBotResponse(message, shopId) {
     }
   }
 }
+
+export function resetConversationHistory(history = []) {
+  conversationHistory = history;
+  if (history.length === 0) {
+    sessionStorage.removeItem('conversationHistory');
+  } else {
+    sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
+  }
+}

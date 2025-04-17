@@ -11,7 +11,7 @@ class StoreModel(Base):
     created_at = Column(DateTime)
     store_name = Column(String)
     store_description = Column(Text, nullable=True)
-    preffered_color = Column(String, nullable=True)
+    preferred_color = Column(String, nullable=True)
     updated_at = Column(DateTime)
     region = Column(String, nullable=True)
     country = Column(String, nullable=True)
@@ -37,7 +37,7 @@ class UserModel(Base):
     conversations = relationship("ConversationModel", back_populates="user")
     store = relationship("StoreModel", back_populates="users")
 
-class DBCollection(Base):
+class CollectionModel(Base):
     __tablename__ = 'collections'
     
     id = Column(Integer, primary_key=True)

@@ -17,11 +17,9 @@ import {
   Tooltip,
   TextField,
 } from "@shopify/polaris";
-import { ActionResponse } from "./types";
+import { ActionResponse } from "app/common/types";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
-
-const COLOR_UPDATE_EVENT = "color-preference-updated";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -74,11 +72,6 @@ export default function Settings() {
   useEffect(() => {
     if (fetcher.data?.success) {
       setShowSuccessBanner(true);
-
-      const colorUpdateEvent = new CustomEvent(COLOR_UPDATE_EVENT, {
-        detail: { color: fetcher.data.color }
-      });
-      window.dispatchEvent(colorUpdateEvent);
 
       const timer = setTimeout(() => setShowSuccessBanner(false), 5000);
       return () => clearTimeout(timer);

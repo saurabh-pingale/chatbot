@@ -21,7 +21,7 @@ export function trackEvent(eventName, metadata = {}) {
 
 export function setupTracking() {
   const shopId = getShopId();
-  console.log("Shop ID:", shopId);
+  
   window.addEventListener('beforeunload', () => {
     const session = JSON.parse(sessionStorage.getItem(SESSION_STORAGE.CHATBOT_SESSION_DATA));
     if (session) {

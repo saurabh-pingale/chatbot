@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import styles from '../components/styles/training.module.css';
+import styles from '../styles/training.module.css';
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-import { fetchProducts } from "./api/products";
+import { fetchProducts } from "./products"
 import { FetcherResponse, LoaderData } from "app/common/types";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

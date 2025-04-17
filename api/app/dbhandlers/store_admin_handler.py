@@ -2,9 +2,10 @@ from typing import Optional, List, Dict
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
 
-from app.models.db.store_admin import Base, ProductModel, StoreModel
-from app.models.api.store_admin import (Collection as CollectionModel, ProductRequest)
+from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel
+from app.models.api.store_admin import (Collection, ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
 
@@ -29,7 +30,7 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    StoreModel.query.filter_by(id=shop_id)
+                    select(StoreModel).filter_by(id=shop_id)
                 )
                 store = store.scalars().first()
                 if not store:
@@ -111,9 +112,10 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    StoreModel.query.filter_by(store_name=store_name)
+                    select(StoreModel).filter(StoreModel.store_name == store_name)
                 )
                 store = store.scalars().first()
+                logger.info(f"Store: {store}")
                 if not store:
                     logger.warning(f"No store found with name: {store_name}")
                     return None

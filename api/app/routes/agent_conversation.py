@@ -34,8 +34,7 @@ async def agent_conversation(request: Request):
         shopId = request.query_params.get("shopId")
         app = get_app()
         
-        # return await app.conversation_service.get_conversation(namespace, user_message, contents)
-        response = await app.agent_router_service.process_message(shopId, user_message, contents)
+        response = await app.agent_router_service.generate_agent_response(shopId, user_message, contents)
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
