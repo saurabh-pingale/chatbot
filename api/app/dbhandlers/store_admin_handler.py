@@ -15,10 +15,10 @@ class StoreAdminHandler:
 
         if not database_url:
             raise ValueError("Database URL must be provided in the environment variables.")
-
         self.engine = create_async_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
 
+        #TODO - create_all() should be in start_event() in routes
         self.create_all()
 
     async def create_all(self):

@@ -3,8 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#Pinecone
-PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 HUGGING_FACE_API_KEY = os.getenv("HUGGING_FACE_API_KEY")
 HUGGINGFACE_API = os.getenv("HUGGINGFACE_API")
 

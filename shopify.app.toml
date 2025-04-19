@@ -3,7 +3,7 @@
 client_id = "87869605ef99cb19747c1116d0a124d8"
 name = "prod-chatbot"
 handle = "prod-chatbot"
-application_url = "https://tigers-flexible-comic-furniture.trycloudflare.com"
+application_url = "https://saints-reduces-specified-others.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,9 +27,9 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://tigers-flexible-comic-furniture.trycloudflare.com/auth/callback",
-  "https://tigers-flexible-comic-furniture.trycloudflare.com/auth/shopify/callback",
-  "https://tigers-flexible-comic-furniture.trycloudflare.com/api/auth/callback"
+  "https://saints-reduces-specified-others.trycloudflare.com/auth/callback",
+  "https://saints-reduces-specified-others.trycloudflare.com/auth/shopify/callback",
+  "https://saints-reduces-specified-others.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
