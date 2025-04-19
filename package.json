@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "remix vite:build",
-    "dev": "cross-env PORT=3000 shopify app dev",
+    "dev": "shopify app dev",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
@@ -28,7 +28,7 @@
     "@prisma/client": "^6.2.1",
     "@remix-run/dev": "^2.15.0",
     "@remix-run/fs-routes": "^2.15.0",
-    "@remix-run/node": "^2.15.0",
+    "@remix-run/node": "^2.16.5",
     "@remix-run/react": "^2.15.0",
     "@remix-run/serve": "^2.15.0",
     "@shopify/app-bridge-react": "^4.1.6",

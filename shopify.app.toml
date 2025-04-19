@@ -1,35 +1,36 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "805bcae4a3ca70062bf8b2037c5dd508"
-name = "test-chatbot"
-handle = "test-chatbot-7"
-application_url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
+client_id = "87869605ef99cb19747c1116d0a124d8"
+name = "prod-chatbot"
+handle = "prod-chatbot"
+application_url = "https://tigers-flexible-comic-furniture.trycloudflare.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-04"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/callback",
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/shopify/callback",
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/api/auth/callback"
+  "https://tigers-flexible-comic-furniture.trycloudflare.com/auth/callback",
+  "https://tigers-flexible-comic-furniture.trycloudflare.com/auth/shopify/callback",
+  "https://tigers-flexible-comic-furniture.trycloudflare.com/api/auth/callback"
 ]
-
-[app_proxy]
-url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
-subpath = "chatbot-api"
-prefix = "apps"
 
 [pos]
 embedded = false
-
-[web]
-port = 3_000
-
-[build]
-automatically_update_urls_on_dev = true

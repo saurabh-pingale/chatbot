@@ -16,8 +16,6 @@
     "moduleResolution": "Bundler",
     "target": "ES2022",
     "baseUrl": ".",
-    "types": ["node"],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true 
+    "types": ["node"]
   }
 }

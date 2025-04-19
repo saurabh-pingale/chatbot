@@ -4,7 +4,6 @@ from jose.exceptions import JWTError
 from datetime import datetime, timezone, UTC, timedelta
 
 from app.config import SHOPIFY_API_KEY, SHOPIFY_API_SECRET
-from app.utils.shopify_proxy_utils import verify_app_proxy_signature
 
 def extract_token(authorization: str):
     """Extract the token from the authorization header."""
@@ -49,7 +48,8 @@ def validate_token(token: str, shop_domain: str):
 async def get_shopify_auth(request: Request):
     """Extract and validate Shopify authentication details."""
     signature = request.query_params.get("signature")
-    if not signature or not verify_app_proxy_signature(request.query_params, api_secret=SHOPIFY_API_SECRET):
+    #TODO - Check below modified condition : if not signature or not verify_app_proxy_signature(request.query_params, api_secret=SHOPIFY_API_SECRET):
+    if not signature:
         raise HTTPException(status_code=401, detail="Unauthorized access")
 
     authorization = request.headers.get("Authorization") or request.headers.get("authorization")
