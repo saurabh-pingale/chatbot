@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const colorLoader = createLoader();
     container.appendChild(colorLoader);
 
-    container.style.setProperty('--primary-color', COLORS.TEAL_400);
+    container.style.setProperty('--primary-color', COLORS.ORANGE_450);
     container.style.setProperty('--text-color', COLORS.WHITE_100);
 
     const primaryColor = await initColorTheme();

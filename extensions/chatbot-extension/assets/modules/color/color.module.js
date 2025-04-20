@@ -3,16 +3,16 @@ import { getShopId } from '../../utils/shopify.utils';
 
 export async function fetchColorPreference() {
   const shopId = getShopId();
-  if (!shopId) return COLORS.TEAL_400;
+  if (!shopId) return COLORS.ORANGE_450;
 
   try {
     const response = await fetch(`/apps/chatbot-api/color-preference?shopId=${encodeURIComponent(shopId)}`);
     if (!response.ok) throw new Error('Failed to fetch color');
     const data = await response.json();
-    return data.color || COLORS.TEAL_400;
+    return data.color || COLORS.ORANGE_450;
   } catch (error) {
     console.error("Color fetch error:", error);
-    return COLORS.TEAL_400;
+    return COLORS.ORANGE_450;
   }
 }
 

@@ -53,6 +53,7 @@ export function initChatModule(primaryColor) {
   const sendButton = document.querySelector('.send-button');
 
   window.addEventListener('beforeunload', () => {
+    //TODO - If we are not using it, please remove it 
     closeWebSocket();
   });
 
