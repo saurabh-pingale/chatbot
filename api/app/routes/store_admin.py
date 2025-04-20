@@ -20,10 +20,11 @@ store_admin_router = APIRouter(prefix="/store-admin", tags=["store", "admin"])
     },
 )
 async def get_color_preference(request: Request):
-    shopId = request.query_params.get("shopId")
+    #TODO - In python use snake case instead of camel case
+    shop_id = request.query_params.get("shopId")
     try:
         app = get_app()
-        color = await app.store_admin_service.get_color_preference(shopId)
+        color = await app.store_admin_service.get_color_preference(shop_id)
         return {"color": color}
     except Exception as error:
         logger.error("Error in get_color_preference: %s", str(error), exc_info=True)

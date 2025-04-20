@@ -5,7 +5,7 @@ import { userQueries } from '../../utils/queris.config';
 
 export function renderContent(container, primaryColor, shouldOpen = false) {
     const hasEmail = hasSubmittedEmail();
-    const content = hasEmail 
+    const content = hasEmail
       ? createChatPage('Store Assistant', primaryColor, userQueries)
       : createEmailGatePage('Store Assistant', primaryColor);
   

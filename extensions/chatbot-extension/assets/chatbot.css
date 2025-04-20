@@ -633,8 +633,8 @@
   position: fixed;
   bottom: 80px;
   right: 20px;
-  width: 320px;
-  height: 380px;
+  width: 400px;
+  height: 600px;
   background-color: #f9f9f9;
   border: 1px solid var(--primary-color);
   border-radius: 12px;

@@ -9,6 +9,7 @@ from app.models.api.store_admin import (Collection, ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
 
+#TODO - Tried using new db url its not working, once check
 class StoreAdminHandler:
     def __init__(self):
         database_url = DATABASE_URL
@@ -18,7 +19,7 @@ class StoreAdminHandler:
         self.engine = create_async_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
 
-        #TODO - create_all() should be in start_event() in routes
+        #TODO - create_all() should be in start_event() in routes, ask chatgpt
         self.create_all()
 
     async def create_all(self):
@@ -48,12 +49,11 @@ class StoreAdminHandler:
                 result = []
 
                 titles = [c.title for c in collections]
-                existing_collections = await session.execute(
-                    CollectionModel.query.filter(CollectionModel.title.in_(titles))
-                )
-                existing_collections = existing_collections.scalars().all()
+                stmt = select(CollectionModel).where(CollectionModel.title.in_(titles))
+                existing_collections = await session.execute(stmt)
+                collections_list = existing_collections.scalars().all()
 
-                existing_map = {c.title: c for c in existing_collections}
+                existing_map = {c.title: c for c in collections_list}
 
                 to_insert = []
                 for collection in collections:
