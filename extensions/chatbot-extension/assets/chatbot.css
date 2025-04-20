@@ -401,6 +401,14 @@
   align-items: stretch;
 }
 
+.toggle-cancel{
+  transition: transform .2s ease-in;
+  width: 54px;
+  align-items: center;
+  height: 54px;
+  justify-content: center;
+}
+
 .product-slider::-webkit-scrollbar {
   display: none;
 }

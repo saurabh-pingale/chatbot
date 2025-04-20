@@ -7,6 +7,7 @@ export function createChatPage(chatbotTitle, primaryColor, userQueries) {
     const page = document.createElement('div');
     page.className = 'chat-page';
 
+    //TODO - Image should come from db where shopify admin will be uploaded also fallback if image is not uploaded
     const header = createChatHeader('#00A8E8', chatbotTitle, "https://uploads.servicebell.com/cdn-cgi/image/width=320,height=320,f=auto/widget-org-logos/770540926.533a796cc2644e93a2bb3dec2b40c3f2.png");
     page.appendChild(header);
 
