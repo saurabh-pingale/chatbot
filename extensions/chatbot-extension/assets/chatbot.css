@@ -603,6 +603,17 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
 }
 
+/* 📱 Mobile Responsiveness */
+@media (max-width: 600px) {
+  .chat-page {
+    width: 90vw;
+    height: 600px;
+    right: 5vw;
+    bottom: 10vh;
+    border-radius: 16px;
+  }
+}
+
 .chat-page.open {
   opacity: 1;
   transform: translateY(0);
