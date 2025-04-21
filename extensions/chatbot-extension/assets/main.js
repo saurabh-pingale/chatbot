@@ -7,6 +7,9 @@ import { initCartModule } from './modules/cart/cart.module';
 import { renderContent } from './modules/content/content.module';
 import { setupTracking } from './modules/user/tracking.module';
 import { createLoader } from './components/ui/Loader/Loader';
+import { getShopId } from './utils/shopify.utils';
+import { fetchStoreImage } from './modules/api/api.module';
+import { IMAGE } from './constants/colors.constants';
 
 let currentContent = null;
 let isOpen = false;
@@ -16,21 +19,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Chatbot container not found');
         return;
     }
-
+    
     const colorLoader = createLoader();
     container.appendChild(colorLoader);
-
+    
     container.style.setProperty('--primary-color', COLORS.ORANGE_450);
     container.style.setProperty('--text-color', COLORS.WHITE_100);
-
+    
     const primaryColor = await initColorTheme();
     container.removeChild(colorLoader);
+
+    const shopId = getShopId();
+    const imageUrl = await fetchStoreImage(shopId);
+
+    const finalImageUrl = imageUrl || IMAGE.FALLBACK;
     
-    const toggleButton = createToggleButton(primaryColor); 
+    const toggleButton = createToggleButton(primaryColor, finalImageUrl); 
     container.appendChild(toggleButton);
 
     window.chatbotRenderContent = (shouldOpen) => {
-        currentContent = renderContent(container, primaryColor, shouldOpen);
+        currentContent = renderContent(container, primaryColor, shouldOpen, finalImageUrl);
         if (shouldOpen && hasSubmittedEmail()) {
             initChatModule(primaryColor);
         }
@@ -41,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return currentContent;
     };
 
-    currentContent = renderContent(container, primaryColor, false);
+    currentContent = renderContent(container, primaryColor, false, imageUrl);
     
     toggleButton.addEventListener('click', () => {
         isOpen = !isOpen;

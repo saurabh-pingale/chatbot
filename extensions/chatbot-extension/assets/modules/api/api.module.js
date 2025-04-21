@@ -85,3 +85,15 @@ export function resetConversationHistory(history = []) {
     sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
   }
 }
+
+export async function fetchStoreImage(shopId) {
+  try {
+    const response = await fetch(`${API.STORE_IMAGE_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`);
+    if (!response.ok) throw new Error("Failed to fetch image");
+    const { imageUrl } = await response.json();
+    return imageUrl || null;
+  } catch (error) {
+    console.error("Error fetching store image:", error);
+    return null;
+  }
+}

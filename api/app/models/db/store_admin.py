@@ -17,6 +17,7 @@ class StoreModel(Base):
     country = Column(String, nullable=True)
     support_email = Column(Text, nullable=True)
     support_phone = Column(Text, nullable=True)
+    image = Column(String, nullable=True)
 
     conversations = relationship("ConversationModel", back_populates="store")
     users = relationship("UserModel", back_populates="store")

@@ -12,8 +12,6 @@ import {
 
 export default function ChatbotIndex() {
 
-
-  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const features = [
     "Trained with specialized vectors for accurate responses",
     "Answers product-specific questions instantly",
@@ -22,7 +20,6 @@ export default function ChatbotIndex() {
     "Customizable to match your brand voice"
   ];
 
-  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const exampleQuestions = [
     "How do I track my order?",
     "What's your return policy?",

@@ -5,25 +5,13 @@ import requests
 from typing import Type, TypeVar, Any, Dict
 from pydantic import BaseModel
 from app.utils.logger import logger
-from app.config import HUGGINGFACE_API
-from app.constants import HUGGINGFACE_API_URL, HUGGINGFACE_MODEL_NAME
+from app.config import CLUADE_API_KEY
+from app.constants import CLUADE_API_URL, CLUADE_MODEL_NAME
 
 T = TypeVar('T', bound=BaseModel)
 
 class HuggingFaceClient:
     """Client for interacting with Hugging Face's Inference API"""
-    
-    def __init__(self):
-        self.model_name = HUGGINGFACE_MODEL_NAME
-        self.api_url = HUGGINGFACE_API_URL
-        self.api_token = HUGGINGFACE_API
-        if not self.api_token:
-            raise ValueError("HUGGINGFACE_API_TOKEN environment variable not set")
-        
-        self.headers = {
-            "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
-        }
     
     async def _call_huggingface_api(
         self, 
@@ -32,54 +20,63 @@ class HuggingFaceClient:
         temperature: float = 0.7,
         max_new_tokens: int = 500
     ) -> str:
-        """Call the Hugging Face API directly"""
+        """Call the Claude Haiku API"""
         try:
             start_time = time.time() 
 
-            formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
+            headers = {
+                "x-api-key": CLUADE_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json"
+            }
+
+            prompt_content = []
+            if system_message:
+                prompt_content.append({"role": "system", "content": system_message})
+            prompt_content.append({"role": "user", "content": user_message})
             
             payload = {
-                "inputs": formatted_prompt,
-                "parameters": {
-                    "max_new_tokens": max_new_tokens,
-                    "temperature": temperature,
-                    "top_k": 50,
-                    "top_p": 0.95,
-                    "return_full_text": False
-                }
+                "model": CLAUDE_MODEL_NAME,
+                "messages": prompt_content,
+                "temperature": temperature,
+                "top_p": 0.95,
+                "max_tokens": max_new_tokens
             }
             
-            response = requests.post(
-                self.api_url,
-                headers=self.headers,
-                json=payload,
-                timeout=60
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    CLUADE_API_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=60.0
+                )
+                response.raise_for_status()
+                json_response = response.json()
 
             end_time = time.time()
             elapsed_time = end_time - start_time
             logger.info(f"Hugging Face API call took {elapsed_time:.2f} seconds")
                   
-            if response.status_code != 200:
-                error_msg = f"API request failed with status {response.status_code}: {response.text}"
-                logger.error(error_msg)
-                return "Error: API request failed"
+            content = (
+                json_response.get("content", [{}])[0].get("text", "")
+                if isinstance(json_response.get("content"), list)
+                else ""
+            )
 
             response_data = response.json()
             if not isinstance(response_data, list) or not response_data:
                 logger.error(f"Invalid response format: {response_data}")
                 return "Error: Invalid response format"
                 
-            generated_text = response_data[0].get('generated_text', '')
-            if not generated_text:
-                logger.error("No generated text in response")
-                return "Error: Empty response from API"
+            if not content:
+                logger.error("Claude response has no content")
+                return "Error: Empty response from Claude"
 
-            logger.info(f"HuggingFace API response: {generated_text}")
-            return generated_text
+            logger.info(f"Claude API response: {content}")
+            return content
             
         except Exception as e:
-            logger.error(f"Error calling HuggingFace API: {str(e)}", exc_info=True)
+            logger.error(f"Error calling Claude API: {str(e)}", exc_info=True)
             return f"Error: Unable to generate response due to {str(e)}"
     
     def _extract_json(self, text: str) -> Dict[str, Any]:

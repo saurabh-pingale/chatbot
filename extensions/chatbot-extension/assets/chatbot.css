@@ -36,7 +36,7 @@
   background-color: #ffffff;
   border-radius: 16px 10px 0 0;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-  z-index: 10001;
+  z-index: 2;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   overflow: hidden;
@@ -55,6 +55,7 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #f0f0f0;
+  z-index: 3;
 }
 
 .cart-drawer-title {
@@ -91,7 +92,7 @@
   font-size: 24px;
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 10000;
+  z-index: 4;
   color: white;
   transition: transform 0.2s;
 }
@@ -115,6 +116,7 @@
   cursor: pointer;
   text-decoration: none;
   transition: background-color 0.2s;
+  z-index: 3;
 }
 
 .checkout-button:hover {
@@ -274,6 +276,7 @@
   overflow-y: auto;
   gap: 8px;
   border-radius: 1rem;
+  scroll-behavior: smooth;
 }
 
 

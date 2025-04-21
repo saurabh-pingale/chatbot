@@ -3,10 +3,10 @@ import { createEmailGatePage } from '../../pages/EmailGatePage/EmailGatePage';
 import { hasSubmittedEmail } from '../user/session.module';
 import { userQueries } from '../../utils/queris.config';
 
-export function renderContent(container, primaryColor, shouldOpen = false) {
+export function renderContent(container, primaryColor, shouldOpen = false, finalImageUrl) {
     const hasEmail = hasSubmittedEmail();
     const content = hasEmail
-      ? createChatPage('Store Assistant', primaryColor, userQueries)
+      ? createChatPage('Store Assistant', primaryColor, userQueries, finalImageUrl)
       : createEmailGatePage('Store Assistant', primaryColor);
   
     const existingContent = container.querySelector('.chat-page, .email-gate-page');

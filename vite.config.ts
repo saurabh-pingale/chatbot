@@ -25,14 +25,14 @@ if (host === "localhost") {
   hmrConfig = {
     protocol: "ws",
     host: "localhost",
-    port: 64999,
-    clientPort: 64999,
+    port: 3000,
+    clientPort: 3000,
   };
 } else {
   hmrConfig = {
     protocol: "wss",
     host: host,
-    port: parseInt(process.env.FRONTEND_PORT!) || 8002,
+    port: 443,
     clientPort: 443,
   };
 }
@@ -43,8 +43,9 @@ export default defineConfig({
     cors: {
       preflightContinue: true,
     },
-    port: Number(process.env.PORT || 3000),
-    hmr: hmrConfig,
+    port: 3000,
+    strictPort: true,
+    hmr: false,
     fs: {
       // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
       allow: ["app", "node_modules"],

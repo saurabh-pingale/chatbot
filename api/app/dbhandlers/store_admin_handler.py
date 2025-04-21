@@ -5,26 +5,22 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 
 from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel
-from app.models.api.store_admin import (Collection, ProductRequest)
+from app.models.api.store_admin import (ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
 
-#TODO - Tried using new db url its not working, once check
 class StoreAdminHandler:
     def __init__(self):
         database_url = DATABASE_URL
-
         if not database_url:
             raise ValueError("Database URL must be provided in the environment variables.")
+        
         self.engine = create_async_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
 
-        #TODO - create_all() should be in start_event() in routes, ask chatgpt
-        self.create_all()
-
     async def create_all(self):
         async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)   
 
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetches color preference for a given shop ID."""
@@ -127,3 +123,83 @@ class StoreAdminHandler:
             except SQLAlchemyError as error:
                 logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
                 raise error
+            
+    async def save_color_preference(self, shop_id: str, color: str) -> None:
+        """Saves the color preference for a given shop ID."""
+        async with self.Session() as session:
+            try:
+                store = await session.execute(
+                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                )
+                store = store.scalars().first()
+
+                if not store:
+                    store = StoreModel(store_name=shop_id)
+                    session.add(store)
+
+                store.preferred_color = color
+                await session.commit()
+                logger.info(f"Color preference saved for shop: {shop_id}")
+
+            except SQLAlchemyError as error:
+                logger.error("Database error in save_color_preference: %s", str(error), exc_info=True)
+                raise error
+            
+    async def save_support_info(self, shop_id: str, email: str, phone: str) -> dict:
+        async with self.Session() as session:
+            try:
+                result = await session.execute(
+                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                )
+                store = result.scalars().first()
+                if not store:
+                    store = StoreModel(store_name=shop_id)
+                    session.add(store)
+
+                store.support_email = email
+                store.support_phone = phone
+
+                await session.commit()
+                return {"success": True}
+            except SQLAlchemyError as error:
+                await session.rollback()
+                logger.error("Error saving support info: %s", str(error), exc_info=True)
+                raise
+
+    async def save_store_image(self, shop_id: str, image_url: str) -> dict:
+        """Saves the image URL for a given store."""
+        async with self.Session() as session:
+            try:
+                result = await session.execute(
+                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                )
+                store = result.scalars().first()
+                if not store:
+                    store = StoreModel(store_name=shop_id)
+                    session.add(store)
+
+                store.image = image_url
+                await session.commit()
+                return {"success": True}
+            except SQLAlchemyError as error:
+                await session.rollback()
+                logger.error("Error saving store image: %s", str(error), exc_info=True)
+                return {"success": False}
+
+    async def get_image(self, store_name: str) -> Optional[dict]:
+        """Fetches image for a given store name."""
+        async with self.Session() as session:
+            try:
+                store = await session.execute(
+                    select(StoreModel).filter(StoreModel.store_name == store_name)
+                )
+                store = store.scalars().first()
+                if not store:
+                    logger.warning(f"No store found with name: {store_name}")
+                    return None
+
+                return store.image
+            except SQLAlchemyError as error:
+                logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
+                raise error
+    

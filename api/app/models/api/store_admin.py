@@ -47,3 +47,19 @@ class Product(BaseModel):
     url: Optional[str]
     price: str
     image: str = Field(default="")
+
+class ColorPreferenceRequest(BaseModel):
+    color: str
+
+class SupportInfoRequest(BaseModel):
+    supportEmail: str
+    supportPhone: str
+
+class StoreImageRequest(BaseModel):
+    imageUrl: str
+
+class StoreImageResponse(BaseModel):
+    success: bool
+
+class GetImageResponse(BaseModel):
+    image: Optional[str]

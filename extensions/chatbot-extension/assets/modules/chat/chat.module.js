@@ -52,15 +52,10 @@ export function initChatModule(primaryColor) {
   const inputBox = document.querySelector('.input-box');
   const sendButton = document.querySelector('.send-button');
 
-  window.addEventListener('beforeunload', () => {
-    //TODO - If we are not using it, please remove it 
-    closeWebSocket();
-  });
-
   loadChatHistoryFromSession(primaryColor);
   
   const handleSend = async (messageFromQuery) => {
-    const message = messageFromQuery || inputBox.value.trim();
+    const message = (messageFromQuery && typeof messageFromQuery === 'string') ? messageFromQuery : inputBox.value.trim();
     if (!message) return;
 
     if(!messageFromQuery) inputBox.value = '';
@@ -101,5 +96,10 @@ export function initChatModule(primaryColor) {
     if (e.key === 'Enter') handleSend();
   });
   
-  sendButton.addEventListener('click', handleSend);
+  sendButton.addEventListener('click', () => {
+    const message = inputBox.value.trim();
+    if (message) {
+      handleSend(message);
+    } 
+  });
 }

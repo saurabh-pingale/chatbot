@@ -4,9 +4,8 @@ import regex
 import hashlib
 from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
-from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
-from app.config import HUGGINGFACE_API
-from app.constants import HF_API_URL
+from app.config import CLUADE_API_KEY
+from app.constants import CLUADE_API_URL
 from app.utils.logger import logger
 from datetime import datetime, timedelta
 import threading
@@ -179,38 +178,37 @@ class DeepseekAIClient:
         try:
             logger.info(f"Calling HuggingFace Mixtral API with {len(messages)} messages")
             headers = {
-                "Authorization": f"Bearer {HUGGINGFACE_API}",
+                "x-api-key": CLUADE_API_KEY,
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }
             
-            # payload = {
-            #     "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            #     "messages": messages,
-            #     "temperature": temperature,
-            #     "top_p": top_p,
-            #     "max_tokens": max_tokens
-            # }
+            payload = {
+                "model": "claude-3-haiku-20240307",
+                "messages": [
+                    {"role": "user", "content": f"{system_message or ''}\n{schema_prompt}\nUser: {user_message}"}
+                ],
+                "temperature": temperature,
+                "top_p": top_p,
+                "max_tokens": max_tokens
+            }
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    HF_API_URL,
+                    CLUADE_API_URL,
                     headers=headers,
-                    json={
-                    "inputs": f"{system_message or ''}\n{schema_prompt}\nUser: {user_message}",
-                        "parameters": {
-                            "temperature": temperature,
-                            "top_p": top_p,
-                            "max_new_tokens": max_tokens,
-                            "return_full_text": False
-                        }
-                    },
+                    json=payload,
                     timeout=60.0
                 )
                 response.raise_for_status()
                 json_response = response.json()
                 
                 # Extract generated content
-                content = json_response[0]["generated_text"] if isinstance(json_response, list) else json_response.get("generated_text", "")
+                content = (
+                    json_response.get("content", [{}])[0].get("text", "")
+                    if isinstance(json_response.get("content"), list)
+                    else ""
+                )
                 logger.info(f"Raw Response: {content}")
 
                 # Clean the response - sometimes models add backticks or other text
