@@ -16,7 +16,7 @@ export async function sendSessionData(sessionData) {
   }
 }
 
-export async function fetchBotResponse(message, shopId) {
+export async function fetchBotResponse(message, shopId, user_id) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds 
   const headers = new Headers({
@@ -34,7 +34,12 @@ export async function fetchBotResponse(message, shopId) {
 
   sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
 
-  const URL = `${API.CHAT_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`;
+  const queryParams = new URLSearchParams({
+    shopId: shopId || '',
+    user_id: user_id || ''
+  });
+
+  const URL = `${API.CHAT_ENDPOINT}?${queryParams.toString()}`;
 
   try {
     const response = await fetch(URL, {

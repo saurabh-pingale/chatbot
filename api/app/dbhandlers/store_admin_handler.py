@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 
 from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel
 from app.models.api.store_admin import (ProductRequest)
@@ -43,33 +44,33 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 result = []
+                insert_data = []
+                for collection in collections:
+                    insert_data.append({
+                        'title': collection.title,
+                        'products_count': collection.products_count
+                    })
 
-                titles = [c.title for c in collections]
+                stmt = insert(CollectionModel).values(insert_data)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['title'],  
+                    set_={'products_count': stmt.excluded.products_count}
+                )
+
+                await session.execute(stmt)
+                await session.commit()
+
+                titles = [c['title'] for c in insert_data]
                 stmt = select(CollectionModel).where(CollectionModel.title.in_(titles))
                 existing_collections = await session.execute(stmt)
                 collections_list = existing_collections.scalars().all()
 
-                existing_map = {c.title: c for c in collections_list}
-
-                to_insert = []
-                for collection in collections:
-                    if collection.title in existing_map:
-                        existing_map[collection.title].products_count = collection.products_count
-                        result.append({
-                            "title": collection.title,
-                            "products_count": collection.products_count,
-                            "id": existing_map[collection.title].id
-                        })
-                    else:
-                        new_collection = CollectionModel(
-                            title=collection.title,
-                            products_count=collection.products_count
-                        )
-                        to_insert.append(new_collection)
-
-                if to_insert:
-                    session.add_all(to_insert)
-                    await session.commit()
+                for collection in collections_list:
+                    result.append({
+                        "title": collection.title,
+                        "products_count": collection.products_count,
+                        "id": collection.id
+                    })
 
                 return result
 
@@ -81,26 +82,37 @@ class StoreAdminHandler:
         """Stores products in the database and links them to collections using bulk insert."""
         async with self.Session() as session:
             try:
-                product_objs = []
-
+                insert_data = []
                 for product in products:
                     col_id = collection_id_map.get(product.category)
-                    product_obj = ProductModel(
-                        title=product.title,
-                        description=product.description,
-                        category=product.category,
-                        url=product.url,
-                        price=float(product.price) if product.price else None,
-                        image=product.image,
-                        collection_id=col_id if col_id else None
-                    )
-                    product_objs.append(product_obj)
+                    insert_data.append({
+                        'title': product.title,
+                        'description': product.description,
+                        'category': product.category,
+                        'url': product.url,
+                        'price': float(product.price) if product.price else None,
+                        'image': product.image,
+                        'collection_id': col_id if col_id else None
+                    })
 
-                session.add_all(product_objs)
+                stmt = insert(ProductModel).values(insert_data)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['title', 'category'], 
+                    set_={
+                        'description': stmt.excluded.description,
+                        'category': stmt.excluded.category,
+                        'url': stmt.excluded.url,
+                        'price': stmt.excluded.price,
+                        'image': stmt.excluded.image,
+                        'collection_id': stmt.excluded.collection_id
+                    }
+                )
+
+                await session.execute(stmt)
                 await session.commit()
 
             except Exception as error:
-                logger.error("Supabase error in store_products: %s", str(error), exc_info=True)
+                logger.error("Error in store_products: %s", str(error), exc_info=True)
                 raise error
 
     async def get_support_contact(self, store_name: str) -> Optional[dict]:

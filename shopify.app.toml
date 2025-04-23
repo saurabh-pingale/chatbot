@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "87869605ef99cb19747c1116d0a124d8"
+client_id = "12f3ff297ca026a165ba1a925b73aa90"
 name = "prod-chatbot"
-handle = "prod-chatbot"
-application_url = "https://analyzed-outputs-mrna-retention.trycloudflare.com"
+handle = "prod-chatbot-1"
+application_url = "https://adequate-donated-journals-spirit.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,27 +13,19 @@ include_config_on_deploy = true
 [webhooks]
 api_version = "2025-04"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "https://dpi-tobacco-shall-board.trycloudflare.com/webhooks/app/scopes_update"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "https://dpi-tobacco-shall-board.trycloudflare.com/webhooks/app/uninstalled"
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://analyzed-outputs-mrna-retention.trycloudflare.com/auth/callback",
-  "https://analyzed-outputs-mrna-retention.trycloudflare.com/auth/shopify/callback",
-  "https://analyzed-outputs-mrna-retention.trycloudflare.com/api/auth/callback"
+  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/callback",
+  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/shopify/callback",
+  "https://adequate-donated-journals-spirit.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://analyzed-outputs-mrna-retention.trycloudflare.com"
+url = "https://adequate-donated-journals-spirit.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

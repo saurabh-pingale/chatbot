@@ -58,18 +58,33 @@ export function initChatModule(primaryColor) {
     const message = (messageFromQuery && typeof messageFromQuery === 'string') ? messageFromQuery : inputBox.value.trim();
     if (!message) return;
 
+    if (message.length > 200) {
+      addMessage(
+        'The message you submitted was too long, please reload the conversation and submit something shorter.',
+        'bot',
+        [],
+        COLORS.GRAY_500
+      );
+      return;
+    }
+
     if(!messageFromQuery) inputBox.value = '';
     
     trackEvent('interactions', {});
 
     addMessage(message, 'user', [], primaryColor);
+
     inputBox.value = '';
+    inputBox.style.height = 'auto';
     
     const typingIndicator = createTypingIndicator(primaryColor);
     document.querySelector('.message-list').appendChild(typingIndicator);
 
     try {
-      const { answer, products } = await fetchBotResponse(message, getShopId());
+      const sessionData = JSON.parse(sessionStorage.getItem('chatbotSessionData') || {});
+      const user_id = sessionData?.email || '';
+
+      const { answer, products } = await fetchBotResponse(message, getShopId(), user_id);
 
       addMessage(answer, 'bot', products || [], COLORS.GRAY_500); 
     } catch(error) {
@@ -87,10 +102,6 @@ export function initChatModule(primaryColor) {
   };
 
   window.sendChatMessage = handleSend;
-
-  inputBox.addEventListener('input', () => {
-    sendButton.disabled = inputBox.value.trim() === '';
-  });
   
   inputBox.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();

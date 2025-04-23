@@ -4,8 +4,8 @@ import regex
 import hashlib
 from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
-from app.config import CLUADE_API_KEY
-from app.constants import CLUADE_API_URL
+from app.config import CLAUDE_API_KEY
+from app.constants import CLAUDE_API_URL
 from app.utils.logger import logger
 from datetime import datetime, timedelta
 import threading
@@ -129,6 +129,8 @@ class DeepseekAIClient:
         Returns:
             Instance of the provided Pydantic model
         """
+        logger.info(f"System Message: {system_message}")
+        logger.info(f"User Message: {user_message}")
         # Generate cache key
         cache_key = DeepseekAIClient._generate_cache_key(
             model_class, user_message, system_message, 
@@ -176,9 +178,9 @@ class DeepseekAIClient:
         messages.append({"role": "user", "content": user_message})
         
         try:
-            logger.info(f"Calling HuggingFace Mixtral API with {len(messages)} messages")
+            logger.info(f"Calling Claude Haiku API with {len(messages)} messages")
             headers = {
-                "x-api-key": CLUADE_API_KEY,
+                "x-api-key": CLAUDE_API_KEY,
                 "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }
@@ -195,7 +197,7 @@ class DeepseekAIClient:
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    CLUADE_API_URL,
+                    CLAUDE_API_URL,
                     headers=headers,
                     json=payload,
                     timeout=60.0

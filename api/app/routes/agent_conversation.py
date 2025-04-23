@@ -1,3 +1,4 @@
+import json
 import time
 from fastapi import APIRouter, Request, HTTPException
 
@@ -32,9 +33,17 @@ async def agent_conversation(request: Request):
         user_message = extract_last_message["user"] if extract_last_message else None
         
         shopId = request.query_params.get("shopId")
+        user_id = request.query_params.get("user_id")
         app = get_app()
         
         response = await app.agent_router_service.generate_agent_response(shopId, user_message, contents)
+
+        await app.conversation_service.store_conversation({
+            "user_query": user_message,
+            "agent_response": json.dumps(response['answer']),
+            "user_id": user_id,
+            "store_id": shopId
+        })
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time

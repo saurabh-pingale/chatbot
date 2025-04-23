@@ -82,26 +82,18 @@ class EmbeddingsHandler:
                         match=models.MatchValue(value=namespace)
                     )
                 )
-            
+
             if metadata_filters:
-                if "min_price" in metadata_filters or "max_price" in metadata_filters:
-                    price_range = {}
-                    if "min_price" in metadata_filters:
-                        price_range["gte"] = metadata_filters["min_price"]
-                    if "max_price" in metadata_filters:
-                        price_range["lte"] = metadata_filters["max_price"]
-                    
+                for key, value in metadata_filters.items():
                     filter_conditions.append(
                         models.FieldCondition(
-                            key="price",
-                            range=models.Range(**price_range)
+                            key=key,
+                            match=models.MatchValue(value=value)
                         )
                     )
 
-            query_filter = None
-            if filter_conditions:
-                query_filter = models.Filter(must=filter_conditions)
-            
+            query_filter = None if not filter_conditions else models.Filter(must=filter_conditions)
+
             search_params = models.SearchParams(
                 hnsw_ef=128, 
                 exact=False  

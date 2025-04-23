@@ -6,5 +6,5 @@ HUGGINGFACE_API_URL = f"https://api-inference.huggingface.co/models/{HUGGINGFACE
 
 HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
 
-CLUADE_API_URL="https://api.anthropic.com/v1/messages"
-CLUADE_MODEL_NAME = "claude-3-haiku-20240307"
+CLAUDE_API_URL="https://api.anthropic.com/v1/messages"
+CLAUDE_MODEL_NAME = "claude-3-haiku-20240307"

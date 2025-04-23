@@ -1,6 +1,6 @@
 {
     "classifier_agent_prompt": {
-      "system_message": "You are a classifier that determines if a user message is a greeting, a product query, or an order-related query.",
+      "system_message": "You are a classification agent. Classify the user's message into ONLY one of: greeting, product, or order. Respond ONLY with a valid JSON object in this exact format: { \"classification\": \"<greeting|product|order>\", \"confidence\": <float between 0 and 1>, \"reasoning\": \"<brief explanation>\" }. Do NOT include any text outside the JSON. No explanations. Just the JSON object.",
       "examples": [
         {
           "user_message": "Hello there",
