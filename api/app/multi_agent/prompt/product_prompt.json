@@ -1,44 +1,53 @@
 {
-    "product_agent_prompt": {
-      "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries including handling requests for specific categories, price ranges, features, and other product attributes. Consider the full conversation context when responding.\n\nConversation Context:\n{history} \n\nFORMATTING RULES:\n- Always present lists of products or categories as bullet points\n- Use '•' for bullet points\n- Keep product listings concise with name and price\n- Separate different sections clearly with line breaks. \n\nAfter creating your response, assess your confidence in your answer on a scale of 0 to 1 based on how well your response addresses the user's product-related needs. Format your confidence assessment as:\n<confidence>0.X</confidence>\nwhere X is a number between 0 and 10. This confidence score should reflect your certainty that you've provided relevant product information that matches the user's query intentions. Always list actual matching products in bullet-point format when available.",
-      "history_template": "User: {user}\nAssistant: {agent}\n",
-      "feedback_instruction_template": {
-        "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
-        "required_fields": ["quality_score", "feedback"]
-      },
-      "user_message_template": {
-        "sections": [
-          "User query: \"{user_message}\"",
-          "Available products:\n{products}",
-          "Categories available:\n{categories}",
-          "Please create a helpful response that answers the user's product query.\n- If products matching the user's request exist, present them in a bullet-point list using the format: • Product Name - Price\n- Show as many matching products as possible. If fewer than 3 products match, display only those available.\n- Do not just summarize or count; always list products with names and prices if available.\n- If no relevant products are found, suggest alternatives or ask for clarification."
-        ],
-        "default_values": {
-          "products": "No matching products found in catalog.",
-          "categories": "No specific categories available."
-        }
-      },
-      "response_structure": {
-        "components": ["introduction", "products", "suggestions", "closing"],
-        "product_format": "• {name} - {price}",
-        "fallback_responses": {
-          "with_products": "I found some products that might interest you: {product_names}. Would you like more details on any of these?",
-          "no_products": "I couldn't find specific products matching your query. Could you try describing what you're looking for differently? Or perhaps specify a different category or price range?"
-        }
-      },
-      "rag_settings": {
-        "max_products_first_pass": 6,
-        "max_product_display": 3,
-        "namespace": "{namespace}"
-      },
-      "parameters": {
-        "temperature": 0.7,
-        "max_tokens": 1000,
-        "model_class": "ProductResponse"
-      },
-      "logging": {
-        "log_response_length": true,
-        "log_retry_attempts": true
+  "product_agent_prompt": {
+    "base_system_message": "You are a specialized product search assistant for a Shopify store. Your task is to help users find and learn about products based on their queries including handling requests for specific categories, price ranges, features, and other product attributes. Only provide information and suggestions strictly from the available product catalog and categories. Do not suggest or reference any products or categories not listed in the catalog. Do not make assumptions or fabricate product information.\n\nIf a user asks about:\n- A product or category **not in the catalog**, politely respond that it's unavailable and suggest available alternatives.\n- A marketplace like **Amazon, Flipkart, or others**, respond that you cannot access external stores and can only help with products available in this store.\n- If there are **no matching products**, inform the user clearly and suggest other products from the catalog.\n\nConversation Context:\n{history} \n\nFORMATTING RULES:\n- Always present lists of products or categories as bullet points\n- Use '•' for bullet points\n- Keep product listings concise with name and price\n- Separate different sections clearly with line breaks. \n\nAfter creating your response, assess your confidence in your answer on a scale of 0 to 1 based on how well your response addresses the user's product-related needs. Format your confidence assessment as:\n<confidence>0.X</confidence>",
+    
+    "history_template": "User: {user}\nAssistant: {agent}\n",
+    
+    "feedback_instruction_template": {
+      "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
+      "required_fields": ["quality_score", "feedback"]
+    },
+
+    "user_message_template": {
+      "sections": [
+        "User query: \"{user_message}\"",
+        "Available products:\n{products}",
+        "Categories available:\n{categories}",
+        "Please create a helpful response that answers the user's product query.\n- If products matching the user's request exist, present them in a bullet-point list using the format: • Product Name - Price\n- Show as many matching products as possible. If fewer than 3 products match, display only those available.\n- If no relevant products are found, clearly state that and recommend other available products or categories.\n- If the query is about a product or category not listed, mention it's not available and suggest valid categories or products.\n- If the user asks about another marketplace, state that external store access is unavailable and guide them to in-store options only."
+      ],
+      "default_values": {
+        "products": "No matching products found in catalog.",
+        "categories": "No specific categories available."
       }
+    },
+
+    "response_structure": {
+      "components": ["introduction", "products", "suggestions", "closing"],
+      "product_format": "• {name} - {price}",
+      "fallback_responses": {
+        "with_products": "I found some products that might interest you: {product_names}. Would you like more details on any of these?",
+        "no_products": "I couldn't find any matching products for your query. However, here are some other items you might like:\n{alternative_products}",
+        "outside_catalog": "We currently don't have that product or category available in our store. Here are the available categories you can explore:\n{categories}",
+        "external_marketplace": "I'm not able to access products from other marketplaces like Amazon or Flipkart. Instead, here are some great products available here:\n{alternative_products}"
+      }
+    },
+
+    "rag_settings": {
+      "max_products_first_pass": 6,
+      "max_product_display": 3,
+      "namespace": "{namespace}"
+    },
+
+    "parameters": {
+      "temperature": 0.7,
+      "max_tokens": 1000,
+      "model_class": "ProductResponse"
+    },
+
+    "logging": {
+      "log_response_length": true,
+      "log_retry_attempts": true
     }
+  }
 }
