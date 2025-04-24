@@ -73,7 +73,7 @@ export function openCartDrawer() {
   drawerInstance.classList.add('open');
   drawerInstance.classList.remove('auto-close');
   
-  resetAutoCloseTimer();
+  // resetAutoCloseTimer();
 }
 
 export function closeCartDrawer() {
@@ -247,10 +247,10 @@ function persistCart(items) {
   }
 }
 
-function resetAutoCloseTimer() {
-  if (cartDrawerAutoCloseTimer) clearTimeout(cartDrawerAutoCloseTimer);
-  cartDrawerAutoCloseTimer = setTimeout(closeCartDrawer, 5000);
-}
+// function resetAutoCloseTimer() {
+//   if (cartDrawerAutoCloseTimer) clearTimeout(cartDrawerAutoCloseTimer);
+//   cartDrawerAutoCloseTimer = setTimeout(closeCartDrawer, 5000);
+// }
 
 function loadCartFromStorage() {
   updateCartDrawer(getCartItems());
