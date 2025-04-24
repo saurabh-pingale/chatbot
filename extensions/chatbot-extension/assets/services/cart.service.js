@@ -295,7 +295,7 @@ async function handleCartUpdate(event) {
 }
 
 async function handleStoreCartUpdate(storeCart) {
-  if (isCartSyncInProgress) return;
+  if (isStoreCartUpdating) return;
 
   const items = storeCart.items.map(item => ({
     id: item.id,

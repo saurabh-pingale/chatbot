@@ -1,10 +1,9 @@
 import { fetchBotResponse } from '../api/api.module';
-import { resetConversationHistory } from '../../utils/session.utils';
+import { resetConversationHistory } from '../api/api.module';
 import { addMessage } from '../../services/message.service';
 import { createTypingIndicator } from '../../components/chat/TypingIndicator/TypingIndicator';
 import { getShopId } from '../../utils/shopify.utils';
 import { COLORS } from '../../constants/colors.constants';
-import { initWebSocket, closeWebSocket } from '../../services/websocket.service';
 import { trackEvent } from '../user/tracking.module';
  
 let messagesLoaded = false;
@@ -52,12 +51,6 @@ export function initChatModule(primaryColor) {
 
   const inputBox = document.querySelector('.input-box');
   const sendButton = document.querySelector('.send-button');
-
-  const shopId = getShopId();
-  const sessionData = JSON.parse(sessionStorage.getItem('chatbotSessionData') || '{}');
-  const userId = sessionData.email; 
-  console.log('Initializing WebSocket with:', { shopId, userId });
-  initWebSocket(shopId, userId);
 
   window.addEventListener('beforeunload', () => {
     closeWebSocket();

@@ -1,4 +1,3 @@
-import { getRepository } from "typeorm";
 import { Store } from "./db/entity/Store";
 import { createDatabaseConnection } from "./db/database";
 

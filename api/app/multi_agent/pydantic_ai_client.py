@@ -1,10 +1,12 @@
 import json
 import httpx
+import regex
 import hashlib
-import time
 from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
 from app.config import DEEPSEEK_API_URL, DEEPSEEK_API_KEY
+from app.config import HUGGINGFACE_API
+from app.constants import HF_API_URL
 from app.utils.logger import logger
 from datetime import datetime, timedelta
 import threading
@@ -162,11 +164,12 @@ class DeepseekAIClient:
             messages.append({"role": "system", "content": system_message})
         
         schema_prompt = schema_instructions or f"""
-        You must respond in valid JSON format according to this schema:
+        You are an API that must return JSON only.
+        The output must match this JSON schema exactly:
         {schema_str}
         
-        Your response must ONLY contain the JSON object, nothing else.
-        The JSON must be valid and match the schema exactly.
+        Do not include any additional explanation or text.
+        Only return a valid JSON object.
         """
         
         messages.append({"role": "system", "content": schema_prompt})
@@ -174,49 +177,49 @@ class DeepseekAIClient:
         messages.append({"role": "user", "content": user_message})
         
         try:
-            logger.info(f"Calling Deepseek API with {len(messages)} messages")
+            logger.info(f"Calling HuggingFace Mixtral API with {len(messages)} messages")
             headers = {
-                "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                "Authorization": f"Bearer {HUGGINGFACE_API}",
                 "Content-Type": "application/json"
             }
             
-            payload = {
-                "model": "deepseek-chat",
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-                "top_p": top_p,
-                "stream": False,
-                "response_format": {"type": "json_object"}
-            }
+            # payload = {
+            #     "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+            #     "messages": messages,
+            #     "temperature": temperature,
+            #     "top_p": top_p,
+            #     "max_tokens": max_tokens
+            # }
             
-            start_time = time.perf_counter()
-
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    DEEPSEEK_API_URL,
+                    HF_API_URL,
                     headers=headers,
-                    json=payload,
+                    json={
+                    "inputs": f"{system_message or ''}\n{schema_prompt}\nUser: {user_message}",
+                        "parameters": {
+                            "temperature": temperature,
+                            "top_p": top_p,
+                            "max_new_tokens": max_tokens,
+                            "return_full_text": False
+                        }
+                    },
                     timeout=60.0
                 )
                 response.raise_for_status()
-
-                end_time = time.perf_counter()
-
-                duration = end_time - start_time
-                logger.info(f"Deepseek API call took {duration:.2f} seconds")
-
                 json_response = response.json()
                 
                 # Extract generated content
-                content = json_response["choices"][0]["message"]["content"]
-                
+                content = json_response[0]["generated_text"] if isinstance(json_response, list) else json_response.get("generated_text", "")
+                logger.info(f"Raw Response: {content}")
+
                 # Clean the response - sometimes models add backticks or other text
                 content = DeepseekAIClient._clean_json_response(content)
                 
                 # Parse as JSON and validate with the model
                 try:
-                    parsed_data = json.loads(content)
+                    parsed_data = json.loads(DeepseekAIClient.extract_json_only(content))
+                    logger.info(f"Parsed Data: {parsed_data}")
                     result = model_class.model_validate(parsed_data)
                     
                     # Store in cache
@@ -240,7 +243,7 @@ class DeepseekAIClient:
         except Exception as e:
             logger.error(f"Error calling Deepseek API: {e}", exc_info=True)
             raise
-    
+
     @staticmethod
     def _clean_json_response(content: str) -> str:
         """
@@ -307,3 +310,10 @@ class DeepseekAIClient:
             except json.JSONDecodeError:
                 logger.error("Could not repair JSON, returning raw content")
                 return content.strip()
+       
+    @staticmethod   
+    def extract_json_only(text: str) -> str:
+        json_match = regex.search(r'\{(?:[^{}]|(?R))*\}', text, regex.DOTALL)
+        if json_match:
+            return json_match.group(0)
+        raise ValueError("No valid JSON object found in the text.")

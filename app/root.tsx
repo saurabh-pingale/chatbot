@@ -5,7 +5,6 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import Chatbot from "./components/Chatbot";
 
 export default function App() {
   return (
@@ -23,7 +22,6 @@ export default function App() {
       </head>
       <body>
         <Outlet />
-        <Chatbot />
         <ScrollRestoration />
         <Scripts />
       </body>
