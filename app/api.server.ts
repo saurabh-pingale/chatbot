@@ -13,11 +13,6 @@ export async function forwardRequestToBackend(path: string, request: Request) {
   const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
   try {
-    fetch('https://fakestoreapi.com/products/1')
-            .then(res=>res.json())
-            .then(json=>console.log(json))
-      
-    console.log("Full URL:", fullUrl);
     const response = await fetch(fullUrl, {
       method: request.method,
       headers: headers,
