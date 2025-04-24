@@ -1,10 +1,10 @@
 export const API = {
     IP_ADDRESS: 'https://api.ipify.org?format=json',
     USER_LOCATION: 'https://ipapi.co',
-    CHAT_ENDPOINT: '/apps/chatbot-api/agent_conversation',
-    ANALYTICS_ENDPOINT: '/apps/chatbot-api/analytics',
-    STORE_IMAGE_ENDPOINT: '/apps/chatbot-api/get_image',
-    COLOR_ENDPOINT: '/apps/chatbot-api/color-preference'
+    CHAT_ENDPOINT: 'https://fastapi.formpilot.org/agent_conversation_router/agent_conversation',
+    ANALYTICS_ENDPOINT: 'https://fastapi.formpilot.org/analytics_router/analytics',
+    STORE_IMAGE_ENDPOINT: 'https://fastapi.formpilot.org/store-admin/get_image',
+    COLOR_ENDPOINT: 'https://fastapi.formpilot.org/store-admin/color-preference'
 };
 
 export const SHOPIFY_API = {
