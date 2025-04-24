@@ -198,7 +198,7 @@
 .quantity-selector {
   display: flex;
   align-items: center;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 4px;
   overflow: hidden;
 }
@@ -233,7 +233,6 @@
   border-radius: 8px;
   border: 1px solid #d0d2d0;
   padding: 10px;
-  padding-left: 30px;
   box-sizing: border-box;
 }
 
@@ -534,7 +533,6 @@
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
-  z-index: 11;
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
 }
@@ -832,7 +830,6 @@ button:has(.circular-loader) .circular-loader {
   margin: 0;
   position: sticky;
   bottom: 50px;
-  z-index: 10;
   width: 100%;
   box-sizing: border-box;
   scrollbar-width: none; 
