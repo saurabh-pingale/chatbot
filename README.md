@@ -1,6 +1,6 @@
 # Shopify Remix Chatbot App
 
-This is a Shopify Remix Chatbot App that allows users to interact with a chatbot on their Shopify store. The chatbot can be customized and trained to provide responses based on the products available in the store. The app integrates with Shopify's Admin API, Supabase for database management, Pinecone for vector storage, and Hugging Face for natural language processing.
+This is a Shopify Remix Chatbot App that allows users to interact with a chatbot on their Shopify store. The chatbot can be customized and trained to provide responses based on the products available in the store. The app integrates with Shopify's Admin API, Supabase for database management, Quadrant for vector storage, and Hugging Face for natural language processing.
 
 ## Features
 
@@ -12,7 +12,7 @@ This is a Shopify Remix Chatbot App that allows users to interact with a chatbot
 - **Training:** Users can train the chatbot by fetching products from their Shopify store or by manually 
   entering product data in JSON format.
 
-- **Vector Database:** Product data is converted into embeddings and stored in a Pinecone vector 
+- **Vector Database:** Product data is converted into embeddings and stored in a Quadrant vector 
   database for efficient querying.
 
 - **Response Generation:** The chatbot uses a language model (DeepSeek-R1-Distill-Qwen-32B) to generate 
@@ -43,9 +43,9 @@ Before you begin, ensure you have the following installed:
 
     - Create a [Supabase](https://supabase.com/) account for database management.
  
-5. **Pinecone Account:**
+5. **Quadrant Account:**
 
-    - Create a [Pinecone](https://www.pinecone.io/) account for vector storage.
+    - Create a [Quadrant](www.quadrant.com) account for vector storage.
 
 6. **Hugging Face Account:**
 
@@ -79,7 +79,7 @@ SHOPIFY_APP_URL='your-shopify-app-url'
 SUPABASE_URL='your-supabase-url'
 SUPABASE_SERVICE_ROLE_KEY='your-supabase-service-role-key'
 
-PINECONE_API_KEY='your-pinecone-api-key'
+QUADRANT_API_KEY='your-quadrant-api-key'
 
 HUGGINGFACE_API_KEY='you-huggingface-api-key'
 ```
@@ -152,10 +152,10 @@ function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boo
 - **Training the Chatbot**
   To train the chatbot, navigate to the Training page. You can either fetch products from your Shopify  
   store using the Fetch Products button or manually enter product data in JSON format. The products will 
-  be converted into embeddings and stored in the Pinecone vector database.
+  be converted into embeddings and stored in the Quadrant vector database.
 
 - **Querying the Chatbot**
-  When a user sends a message to the chatbot, the app queries the Pinecone vector database for matching 
+  When a user sends a message to the chatbot, the app queries the Quadrant vector database for matching 
   embeddings. If a match is found, the embeddings and the user's message are passed to the language 
   model, which generates a response. If no match is found, the chatbot responds with "I don't have much 
   information on this."
@@ -167,10 +167,10 @@ function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boo
 
 - **Shopify Polaris:** For building the user interface.
 
-- **Supabase:** For database management.
+- **Postgres:** For database management.
 
-- **Pinecone:** For storing and querying vector embeddings.
+- **Quadrant:** For storing and querying vector embeddings.
 
 - **Xenova/Transformers:** For generating embeddings using the all-MiniLM-L6-v2 model.
 
-- **Hugging Face:** For generating responses using the DeepSeek-R1-Distill-Qwen-32B model.
+- **Hugging Face:** For generating responses using the Mistral model.

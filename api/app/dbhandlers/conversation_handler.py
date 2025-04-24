@@ -2,6 +2,7 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
 from datetime import datetime
 
 from app.models.db.conversation import ConversationModel
@@ -25,9 +26,9 @@ class ConversationHandler:
             try:
                 store_name = conversation_data["store_id"]
                 store = await session.execute(
-                    StoreModel.__table__.select().where(StoreModel.store_name == store_name)
+                    select(StoreModel).where(StoreModel.store_name == store_name)
                 )
-                store_record = store.scalar_one_or_none()
+                store_record = store.scalars().first()
 
                 if not store_record:
                     # If store does not exist, create a new store
@@ -45,9 +46,9 @@ class ConversationHandler:
 
                 user_id = conversation_data["user_id"]
                 user_query = await session.execute(
-                    UserModel.__table__.select().where(UserModel.email == user_id)
+                    select(UserModel).where(UserModel.email == user_id)
                 )
-                user_record = user_query.scalar_one_or_none()
+                user_record = user_query.scalars().first()
 
                 if not user_record:
                     new_user = UserModel(

@@ -36,7 +36,21 @@ class OrderAgent(Agent):
 
             history_context = self._build_history_context(context)
 
+            store_handler = StoreAdminHandler()
+            store_contact = await store_handler.get_support_contact(context.namespace)
+
+            support_email = store_contact.get("support_email", "email not available")
+            support_phone = store_contact.get("support_phone", "phone number not available")
+
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
+
+            support_contact_message = self.prompt_config['support_contact_message'].format(
+                support_email=support_email,
+                support_phone=support_phone
+            )
+
+            system_message += f"\n\n{support_contact_message}"
+
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
@@ -48,20 +62,6 @@ class OrderAgent(Agent):
                 for section in self.prompt_config['user_message_template']['sections']
             ])
 
-            store_handler = StoreAdminHandler()
-            store_contact = await store_handler.get_support_contact(context.namespace)
-            logger.info(f"Contact Info: {store_contact}")
-
-            if store_contact and (store_contact.get("support_email") or store_contact.get("support_phone")):
-                support_contact_message = "For specific details about your order or to take further action, please contact our support team"
-                if store_contact.get("support_email"):
-                    support_contact_message += f" at {store_contact['support_email']}"
-                if store_contact.get("support_phone"):
-                    support_contact_message += f" or call us at {store_contact['support_phone']}"
-                support_contact_message += " with your order number ready."
-            else:
-                support_contact_message = self.prompt_config['support_contact_message']
-
             result = await DeepseekAIClient.generate(
                 model_class=OrderResponse,
                 user_message=user_message,
@@ -71,10 +71,6 @@ class OrderAgent(Agent):
             )
 
             response_text = result.response_text
-            
-            if result.requires_support:
-                response_text += f"\n\n{self.prompt_config['support_contact_message']}"
-
             context.response = response_text
 
             context.response, confidence_score = self._extract_confidence_score(context.response)
@@ -97,7 +93,7 @@ class OrderAgent(Agent):
             context.metadata["error"] = f"Order agent error: {str(e)}"
             context.confidence_score = 0.0
             
-            context.response = self.prompt_config['fallback_responses']['general_error'] + " " + self.prompt_config['support_contact_message']
+            context.response = f"{self.prompt_config['fallback_responses']['general_error']} {support_contact_message}"
                 
             return context
 

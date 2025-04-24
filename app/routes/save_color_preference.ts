@@ -1,34 +1,23 @@
-import { getRepository } from 'typeorm';
-import { Store } from './db/entity/Store';
-import { createDatabaseConnection } from './db/database';
+import { API } from "app/constants/api.constants";
 
 export const saveColorPreference = async (shopId: string, color: string) => {
-  let connection;
   try {
-    connection = await createDatabaseConnection();
+    const response = await fetch(`${API.BACKEND_URL}/store-admin/save-color-preference?shopId=${shopId}`, {
+      method: "POST",
+      body: JSON.stringify({ color }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    const storeRepository = getRepository(Store);
-
-    let store = await storeRepository.findOne({ where: { store_name: shopId } });
-
-    if (!store) {
-      store = new Store();
-      store.store_name = shopId;
-      store.preferred_color = color;
-
-      await storeRepository.save(store);
-    } else {
-      store.preferred_color = color;
-      await storeRepository.save(store);
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to save color preference");
     }
 
-    return { success: true };
-  } catch (error: any) {
-    console.error("Error in saveColorPreference:", error);
-    throw new Error(`Failed to save color preference: ${error.message || "Unknown error"}`);
-  } finally {
-    if (connection) {
-      await connection.close();
-    }
+    return result;
+  } catch (error) {
+    console.error("Error saving color preference:", error);
+    throw new Error(`Failed to save color preference:`);
   }
 };

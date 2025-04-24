@@ -7,7 +7,7 @@ from app.utils.rag_pipeline_utils import (
     extract_products_from_response,
     format_context_texts,
     extract_categories,
-    extract_essential_filters
+    extract_metadata_from_message
 )
 from app.multi_agent.pydantic_ai_client import DeepseekAIClient
 from app.models.api.agent_router import ProductResponse
@@ -41,22 +41,29 @@ class ProductAgent(Agent):
                     previous_response = f"Previous response: {context.response}\n\n"
 
             if not context.products or context.attempts == 0:
-                essential_filters = extract_essential_filters(context.user_message)
-
-                essential_filters["namespace"] = context.namespace
-
                 user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
+
+                metadata_filters = extract_metadata_from_message(context.user_message)
 
                 query_response = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings,
                     namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
-                    metadata_filters=essential_filters
+                    metadata_filters=metadata_filters
                 )
 
                 products = extract_products_from_response(query_response)
+
+                # full_product_count = len(products)
+                # max_display = self.prompt_config['rag_settings']['max_product_display']
+                # note = ""
+
+                # if full_product_count > max_display:
+                    # note = f"Note: We found {full_product_count} matching products, but only the top {max_display} are shown here."
+
                 context_texts = format_context_texts(query_response)
                 
-                context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
+                # context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
+                context.products = products 
                 context.categories = extract_categories(products) if products else []
 
             else:
@@ -70,6 +77,7 @@ class ProductAgent(Agent):
                     "description": p.get("description", ""),
                     "category": p.get("category", "")
                 })
+            logger.info(f"Number of products passed to generate(): {len(product_data)}")
 
             history_context = self._build_history_context(context)
 
@@ -85,6 +93,12 @@ class ProductAgent(Agent):
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             ])
+            logger.info(f"User Message: {user_message}")
+            
+            # if note:
+                # user_message += f"\n\n{note}"
+
+            logger.info(f"User Message: {user_message}")
 
             result = await DeepseekAIClient.generate(
                 model_class=ProductResponse,
@@ -93,7 +107,7 @@ class ProductAgent(Agent):
                 temperature=self.prompt_config['parameters']['temperature'],
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
-
+            logger.info(f"LLM RESPONSE: {result}")
             response_text = result.introduction
 
             if result.products:

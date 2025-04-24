@@ -1,27 +1,26 @@
-import { Store } from "./db/entity/Store";
-import { createDatabaseConnection } from "./db/database";
+import { API } from "app/constants/api.constants";
 
 export const saveSupportInfo = async (shopId: string, supportEmail: string, supportPhone: string) => {
-  let connection;
   try {
-    connection = await createDatabaseConnection();
+    const response = await fetch(
+      `${API.BACKEND_URL}/store-admin/save-support-info?shopId=${shopId}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ supportEmail, supportPhone }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    const storeRepository = connection.getRepository(Store);
-
-    let store = await storeRepository.findOne({ where: { store_name: shopId } });
-
-    if (!store) {
-      store = new Store();
-      store.store_name = shopId;
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to save support info");
     }
 
-    store.support_email = supportEmail;
-    store.support_phone = supportPhone;
-
-    await storeRepository.save(store);
-    return { success: true };
-  } catch (error: any) {
-    console.error("Error in saveSupportInfo:", error);
-    throw new Error(`Failed to save support info: ${error.message || "unknown error"}`);
+    return result;
+  } catch (error) {
+    console.error("Error saving support info:", error);
+    throw new Error("Failed to save support info");
   }
 };

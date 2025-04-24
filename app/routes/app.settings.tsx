@@ -18,6 +18,8 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { ActionResponse } from "app/common/types";
+import { uploadToCloudinary } from "./cloudinary.api";
+import { saveImageURLs } from "./save_image_urls";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 
@@ -60,6 +62,10 @@ export default function Settings() {
   const [showErrorBanner, setShowErrorBanner] = useState(false);
   const [supportEmail, setSupportEmail] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const fetcher = useFetcher<ActionResponse>();
   const { session } = useLoaderData<{ session: { shop: string } }>();
 
@@ -102,6 +108,38 @@ export default function Settings() {
       { method: "post" }
     );
   };
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    setUploading(true);
+  
+    const imageUrl = await uploadToCloudinary(file);
+  
+    if (imageUrl) {
+      setUploadedImage(imageUrl);
+    }
+  
+    setUploading(false);
+  };
+  
+const handleSubmitImages = async () => {
+  const shopId = session?.shop;
+  if (!shopId || !uploadedImage) return;
+
+  try {
+    setSaving(true);
+    await saveImageURLs(shopId, uploadedImage);
+    setShowSuccessBanner(true);
+  } catch (error) {
+    setShowErrorBanner(true);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const isLoading = fetcher.state === "submitting";
 
@@ -257,6 +295,84 @@ export default function Settings() {
                       setSupportPhone("");
                     }}
                     disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="500">
+                <BlockStack gap="200">
+                  <InlineStack align="center" gap="200">
+                    <Text as="h2" variant="headingLg">
+                      Chatbot Appearance Images
+                    </Text>
+                  </InlineStack>
+                  <Text variant="bodyMd" as="p">
+                    Upload custom image to personalize your chatbot's toggle button and header appearance.
+                  </Text>
+                </BlockStack>
+
+                <Box padding="400" background="bg-surface-secondary" borderRadius="200">
+                  <BlockStack gap="300">
+                    <Text variant="headingSm" as="h3">
+                      Upload Chatbot Image
+                    </Text>
+                    <Text as="p" variant="bodyMd">
+                      Supported formats: JPG, PNG. Recommended size: 100x100 pixels.
+                    </Text>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{
+                        padding: "12px 16px",
+                        backgroundColor: "#f6f6f7",
+                        borderRadius: "8px",
+                        border: "1px solid #dcdcdc",
+                        cursor: "pointer"
+                      }}
+                    />
+                    {uploadedImage && (
+                      <Box paddingBlockStart="300">
+                        <img
+                          src={uploadedImage}
+                          alt="Uploaded preview"
+                          style={{
+                            maxWidth: "150px",
+                            maxHeight: "150px",
+                            objectFit: "contain",
+                            borderRadius: "12px",
+                            boxShadow: "0 0 0 1px #ccc"
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </BlockStack>
+                </Box>
+                  
+                <InlineStack gap="200">
+                  <Button
+                    variant="primary"
+                    onClick={uploadedImage ? handleSubmitImages : undefined}
+                    disabled={!uploadedImage || uploading || saving}
+                    loading={uploading || saving}
+                  >
+                    {uploading
+                      ? "Uploading..."
+                      : saving
+                      ? "Saving..."
+                      : uploadedImage
+                      ? "Save Image"
+                      : "Upload Image First"}
+                  </Button>
+                  <Button
+                    onClick={() => setUploadedImage(null)}
+                    disabled={uploading}
                   >
                     Cancel
                   </Button>

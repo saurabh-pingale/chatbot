@@ -12,7 +12,7 @@ T = TypeVar('T', bound=BaseModel)
 
 class HuggingFaceClient:
     """Client for interacting with Hugging Face's Inference API"""
-    
+
     def __init__(self):
         self.model_name = HUGGINGFACE_MODEL_NAME
         self.api_url = HUGGINGFACE_API_URL
@@ -32,12 +32,12 @@ class HuggingFaceClient:
         temperature: float = 0.7,
         max_new_tokens: int = 500
     ) -> str:
-        """Call the Hugging Face API directly"""
+        """Call the Hugging Face API"""
         try:
             start_time = time.time() 
 
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
-            
+
             payload = {
                 "inputs": formatted_prompt,
                 "parameters": {
@@ -48,7 +48,7 @@ class HuggingFaceClient:
                     "return_full_text": False
                 }
             }
-            
+
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
@@ -59,17 +59,17 @@ class HuggingFaceClient:
             end_time = time.time()
             elapsed_time = end_time - start_time
             logger.info(f"Hugging Face API call took {elapsed_time:.2f} seconds")
-                  
+
             if response.status_code != 200:
                 error_msg = f"API request failed with status {response.status_code}: {response.text}"
                 logger.error(error_msg)
                 return "Error: API request failed"
-
+                  
             response_data = response.json()
             if not isinstance(response_data, list) or not response_data:
                 logger.error(f"Invalid response format: {response_data}")
                 return "Error: Invalid response format"
-                
+
             generated_text = response_data[0].get('generated_text', '')
             if not generated_text:
                 logger.error("No generated text in response")
@@ -77,11 +77,11 @@ class HuggingFaceClient:
 
             logger.info(f"HuggingFace API response: {generated_text}")
             return generated_text
-            
+
         except Exception as e:
             logger.error(f"Error calling HuggingFace API: {str(e)}", exc_info=True)
             return f"Error: Unable to generate response due to {str(e)}"
-    
+            
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON object from text response"""
         try:

@@ -3,14 +3,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#Pinecone
-PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 HUGGING_FACE_API_KEY = os.getenv("HUGGING_FACE_API_KEY")
 HUGGINGFACE_API = os.getenv("HUGGINGFACE_API")
 
 #QDRANT
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_API_URL = os.getenv("QDRANT_API_URL")
+
+#CLUADE
+CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
 #Langfuse
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")

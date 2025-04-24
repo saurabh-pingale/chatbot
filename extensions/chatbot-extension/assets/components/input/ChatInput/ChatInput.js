@@ -3,10 +3,22 @@ export function createChatInput(primaryColor) {
     container.className = 'input-component';
     
     container.innerHTML = `
-      <input type="text" class="input-box" placeholder="Type your message...">
+      <textarea class="input-box" placeholder="Type your message..." rows="1" maxlength="200"></textarea>
       <button class="send-button" disabled>Send</button>
     `;
+
+    const inputBox = container.querySelector('.input-box');
+    const sendButton = container.querySelector('.send-button');
     
-    container.querySelector('.send-button').style.backgroundColor = primaryColor;
+    inputBox.style.resize = 'none';
+    inputBox.style.overflowY = 'hidden';
+
+    inputBox.addEventListener('input', () => {
+      inputBox.style.height = 'auto';
+      inputBox.style.height = `${inputBox.scrollHeight}px`;
+      sendButton.disabled = inputBox.value.trim() === '';
+    });
+
+    sendButton.style.backgroundColor = primaryColor;
     return container;
   }

@@ -1,15 +1,13 @@
 export function createTypingIndicator(primaryColor) {
-    const indicator = document.createElement('div');
-    indicator.className = 'typing-indicator';
-    indicator.innerHTML = `
-      <span></span>
-      <span></span>
-      <span></span>
-    `;
+  const indicator = document.createElement('div');
+  indicator.className = 'typing-indicator';
+  indicator.style.setProperty('--primary-color', primaryColor);
 
-    const dots = indicator.querySelectorAll('span');
-    dots.forEach(dot => {
-      dot.style.backgroundColor = primaryColor;
-    })
-    return indicator;
-  }
+  indicator.innerHTML = `
+    <span></span>
+    <span></span>
+    <span></span>
+  `;
+
+  return indicator;
+}

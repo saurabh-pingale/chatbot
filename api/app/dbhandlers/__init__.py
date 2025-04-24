@@ -11,3 +11,7 @@ def init_handlers(app: 'CustmFastAPI'):
     app.rag_pipeline_handler = EmbeddingsHandler()
     app.analytics_handler = AnalyticsHandler()
     app.conversation_handler = ConversationHandler()
+
+    @app.on_event("startup")
+    async def on_startup_create_tables():
+        await app.store_admin_handler.create_all()

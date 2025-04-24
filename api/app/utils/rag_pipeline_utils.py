@@ -1,5 +1,5 @@
-import re
 from typing import List, Dict, Any
+import re
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
     """Extracts and filters products from query results."""
@@ -33,40 +33,29 @@ def format_context_texts(query_results: List[Any]) -> str:
 def extract_categories(transformed_products):
     return list({str(p.get("category", "")) for p in transformed_products if p.get("category")})
 
-def extract_essential_filters(user_message: str) -> Dict[str, Any]:
-    """Extract only price range filters that require structured filtering."""
-    filters = {}
-    lower_message = user_message.lower()
+def extract_metadata_from_message(user_message: str):
+    """Extracts possible metadata filters (e.g., category, price, color) from the user message."""
+    metadata = {}
     
-    # Extract only price information
-    price_patterns = [
-        # Less than/under patterns
-        (r'(?:under|less than|below|not more than|cheaper than|at most)\s*\$?(\d+(?:\.\d+)?)', "max_price", 1),
-        # Greater than/over patterns
-        (r'(?:over|more than|above|at least|higher than|minimum|starting at|from)\s*\$?(\d+(?:\.\d+)?)', "min_price", 1),
-        # Price range patterns
-        (r'\$?(\d+(?:\.\d+)?)\s*(?:-|to)\s*\$?(\d+(?:\.\d+)?)', ["min_price", "max_price"], [1, 2]),
-        (r'between\s*\$?(\d+(?:\.\d+)?)\s*and\s*\$?(\d+(?:\.\d+)?)', ["min_price", "max_price"], [1, 2]),
-        # Exact price patterns
-        (r'(?:price|cost)(?:\s+is|\s*:\s*)\s*\$?(\d+(?:\.\d+)?)', "exact_price", 1),
-        (r'(?:exactly|precisely|just)\s*\$?(\d+(?:\.\d+)?)', "exact_price", 1)
-    ]
+    category_match = re.search(r"category[:\s]+([a-zA-Z0-9\s]+?)(?:\s|$|\.|\,)", user_message, re.IGNORECASE)
+    if category_match:
+        metadata["category"] = category_match.group(1).strip()
     
-    for pattern, key, group in price_patterns:
-        match = re.search(pattern, lower_message)
-        if match:
-            if isinstance(key, list):
-                # Handle multiple capture groups (like price ranges)
-                for i, k in enumerate(key):
-                    filters[k] = float(match.group(group[i]))
-            else:
-                # Handle single capture group
-                filters[key] = float(match.group(group))
+    price_match = re.search(r"price[:\s]+(\d+)[\s-]+(\d+)", user_message, re.IGNORECASE)
+    if price_match:
+        metadata["price_min"] = int(price_match.group(1))
+        metadata["price_max"] = int(price_match.group(2))
     
-    # Convert exact price to a narrow range if specified
-    if "exact_price" in filters:
-        exact = filters.pop("exact_price")
-        filters["min_price"] = exact * 0.95  # 5% tolerance
-        filters["max_price"] = exact * 1.05  # 5% tolerance
+    color_match = re.search(r"color[:\s]+([a-zA-Z]+)", user_message, re.IGNORECASE)
+    if color_match:
+        metadata["color"] = color_match.group(1).strip()
     
-    return filters
+    fabric_match = re.search(r"fabric[:\s]+([a-zA-Z]+)", user_message, re.IGNORECASE)
+    if fabric_match:
+        metadata["fabric"] = fabric_match.group(1).strip()
+    
+    model_match = re.search(r"model[:\s]+([a-zA-Z0-9\s]+?)(?:\s|$|\.|\,)", user_message, re.IGNORECASE)
+    if model_match:
+        metadata["model"] = model_match.group(1).strip()
+    
+    return metadata

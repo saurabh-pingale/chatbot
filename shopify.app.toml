@@ -1,35 +1,33 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "805bcae4a3ca70062bf8b2037c5dd508"
-name = "test-chatbot"
-handle = "test-chatbot-7"
-application_url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
+client_id = "12f3ff297ca026a165ba1a925b73aa90"
+name = "prod-chatbot"
+handle = "prod-chatbot-1"
+application_url = "https://adequate-donated-journals-spirit.trycloudflare.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/callback",
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/auth/shopify/callback",
-  "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app/api/auth/callback"
+  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/callback",
+  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/shopify/callback",
+  "https://adequate-donated-journals-spirit.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://835c-2401-4900-7c70-37d9-2cd0-130a-32df-c89b.ngrok-free.app"
+url = "https://adequate-donated-journals-spirit.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
 embedded = false
-
-[web]
-port = 3_000
-
-[build]
-automatically_update_urls_on_dev = true

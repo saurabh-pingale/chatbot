@@ -1,37 +1,17 @@
-import { useState } from "react";
 import {
   Page,
   Layout,
   Text,
   Card,
-  Button,
   BlockStack,
   Box,
   List,
   InlineStack,
-  TextField,
   Banner,
 } from "@shopify/polaris";
 
 export default function ChatbotIndex() {
-  const [demoQuestion, setDemoQuestion] = useState("");
-  const [demoResponse, setDemoResponse] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
 
-  const handleDemoSubmit = () => {
-    if (!demoQuestion.trim()) return;
-    
-    setIsTyping(true);
-
-    //TODO - Shift these things to shop admin page, where shop owner will decide what should add, based on it will fetch and show
-    //TODO - Try to give more control for shop owner
-    setTimeout(() => {
-      setDemoResponse("This is a sample response from your AI-powered chatbot. In the actual implementation, this would be generated based on your trained vectors.");
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const features = [
     "Trained with specialized vectors for accurate responses",
     "Answers product-specific questions instantly",
@@ -40,7 +20,6 @@ export default function ChatbotIndex() {
     "Customizable to match your brand voice"
   ];
 
-  //TODO - Shift these things to store admin page, where shop owner will decide what to do, based on it will fetch and show
   const exampleQuestions = [
     "How do I track my order?",
     "What's your return policy?",
@@ -70,45 +49,6 @@ export default function ChatbotIndex() {
                 <Banner title="Ready to assist your customers" tone="success">
                   Your chatbot is active and ready to help your customers with their questions.
                 </Banner>
-
-                <BlockStack gap="400">
-                  <Text as="h3" variant="headingMd">
-                    Try it out
-                  </Text>
-                  <Card>
-                    <BlockStack gap="400">
-                      <TextField
-                        label="Ask a question"
-                        value={demoQuestion}
-                        onChange={setDemoQuestion}
-                        placeholder="Type a question to see how the chatbot responds..."
-                        autoComplete="off"
-                        connectedRight={
-                          <Button onClick={handleDemoSubmit} disabled={!demoQuestion.trim()}>
-                            Ask
-                          </Button>
-                        }
-                      />
-                      
-                      {(isTyping || demoResponse) && (
-                        <Box
-                          padding="400"
-                          background="bg-surface-secondary"
-                          borderWidth="025"
-                          borderRadius="200"
-                          borderColor="border"
-                        >
-                          {isTyping ? (
-                            <Text as="p">Typing...</Text>
-                          ) : (
-                            <Text as="p">{demoResponse}</Text>
-                          )}
-                        </Box>
-                      )}
-                    </BlockStack>
-                  </Card>
-                </BlockStack>
-
                 <BlockStack gap="400">
                   <Text as="h3" variant="headingMd">
                     How it works
@@ -123,13 +63,31 @@ export default function ChatbotIndex() {
                     <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="100px">
                       <Text as="p" variant="headingMd" alignment="center">2</Text>
                     </Box>
-                    <Text as="p">AI processes the question using trained vectors</Text>
+                    <Text as="p">Chatbot using Advanced Artifical Intelligence</Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500">
                     <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="100px">
                       <Text as="p" variant="headingMd" alignment="center">3</Text>
                     </Box>
-                    <Text as="p">AI generates an accurate, helpful response</Text>
+                    <Text as="p">ChatBot processes the question using trained data</Text>
+                  </InlineStack>
+                  <InlineStack wrap={false} gap="500">
+                    <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="100px">
+                      <Text as="p" variant="headingMd" alignment="center">4</Text>
+                    </Box>
+                    <Text as="p">ChatBot helps in get latest products</Text>
+                  </InlineStack>
+                  <InlineStack wrap={false} gap="500">
+                    <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="100px">
+                      <Text as="p" variant="headingMd" alignment="center">5</Text>
+                    </Box>
+                    <Text as="p">ChatBot helps in get latest orders requests</Text>
+                  </InlineStack>
+                  <InlineStack wrap={false} gap="500">
+                    <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="100px">
+                      <Text as="p" variant="headingMd" alignment="center">6</Text>
+                    </Box>
+                    <Text as="p">ChatBot helps in boost sales</Text>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>

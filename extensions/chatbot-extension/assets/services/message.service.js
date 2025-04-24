@@ -3,13 +3,15 @@ import { createProductSlider } from '../components/products/ProductSlider/Produc
 import { addToCart } from '../modules/cart/cart.module';
 
 export function addMessage(text, sender, products = [], primaryColor) {
+  const messageText = (typeof text === 'string') ? text : String(text);
+
   const messageList = document.querySelector('.message-list');
   if (!messageList) return;
 
   const messageWrapper = document.createElement('div');
   messageWrapper.className = 'message-wrapper';
 
-  const messageElement = createMessage(text, sender);
+  const messageElement = createMessage(messageText, sender);
   messageWrapper.appendChild(messageElement);
 
   if (sender === 'bot' && products.length > 0) {
@@ -26,6 +28,8 @@ export function addMessage(text, sender, products = [], primaryColor) {
   }
 
   messageList.appendChild(messageWrapper);
+
+  messageList.scrollTop = messageList.scrollHeight;
 
   if (!window.isLoadingHistory) {
     saveMessageToSession(text, sender, products);
