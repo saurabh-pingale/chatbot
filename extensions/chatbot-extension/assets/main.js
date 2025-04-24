@@ -29,16 +29,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const primaryColor = await initColorTheme();
     container.removeChild(colorLoader);
 
-    const shopId = getShopId();
-    const imageUrl = await fetchStoreImage(shopId);
+    // const shopId = getShopId();
+    // const imageUrl = await fetchStoreImage(shopId);
 
-    const finalImageUrl = imageUrl || IMAGE.FALLBACK;
+    // const finalImageUrl = imageUrl || IMAGE.FALLBACK;
     
-    const toggleButton = createToggleButton(primaryColor, finalImageUrl); 
+    const toggleButton = createToggleButton(primaryColor); 
     container.appendChild(toggleButton);
 
     window.chatbotRenderContent = (shouldOpen) => {
-        currentContent = renderContent(container, primaryColor, shouldOpen, finalImageUrl);
+        currentContent = renderContent(container, primaryColor, shouldOpen);
         if (shouldOpen && hasSubmittedEmail()) {
             initChatModule(primaryColor);
         }

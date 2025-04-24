@@ -3,11 +3,11 @@ import { createMessageList } from '../../components/chat/MessageList/MessageList
 import { createChatInput } from '../../components/input/ChatInput/ChatInput';
 import { createUserQuerySlider } from '../../components/query-slider/UserQuerySlider';
 
-export function createChatPage(chatbotTitle, primaryColor, userQueries, finalImageUrl) { 
+export function createChatPage(chatbotTitle, primaryColor, userQueries) { 
     const page = document.createElement('div');
     page.className = 'chat-page';
 
-    const header = createChatHeader('#00A8E8', chatbotTitle, finalImageUrl);
+    const header = createChatHeader('#00A8E8', chatbotTitle);
     page.appendChild(header);
 
     const chatContent = document.createElement('div');
