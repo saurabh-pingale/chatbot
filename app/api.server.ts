@@ -1,11 +1,16 @@
+import fetch from "node-fetch";
+import https from "https";
 import { API } from "app/constants/api.constants";
+
 export async function forwardRequestToBackend(path: string, request: Request) {
   const fullUrl = `${API.BACKEND_URL}${path}`;
 
   const headers = new Headers(request.headers);
   
-  // headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || '');
-  // headers.set('X-Shopify-Shop-Domain', request.headers.get('X-Shopify-Shop-Domain') || '');
+  headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || '');
+  headers.set('X-Shopify-Shop-Domain', request.headers.get('X-Shopify-Shop-Domain') || '');
+
+  const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
   try {
     console.log("Full URL:", fullUrl);
@@ -13,24 +18,25 @@ export async function forwardRequestToBackend(path: string, request: Request) {
       method: request.method,
       headers: headers,
       body: request.method !== 'GET' ? await request.text() : undefined,
+      agent: httpsAgent,
     });
 
     if (response.headers.get('content-type')?.includes('application/json')) {
       const data = await response.json();
       return new Response(JSON.stringify(data), {
         status: response.status,
-        // headers: {
-        //   'Content-Type': 'application/json',
-        //   'X-Shopify-API-Version': response.headers.get('X-Shopify-API-Version') || '',
-        // },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-API-Version': response.headers.get('X-Shopify-API-Version') || '',
+        },
       });
     }
 
     return new Response(await response.text(), {
       status: response.status,
-      // headers: {
-      //   'Content-Type': response.headers.get('content-type') || 'text/plain',
-      // },
+      headers: {
+        'Content-Type': response.headers.get('content-type') || 'text/plain',
+      },
     });
   } catch (error) {
     console.error('Proxy request failed1111:', error);
