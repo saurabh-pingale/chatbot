@@ -7,9 +7,6 @@ import { initCartModule } from './modules/cart/cart.module';
 import { renderContent } from './modules/content/content.module';
 import { setupTracking } from './modules/user/tracking.module';
 import { createLoader } from './components/ui/Loader/Loader';
-import { getShopId } from './utils/shopify.utils';
-import { fetchStoreImage } from './modules/api/api.module';
-import { IMAGE } from './constants/colors.constants';
 
 let currentContent = null;
 let isOpen = false;
@@ -28,11 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const primaryColor = await initColorTheme();
     container.removeChild(colorLoader);
-
-    // const shopId = getShopId();
-    // const imageUrl = await fetchStoreImage(shopId);
-
-    // const finalImageUrl = imageUrl || IMAGE.FALLBACK;
     
     const toggleButton = createToggleButton(primaryColor); 
     container.appendChild(toggleButton);

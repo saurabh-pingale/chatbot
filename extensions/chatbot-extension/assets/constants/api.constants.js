@@ -3,7 +3,7 @@ export const API = {
     USER_LOCATION: 'https://ipapi.co',
     CHAT_ENDPOINT: '/apps/chatbot-api/agent_conversation',
     ANALYTICS_ENDPOINT: '/apps/chatbot-api/analytics',
-    STORE_IMAGE_ENDPOINT: '/apps/chatbot-api/get_image',
+    // STORE_IMAGE_ENDPOINT: '/apps/chatbot-api/get_image',
     COLOR_ENDPOINT: '/apps/chatbot-api/color-preference'
 };
 
