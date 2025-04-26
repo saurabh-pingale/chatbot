@@ -25,7 +25,8 @@ export function applyColorTheme(color) {
     '.chatbot-header',
     '.send-button',
     '.start-chat-button',
-    '.add-to-cart-button'
+    '.add-to-cart-button',
+    '.user-message'
   ];
   
   elementsToColor.forEach(selector => {
@@ -34,7 +35,7 @@ export function applyColorTheme(color) {
     });
   });
 
-  document.querySelectorAll('.chatbot-window, .email-collection-screen').forEach(el => {
+  document.querySelectorAll('.chat-window, .chat-page, .email-gate-page').forEach(el => {
     el.style.borderColor = color;
   });
 }

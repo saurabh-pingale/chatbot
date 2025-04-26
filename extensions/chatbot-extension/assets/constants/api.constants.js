@@ -3,8 +3,10 @@ export const API = {
     USER_LOCATION: 'https://ipapi.co',
     CHAT_ENDPOINT: '/apps/chatbot-api/agent_conversation',
     ANALYTICS_ENDPOINT: '/apps/chatbot-api/analytics',
-    // STORE_IMAGE_ENDPOINT: '/apps/chatbot-api/get_image',
-    COLOR_ENDPOINT: '/apps/chatbot-api/color-preference'
+    STORE_IMAGE_ENDPOINT: '/apps/chatbot-api/get_image',
+    COLOR_ENDPOINT: '/apps/chatbot-api/color-preference',
+    STORE_CHECKOUT_PRODUCT_ENDPOINT: '/apps/chatbot-api/store_checkout_product',
+    REMOVE_CHECKOUT_PRODUCT_ENDPOINT: '/apps/chatbot-api/remove_checkout_product'
 };
 
 export const SHOPIFY_API = {

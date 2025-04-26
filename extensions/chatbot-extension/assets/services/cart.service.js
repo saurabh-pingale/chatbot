@@ -5,8 +5,9 @@ import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cart.module';
 import { createLoader } from '../components/ui/Loader/Loader';
 import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
+import { removeCartItemFromBackend, sendCartDataToBackend } from '../modules/api/api.module';
+import { COLORS } from '../constants/colors.constants';
 
-let cartDrawerAutoCloseTimer = null;
 let drawerInstance = null;
 let currentChatPage = null;
 let isStoreCartUpdating = false;
@@ -72,8 +73,6 @@ export function openCartDrawer() {
   drawerInstance.style.display = 'block';
   drawerInstance.classList.add('open');
   drawerInstance.classList.remove('auto-close');
-  
-  // resetAutoCloseTimer();
 }
 
 export function closeCartDrawer() {
@@ -125,10 +124,11 @@ export function updateCartDrawer(items) {
 export function updateCartCount() {
   const items = getCartItems();
   const total = items.reduce((sum, item) => sum + item.quantity, 0);
-  
+
   document.querySelectorAll('.cart-count').forEach(el => {
     el.textContent = total;
     el.style.display = total > 0 ? 'flex' : 'none';
+    // el.style.backgroundColor = primaryColor || COLORS.ORANGE_450;
   });
 }
 
@@ -177,6 +177,7 @@ export async function addToCart(product, quantityChange = 1) {
 
     if (existing.quantity <= 0) {
       items.splice(items.indexOf(existing), 1);
+      await removeCartItemFromBackend(existing);
     }
   } else if(quantityChange > 0){
     items.push({
@@ -185,6 +186,11 @@ export async function addToCart(product, quantityChange = 1) {
       variant_id: variantId,
       id: variantId,
       properties: product.properties || { chatbot_added: true }
+    });
+
+    sendCartDataToBackend({
+      ...product,
+      quantity: quantityChange,
     });
   }
   
@@ -233,7 +239,7 @@ async function syncWithStoreCart(items) {
     cartIcons.forEach(icon => {
       icon.classList.remove('cart-icon-hidden');
     });
-    isSyncing = false;
+    isStoreCartUpdating = false;
   }
 }
 
@@ -246,11 +252,6 @@ function persistCart(items) {
     console.error('Error saving cart to localStorage', e);
   }
 }
-
-// function resetAutoCloseTimer() {
-//   if (cartDrawerAutoCloseTimer) clearTimeout(cartDrawerAutoCloseTimer);
-//   cartDrawerAutoCloseTimer = setTimeout(closeCartDrawer, 5000);
-// }
 
 function loadCartFromStorage() {
   updateCartDrawer(getCartItems());

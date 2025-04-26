@@ -1,4 +1,5 @@
 import { API } from '../../constants/api.constants';
+import { getShopId } from '../../utils/shopify.utils';
 
 let conversationHistory = [];
 
@@ -91,14 +92,74 @@ export function resetConversationHistory(history = []) {
   }
 }
 
-// export async function fetchStoreImage(shopId) {
-//   try {
-//     const response = await fetch(`${API.STORE_IMAGE_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`);
-//     if (!response.ok) throw new Error("Failed to fetch image");
-//     const { imageUrl } = await response.json();
-//     return imageUrl || null;
-//   } catch (error) {
-//     console.error("Error fetching store image:", error);
-//     return null;
-//   }
-// }
+export async function fetchStoreImage(shopId) {
+  try {
+    const response = await fetch(`${API.STORE_IMAGE_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`);
+    if (!response.ok) throw new Error("Failed to fetch image");
+    const imageUrl = await response.json();
+    return imageUrl.image || null;
+  } catch (error) {
+    console.error("Error fetching store image:", error);
+    return null;
+  }
+}
+
+export async function sendCartDataToBackend(product) {
+  try {
+    const shopId = await getShopId();
+    const sessionData = JSON.parse(sessionStorage.getItem('chatbotSessionData') || {});
+    const user_id = sessionData?.email || '';
+
+    const queryParams = new URLSearchParams({
+      shop: shopId || '',
+      user_id: user_id || ''
+    });
+  
+    const URL = `${API.STORE_CHECKOUT_PRODUCT_ENDPOINT}?${queryParams.toString()}`;
+    
+    const response = await fetch(URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_name: product.title,
+        collection_title: product.category,
+        product_count: product.quantity,
+        timestamp: new Date().toISOString()  
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to send cart data to backend');
+    }
+
+    const data = await response.json();
+    return data; 
+  } catch (error) {
+    console.error('Error sending cart data:', error);
+    throw error;
+  }
+}
+
+export async function removeCartItemFromBackend(product) {
+  try {
+    const response = await fetch(API.REMOVE_CHECKOUT_PRODUCT_ENDPOINT, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productTitle: product.title
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to remove product from backend cart');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error removing product from backend cart:', error);
+    return null;
+  }
+}

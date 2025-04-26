@@ -43,6 +43,7 @@ export function addToCart(product) {
     image: product.image || '',
     title: product.title || '',
     price: product.price || '',
+    category: product.category || '',
     quantity: product.quantity,
     source: 'chatbot'
   };
