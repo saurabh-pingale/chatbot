@@ -5,10 +5,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
-from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel
+from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel, UserModel
 from app.models.api.store_admin import (ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
+
 
 class StoreAdminHandler:
     def __init__(self):
@@ -28,7 +29,7 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    select(StoreModel).filter_by(id=shop_id)
+                    select(StoreModel).filter(StoreModel.store_name == shop_id)
                 )
                 store = store.scalars().first()
                 if not store:
@@ -214,4 +215,3 @@ class StoreAdminHandler:
             except SQLAlchemyError as error:
                 logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
                 raise error
-    

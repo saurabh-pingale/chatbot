@@ -21,6 +21,7 @@ class StoreModel(Base):
 
     conversations = relationship("ConversationModel", back_populates="store")
     users = relationship("UserModel", back_populates="store")
+    checkout_products = relationship("CheckoutProductModel", back_populates="store")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -37,6 +38,7 @@ class UserModel(Base):
 
     conversations = relationship("ConversationModel", back_populates="user")
     store = relationship("StoreModel", back_populates="users")
+    checkout_products = relationship("CheckoutProductModel", back_populates="user")
 
 class CollectionModel(Base):
     __tablename__ = 'collections'
@@ -46,6 +48,7 @@ class CollectionModel(Base):
     products_count = Column(Integer)
     
     products = relationship("ProductModel", back_populates="collection")
+    checkout_products = relationship("CheckoutProductModel", back_populates="collection")
 
 class ProductModel(Base):
     __tablename__ = 'products'
@@ -64,6 +67,7 @@ class ProductModel(Base):
     collection_id = Column(Integer, ForeignKey('collections.id'))
     
     collection = relationship("CollectionModel", back_populates="products")
+    checkout_products = relationship("CheckoutProductModel", back_populates="product")
     
 # class ChatbotAnalytics(Base):
 #     __tablename__ = 'chatbot_analytics'

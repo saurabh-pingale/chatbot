@@ -3,7 +3,7 @@
 client_id = "12f3ff297ca026a165ba1a925b73aa90"
 name = "prod-chatbot"
 handle = "prod-chatbot-1"
-application_url = "https://adequate-donated-journals-spirit.trycloudflare.com"
+application_url = "https://delight-management-titten-try.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/callback",
-  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/shopify/callback",
-  "https://adequate-donated-journals-spirit.trycloudflare.com/api/auth/callback"
+  "https://delight-management-titten-try.trycloudflare.com/auth/callback",
+  "https://delight-management-titten-try.trycloudflare.com/auth/shopify/callback",
+  "https://delight-management-titten-try.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://adequate-donated-journals-spirit.trycloudflare.com"
+url = "https://delight-management-titten-try.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

@@ -4,6 +4,7 @@ from app.dbhandlers.store_admin_handler import StoreAdminHandler
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.conversation_handler import ConversationHandler
+from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
 
 def init_handlers(app: 'CustmFastAPI'):
     """Initialize handlers in the app state."""
@@ -11,6 +12,7 @@ def init_handlers(app: 'CustmFastAPI'):
     app.rag_pipeline_handler = EmbeddingsHandler()
     app.analytics_handler = AnalyticsHandler()
     app.conversation_handler = ConversationHandler()
+    app.checkout_product_handler = CheckoutProductHandler
 
     @app.on_event("startup")
     async def on_startup_create_tables():

@@ -9,17 +9,21 @@ class CustmFastAPI(FastAPI):
         from app.services.agent_conversation_service import AgentConversationService
         from app.services.analytics_service import AnalyticsService
         from app.services.conversation_service import ConversationService
+        from app.services.checkout_product_service import CheckoutProductService
         from app.dbhandlers.store_admin_handler import StoreAdminHandler
         from app.dbhandlers.embeddings_handler import EmbeddingsHandler
         from app.dbhandlers.analytics_handler import AnalyticsHandler
         from app.dbhandlers.conversation_handler import ConversationHandler
+        from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
 
         self.store_admin_service = StoreAdminService()
         self.agent_router_service = MultiAgentService()
         self.agent_conversation_service = AgentConversationService()
         self.analytics_service = AnalyticsService()
         self.conversation_service = ConversationService()
+        self.checkout_product_service = CheckoutProductService()
         self.store_admin_handler = StoreAdminHandler()
         self.rag_pipeline_handler = EmbeddingsHandler()
         self.analytics_handler = AnalyticsHandler()
         self.conversation_handler = ConversationHandler()
+        self.checkout_product_handler = CheckoutProductHandler()
