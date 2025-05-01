@@ -96,8 +96,8 @@ export async function fetchStoreImage(shopId) {
   try {
     const response = await fetch(`${API.STORE_IMAGE_ENDPOINT}?shopId=${encodeURIComponent(shopId)}`);
     if (!response.ok) throw new Error("Failed to fetch image");
-    const imageUrl = await response.json();
-    return imageUrl.image || null;
+    const data = await response.json();
+    return data.image || null;
   } catch (error) {
     console.error("Error fetching store image:", error);
     return null;
@@ -121,8 +121,7 @@ export async function sendCartDataToBackend(product) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        product_name: product.title,
-        collection_title: product.category,
+        product_id: product.id,
         product_count: product.quantity,
         timestamp: new Date().toISOString()  
       })
@@ -149,7 +148,7 @@ export async function removeCartItemFromBackend(product) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        productTitle: product.title
+        productId: product.id
       })
     });
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
@@ -9,7 +9,7 @@ class StoreModel(Base):
     
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime)
-    store_name = Column(String)
+    shop_id = Column(String)
     store_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
     updated_at = Column(DateTime)
@@ -57,7 +57,7 @@ class ProductModel(Base):
         {'sqlite_autoincrement': True, 'extend_existing': True}
     )
     
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     title = Column(String, unique=True)
     description = Column(String)
     category = Column(String)

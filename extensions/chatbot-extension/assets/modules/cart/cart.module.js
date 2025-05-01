@@ -40,6 +40,7 @@ export function addToCart(product) {
   const cartProduct = {
     ...product,
     variant_id: variantId,
+    id: product.id,
     image: product.image || '',
     title: product.title || '',
     price: product.price || '',

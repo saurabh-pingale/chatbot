@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
-from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel, UserModel
+from app.models.db.store_admin import Base, ProductModel, StoreModel, CollectionModel
 from app.models.api.store_admin import (ProductRequest)
 from app.config import DATABASE_URL
 from app.utils.logger import logger
@@ -29,7 +29,7 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    select(StoreModel).filter(StoreModel.store_name == shop_id)
+                    select(StoreModel).filter(StoreModel.shop_id == shop_id)
                 )
                 store = store.scalars().first()
                 if not store:
@@ -87,6 +87,7 @@ class StoreAdminHandler:
                 for product in products:
                     col_id = collection_id_map.get(product.category)
                     insert_data.append({
+                        'id': product.id,
                         'title': product.title,
                         'description': product.description,
                         'category': product.category,
@@ -95,8 +96,9 @@ class StoreAdminHandler:
                         'image': product.image,
                         'collection_id': col_id if col_id else None
                     })
-
+                
                 stmt = insert(ProductModel).values(insert_data)
+                logger.info(f"Data inserted")
                 stmt = stmt.on_conflict_do_update(
                     index_elements=['title', 'category'], 
                     set_={
@@ -121,7 +123,7 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    select(StoreModel).filter(StoreModel.store_name == store_name)
+                    select(StoreModel).filter(StoreModel.shop_id == store_name)
                 )
                 store = store.scalars().first()
                 logger.info(f"Store: {store}")
@@ -142,12 +144,12 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                    select(StoreModel).where(StoreModel.shop_id == shop_id)
                 )
                 store = store.scalars().first()
 
                 if not store:
-                    store = StoreModel(store_name=shop_id)
+                    store = StoreModel(shop_id=shop_id)
                     session.add(store)
 
                 store.preferred_color = color
@@ -162,11 +164,11 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 result = await session.execute(
-                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                    select(StoreModel).where(StoreModel.shop_id == shop_id)
                 )
                 store = result.scalars().first()
                 if not store:
-                    store = StoreModel(store_name=shop_id)
+                    store = StoreModel(shop_id=shop_id)
                     session.add(store)
 
                 store.support_email = email
@@ -184,11 +186,11 @@ class StoreAdminHandler:
         async with self.Session() as session:
             try:
                 result = await session.execute(
-                    select(StoreModel).where(StoreModel.store_name == shop_id)
+                    select(StoreModel).where(StoreModel.shop_id == shop_id)
                 )
                 store = result.scalars().first()
                 if not store:
-                    store = StoreModel(store_name=shop_id)
+                    store = StoreModel(shop_id=shop_id)
                     session.add(store)
 
                 store.image = image_url
@@ -199,16 +201,16 @@ class StoreAdminHandler:
                 logger.error("Error saving store image: %s", str(error), exc_info=True)
                 return {"success": False}
 
-    async def get_image(self, store_name: str) -> Optional[dict]:
+    async def get_image(self, shop_id: str) -> Optional[dict]:
         """Fetches image for a given store name."""
         async with self.Session() as session:
             try:
                 store = await session.execute(
-                    select(StoreModel).filter(StoreModel.store_name == store_name)
+                    select(StoreModel).filter(StoreModel.shop_id == shop_id)
                 )
                 store = store.scalars().first()
                 if not store:
-                    logger.warning(f"No store found with name: {store_name}")
+                    logger.warning(f"No store found with name: {shop_id}")
                     return None
 
                 return store.image

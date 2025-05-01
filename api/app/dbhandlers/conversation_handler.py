@@ -26,14 +26,14 @@ class ConversationHandler:
             try:
                 store_name = conversation_data["store_id"]
                 store = await session.execute(
-                    select(StoreModel).where(StoreModel.store_name == store_name)
+                    select(StoreModel).where(StoreModel.shop_id == store_name)
                 )
                 store_record = store.scalars().first()
 
                 if not store_record:
                     # If store does not exist, create a new store
                     new_store = StoreModel(
-                        store_name=store_name,
+                        shop_id=store_name,
                         created_at=datetime.utcnow(),  
                         updated_at=datetime.utcnow()  
                     )

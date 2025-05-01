@@ -22,12 +22,11 @@ class CheckoutProductHandler:
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)   
 
-    
-    async def store_checkout_product(self, store_name: str, user_email: str, product_name: str, collection_title: str, product_count: int):
+    async def store_checkout_product(self, shop_id: str, user_email: str, product_id: int, product_count: int):
         """Stores checkout product information in the database."""
         async with self.Session() as session:
             try:
-                store = await session.execute(select(StoreModel).filter(StoreModel.store_name == store_name))
+                store = await session.execute(select(StoreModel).filter(StoreModel.shop_id == shop_id))
                 store_id = store.scalars().first()
                 if not store_id:
                     raise ValueError("Store not found")
@@ -37,26 +36,25 @@ class CheckoutProductHandler:
                 if not user_id:
                     raise ValueError("User not found")
 
-                product = await session.execute(select(ProductModel).filter(ProductModel.title == product_name))
-                product_id = product.scalars().first()
-                if not product_id:
+                product = await session.execute(select(ProductModel).filter(ProductModel.id == product_id))
+                product_record = product.scalars().first()
+                if not product_record:
                     raise ValueError("Product not found")
 
-                collection = await session.execute(select(CollectionModel).filter(CollectionModel.title == collection_title))
-                collection_id = collection.scalars().first()
+                collection_id = await product_record.collection_id
                 if not collection_id:
                     raise ValueError("Collection not found")
 
                 stmt = insert(CheckoutProductModel).values(
                     store_id=store_id.id,
                     user_id=user_id.id,
-                    product_id=product_id.id,
+                    product_id=product_record.id,
                     collection_id=collection_id.id,
                     product_count=product_count
                 )
                 await session.execute(stmt)
                 await session.commit()
-                logger.info(f"Checkout product saved: Store {store_name}, User {user_email}, Product {product_name}")
+                logger.info(f"Checkout product saved: Store {shop_id}, User {user_email}, Product {product_id}")
                 return {"success": True}
 
             except SQLAlchemyError as error:
@@ -67,17 +65,17 @@ class CheckoutProductHandler:
                 logger.error(f"Error: {error}", exc_info=True)
                 return {"success": False, "error": str(error)}
 
-    async def remove_checkout_product(self, product_title: str):
+    async def remove_checkout_product(self, product_id: int):
         """Removes a checkout product entry by user and product title."""
         async with self.Session() as session:
             try:
-                product = await session.execute(select(ProductModel).filter(ProductModel.title == product_title))
-                product_id = product.scalars().first()
-                if not product_id:
+                product = await session.execute(select(ProductModel).filter(ProductModel.id == product_id))
+                product_record = product.scalars().first()
+                if not product_record:
                     raise ValueError("Product not found")
 
                 stmt = delete(CheckoutProductModel).where(
-                    CheckoutProductModel.product_id == product_id.id
+                    CheckoutProductModel.product_id == product_id
                 )
                 result = await session.execute(stmt)
                 await session.commit()
@@ -85,7 +83,7 @@ class CheckoutProductHandler:
                 if result.rowcount == 0:
                     return {"success": False, "error": "No matching product in cart"}
 
-                logger.info(f"Removed product '{product_title}' from checkout cart.")
+                logger.info(f"Removed product '{product_id}' from checkout cart.")
                 return {"success": True}
             except SQLAlchemyError as error:
                 await session.rollback()

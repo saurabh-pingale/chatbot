@@ -5,7 +5,6 @@ from app.routes.products import products_router
 from app.routes.agent_conversation import agent_conversation_router
 from app.routes.analytics import analytics_router
 from app.routes.checkout_product import checkout_product_router
-
 def init_routes(app: CustmFastAPI):
     app.include_router(store_admin_router)
     app.include_router(products_router)

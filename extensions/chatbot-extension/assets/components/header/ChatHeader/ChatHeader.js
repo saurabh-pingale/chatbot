@@ -11,7 +11,7 @@ export function createChatHeader(primaryColor, title, finalImageUrl) {
       <h3 class="chatbot-header-title">${title}</h3>
     </div>
   `;
-  console.log("Primary Color", primaryColor);
+ 
   const cartIcon = createCartIcon(primaryColor);
   header.appendChild(cartIcon);
 

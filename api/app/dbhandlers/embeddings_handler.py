@@ -117,7 +117,7 @@ class EmbeddingsHandler:
                 
                 results.append(
                     Vector(
-                        id=str(match.id),
+                        id=match.id,
                         values=match.vector if includes_values and match.vector else [],
                         metadata=VectorMetadata(**payload),
                         score=match.score 

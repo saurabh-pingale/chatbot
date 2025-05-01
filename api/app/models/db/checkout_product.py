@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, BigInteger
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -9,7 +9,7 @@ class CheckoutProductModel(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     product_count = Column(Integer)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(BigInteger, ForeignKey("products.id"), nullable=False)
     collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)

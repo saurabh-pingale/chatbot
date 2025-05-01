@@ -6,7 +6,6 @@ import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/ap
 import { createLoader } from '../components/ui/Loader/Loader';
 import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
 import { removeCartItemFromBackend, sendCartDataToBackend } from '../modules/api/api.module';
-import { COLORS } from '../constants/colors.constants';
 
 let drawerInstance = null;
 let currentChatPage = null;
@@ -128,7 +127,6 @@ export function updateCartCount() {
   document.querySelectorAll('.cart-count').forEach(el => {
     el.textContent = total;
     el.style.display = total > 0 ? 'flex' : 'none';
-    // el.style.backgroundColor = primaryColor || COLORS.ORANGE_450;
   });
 }
 
@@ -140,8 +138,7 @@ export function getCartItems() {
       const variantId = extractVariantId(item.variant_id);
       return {
         ...item,
-        variant_id: variantId,
-        id: variantId
+        variant_id: variantId
       };
     });
   } catch (e) {
@@ -184,12 +181,13 @@ export async function addToCart(product, quantityChange = 1) {
       ...product,
       quantity: Math.min(quantityChange, 10),
       variant_id: variantId,
-      id: variantId,
+      id: product.id,
       properties: product.properties || { chatbot_added: true }
     });
 
     sendCartDataToBackend({
       ...product,
+      id: product.id,
       quantity: quantityChange,
     });
   }
@@ -217,7 +215,7 @@ async function syncWithStoreCart(items) {
     const storeItems = storeCart?.items || [];
 
     const needsSync = !arraysEqual(
-      items.map(i => ({ id: i.id, qty: i.quantity })),
+      items.map(i => ({ id: i.variant_id, qty: i.quantity })),
       storeItems.map(i => ({ id: i.id, qty: i.quantity }))
     );
 
@@ -314,7 +312,6 @@ async function handleStoreCartUpdate(storeCart) {
   const storeItemsSimplified = items.map(i => ({ id: i.id, qty: i.quantity }));
 
    if (!arraysEqual(storeItemsSimplified, currentItemsSimplified)) {
-    console.log('Cart changed in store, updating local cart');
     persistCart(items);
   }
 }

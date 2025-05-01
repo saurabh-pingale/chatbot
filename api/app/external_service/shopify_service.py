@@ -62,7 +62,7 @@ class ShopifyService:
         """
         
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 response = await client.post(
                     f"https://{self.shopify_store}/admin/api/2023-10/graphql.json",
                     headers={

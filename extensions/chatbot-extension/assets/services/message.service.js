@@ -17,6 +17,7 @@ export function addMessage(text, sender, products = [], primaryColor) {
   if (sender === 'bot' && products.length > 0) {
     const slider = createProductSlider(products, primaryColor, (product) => {
         addToCart({
+          id: product.id,
           title: product.title,
           price: product.price,
           image: product.image,
