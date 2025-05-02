@@ -57,7 +57,7 @@ class ProductModel(Base):
         {'sqlite_autoincrement': True, 'extend_existing': True}
     )
     
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     title = Column(String, unique=True)
     description = Column(String)
     category = Column(String)

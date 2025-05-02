@@ -869,3 +869,230 @@ button:has(.circular-loader) .circular-loader {
 .user-query-button:active {
   transform: translateY(0);
 }
+
+/* Small devices (portrait phones, 320px and up) */
+@media (min-width: 320px) {
+  .chat-page, .email-gate-page {
+    width: 95vw;
+    height: 80vh;
+    right: 2.5vw;
+    bottom: 10vh;
+  }
+  
+  .message {
+    max-width: 90%;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .product-slider {
+    padding-bottom: 8px;
+  }
+
+  .product-card {
+    min-width: 130px;
+  }
+  
+  .input-component {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .input-box {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: 42px;
+  }
+  
+  .send-button {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .cart-drawer {
+    max-height: 70vh;
+  }
+  
+  .cart-item-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .user-query-button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+/* Small devices (landscape phones, 480px and up) */
+@media (min-width: 480px) {
+  .chat-page, .email-gate-page {
+    width: 90vw;
+    height: 70vh;
+  }
+  
+  .message {
+    max-width: 85%;
+  }
+  
+  .product-card {
+    min-width: 140px;
+  }
+
+  .cart-drawer {
+    max-height: 65vh;
+  }
+}
+
+/* Medium devices (tablets, 600px and up) */
+@media (min-width: 600px) {
+  .chat-page, .email-gate-page {
+    width: 380px;
+    height: 600px;
+    right: 20px;
+    bottom: 80px;
+  }
+  
+  .message {
+    max-width: 80%;
+    padding: 10px 14px;
+  }
+  
+  .product-card {
+    min-width: 150px;
+  }
+
+  .cart-drawer {
+    max-height: 60vh;
+  }
+  
+  .chatbot-toggle-button {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+}
+
+/* Large devices (small laptops, 768px and up) */
+@media (min-width: 768px) {
+  .chat-page, .email-gate-page {
+    width: 400px;
+  }
+  
+  .product-slider {
+    gap: 16px;
+  }
+  
+  .product-card {
+    min-width: 160px;
+  }
+
+  .chatbot-toggle-button {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+}
+
+/* Extra large devices (laptops/desktops, 992px and up) */
+@media (min-width: 992px) {
+  .chat-page, .email-gate-page {
+    width: 420px;
+    height: 650px;
+  }
+  
+  .message-list {
+    padding: 15px;
+  }
+
+  .product-card {
+    min-width: 170px;
+  }
+}
+
+/* Extra extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .chat-page, .email-gate-page {
+    width: 450px;
+    height: 700px;
+  }
+  
+  .chatbot-toggle-button {
+    bottom: 30px;
+    right: 30px;
+  }
+}
+
+/* Special cases for very small phones */
+@media (max-height: 600px) {
+  .chat-page, .email-gate-page {
+    height: 85vh;
+  }
+  
+  .chat-content {
+    height: calc(100% - 100px);
+  }
+
+  .cart-drawer {
+    max-height: 75vh;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .chat-page, .email-gate-page {
+    height: 90vh;
+    bottom: 5vh;
+  }
+  
+  .message-list {
+    max-height: 60vh;
+  }
+  
+  .cart-drawer {
+    max-height: 80vh;
+  }
+
+  .product-card {
+    min-width: 120px;
+    height: auto;
+  }
+  
+  .product-image {
+    height: 80px;
+  }
+}
+
+/* High DPI devices */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .chatbot-toggle-button {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  
+  .chat-page, .email-gate-page {
+    border-width: 1.5px;
+  }
+
+  .message {
+    border-width: 1.5px;
+  }
+}
+
+/* Foldable devices and tablets */
+@media (min-width: 600px) and (max-height: 700px) {
+  .chat-page, .email-gate-page {
+    height: 75vh;
+    bottom: 5vh;
+  }
+  
+  .message-list {
+    max-height: 55vh;
+  }
+}
+
+/* Very large screens */
+@media (min-width: 1600px) {
+  .chat-page, .email-gate-page {
+    right: calc((100vw - 1600px)/2 + 20px);
+  }
+}
