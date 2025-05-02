@@ -2,6 +2,7 @@ import time
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata

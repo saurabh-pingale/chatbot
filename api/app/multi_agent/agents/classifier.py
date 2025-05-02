@@ -38,8 +38,6 @@ class ClassifierAgent(Agent):
                  max_new_tokens=200  
             )
 
-            logger.info(f"Result: {result}")
-
             context.classification = result.classification.value
             context.metadata["classification_confidence"] = result.confidence
             context.metadata["classification_reasoning"] = result.reasoning

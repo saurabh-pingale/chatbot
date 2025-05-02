@@ -75,7 +75,6 @@ class HuggingFaceClient:
                 logger.error("No generated text in response")
                 return "Error: Empty response from API"
 
-            logger.info(f"HuggingFace API response: {generated_text}")
             return generated_text
 
         except Exception as e:
@@ -172,10 +171,8 @@ class HuggingFaceClient:
             )
             
             data = self._extract_json(response_text)
-            logger.info(f"Extracted data: {data}")
             
             result = self._convert_to_model(model_class, data)
-            logger.info(f"Converted result: {result}")
             
             return result
             

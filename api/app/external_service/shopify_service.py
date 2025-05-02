@@ -1,6 +1,7 @@
 import httpx
 from typing import Dict, Any
 from app.models.api.shopify import ShopifyProduct, ShopifyCollection
+from app.constants import SHOPIFY_GRAPHQL_URL
 from app.utils.logger import logger
 
 class ShopifyService:
@@ -63,8 +64,10 @@ class ShopifyService:
         
         try:
             async with httpx.AsyncClient(verify=False) as client:
+                url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
+
                 response = await client.post(
-                    f"https://{self.shopify_store}/admin/api/2023-10/graphql.json",
+                    url,
                     headers={
                         "Content-Type": "application/json",
                         "X-Shopify-Access-Token": self.shopify_access_token,

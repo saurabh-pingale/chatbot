@@ -2,7 +2,7 @@ import { API } from "app/constants/api.constants";
 
 export const saveImageURLs = async (shopId: string, imageUrl: string) => {
   try {
-    const response = await fetch(`${API.BACKEND_URL}/store-admin/save-store-image?shopId=${shopId}`, {
+    const response = await fetch(`${API.SAVE_STORE_IMAGE}?shopId=${shopId}`, {
         method: "POST",
         body: JSON.stringify({ imageUrl }),
         headers: {

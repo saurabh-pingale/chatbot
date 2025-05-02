@@ -104,7 +104,7 @@ export async function fetchStoreImage(shopId) {
   }
 }
 
-export async function sendCartDataToBackend(product) {
+export async function createCart(product) {
   try {
     const shopId = await getShopId();
     const sessionData = JSON.parse(sessionStorage.getItem('chatbotSessionData') || {});
@@ -140,7 +140,7 @@ export async function sendCartDataToBackend(product) {
   }
 }
 
-export async function removeCartItemFromBackend(product) {
+export async function removeCartItem(productId) {
   try {
     const response = await fetch(API.REMOVE_CHECKOUT_PRODUCT_ENDPOINT, {
       method: 'DELETE',
@@ -148,7 +148,7 @@ export async function removeCartItemFromBackend(product) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        productId: product.id
+        productId
       })
     });
 

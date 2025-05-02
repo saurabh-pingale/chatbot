@@ -42,7 +42,7 @@ async def agent_conversation(request: Request):
             "user_query": user_message,
             "agent_response": json.dumps(response['answer']),
             "user_id": user_id,
-            "store_id": shopId
+            "shop_id": shopId
         })
 
         end_time = time.perf_counter()

@@ -4,7 +4,7 @@ from app.utils.app_utils import get_app
 from app.utils.logger import logger
 from app.utils.checkout_product_utils import SuccessResponse, ErrorResponse
 
-checkout_product_router = APIRouter(prefix="/checkout_product", tags=["checkout_product"])
+checkout_product_router = APIRouter(tags=["checkout_product"])
 
 @checkout_product_router.post(
     "/user-checkout",
@@ -16,7 +16,7 @@ checkout_product_router = APIRouter(prefix="/checkout_product", tags=["checkout_
     },
 )
 async def store_checkout_products(request: Request):
-    shop_id = request.query_params.get("store_name")  
+    shop_id = request.query_params.get("shop_id")  
     user_email = request.query_params.get("user_email")  
 
     body = await request.json()

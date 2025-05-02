@@ -4,13 +4,13 @@ from sqlalchemy import UniqueConstraint
 
 from app.models.db.base import Base
 
-class StoreModel(Base):
-    __tablename__ = 'stores'
+class ShopModel(Base):
+    __tablename__ = 'shops'
     
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime)
     shop_id = Column(String)
-    store_description = Column(Text, nullable=True)
+    shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
     updated_at = Column(DateTime)
     region = Column(String, nullable=True)
@@ -19,9 +19,9 @@ class StoreModel(Base):
     support_phone = Column(Text, nullable=True)
     image = Column(String, nullable=True)
 
-    conversations = relationship("ConversationModel", back_populates="store")
-    users = relationship("UserModel", back_populates="store")
-    checkout_products = relationship("CheckoutProductModel", back_populates="store")
+    conversations = relationship("ConversationModel", back_populates="shop")
+    users = relationship("UserModel", back_populates="shop")
+    checkout_products = relationship("CheckoutProductModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -34,10 +34,10 @@ class UserModel(Base):
     country = Column(Text, nullable=True) 
     ip_address = Column(Text, nullable=True)
     updated_at = Column(DateTime)
-    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
 
     conversations = relationship("ConversationModel", back_populates="user")
-    store = relationship("StoreModel", back_populates="users")
+    shop = relationship("ShopModel", back_populates="users")
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
 
 class CollectionModel(Base):

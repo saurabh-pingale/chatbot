@@ -2,7 +2,7 @@ from typing import Dict
 from fastapi import APIRouter, Request, HTTPException
 from app.utils.app_utils import get_app
 from app.utils.logger import logger
-from app.models.api.store_admin import ErrorResponse
+from app.models.api.shop_admin import ErrorResponse
 
 analytics_router = APIRouter(prefix="/analytics_router", tags=["analytics_router"])
 
@@ -21,7 +21,7 @@ async def store_session_analytics(request: Request, analytics_data: Dict):
     try:
         app = get_app()
         shop_id = request.query_params.get("shopId")
-        logger.info(f"Shop Id: {shop_id}")
+    
         analytics_data['store_id'] = shop_id
         success = await app.analytics_service.store_analytics(analytics_data)
         if not success:

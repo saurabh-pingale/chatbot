@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "c2e63e2ef0febbcddb9c7bc386f2f228"
-application_url = "https://tt-est-confirmed-monsters.trycloudflare.com"
+application_url = "https://analyze-copyright-seems-klein.trycloudflare.com"
 embedded = true
 name = "chatbot"
 handle = "chatbot-216"
@@ -15,13 +15,13 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://tt-est-confirmed-monsters.trycloudflare.com/auth/callback",
-  "https://tt-est-confirmed-monsters.trycloudflare.com/auth/shopify/callback",
-  "https://tt-est-confirmed-monsters.trycloudflare.com/api/auth/callback"
+  "https://analyze-copyright-seems-klein.trycloudflare.com/auth/callback",
+  "https://analyze-copyright-seems-klein.trycloudflare.com/auth/shopify/callback",
+  "https://analyze-copyright-seems-klein.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://tt-est-confirmed-monsters.trycloudflare.com"
+url = "https://analyze-copyright-seems-klein.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

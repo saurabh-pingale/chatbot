@@ -7,10 +7,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const shopDomain = url.searchParams.get('shop');
   const userId = url.searchParams.get('user_id');
 
-  let forwardUrl = '/checkout_product/user-checkout';
+  let forwardUrl = '/user-checkout';
   const params = new URLSearchParams();
 
-  if (shopDomain) params.set('store_name', shopDomain);
+  if (shopDomain) params.set('shop_id', shopDomain);
   if (userId) params.set('user_email', userId);
 
   if (params.toString()) {

@@ -5,7 +5,7 @@ import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cart.module';
 import { createLoader } from '../components/ui/Loader/Loader';
 import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
-import { removeCartItemFromBackend, sendCartDataToBackend } from '../modules/api/api.module';
+import { removeCartItem, createCart } from '../modules/api/api.module';
 
 let drawerInstance = null;
 let currentChatPage = null;
@@ -174,7 +174,7 @@ export async function addToCart(product, quantityChange = 1) {
 
     if (existing.quantity <= 0) {
       items.splice(items.indexOf(existing), 1);
-      await removeCartItemFromBackend(existing);
+      await removeCartItem(existing.id);
     }
   } else if(quantityChange > 0){
     items.push({
@@ -185,7 +185,7 @@ export async function addToCart(product, quantityChange = 1) {
       properties: product.properties || { chatbot_added: true }
     });
 
-    sendCartDataToBackend({
+    await createCart({
       ...product,
       id: product.id,
       quantity: quantityChange,
@@ -295,21 +295,27 @@ async function handleCartUpdate(event) {
 
 async function handleStoreCartUpdate(storeCart) {
   if (isStoreCartUpdating) return;
-
-  const items = storeCart.items.map(item => ({
-    id: item.id,
-    variant_id: `${SHOPIFY_PRODUCT_VARIANT_PREFIX}${item.id}`,
-    title: item.title,
-    price: item.price,
-    image: item.image,
-    quantity: item.quantity,
-    properties: item.properties || {}
-  }));
-
+  
   const currentItems = getCartItems();
 
-  const currentItemsSimplified = currentItems.map(i => ({ id: i.id, qty: i.quantity }));
-  const storeItemsSimplified = items.map(i => ({ id: i.id, qty: i.quantity }));
+  const items = storeCart.items.map(storeItem => {
+    const existingItem = currentItems.find(
+      item => extractVariantId(item.variant_id) === storeItem.id
+    );
+
+    return {
+      id: existingItem ? existingItem.id : storeItem.id,
+      variant_id: `${SHOPIFY_PRODUCT_VARIANT_PREFIX}${storeItem.id}`,
+      title: storeItem.title,
+      price: storeItem.price,
+      image: storeItem.image,
+      quantity: storeItem.quantity,
+      properties: storeItem.properties || {}
+    };
+  });
+
+  const currentItemsSimplified = currentItems.map(i => ({ id: i.variant_id, qty: i.quantity }));
+  const storeItemsSimplified = items.map(i => ({ id: i.variant_id, qty: i.quantity }));
 
    if (!arraysEqual(storeItemsSimplified, currentItemsSimplified)) {
     persistCart(items);

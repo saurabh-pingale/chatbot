@@ -6,7 +6,7 @@ from sqlalchemy import select
 from datetime import datetime
 
 from app.models.db.conversation import ConversationModel
-from app.models.db.store_admin import StoreModel, UserModel
+from app.models.db.shop_admin import ShopModel, UserModel
 from app.config import DATABASE_URL
 from app.utils.logger import logger
 
@@ -24,25 +24,24 @@ class ConversationHandler:
         """Stores a conversation entry in the database."""
         async with self.async_session() as session:
             try:
-                store_name = conversation_data["store_id"]
-                store = await session.execute(
-                    select(StoreModel).where(StoreModel.shop_id == store_name)
+                shop_id = conversation_data["shop_id"]
+                shop = await session.execute(
+                    select(ShopModel).where(ShopModel.shop_id == shop_id)
                 )
-                store_record = store.scalars().first()
+                shop_record = shop.scalars().first()
 
-                if not store_record:
-                    # If store does not exist, create a new store
-                    new_store = StoreModel(
-                        shop_id=store_name,
+                if not shop_record:
+                    new_shop = ShopModel(
+                        shop_id=shop_id,
                         created_at=datetime.utcnow(),  
                         updated_at=datetime.utcnow()  
                     )
-                    session.add(new_store)
+                    session.add(new_shop)
                     await session.commit()
-                    await session.refresh(new_store)
-                    store_id = new_store.id
+                    await session.refresh(new_shop)
+                    shop_id = new_shop.id
                 else:
-                    store_id = store_record.id
+                    shop_id = shop_record.id
 
                 user_id = conversation_data["user_id"]
                 user_query = await session.execute(
@@ -53,7 +52,7 @@ class ConversationHandler:
                 if not user_record:
                     new_user = UserModel(
                         email=user_id,
-                        store_id=store_id,
+                        shop_id=shop_id,
                         created_at=datetime.utcnow(),  
                         updated_at=datetime.utcnow(),  
                     )
@@ -68,7 +67,7 @@ class ConversationHandler:
                     user_query=conversation_data["user_query"],
                     agent_response=conversation_data["agent_response"],
                     user_id=user.id,
-                    store_id=store_id
+                    shop_id=shop_id
                 )
                 session.add(conversation)
                 await session.commit()

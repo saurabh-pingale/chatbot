@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return currentContent;
     };
 
-    currentContent = renderContent(container, primaryColor, false, imageUrl);
+    currentContent = renderContent(container, primaryColor, false, finalImageUrl);
     
     toggleButton.addEventListener('click', () => {
         isOpen = !isOpen;
