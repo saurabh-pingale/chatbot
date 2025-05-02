@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-// import https from "https";
+import https from "https";
 import { API } from "app/constants/api.constants";
 
 export async function forwardRequestToBackend(path: string, request: Request) {
@@ -10,14 +10,14 @@ export async function forwardRequestToBackend(path: string, request: Request) {
   headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || '');
   headers.set('X-Shopify-Shop-Domain', request.headers.get('X-Shopify-Shop-Domain') || '');
 
-  // const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+  const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
   try {
     const response = await fetch(fullUrl, {
       method: request.method,
       headers: headers,
       body: request.method !== 'GET' ? await request.text() : undefined,
-      // agent: httpsAgent,
+      agent: httpsAgent,
     });
 
     if (response.headers.get('content-type')?.includes('application/json')) {
