@@ -1,32 +1,20 @@
 from typing import Optional, List, Dict
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
-from app.models.db.shop_admin import Base, ProductModel, ShopModel, CollectionModel
+from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel
 from app.models.api.shop_admin import (ProductRequest)
-from app.config import DATABASE_URL
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
-
 
 class ShopAdminHandler:
     def __init__(self):
-        database_url = DATABASE_URL
-        if not database_url:
-            raise ValueError("Database URL must be provided in the environment variables.")
-        
-        self.engine = create_async_engine(database_url, echo=True)
-        self.Session = sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
-
-    async def create_all(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)   
+        pass
 
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetches color preference for a given shop ID."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop = await session.execute(
                     select(ShopModel).filter(ShopModel.shop_id == shop_id)
@@ -42,7 +30,7 @@ class ShopAdminHandler:
 
     async def store_collections(self, collections: List[CollectionModel]) -> List[dict]:
         """Stores collections in the database using bulk operations."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 result = []
                 insert_data = []
@@ -81,7 +69,7 @@ class ShopAdminHandler:
 
     async def store_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
         """Stores products in the database and links them to collections using bulk insert."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 insert_data = []
                 for product in products:
@@ -120,7 +108,7 @@ class ShopAdminHandler:
 
     async def get_support_contact(self, shop_id: str) -> Optional[dict]:
         """Fetches support email and phone for a given shop name."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop = await session.execute(
                     select(ShopModel).filter(ShopModel.shop_id == shop_id)
@@ -140,7 +128,7 @@ class ShopAdminHandler:
             
     async def save_color_preference(self, shop_id: str, color: str) -> None:
         """Saves the color preference for a given shop ID."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop = await session.execute(
                     select(ShopModel).where(ShopModel.shop_id == shop_id)
@@ -159,7 +147,7 @@ class ShopAdminHandler:
                 raise error
             
     async def save_support_info(self, shop_id: str, email: str, phone: str) -> dict:
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 result = await session.execute(
                     select(ShopModel).where(ShopModel.shop_id == shop_id)
@@ -181,7 +169,7 @@ class ShopAdminHandler:
 
     async def save_shop_image(self, shop_id: str, image_url: str) -> dict:
         """Saves the image URL for a given shop."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 result = await session.execute(
                     select(ShopModel).where(ShopModel.shop_id == shop_id)
@@ -201,7 +189,7 @@ class ShopAdminHandler:
 
     async def get_image(self, shop_id: str) -> Optional[dict]:
         """Fetches image for a given shop id."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop = await session.execute(
                     select(ShopModel).filter(ShopModel.shop_id == shop_id)

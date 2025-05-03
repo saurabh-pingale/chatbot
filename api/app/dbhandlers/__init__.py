@@ -1,4 +1,5 @@
 from app.custom_fastapi import CustmFastAPI
+from app.dbhandlers.db import create_all_tables
 
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
@@ -16,4 +17,4 @@ def init_handlers(app: 'CustmFastAPI'):
 
     @app.on_event("startup")
     async def on_startup_create_tables():
-        await app.shop_admin_handler.create_all()
+        await create_all_tables()

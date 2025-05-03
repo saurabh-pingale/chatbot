@@ -1,28 +1,17 @@
 from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from datetime import datetime
 
 from app.models.db.conversation import ConversationModel
 from app.models.db.shop_admin import ShopModel, UserModel
-from app.config import DATABASE_URL
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class ConversationHandler:
-    def __init__(self):
-        database_url = DATABASE_URL
-
-        if not database_url:
-            raise ValueError("Database URL must be provided in the environment variables.")
-
-        self.engine = create_async_engine(database_url, echo=False)
-        self.async_session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
-
     async def store_conversation(self, conversation_data: Dict[str, Any]) -> int:
         """Stores a conversation entry in the database."""
-        async with self.async_session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop_id = conversation_data["shop_id"]
                 shop = await session.execute(

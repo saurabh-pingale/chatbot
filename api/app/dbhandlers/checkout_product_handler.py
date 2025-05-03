@@ -1,30 +1,19 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, delete, exists
 
-from app.models.db.shop_admin import Base, ProductModel, ShopModel, UserModel
+from app.models.db.shop_admin import ProductModel, ShopModel, UserModel
 from app.models.db.checkout_product import CheckoutProductModel
-from app.config import DATABASE_URL
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class CheckoutProductHandler:
     def __init__(self):
-        database_url = DATABASE_URL
-        if not database_url:
-            raise ValueError("Database URL must be provided in the environment variables.")
-        
-        self.engine = create_async_engine(database_url, echo=True)
-        self.Session = sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
-
-    async def create_all(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)   
+        pass
 
     async def store_checkout_product(self, shop_id: str, user_email: str, product_id: int, product_count: int):
         """Stores checkout product information in the database."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 shop = await session.execute(select(ShopModel).filter(ShopModel.shop_id == shop_id))
                 shop_id = shop.scalars().first()
@@ -66,7 +55,7 @@ class CheckoutProductHandler:
 
     async def remove_checkout_product(self, product_id: int):
         """Removes a checkout product entry by user and product id."""
-        async with self.Session() as session:
+        async with AsyncSessionLocal() as session:
             try:
                 product_exists = await session.execute(
                     select(exists().where(ProductModel.id == product_id))
