@@ -3,9 +3,10 @@ import { createCartItem } from '../components/cart/CartItem/CartItem';
 import { LOCAL_STORAGE } from '../constants/storage.constants';
 import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cart.module';
-import { createLoader } from '../components/ui/Loader/Loader';
-import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
 import { removeCartItem, createCart } from '../modules/api/api.module';
+import { createLoader } from '../components/ui/Loader/Loader';
+import { createErrorPopup } from '../components/ui/ErrorPopup/ErrorPopup';
+import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
 
 let drawerInstance = null;
 let currentChatPage = null;
@@ -77,7 +78,12 @@ export function openCartDrawer() {
 export function closeCartDrawer() {
   if (!drawerInstance) return;
   drawerInstance.classList.remove('open');
-  drawerInstance.classList.add('auto-close');
+  drawerInstance.classList.add('closing');
+
+  setTimeout(() => {
+    drawerInstance.style.display = 'none';
+    drawerInstance.classList.remove('closing');
+  }, 400);
 }
 
 function setupCartItemEventListeners(cartItemElement, item) {
@@ -173,23 +179,32 @@ export async function addToCart(product, quantityChange = 1) {
     }
 
     if (existing.quantity <= 0) {
-      items.splice(items.indexOf(existing), 1);
       await removeCartItem(existing.id);
+      items.splice(items.indexOf(existing), 1);
     }
   } else if(quantityChange > 0){
-    items.push({
-      ...product,
-      quantity: Math.min(quantityChange, 10),
-      variant_id: variantId,
-      id: product.id,
-      properties: product.properties || { chatbot_added: true }
-    });
+    try{
+      const response = await createCart({
+        ...product,
+        id: product.id,
+        quantity: quantityChange,
+      });
 
-    await createCart({
-      ...product,
-      id: product.id,
-      quantity: quantityChange,
-    });
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      items.push({
+        ...product,
+        quantity: Math.min(quantityChange, 10),
+        variant_id: variantId,
+        id: product.id,
+        properties: product.properties || { chatbot_added: true }
+      });
+    } catch (error) {
+      showErrorPopup('Product is unavailable');
+      return;
+    }
   }
   
   await persistCart(items);
@@ -207,6 +222,7 @@ async function syncWithStoreCart(items) {
 
   const cartIcons = document.querySelectorAll('.chatbot-cart-icon');
   cartIcons.forEach(icon => {
+    icon.classList.remove('cart-icon-visible');
     icon.classList.add('cart-icon-hidden');
   });
 
@@ -219,24 +235,47 @@ async function syncWithStoreCart(items) {
       storeItems.map(i => ({ id: i.id, qty: i.quantity }))
     );
 
-    if (!needsSync) return true;
+    if (!needsSync) {
+      cartIcons.forEach(icon => {
+        icon.classList.remove('cart-icon-hidden');
+        icon.classList.add('cart-icon-visible');
+      });
+      return true;
+    }
 
     const clearSuccess = await clearStoreCart();
     if (!clearSuccess) {
+      cartIcons.forEach(icon => {
+        icon.classList.remove('cart-icon-hidden');
+        icon.classList.add('cart-icon-visible');
+      });
       return false;
     }
 
-    if (items.length === 0) return true;
+    if (items.length === 0) {
+      cartIcons.forEach(icon => {
+        icon.classList.remove('cart-icon-hidden');
+        icon.classList.add('cart-icon-visible');
+      });
+      return true;
+    }
     
     const addSuccess = await addItemsToStoreCart(items);
+
+    cartIcons.forEach(icon => {
+      icon.classList.remove('cart-icon-hidden');
+      icon.classList.add('cart-icon-visible');
+    });
+
     return addSuccess;
   } catch (error) {
     console.error('Error syncing cart:', error);
-    return false;
-  } finally {
     cartIcons.forEach(icon => {
       icon.classList.remove('cart-icon-hidden');
+      icon.classList.add('cart-icon-visible');
     });
+    return false;
+  } finally {
     isStoreCartUpdating = false;
   }
 }
@@ -320,4 +359,9 @@ async function handleStoreCartUpdate(storeCart) {
    if (!arraysEqual(storeItemsSimplified, currentItemsSimplified)) {
     persistCart(items);
   }
+}
+
+function showErrorPopup(message) {
+  const popup = createErrorPopup(message);
+  document.body.appendChild(popup);
 }

@@ -127,12 +127,12 @@ export async function createCart(product) {
       })
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to send cart data to backend');
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to send cart data to backend');
     }
 
-    const data = await response.json();
     return data; 
   } catch (error) {
     console.error('Error sending cart data:', error);
