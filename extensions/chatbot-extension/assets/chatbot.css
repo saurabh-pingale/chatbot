@@ -305,6 +305,7 @@
 .user-message {
   color: #333;
   text-align: right;
+  text-align: justify;
   border-top-right-radius: 0;
   align-self: flex-end;
   margin-left: auto;

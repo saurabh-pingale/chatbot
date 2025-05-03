@@ -1,5 +1,4 @@
 import json
-import time
 from fastapi import APIRouter, Request, HTTPException
 
 from app.utils.app_utils import get_app
@@ -21,8 +20,6 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
 
 async def agent_conversation(request: Request):
     try:
-        start_time = time.perf_counter()
-
         body = await request.json()
         contents = body["messages"]
 
@@ -45,10 +42,6 @@ async def agent_conversation(request: Request):
             "shop_id": shopId
         })
 
-        end_time = time.perf_counter()
-        elapsed_time = end_time - start_time
-        logger.info(f"Agent conversation processing took {elapsed_time:.4f} seconds")
-        
         return response
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)

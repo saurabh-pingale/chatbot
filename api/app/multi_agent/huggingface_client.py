@@ -1,5 +1,4 @@
 import re
-import time
 import json
 import requests
 from typing import Type, TypeVar, Any, Dict
@@ -34,8 +33,6 @@ class HuggingFaceClient:
     ) -> str:
         """Call the Hugging Face API"""
         try:
-            start_time = time.time() 
-
             formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
 
             payload = {
@@ -55,10 +52,6 @@ class HuggingFaceClient:
                 json=payload,
                 timeout=60
             )
-
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            logger.info(f"Hugging Face API call took {elapsed_time:.2f} seconds")
 
             if response.status_code != 200:
                 error_msg = f"API request failed with status {response.status_code}: {response.text}"

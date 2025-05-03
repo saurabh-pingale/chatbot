@@ -64,6 +64,7 @@ class ProductAgent(Agent):
             product_data = []
             for p in context.products:
                 product_data.append({
+                    "id": p.get("id", ""), 
                     "name": p.get("title", "Unknown Product"),
                     "price": p.get("price", "N/A"),
                     "description": p.get("description", ""),
@@ -92,6 +93,45 @@ class ProductAgent(Agent):
                 temperature=self.prompt_config['parameters']['temperature'],
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
+            logger.info(f"LLM Response: {result}")
+
+            if hasattr(result, 'id'):
+                logger.info(f"LLM Returned IDs: {result.id} (Type: {type(result.id)})")
+            else:
+                logger.info("No IDs returned in LLM response")
+
+            requested_ids = set()
+            if hasattr(result, 'id') and result.id:
+                if isinstance(result.id, str):
+                    if result.id.strip().startswith('[') and result.id.strip().endswith(']'):
+                        try:
+                            id_list = json.loads(result.id)
+                            requested_ids.update(str(id_).strip() for id_ in id_list)
+                        except json.JSONDecodeError:
+                            requested_ids.add(str(result.id).strip())
+                    else:
+                        requested_ids.add(str(result.id).strip())
+                elif isinstance(result.id, list):
+                    requested_ids.update(str(id_).strip() for id_ in result.id)
+                elif isinstance(result.id, int):
+                    requested_ids.add(str(result.id).strip())
+
+            if requested_ids:
+                filtered_products = [
+                    p for p in context.products
+                    if str(p.get("id", "")).strip() in requested_ids
+                ]
+
+                logger.info(f"Products before filtering (Count: {len(context.products)}): {[p.get('id') for p in context.products]}")
+                logger.info(f"Filtered products (Count: {len(filtered_products)}): {[p.get('id') for p in filtered_products]}")
+
+                if filtered_products:
+                    context.products = filtered_products
+                    logger.info(f"Successfully filtered to {len(filtered_products)} products matching requested IDs")
+                else:
+                    logger.info("No products matched the requested IDs, maintaining original product list")
+            else:
+                logger.info("No product IDs specified in LLM response, maintaining original product list")
            
             response_text = result.introduction
 
@@ -99,6 +139,8 @@ class ProductAgent(Agent):
                 response_text += f"\n\nHere are {len(result.products)} matching products:"
                 for product in result.products:
                     response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"
+
+            logger.info(f"Response products: {result.products}")    
 
             if result.suggestions:
                 response_text += "\n\n" if not result.products else ""
