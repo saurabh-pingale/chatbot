@@ -1,10 +1,8 @@
 QDRANT_COLLECTION_NAME = 'chatbot_products'
 LANGFUSE_HOST  = "https://cloud.langfuse.com"
 
-HUGGINGFACE_MODEL_NAME = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-HUGGINGFACE_API_URL = f"https://api-inference.huggingface.co/models/{HUGGINGFACE_MODEL_NAME}"
-
-HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
+TOGETHER_MODEL_NAME = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions"
 
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 CLAUDE_MODEL_NAME = "claude-3-haiku-20240307"

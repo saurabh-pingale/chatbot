@@ -4,46 +4,46 @@ import requests
 from typing import Type, TypeVar, Any, Dict
 from pydantic import BaseModel
 from app.utils.logger import logger
-from app.config import HUGGINGFACE_API
-from app.constants import HUGGINGFACE_API_URL, HUGGINGFACE_MODEL_NAME
+from app.config import TOGETHER_API_KEY
+from app.constants import TOGETHER_API_URL, TOGETHER_MODEL_NAME
 
 T = TypeVar('T', bound=BaseModel)
 
-class HuggingFaceClient:
-    """Client for interacting with Hugging Face's Inference API"""
+class TogetherAIClient:
+    """Client for interacting with Together AI's Inference API"""
 
     def __init__(self):
-        self.model_name = HUGGINGFACE_MODEL_NAME
-        self.api_url = HUGGINGFACE_API_URL
-        self.api_token = HUGGINGFACE_API
+        self.model_name = TOGETHER_MODEL_NAME
+        self.api_url = TOGETHER_API_URL
+        self.api_token = TOGETHER_API_KEY
+
         if not self.api_token:
-            raise ValueError("HUGGINGFACE_API_TOKEN environment variable not set")
+            raise ValueError("TOGETHER_API_KEY environment variable not set")
         
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json"
         }
     
-    async def _call_huggingface_api(
+    async def _call_together_api(
         self, 
         system_message: str,
         user_message: str,
         temperature: float = 0.7,
         max_new_tokens: int = 500
     ) -> str:
-        """Call the Hugging Face API"""
+        """Call the Together AI API"""
         try:
-            formatted_prompt = f"<s>[INST] {system_message} [/INST] {user_message} [/INST]</s>"
-
             payload = {
-                "inputs": formatted_prompt,
-                "parameters": {
-                    "max_new_tokens": max_new_tokens,
-                    "temperature": temperature,
-                    "top_k": 50,
-                    "top_p": 0.95,
-                    "return_full_text": False
-                }
+                "model": self.model_name,
+                "messages": [
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message}
+                ],
+                "temperature": temperature,
+                "max_tokens": max_new_tokens,
+                "top_k": 50,
+                "top_p": 0.95,
             }
 
             response = requests.post(
@@ -59,16 +59,13 @@ class HuggingFaceClient:
                 return "Error: API request failed"
                   
             response_data = response.json()
-            if not isinstance(response_data, list) or not response_data:
+            choices = response_data.get("choices", [])
+            if not choices:
                 logger.error(f"Invalid response format: {response_data}")
                 return "Error: Invalid response format"
 
-            generated_text = response_data[0].get('generated_text', '')
-            if not generated_text:
-                logger.error("No generated text in response")
-                return "Error: Empty response from API"
-
-            return generated_text
+            generated_text = choices[0]["message"]["content"]
+            return generated_text.strip()
 
         except Exception as e:
             logger.error(f"Error calling HuggingFace API: {str(e)}", exc_info=True)
@@ -156,7 +153,7 @@ class HuggingFaceClient:
     ) -> T:
         """Generate a response and convert it to the specified Pydantic model"""
         try:
-            response_text = await self._call_huggingface_api(
+            response_text = await self._call_together_api(
                 system_message=system_message,
                 user_message=user_message,
                 temperature=temperature,

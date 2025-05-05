@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.multi_agent.huggingface_client import HuggingFaceClient 
+from app.multi_agent.together_ai_client import TogetherAIClient 
 from app.models.api.agent_router import MessageClassification
 from app.utils.logger import logger
 
@@ -30,7 +30,7 @@ class ClassifierAgent(Agent):
 
     async def process(self, context: AgentContext) -> AgentContext:
         try:
-            result = await HuggingFaceClient().generate(
+            result = await TogetherAIClient().generate(
                 model_class=MessageClassification,
                 user_message=context.user_message,
                 system_message=self.system_message,
@@ -41,10 +41,6 @@ class ClassifierAgent(Agent):
             context.classification = result.classification.value
             context.metadata["classification_confidence"] = result.confidence
             context.metadata["classification_reasoning"] = result.reasoning
-
-            logger.info(f"Message classified as: {context.classification}")
-            logger.info(f"Classification confidence: {result.confidence}")
-            logger.info(f"Classification reasoning: {result.reasoning}")
 
             return context
 

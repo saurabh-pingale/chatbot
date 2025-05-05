@@ -93,12 +93,6 @@ class ProductAgent(Agent):
                 temperature=self.prompt_config['parameters']['temperature'],
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
-            logger.info(f"LLM Response: {result}")
-
-            if hasattr(result, 'id'):
-                logger.info(f"LLM Returned IDs: {result.id} (Type: {type(result.id)})")
-            else:
-                logger.info("No IDs returned in LLM response")
 
             requested_ids = set()
             if hasattr(result, 'id') and result.id:
@@ -122,25 +116,15 @@ class ProductAgent(Agent):
                     if str(p.get("id", "")).strip() in requested_ids
                 ]
 
-                logger.info(f"Products before filtering (Count: {len(context.products)}): {[p.get('id') for p in context.products]}")
-                logger.info(f"Filtered products (Count: {len(filtered_products)}): {[p.get('id') for p in filtered_products]}")
-
                 if filtered_products:
                     context.products = filtered_products
-                    logger.info(f"Successfully filtered to {len(filtered_products)} products matching requested IDs")
-                else:
-                    logger.info("No products matched the requested IDs, maintaining original product list")
-            else:
-                logger.info("No product IDs specified in LLM response, maintaining original product list")
            
             response_text = result.introduction
 
             if result.products:
                 response_text += f"\n\nHere are {len(result.products)} matching products:"
                 for product in result.products:
-                    response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"
-
-            logger.info(f"Response products: {result.products}")    
+                    response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"   
 
             if result.suggestions:
                 response_text += "\n\n" if not result.products else ""
@@ -154,10 +138,6 @@ class ProductAgent(Agent):
             context.response, confidence_score = self._extract_confidence_score(context.response)
             context.confidence_score = confidence_score
             context.metadata["confidence_score"] = confidence_score
-
-            logger.info(f"ProductAgent processed message: {context.user_message}")
-            logger.info(f"Generated response: {context.response}")
-            logger.info(f"Confidence score: {confidence_score}")
 
             if self.prompt_config['logging']['log_response_length']:
                 logger.info(f"ProductAgent generated response of {len(context.response)} chars")
