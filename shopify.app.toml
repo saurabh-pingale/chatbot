@@ -1,10 +1,10 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "c2e63e2ef0febbcddb9c7bc386f2f228"
-application_url = "https://fever-routines-promised-signs.trycloudflare.com"
+client_id = "a5e63b353544300e41f67086b871d4ae"
+application_url = "https://silent-spatial-rg-presentation.trycloudflare.com"
 embedded = true
-name = "chatbot"
-handle = "chatbot-216"
+name = "chatbot-test"
+handle = "chatbot-test-15"
 
 [webhooks]
 api_version = "2025-04"
@@ -15,13 +15,13 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://fever-routines-promised-signs.trycloudflare.com/auth/callback",
-  "https://fever-routines-promised-signs.trycloudflare.com/auth/shopify/callback",
-  "https://fever-routines-promised-signs.trycloudflare.com/api/auth/callback"
+  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/callback",
+  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/shopify/callback",
+  "https://silent-spatial-rg-presentation.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://fever-routines-promised-signs.trycloudflare.com"
+url = "https://silent-spatial-rg-presentation.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
