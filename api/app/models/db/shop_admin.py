@@ -52,13 +52,10 @@ class CollectionModel(Base):
 
 class ProductModel(Base):
     __tablename__ = 'products'
-    __table_args__ = (
-        UniqueConstraint('title', 'category', name='uq_title_category'),
-        {'sqlite_autoincrement': True, 'extend_existing': True}
-    )
+    __table_args__ = {'sqlite_autoincrement': True, 'extend_existing': True}
     
     id = Column(BigInteger, primary_key=True, autoincrement=False)
-    title = Column(String, unique=True)
+    title = Column(String)
     description = Column(String)
     category = Column(String)
     url = Column(String)

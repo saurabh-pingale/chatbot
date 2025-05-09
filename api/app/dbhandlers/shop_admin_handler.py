@@ -88,8 +88,9 @@ class ShopAdminHandler:
                 stmt = insert(ProductModel).values(insert_data)
                 
                 stmt = stmt.on_conflict_do_update(
-                    index_elements=['title', 'category'], 
+                    index_elements=['id'], 
                     set_={
+                        'title': stmt.excluded.title,
                         'description': stmt.excluded.description,
                         'category': stmt.excluded.category,
                         'url': stmt.excluded.url,
