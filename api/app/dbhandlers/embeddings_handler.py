@@ -1,7 +1,7 @@
-import time 
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
@@ -61,12 +61,8 @@ class EmbeddingsHandler:
 
         query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}"
 
-        start_time = time.perf_counter()
-
         cached_result = query_cache.get(query_key)
         if cached_result:
-            elapsed_time = time.perf_counter() - start_time
-            logger.info(f"Query result served from cache in {elapsed_time:.4f} seconds.")
             return cached_result
 
         norm = (sum(value**2 for value in vector)) ** 0.5
@@ -117,7 +113,7 @@ class EmbeddingsHandler:
                 
                 results.append(
                     Vector(
-                        id=str(match.id),
+                        id=match.id,
                         values=match.vector if includes_values and match.vector else [],
                         metadata=VectorMetadata(**payload),
                         score=match.score 
@@ -125,8 +121,6 @@ class EmbeddingsHandler:
                 )
 
             query_cache.put(query_key, results)
-            elapsed_time = time.perf_counter() - start_time
-            logger.info(f"Query result served from Qdrant in {elapsed_time:.4f} seconds.")
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)

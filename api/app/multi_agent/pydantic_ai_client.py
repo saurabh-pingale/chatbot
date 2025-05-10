@@ -69,7 +69,6 @@ class DeepseekAIClient:
         """Clear the entire cache"""
         with DeepseekAIClient._cache_lock:
             DeepseekAIClient._cache.clear()
-            logger.info("Cache cleared")
     
     @staticmethod
     def get_cache_stats() -> Dict[str, int]:
@@ -129,8 +128,7 @@ class DeepseekAIClient:
         Returns:
             Instance of the provided Pydantic model
         """
-        logger.info(f"System Message: {system_message}")
-        logger.info(f"User Message: {user_message}")
+        
         # Generate cache key
         cache_key = DeepseekAIClient._generate_cache_key(
             model_class, user_message, system_message, 
@@ -211,7 +209,6 @@ class DeepseekAIClient:
                     if isinstance(json_response.get("content"), list)
                     else ""
                 )
-                logger.info(f"Raw Response: {content}")
 
                 # Clean the response - sometimes models add backticks or other text
                 content = DeepseekAIClient._clean_json_response(content)
@@ -219,7 +216,7 @@ class DeepseekAIClient:
                 # Parse as JSON and validate with the model
                 try:
                     parsed_data = json.loads(DeepseekAIClient.extract_json_only(content))
-                    logger.info(f"Parsed Data: {parsed_data}")
+                    
                     result = model_class.model_validate(parsed_data)
                     
                     # Store in cache

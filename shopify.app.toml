@@ -1,14 +1,10 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "12f3ff297ca026a165ba1a925b73aa90"
-name = "prod-chatbot"
-handle = "prod-chatbot-1"
-application_url = "https://adequate-donated-journals-spirit.trycloudflare.com"
+client_id = "a5e63b353544300e41f67086b871d4ae"
+application_url = "https://silent-spatial-rg-presentation.trycloudflare.com"
 embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
+name = "chatbot-test"
+handle = "chatbot-test-15"
 
 [webhooks]
 api_version = "2025-04"
@@ -19,15 +15,18 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/callback",
-  "https://adequate-donated-journals-spirit.trycloudflare.com/auth/shopify/callback",
-  "https://adequate-donated-journals-spirit.trycloudflare.com/api/auth/callback"
+  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/callback",
+  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/shopify/callback",
+  "https://silent-spatial-rg-presentation.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://adequate-donated-journals-spirit.trycloudflare.com"
+url = "https://silent-spatial-rg-presentation.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
 embedded = false
+
+[build]
+automatically_update_urls_on_dev = true

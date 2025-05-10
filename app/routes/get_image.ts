@@ -4,5 +4,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const { forwardRequestToBackend } = await import("../api.server");
 
-  return forwardRequestToBackend(`/store-admin/get-image${url.search}`, request);
+  return forwardRequestToBackend(`/shop-admin/get-image${url.search}`, request);
 }

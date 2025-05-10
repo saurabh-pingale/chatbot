@@ -7,7 +7,7 @@ export function renderContent(container, primaryColor, shouldOpen = false, final
     const hasEmail = hasSubmittedEmail();
     const content = hasEmail
       ? createChatPage('Store Assistant', primaryColor, userQueries, finalImageUrl)
-      : createEmailGatePage('Store Assistant', primaryColor);
+      : createEmailGatePage('Store Assistant', primaryColor, finalImageUrl);
   
     const existingContent = container.querySelector('.chat-page, .email-gate-page');
     if (existingContent) container.removeChild(existingContent);

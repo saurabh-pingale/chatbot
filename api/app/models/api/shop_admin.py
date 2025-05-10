@@ -55,10 +55,10 @@ class SupportInfoRequest(BaseModel):
     supportEmail: str
     supportPhone: str
 
-class StoreImageRequest(BaseModel):
+class ShopImageRequest(BaseModel):
     imageUrl: str
 
-class StoreImageResponse(BaseModel):
+class ShopImageResponse(BaseModel):
     success: bool
 
 class GetImageResponse(BaseModel):

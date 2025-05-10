@@ -20,7 +20,7 @@ class ErrorResponse(BaseModel):
     success: bool
 
 class ProductEmbedding(BaseModel):
-    id: str
+    id: int
     values: List[float]
     metadata: Dict[str, Any]
 
@@ -36,7 +36,7 @@ class VectorMetadata(BaseModel):
     variant_id: str
 
 class Vector(BaseModel):
-    id: str
+    id: int
     values: List[float]
     metadata: VectorMetadata
 

@@ -11,15 +11,17 @@ export function addMessage(text, sender, products = [], primaryColor) {
   const messageWrapper = document.createElement('div');
   messageWrapper.className = 'message-wrapper';
 
-  const messageElement = createMessage(messageText, sender);
+  const messageElement = createMessage(messageText, sender, primaryColor);
   messageWrapper.appendChild(messageElement);
 
   if (sender === 'bot' && products.length > 0) {
     const slider = createProductSlider(products, primaryColor, (product) => {
         addToCart({
+          id: product.id,
           title: product.title,
           price: product.price,
           image: product.image,
+          category: product.category,
           variant_id: product.variant_id || product.id,
           quantity: 1
         });

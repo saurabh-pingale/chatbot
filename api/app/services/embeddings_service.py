@@ -1,8 +1,9 @@
 import numpy as np
 from FlagEmbedding import FlagModel
 from typing import List, Optional, Dict, Any
-from app.utils.vector_utils import pad_vector
+
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
+from app.utils.vector_utils import pad_vector
 
 class EmbeddingService:
     model = FlagModel(

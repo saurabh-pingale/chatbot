@@ -1,10 +1,10 @@
 from typing import Optional
 
-from app.dbhandlers.store_admin_handler import StoreAdminHandler
+from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 
-class StoreAdminService:
+class ShopAdminService:
     def __init__(self):
-        self.db_handler = StoreAdminHandler()
+        self.db_handler = ShopAdminHandler()
 
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetch color preference from DB via handler."""
@@ -18,9 +18,9 @@ class StoreAdminService:
         """Save support info to the DB via handler."""
         await self.db_handler.save_support_info(shop_id, email, phone)
 
-    async def save_store_image(self, shop_id: str, image_url: str):
+    async def save_shop_image(self, shop_id: str, image_url: str):
         """Save image URL to the DB via handler."""
-        await self.db_handler.save_store_image(shop_id, image_url)
+        await self.db_handler.save_shop_image(shop_id, image_url)
 
     async def get_image(self, shop_id: str) -> Optional[str]:
         """Fetch image from DB via handler."""

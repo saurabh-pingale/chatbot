@@ -12,7 +12,7 @@ class ConversationModel(Base):
     agent_response = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
 
     user = relationship("UserModel", back_populates="conversations")
-    store = relationship("StoreModel", back_populates="conversations")
+    shop = relationship("ShopModel", back_populates="conversations")

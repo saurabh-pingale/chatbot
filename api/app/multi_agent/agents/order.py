@@ -4,7 +4,7 @@ from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
 from app.multi_agent.pydantic_ai_client import DeepseekAIClient
 from app.models.api.agent_router import OrderResponse
-from app.dbhandlers.store_admin_handler import StoreAdminHandler
+from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.logger import logger
 
 class OrderAgent(Agent):
@@ -36,11 +36,11 @@ class OrderAgent(Agent):
 
             history_context = self._build_history_context(context)
 
-            store_handler = StoreAdminHandler()
-            store_contact = await store_handler.get_support_contact(context.namespace)
+            shop_handler = ShopAdminHandler()
+            shop_contact = await shop_handler.get_support_contact(context.namespace)
 
-            support_email = store_contact.get("support_email", "email not available")
-            support_phone = store_contact.get("support_phone", "phone number not available")
+            support_email = shop_contact.get("support_email", "email not available")
+            support_phone = shop_contact.get("support_phone", "phone number not available")
 
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
 
