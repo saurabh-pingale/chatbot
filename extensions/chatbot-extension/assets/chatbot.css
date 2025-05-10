@@ -664,23 +664,6 @@
   overflow: hidden;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
 }
-/* 
-@media (max-width: 600px) {
-  .chat-page {
-    width: calc(100vw - 40px);
-    height: 70vh;
-    right: 20px;
-    bottom: 100px;
-    border-radius: 16px;
-  }
-
-  .chatbot-toggle-button {
-    width: 56px;
-    height: 56px;
-    bottom: 16px;
-    right: 16px;
-  }
-} */
 
 .chat-page.open {
   opacity: 1;
@@ -1136,25 +1119,21 @@ button:has(.circular-loader) .circular-loader {
 /* Landscape orientation adjustments */
 @media (orientation: landscape) and (max-height: 500px) {
   .chat-page, .email-gate-page {
-    height: 90vh;
-    bottom: 5vh;
+    height: 80vh !important;
+    bottom: 10vh !important;
+    width: 80vw;
   }
   
   .message-list {
-    max-height: 60vh;
-  }
-  
-  .cart-drawer {
-    max-height: 80vh;
+    max-height: 55vh !important;
   }
 
   .product-card {
-    min-width: 120px;
-    height: auto;
+    min-width: 120px !important;
   }
   
   .product-image {
-    height: 80px;
+    height: 80px !important;
   }
 
   .error-popup {
@@ -1325,5 +1304,94 @@ button:has(.circular-loader) .circular-loader {
     top: 120px;
     right: 30px;
     max-width: 350px;
+  }
+}
+
+@media (max-width: 767px) {
+  .chat-page, .email-gate-page {
+    width: calc(100vw - 32px) !important;
+    height: 70vh !important;
+    right: 16px !important;
+    bottom: 80px !important;
+    border-radius: 16px !important;
+    max-width: 100% !important;
+  }
+
+  .chatbot-toggle-button {
+    width: 52px !important;
+    height: 52px !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    font-size: 22px !important;
+  }
+
+  .message {
+    max-width: 90% !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  .chatbot-header-glass {
+    padding: 10px 14px !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+
+  .chatbot-header-title {
+    font-size: 16px !important;
+  }
+
+  .input-component {
+    padding: 12px 14px !important;
+    border-radius: 0 0 16px 16px !important;
+  }
+
+  .input-box {
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  .send-button {
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+  }
+
+  .product-card {
+    min-width: 140px !important;
+  }
+
+  .product-title {
+    font-size: 13px !important;
+  }
+
+  .cart-drawer {
+    max-height: 65vh !important;
+  }
+
+  .user-query-slider {
+    padding: 10px 12px !important;
+    bottom: 60px !important;
+  }
+
+  .user-query-button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .chat-page, .email-gate-page {
+    height: 65vh !important;
+    bottom: 70px !important;
+  }
+
+  .message {
+    max-width: 92% !important;
+    font-size: 13px !important;
+  }
+
+  .chatbot-toggle-button {
+    width: 48px !important;
+    height: 48px !important;
   }
 }
