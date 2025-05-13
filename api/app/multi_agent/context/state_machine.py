@@ -44,6 +44,8 @@ class StateMachine:
             return AgentState.PROCESSING_PRODUCT
         elif context.classification == "order":
             return AgentState.PROCESSING_ORDER
+        elif context.classification == "terms":
+            return AgentState.PROCESSING_TERMS
 
         return AgentState.FALLBACK
     
@@ -79,7 +81,7 @@ class StateMachine:
                     context.metadata["skipped_evaluation"] = True
                     break
 
-                if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER) and \
+                if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER, AgentState.PROCESSING_TERMS) and \
                    context.confidence_score is not None and context.confidence_score >= self.confidence_threshold:
                     logger.info(f"High confidence score ({context.confidence_score}), skipping evaluation")
                     self.state = AgentState.COMPLETE
@@ -121,7 +123,8 @@ class StateMachine:
         elif self.state == AgentState.CLASSIFYING:
             return context.classification if context.classification else "default"
             
-        elif self.state in (AgentState.PROCESSING_GREETING, AgentState.PROCESSING_PRODUCT):
+        elif self.state in (AgentState.PROCESSING_GREETING, AgentState.PROCESSING_PRODUCT, 
+                       AgentState.PROCESSING_ORDER, AgentState.PROCESSING_TERMS):
             return "processed"
             
         elif self.state == AgentState.EVALUATING:

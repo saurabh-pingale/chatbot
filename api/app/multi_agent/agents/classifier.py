@@ -50,11 +50,14 @@ class ClassifierAgent(Agent):
             fallback_logic = self.prompt_config['parameters']['fallback_logic']
             
             if any(term in context.user_message.lower() 
-                  for term in fallback_logic.get('order_terms', [])):
+                    for term in fallback_logic.get('order_terms', [])):
                 context.classification = "order"
             elif any(term in context.user_message.lower() 
-                     for term in fallback_logic.get('product_terms', [])):
+                    for term in fallback_logic.get('product_terms', [])):
                 context.classification = "product"
+            elif any(term in context.user_message.lower() 
+                    for term in fallback_logic.get('terms_terms', [])):
+                context.classification = "terms"
             else:
                 context.classification = fallback_logic.get('default_classification', 'greeting')
                 

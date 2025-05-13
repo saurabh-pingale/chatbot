@@ -48,7 +48,8 @@ class ProductAgent(Agent):
                 query_response = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings,
                     namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
-                    metadata_filters=metadata_filters
+                    metadata_filters=metadata_filters,
+                    agent_type="ProductAgent"
                 )
 
                 products = extract_products_from_response(query_response)

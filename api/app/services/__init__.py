@@ -13,4 +13,3 @@ def init_services(app: CustmFastAPI):
     app.conversation_service = ConversationService()
     app.analytics_service = AnalyticsService()
     app.checkout_product_service = CheckoutProductService()
-

@@ -13,15 +13,29 @@ class EmbeddingService:
     )
 
     @staticmethod
-    def create_embeddings(text: str) -> List[float]:
-        embeddings = EmbeddingService.model.encode(text)
-        embeddings = np.array(embeddings)
+    def create_embeddings(text: str | List[str]) -> List[float] | List[List[float]]:
+        if isinstance(text, str):
+            embedding = EmbeddingService.model.encode(text)
+            embedding = np.array(embedding)
 
-        norm = np.linalg.norm(embeddings)
-        if norm > 0:
-            embeddings = embeddings / norm 
+            norm = np.linalg.norm(embedding)
+            if norm > 0:
+                embedding = embedding / norm
 
-        return pad_vector(embeddings.tolist(), 1024)
+            return pad_vector(embedding.tolist(), 1024)
+
+        elif isinstance(text, list):
+            embeddings = EmbeddingService.model.encode(text)
+            embeddings = np.array(embeddings)
+
+            padded_embeddings = []
+            for emb in embeddings:
+                norm = np.linalg.norm(emb)
+                if norm > 0:
+                    emb = emb / norm
+                padded_embeddings.append(pad_vector(emb.tolist(), 1024))
+
+        return padded_embeddings
 
     @staticmethod
     async def get_embeddings(
@@ -30,6 +44,7 @@ class EmbeddingService:
         namespace: Optional[str] = None, 
         includes_values: bool = False,
         metadata_filters: Optional[Dict[str, Any]] = None,
+        agent_type: Optional[str] = None
         ):
         embeddings_handler = EmbeddingsHandler()
         return await embeddings_handler.query_embeddings(
@@ -37,5 +52,6 @@ class EmbeddingService:
             top_k=top_k,
             namespace=namespace,
             includes_values=includes_values,
-            metadata_filters=metadata_filters
+            metadata_filters=metadata_filters,
+            agent_type=agent_type
         )

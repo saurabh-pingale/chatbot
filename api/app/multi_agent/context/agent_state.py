@@ -6,6 +6,7 @@ class AgentState(Enum):
     PROCESSING_GREETING = auto()
     PROCESSING_PRODUCT = auto()
     PROCESSING_ORDER = auto()
+    PROCESSING_TERMS = auto()
     EVALUATING = auto()
     FALLBACK = auto()
     COMPLETE = auto()

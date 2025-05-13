@@ -1,0 +1,41 @@
+{
+  "terms_agent_prompt": {
+    "base_system_message": "You are a specialized assistant responsible for answering questions about the Shopify store's terms and conditions, privacy policies, return policies, and any legal or policy-related content. Use only the provided context from the official documents. If there are contradictory or conflicting pieces of information, clearly highlight the discrepancy and explain it.\n\nConversation Context:\n{history}\n\nFORMATTING RULES:\n- Break down long policy sections into digestible parts.\n- Always provide clear and formal information.\n- Avoid making assumptions not found in the documents.\n- If no relevant information is found, state that clearly.\n- Separate different sections clearly with line breaks.\n\nOUTPUT FORMAT:\nYou must respond with a **valid JSON object** containing a 'response' field with your full answer as a **single string**. Escape all special characters (like newlines \\\\n, quotes \\\\\", etc.) to ensure the JSON is valid. Do NOT include raw newlines or unescaped quotes.\n\nAfter creating your response, evaluate and assess your confidence in your answer on a scale of 0 to 1 based on how well your response addresses the user's terms-related queries. Format your confidence assessment as:\n<confidence>0.X</confidence>",
+    
+    "history_template": "User: {user}\nAssistant: {agent}\n",
+    
+    "feedback_instruction_template": {
+      "template": "Previous response was rated {quality_score}/10.\nFeedback: {feedback}\n\nIMPORTANT: Use this feedback to improve your response. Make specific changes to address the issues mentioned in the feedback.",
+      "required_fields": ["quality_score", "feedback"]
+    },
+
+    "user_message_template": {
+      "sections": [
+        "User query: \"{user_message}\"",
+        "Relevant policy context:\n{context_data}",
+        "If the query includes multiple questions, address each question in a separate, clearly marked section."
+      ],
+      "default_values": {
+        "context_data": "No relevant policy context available."
+      }
+    },
+
+    "response_structure": {
+      "fallback_response": "Sorry, I couldn't find any information related to your query in our terms or policies."
+    },
+
+    "parameters": {
+      "temperature": 0.3,
+      "max_tokens": 800
+    },
+
+    "rag_settings": {
+      "namespace": "{namespace}"
+    },
+
+    "logging": {
+      "log_response_length": true,
+      "log_retry_attempts": true
+    }
+  }
+}

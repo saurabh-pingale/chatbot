@@ -6,6 +6,7 @@ from app.multi_agent.agents.classifier import ClassifierAgent
 from app.multi_agent.agents.greeting import GreetingAgent
 from app.multi_agent.agents.product import ProductAgent 
 from app.multi_agent.agents.order import OrderAgent  
+from app.multi_agent.agents.terms import TermsAgent
 from app.multi_agent.agents.evaluator import EvaluatorAgent
 from app.multi_agent.agents.fallback import FallbackAgent
 
@@ -20,6 +21,8 @@ class StateMachineService:
         state_machine.register_agent(AgentState.PROCESSING_GREETING, GreetingAgent())
         state_machine.register_agent(AgentState.PROCESSING_PRODUCT, ProductAgent())
         state_machine.register_agent(AgentState.PROCESSING_ORDER, OrderAgent())
+        state_machine.register_agent(AgentState.PROCESSING_TERMS, TermsAgent())
+
         state_machine.register_agent(AgentState.EVALUATING, EvaluatorAgent())
         state_machine.register_agent(AgentState.FALLBACK, FallbackAgent())
     
@@ -34,6 +37,7 @@ class StateMachineService:
         state_machine.register_transition(AgentState.CLASSIFYING, "greeting", AgentState.PROCESSING_GREETING)
         state_machine.register_transition(AgentState.CLASSIFYING, "product", AgentState.PROCESSING_PRODUCT)
         state_machine.register_transition(AgentState.CLASSIFYING, "order", AgentState.PROCESSING_ORDER)
+        state_machine.register_transition(AgentState.CLASSIFYING, "terms", AgentState.PROCESSING_TERMS)
         state_machine.register_transition(AgentState.CLASSIFYING, "default", AgentState.FALLBACK)
         
         # # From PROCESSING_GREETING
@@ -47,6 +51,10 @@ class StateMachineService:
         # # From PROCESSING_ORDER
         state_machine.register_transition(AgentState.PROCESSING_ORDER, "processed", AgentState.EVALUATING)
         state_machine.register_transition(AgentState.PROCESSING_ORDER, "default", AgentState.FALLBACK)
+
+        # # From PROCESSING_TERMS
+        state_machine.register_transition(AgentState.PROCESSING_TERMS, "processed", AgentState.EVALUATING)
+        state_machine.register_transition(AgentState.PROCESSING_TERMS, "default", AgentState.FALLBACK)
         
         # # From EVALUATING
         state_machine.register_transition(AgentState.EVALUATING, "good_quality", AgentState.COMPLETE)
