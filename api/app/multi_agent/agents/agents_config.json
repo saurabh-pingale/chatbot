@@ -1,0 +1,157 @@
+{
+    "agents": [
+        {
+            "state": "INIT",
+            "agent_class": "app.multi_agent.agents.init.InitAgent",
+            "transitions": [
+                {
+                    "from_state": "INIT",
+                    "condition": "start",
+                    "to_state": "CLASSIFYING"
+                },
+                {
+                    "from_state": "INIT",
+                    "condition": "default",
+                    "to_state": "ERROR"
+                }
+            ]
+        },
+        {
+            "state": "CLASSIFYING",
+            "agent_class": "app.multi_agent.agents.classifier.ClassifierAgent",
+            "transitions": [
+                {
+                    "from_state": "CLASSIFYING",
+                    "condition": "greeting",
+                    "to_state": "PROCESSING_GREETING"
+                },
+                {
+                    "from_state": "CLASSIFYING",
+                    "condition": "product",
+                    "to_state": "PROCESSING_PRODUCT"
+                },
+                {
+                    "from_state": "CLASSIFYING",
+                    "condition": "order",
+                    "to_state": "PROCESSING_ORDER"
+                },
+                {
+                    "from_state": "CLASSIFYING",
+                    "condition": "terms",
+                    "to_state": "PROCESSING_TERMS"
+                },
+                {
+                    "from_state": "CLASSIFYING",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "PROCESSING_GREETING",
+            "agent_class": "app.multi_agent.agents.greeting.GreetingAgent",
+            "transitions": [
+                {
+                    "from_state": "PROCESSING_GREETING",
+                    "condition": "processed",
+                    "to_state": "EVALUATING"
+                },
+                {
+                    "from_state": "PROCESSING_GREETING",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "PROCESSING_PRODUCT",
+            "agent_class": "app.multi_agent.agents.product.ProductAgent",
+            "transitions": [
+                {
+                    "from_state": "PROCESSING_PRODUCT",
+                    "condition": "processed",
+                    "to_state": "EVALUATING"
+                },
+                {
+                    "from_state": "PROCESSING_PRODUCT",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "PROCESSING_ORDER",
+            "agent_class": "app.multi_agent.agents.order.OrderAgent",
+            "transitions": [
+                {
+                    "from_state": "PROCESSING_ORDER",
+                    "condition": "processed",
+                    "to_state": "EVALUATING"
+                },
+                {
+                    "from_state": "PROCESSING_ORDER",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "PROCESSING_TERMS",
+            "agent_class": "app.multi_agent.agents.terms.TermsAgent",
+            "transitions": [
+                {
+                    "from_state": "PROCESSING_TERMS",
+                    "condition": "processed",
+                    "to_state": "EVALUATING"
+                },
+                {
+                    "from_state": "PROCESSING_TERMS",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "EVALUATING",
+            "agent_class": "app.multi_agent.agents.evaluator.EvaluatorAgent",
+            "transitions": [
+                {
+                    "from_state": "EVALUATING",
+                    "condition": "good_quality",
+                    "to_state": "COMPLETE"
+                },
+                {
+                    "from_state": "EVALUATING",
+                    "condition": "low_quality",
+                    "to_state": "FALLBACK"
+                },
+                {
+                    "from_state": "EVALUATING",
+                    "condition": "max_attempts",
+                    "to_state": "FALLBACK"
+                },
+                {
+                    "from_state": "EVALUATING",
+                    "condition": "default",
+                    "to_state": "FALLBACK"
+                }
+            ]
+        },
+        {
+            "state": "FALLBACK",
+            "agent_class": "app.multi_agent.agents.fallback.FallbackAgent",
+            "transitions": [
+                {
+                    "from_state": "FALLBACK",
+                    "condition": "complete",
+                    "to_state": "COMPLETE"
+                },
+                {
+                    "from_state": "FALLBACK",
+                    "condition": "default",
+                    "to_state": "ERROR"
+                }
+            ]
+        }
+    ]
+}

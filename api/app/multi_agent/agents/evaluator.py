@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import ResponseEvaluation
 from app.utils.logger import logger
 
@@ -43,7 +43,7 @@ class EvaluatorAgent(Agent):
                 "Evaluate this response considering the full conversation flow."
             )
 
-            evaluation = await DeepseekAIClient.generate(
+            evaluation = await LLMClient.generate(
                 model_class=ResponseEvaluation,
                 user_message=user_message,
                 system_message=self.system_message,

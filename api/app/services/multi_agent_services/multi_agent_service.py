@@ -5,8 +5,7 @@ from datetime import datetime
 from app.multi_agent.context.agent_context import AgentContext
 from app.multi_agent.context.agent_state import AgentState
 from app.multi_agent.context.state_machine import StateMachine
-
-from app.services.multi_agent_services.state_machine_service import StateMachineService
+from app.multi_agent.context.agent_config import AgentConfig
 from app.utils.logger import logger
 
 class MultiAgentService:
@@ -16,6 +15,7 @@ class MultiAgentService:
         init_start = time.perf_counter()
 
         self.state_machine = StateMachine()
+        self.agent_config = AgentConfig()
         self._setup_state_machine()
 
         init_end = time.perf_counter()
@@ -23,9 +23,15 @@ class MultiAgentService:
     
     def _setup_state_machine(self):
         """Set up the state machine with agents and transitions"""
-        # Register agents and transitions using the StateMachineService
-        StateMachineService.register_agents(self.state_machine)
-        StateMachineService.register_transitions(self.state_machine)
+        for agent in self.agent_config.get_agent_classes():
+            self.state_machine.register_agent(agent["state"], agent["class"]())
+        
+        for transition in self.agent_config.get_transitions():
+            self.state_machine.register_transition(
+                transition["from_state"],
+                transition["condition"],
+                transition["to_state"]
+            )
     
     async def generate_agent_response(self, shopId: str, user_message: str, contents: list) -> Dict[str, Any]:
         """Process a user message through the multi-agent system"""

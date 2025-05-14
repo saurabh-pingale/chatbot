@@ -23,7 +23,7 @@ class CacheEntry:
         """Check if the cache entry has expired"""
         return datetime.now() > self.timestamp + timedelta(seconds=self.ttl_seconds)
 
-class DeepseekAIClient:
+class LLMClient:
     """
     Client for generating structured responses from Deepseek API 
     using Pydantic models for validation and structure with caching support
@@ -67,15 +67,15 @@ class DeepseekAIClient:
     @staticmethod
     def clear_cache() -> None:
         """Clear the entire cache"""
-        with DeepseekAIClient._cache_lock:
-            DeepseekAIClient._cache.clear()
+        with LLMClient._cache_lock:
+            LLMClient._cache.clear()
     
     @staticmethod
     def get_cache_stats() -> Dict[str, int]:
         """Get cache statistics"""
-        with DeepseekAIClient._cache_lock:
-            total = len(DeepseekAIClient._cache)
-            expired = sum(1 for entry in DeepseekAIClient._cache.values() if entry.is_expired())
+        with LLMClient._cache_lock:
+            total = len(LLMClient._cache)
+            expired = sum(1 for entry in LLMClient._cache.values() if entry.is_expired())
             
         return {
             "total_entries": total,
@@ -86,14 +86,14 @@ class DeepseekAIClient:
     @staticmethod
     def remove_expired_entries() -> int:
         """Remove expired entries from cache and return count of removed items"""
-        with DeepseekAIClient._cache_lock:
+        with LLMClient._cache_lock:
             keys_to_remove = [
-                key for key, entry in DeepseekAIClient._cache.items() 
+                key for key, entry in LLMClient._cache.items() 
                 if entry.is_expired()
             ]
             
             for key in keys_to_remove:
-                del DeepseekAIClient._cache[key]
+                del LLMClient._cache[key]
                 
             logger.debug(f"Removed {len(keys_to_remove)} expired cache entries")
             return len(keys_to_remove)
@@ -130,16 +130,16 @@ class DeepseekAIClient:
         """
         
         # Generate cache key
-        cache_key = DeepseekAIClient._generate_cache_key(
+        cache_key = LLMClient._generate_cache_key(
             model_class, user_message, system_message, 
             temperature, max_tokens, top_p, schema_instructions
         )
         
         # Try to get from cache if not bypassing
         if not bypass_cache:
-            with DeepseekAIClient._cache_lock:
-                if cache_key in DeepseekAIClient._cache:
-                    cache_entry = DeepseekAIClient._cache[cache_key]
+            with LLMClient._cache_lock:
+                if cache_key in LLMClient._cache:
+                    cache_entry = LLMClient._cache[cache_key]
                     
                     # Check if entry is still valid
                     if not cache_entry.is_expired():
@@ -147,12 +147,12 @@ class DeepseekAIClient:
                         return cache_entry.data
                     else:
                         # Remove expired entry
-                        del DeepseekAIClient._cache[cache_key]
+                        del LLMClient._cache[cache_key]
                         logger.debug(f"Removed expired cache entry for {model_class.__name__}")
         
         # Clean cache occasionally (10% chance)
         if hash(cache_key) % 10 == 0:
-            DeepseekAIClient.remove_expired_entries()
+            LLMClient.remove_expired_entries()
         
         schema = model_class.model_json_schema()
         schema_str = json.dumps(schema, indent=2)
@@ -210,18 +210,17 @@ class DeepseekAIClient:
                     else ""
                 )
 
-                # Clean the response - sometimes models add backticks or other text
-                content = DeepseekAIClient._clean_json_response(content)
+                content = LLMClient._clean_json_response(content)
                 
                 # Parse as JSON and validate with the model
                 try:
-                    parsed_data = json.loads(DeepseekAIClient.extract_json_only(content))
+                    parsed_data = json.loads(LLMClient.extract_json_only(content))
                     
                     result = model_class.model_validate(parsed_data)
                     
                     # Store in cache
-                    with DeepseekAIClient._cache_lock:
-                        DeepseekAIClient._cache[cache_key] = CacheEntry(
+                    with LLMClient._cache_lock:
+                        LLMClient._cache[cache_key] = CacheEntry(
                             data=result, 
                             ttl_seconds=cache_ttl
                         )

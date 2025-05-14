@@ -1,9 +1,10 @@
 import json
+import re
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
 from app.services.embeddings_service import EmbeddingService
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import TermsResponse
 from app.utils.logger import logger
 
@@ -67,7 +68,7 @@ class TermsAgent(Agent):
                 for section in self.prompt_config['user_message_template']['sections']
             ])
 
-            result = await DeepseekAIClient.generate(
+            result = await LLMClient.generate(
                 model_class=TermsResponse,
                 user_message=user_message,
                 system_message=system_message,
@@ -103,20 +104,29 @@ class TermsAgent(Agent):
             return "No previous conversation about policies or terms."
         
         policy_relevant = []
+        keywords_pattern = re.compile(r"\b(policy|terms|privacy|legal|refund|return)\b", re.IGNORECASE)
+
         for msg in context.conversation_history:
-            if any(term in msg.get("user", "").lower() 
-                   for term in ["policy", "terms", "privacy", "legal", "refund", "return"]):
-                if msg.get("user"):
+            user_msg = msg.get("user", "")
+            if keywords_pattern.search(user_msg):
+                if user_msg:
                     policy_relevant.append(f"User: {msg['user']}")
                 if msg.get("agent"):
                     policy_relevant.append(f"Assistant: {msg['agent']}")
 
-        return "\n".join(policy_relevant[-6:]) if policy_relevant else "No relevant policy history"
+        MAX_POLICY_HISTORY_ENTRIES = 6
+
+        if policy_relevant:
+            recent_policy_history = policy_relevant[-MAX_POLICY_HISTORY_ENTRIES:]
+            return "\n".join(recent_policy_history)
+        else:
+            return "No relevant policy history"
 
     def _extract_confidence_score(self, response_text: str) -> float:
         """Extract confidence score from the response text"""
         try:
-            import re
+            DEFAULT_CONFIDENCE_SCORE = 0.7
+
             confidence_pattern = r'<confidence>(0\.\d+)</confidence>'
             match = re.search(confidence_pattern, response_text)
 
@@ -125,7 +135,7 @@ class TermsAgent(Agent):
                 response_text_cleaned = re.sub(confidence_pattern, '', response_text).strip()
                 return response_text_cleaned, confidence_score
             else:
-                return response_text, 0.7
+                return response_text, DEFAULT_CONFIDENCE_SCORE
         except Exception as e:
             logger.error(f"Error extracting confidence score: {str(e)}")
-            return response_text, 0.7
+            return response_text, DEFAULT_CONFIDENCE_SCORE

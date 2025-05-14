@@ -9,7 +9,7 @@ from app.utils.rag_pipeline_utils import (
     extract_categories,
     extract_metadata_from_message
 )
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import ProductResponse
 from app.utils.logger import logger
 
@@ -87,7 +87,7 @@ class ProductAgent(Agent):
                 for section in self.prompt_config['user_message_template']['sections']
             ])
 
-            result = await DeepseekAIClient.generate(
+            result = await LLMClient.generate(
                 model_class=ProductResponse,
                 user_message=user_message,
                 system_message=system_message,

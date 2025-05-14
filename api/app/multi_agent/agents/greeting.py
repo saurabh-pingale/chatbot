@@ -3,7 +3,7 @@ from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
 from app.utils.logger import logger
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import GreetingResponse
 
 class GreetingAgent(Agent):
@@ -55,7 +55,7 @@ class GreetingAgent(Agent):
                 else self.prompt_config['cache_settings']['default_ttl']
             )
 
-            response = await DeepseekAIClient.generate(
+            response = await LLMClient.generate(
                 model_class=GreetingResponse,
                 user_message=context.user_message,
                 system_message=system_message,

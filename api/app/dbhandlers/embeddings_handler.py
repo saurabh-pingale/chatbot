@@ -63,7 +63,7 @@ class EmbeddingsHandler:
 
         query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
 
-        cached_result = query_cache.get(query_key)
+        cached_result = self.get_cache_results(query_key)
         if cached_result:
             return cached_result
 
@@ -112,31 +112,25 @@ class EmbeddingsHandler:
                 payload = match.payload
                 if not payload:
                     continue
- 
-                if agent_type == "ProductAgent":
-                    try:
-                        results.append(
-                            Vector(
-                                id=match.id,
-                                values=match.vector if includes_values and match.vector else [],
-                                metadata=VectorMetadata(**payload),
-                                score=match.score 
-                            )
-                        )
-                    except ValidationError as e:
-                        logger.error(f"Product validation failed: {e}")
-                else:
+                
+                try:
                     results.append(
                         Vector(
                             id=match.id,
                             values=match.vector if includes_values and match.vector else [],
-                            metadata=payload, 
+                            metadata=VectorMetadata(**payload) if agent_type == "ProductAgent" else payload,
                             score=match.score 
                         )
                     )
+                except ValidationError as e:
+                    logger.error(f"Product validation failed: {e}")
 
             query_cache.put(query_key, results)
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)
             return []
+
+    def get_cache_results(self, query_key: str) -> Optional[List[Vector]]:
+        """Fetch results from query cache using the query key."""
+        return query_cache.get(query_key)    

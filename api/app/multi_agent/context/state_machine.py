@@ -13,6 +13,11 @@ class StateMachine:
         self.state = AgentState.INIT
         self.previous_states: List[AgentState] = []
         self.confidence_threshold = 0.6
+        self._processing_states = {
+            state.classification_type: state 
+            for state in AgentState 
+            if state.is_processing_state
+        }
     
     def register_agent(self, state: AgentState, agent: Agent) -> None:
         """Register an agent for a particular state"""
@@ -38,15 +43,8 @@ class StateMachine:
 
     def get_previous_processing_state(self, context: AgentContext) -> Optional[AgentState]:
         """Get the previous processing state based on the context classification"""
-        if context.classification == "greeting":
-            return AgentState.PROCESSING_GREETING
-        elif context.classification == "product":
-            return AgentState.PROCESSING_PRODUCT
-        elif context.classification == "order":
-            return AgentState.PROCESSING_ORDER
-        elif context.classification == "terms":
-            return AgentState.PROCESSING_TERMS
-
+        if context.classification and context.classification in self._processing_states:
+            return self._processing_states[context.classification]
         return AgentState.FALLBACK
     
     async def execute(self, context: AgentContext) -> AgentContext:
@@ -75,15 +73,11 @@ class StateMachine:
                         context.metadata.get("feedback", "")
                     )
 
-                if self.state == AgentState.PROCESSING_GREETING:
-                    logger.info("Processing greeting, skipping evaluation")
-                    self.state = AgentState.COMPLETE
-                    context.metadata["skipped_evaluation"] = True
-                    break
+                if (self.state.is_processing_state and (self.state == AgentState.PROCESSING_GREETING or
 
-                if self.state in (AgentState.PROCESSING_PRODUCT, AgentState.PROCESSING_ORDER, AgentState.PROCESSING_TERMS) and \
-                   context.confidence_score is not None and context.confidence_score >= self.confidence_threshold:
-                    logger.info(f"High confidence score ({context.confidence_score}), skipping evaluation")
+                    (context.confidence_score is not None and context.confidence_score >= self.confidence_threshold))):
+
+                    logger.info(f"Skipping evaluation for {self.state}")
                     self.state = AgentState.COMPLETE
                     context.metadata["skipped_evaluation"] = True
                     break
@@ -123,8 +117,7 @@ class StateMachine:
         elif self.state == AgentState.CLASSIFYING:
             return context.classification if context.classification else "default"
             
-        elif self.state in (AgentState.PROCESSING_GREETING, AgentState.PROCESSING_PRODUCT, 
-                       AgentState.PROCESSING_ORDER, AgentState.PROCESSING_TERMS):
+        elif self.state.is_processing_state:
             return "processed"
             
         elif self.state == AgentState.EVALUATING:
