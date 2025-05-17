@@ -1,0 +1,28 @@
+{
+    "agents": [
+        {
+            "state": "CLASSIFYING",
+            "agent_class": "app.multi_agent.agents.classifier.ClassifierAgent"
+        },
+        {
+            "state": "PROCESSING_GREETING",
+            "agent_class": "app.multi_agent.agents.greeting.GreetingAgent",
+            "trigger_conditions": ["greeting"]
+        },
+        {
+            "state": "PROCESSING_PRODUCT",
+            "agent_class": "app.multi_agent.agents.product.ProductAgent",
+            "trigger_conditions": ["product"]
+        },
+        {
+            "state": "PROCESSING_ORDER",
+            "agent_class": "app.multi_agent.agents.order.OrderAgent",
+            "trigger_conditions": ["order"]
+        },
+        {
+            "state": "PROCESSING_TERMS",
+            "agent_class": "app.multi_agent.agents.terms.TermsAgent",
+            "trigger_conditions": ["terms"]
+        }
+    ]
+}

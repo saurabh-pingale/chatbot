@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 from typing import Optional
 
 def configure_logger(
@@ -8,7 +9,7 @@ def configure_logger(
     log_format: Optional[str] = None,
     date_format: Optional[str] = None,
     log_to_file: bool = False,
-    log_file_path: str = "app.log"
+    log_file_path: Optional[str] = None
 ) -> logging.Logger:
 
     if log_format is None:
@@ -28,8 +29,13 @@ def configure_logger(
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
-    # Optional file handler
     if log_to_file:
+        if not log_file_path:
+            root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            logs_dir = os.path.join(root_dir, "logs")
+            os.makedirs(logs_dir, exist_ok=True)
+            log_file_path = os.path.join(logs_dir, "app.log")
+
         file_handler = logging.FileHandler(log_file_path)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -39,4 +45,4 @@ def configure_logger(
 
     return logger
 
-logger = configure_logger("app")
+logger = configure_logger("app", log_to_file=True)

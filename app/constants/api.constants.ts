@@ -6,6 +6,7 @@ export const API = {
     SAVE_COLOR_PREFERENCE: `${BACKEND_URL}/shop-admin/save-color-preference`,
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,
     CREATE_PRODUCTS : `${BACKEND_URL}/products_router/create`,
+    TEXT_TRAIN : `${BACKEND_URL}/text_training/train    `
 } 
 
 export const CLOUDINARY = {

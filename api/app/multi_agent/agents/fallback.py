@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import FallbackResponse
 from app.utils.logger import logger
 
@@ -35,7 +35,7 @@ class FallbackAgent(Agent):
                 for section in self.prompt_config['user_message_template']['sections']
             )
 
-            result = await DeepseekAIClient.generate(
+            result = await LLMClient.generate(
                 model_class=FallbackResponse,
                 user_message=user_message,
                 system_message=self.system_message,

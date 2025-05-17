@@ -24,6 +24,7 @@ class ClassificationType(str, Enum):
     GREETING = "greeting"
     PRODUCT = "product"
     ORDER = "order"
+    TERMS = "terms"
 
 class MessageClassification(BaseModel):
     """Schema for message classification"""
@@ -139,3 +140,6 @@ class OrderResponse(BaseModel):
 class ConfidenceResponse(BaseModel):
     """Model for confidence score responses"""
     confidence_score: float = Field(..., description="Confidence score from 0 to 1 indicating how well the response addresses the user's needs")
+
+class TermsResponse(BaseModel):
+    response: str

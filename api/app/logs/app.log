@@ -1,0 +1,599 @@
+2025-05-15 16:32:45 - app - INFO - Agent system initialized in 0.0092s
+2025-05-15 16:32:49 - app - INFO - Agent system initialized in 0.0017s
+2025-05-17 10:48:28 - app - INFO - Agent system initialized in 0.0759s
+2025-05-17 10:50:03 - app - INFO - Agent system initialized in 0.0141s
+2025-05-17 10:50:06 - app - INFO - Agent system initialized in 0.0019s
+2025-05-17 11:21:17 - app - INFO - Agent system initialized in 0.0009s
+2025-05-17 11:21:21 - app - INFO - Agent system initialized in 0.0025s
+2025-05-17 11:24:31 - app - INFO - Agent system initialized in 0.0021s
+2025-05-17 11:24:33 - app - INFO - Agent system initialized in 0.0020s
+2025-05-17 11:24:36 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=9VrggsPpE2FLjgMvfJBxptAj, returning default
+2025-05-17 11:24:36 - app - INFO - Agent system initialized in 0.0032s
+2025-05-17 11:24:37 - app - INFO - Agent system initialized in 0.0027s
+2025-05-17 11:24:39 - app - INFO - Agent system initialized in 0.0039s
+2025-05-17 11:24:41 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=9VrggsPpE2FLjgMvfJBxptAj, returning default
+2025-05-17 11:24:42 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=9VrggsPpE2FLjgMvfJBxptAj
+2025-05-17 11:24:44 - app - INFO - Agent system initialized in 0.0018s
+2025-05-17 11:24:46 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=9VrggsPpE2FLjgMvfJBxptAj
+2025-05-17 11:25:06 - app - INFO - Agent system initialized in 0.0035s
+2025-05-17 11:25:10 - app - INFO - State: AgentState.INIT, Agent: InitAgent
+2025-05-17 11:26:21 - app - INFO - Agent system initialized in 0.0076s
+2025-05-17 11:26:24 - app - INFO - Agent system initialized in 0.0058s
+2025-05-17 11:26:43 - app - INFO - Agent system initialized in 0.0054s
+2025-05-17 11:26:44 - app - INFO - State: AgentState.INIT, Agent: InitAgent
+2025-05-17 11:27:50 - app - INFO - Agent system initialized in 0.0037s
+2025-05-17 11:27:53 - app - INFO - Agent system initialized in 0.0049s
+2025-05-17 11:27:58 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=Ppv8mKZbxtsxkarHgSt1ZRDB, returning default
+2025-05-17 11:28:00 - app - INFO - Agent system initialized in 0.0116s
+2025-05-17 11:28:02 - app - INFO - Agent system initialized in 0.0074s
+2025-05-17 11:28:07 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=Ppv8mKZbxtsxkarHgSt1ZRDB, returning default
+2025-05-17 11:28:09 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=Ppv8mKZbxtsxkarHgSt1ZRDB
+2025-05-17 11:28:10 - app - INFO - Agent system initialized in 0.0043s
+2025-05-17 11:28:13 - app - INFO - Agent system initialized in 0.0055s
+2025-05-17 11:28:15 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=Ppv8mKZbxtsxkarHgSt1ZRDB
+2025-05-17 11:28:32 - app - INFO - Agent system initialized in 0.0063s
+2025-05-17 11:28:33 - app - INFO - State: AgentState.INIT, Agent: InitAgent
+2025-05-17 11:54:44 - app - INFO - Agent system initialized in 0.0107s
+2025-05-17 11:54:47 - app - INFO - Agent system initialized in 0.0045s
+2025-05-17 11:55:05 - app - INFO - Agent system initialized in 0.0023s
+2025-05-17 11:55:12 - app - INFO - Agent system initialized in 0.0029s
+2025-05-17 11:55:16 - app - INFO - Agent system initialized in 0.0035s
+2025-05-17 11:55:18 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 11:55:19 - app - INFO - Agent system initialized in 0.0033s
+2025-05-17 11:55:21 - app - INFO - Agent system initialized in 0.0049s
+2025-05-17 11:55:23 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 11:55:23 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 11:55:25 - app - INFO - Agent system initialized in 0.0017s
+2025-05-17 11:55:28 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 11:55:46 - app - INFO - Agent system initialized in 0.0017s
+2025-05-17 11:55:47 - app - INFO - State: AgentState.INIT, Agent: InitAgent
+2025-05-17 11:55:47 - app - INFO - Transitioning from INIT to ERROR via 'default'
+2025-05-17 12:04:20 - app - INFO - Agent system initialized in 0.0034s
+2025-05-17 12:04:23 - app - INFO - Agent system initialized in 0.0022s
+2025-05-17 12:04:34 - app - INFO - Agent system initialized in 0.0018s
+2025-05-17 12:04:35 - app - INFO - Agent system initialized in 0.0017s
+2025-05-17 12:04:36 - app - INFO - Agent system initialized in 0.0022s
+2025-05-17 12:04:37 - app - INFO - Agent system initialized in 0.0020s
+2025-05-17 12:04:40 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 12:04:40 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 12:04:40 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 12:04:40 - app - INFO - Agent system initialized in 0.0041s
+2025-05-17 12:04:43 - app - INFO - Agent system initialized in 0.0024s
+2025-05-17 12:04:44 - app - INFO - Agent system initialized in 0.0057s
+2025-05-17 12:04:46 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 12:04:46 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 12:04:48 - app - INFO - Agent system initialized in 0.0054s
+2025-05-17 12:04:49 - app - INFO - Agent system initialized in 0.0018s
+2025-05-17 12:04:50 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:04:50 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:04:50 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:04:52 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_GREETING via 'greeting'
+2025-05-17 12:04:52 - app - INFO - Executing PROCESSING_GREETING with GreetingAgent
+2025-05-17 12:04:52 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:04:52 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 12:04:54 - app - INFO - GreetingAgent processed message: Hi
+2025-05-17 12:04:54 - app - INFO - Generated response: Hello! Welcome to our store. How can I assist you today? Please feel free to ask about any of our products. I'd be happy to provide more information.
+2025-05-17 12:04:54 - app - INFO - Response structure: {"welcome_message":"Hello! Welcome to our store. How can I assist you today?","product_prompt":"Please feel free to ask about any of our products. I'd be happy to provide more information.","category_mention":null}
+2025-05-17 12:04:54 - app - INFO - Cache status: enabled
+2025-05-17 12:04:54 - app - INFO - Transitioning from PROCESSING_GREETING to EVALUATING via 'processed'
+2025-05-17 12:04:54 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:04:54 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:04:56 - app - INFO - Response quality score: 8.0
+2025-05-17 12:04:56 - app - INFO - Evaluation strengths: The response is relevant to the user's greeting, providing a friendly and welcoming tone. It offers to assist the user with any questions about the store's products.
+2025-05-17 12:04:56 - app - INFO - Evaluation weaknesses: The response could be slightly more concise, as the full context of the conversation is not provided.
+2025-05-17 12:04:56 - app - INFO - Feedback: Overall, this is a strong response that addresses the user's greeting appropriately. To improve, the response could be shortened while maintaining the helpful and friendly tone.
+2025-05-17 12:04:56 - app - INFO - Attempt count: 1
+2025-05-17 12:04:56 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:05:49 - app - INFO - Agent system initialized in 0.0054s
+2025-05-17 12:05:50 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:05:50 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:05:50 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:05:52 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:05:52 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:05:54 - app - ERROR - Product validation failed: 8 validation errors for VectorMetadata
+title
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+description
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+category
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+type
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+url
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+image
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+price
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+variant_id
+  Field required [type=missing, input_value={'text': "Terms & Conditi...atbot201.myshopify.com'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-17 12:05:54 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:06:02 - app - WARNING - JSON needs repair: Expecting ',' delimiter: line 34 column 6 (char 2916)
+2025-05-17 12:06:02 - app - ERROR - Could not repair JSON, returning raw content
+2025-05-17 12:06:02 - app - ERROR - Failed to parse JSON: Expecting ',' delimiter: line 34 column 6 (char 2916)
+2025-05-17 12:06:02 - app - ERROR - Invalid JSON content: {
+  "introduction": "Here are some products available in our store:",
+  "id": [8524323389674, 8524322996458, 8524323029226, 8524321915114, 8524322439402, 8524323258602, 8524323094762, 8524320375018, 8524320637162],
+  "products": [
+    {
+      "name": "Shox Ride 2 Metallic Platinum",
+      "price": "18395.00",
+      "description": "Why do we call a sneaker more than two decades old a modern classic? Because it's a bona fide classic that was always ahead of its time. And still is. The Shox Ride 2 is so much more than a good-looking pair of kicks. Its audacious design delivers responsive cushioning with four innovative columns of support under the heel and a Max Air unit in the forefoot. This Metallic Platinum edition features a mix of durable leather and breezy textiles in a distressed finish, giving you both style and comfort in one iconic package."
+    },
+    {
+      "name": "Nike Sportswear Everyday Essential No-Show Socks (3 Pairs)",
+      "price": "995.00",
+      "description": "Designed through the lens of sport, the Nike Sportswear Essential Ankle Socks feature a lightweight, no-show style with a soft feel ready for everyday wear. Color Shown: Black Style: DX5075-010 Country/Region of Origin: China"
+    },
+    {
+      "name": "Nike ACG Everyday Cushioned Crew Socks (1 Pair)",
+      "price": "1295.00",
+      "description": "Snag the Everyday sock for the ACG fan. Cushioning under the forefoot and heel helps absorb impact while a banded arch adds a little extra support where you need it most. Color Shown: Bicoastal/Thunder Blue/Dusty Cactus/White Style: FB3341-361 Country/Region of Origin: China"
+    },
+    {
+      "name": "Nike Tech Men's Woven Shorts",
+      "price": "5995.00",
+      "description": "We layered a cool, crinkled woven over a soft mesh liner and gave the whole thing a mellow dye wash to create these Tech Woven shorts. The result? Broken-in comfort with a distinct Nike Tech aesthetic. Color Shown: Black/Black Style: HJ0675-010 Country/Region of Origin: China"
+    },
+    {
+      "name": "Nike Project F.R.O.G. Men's Pullover Hoodie",
+      "price": "7995.00",
+      "description": "This oversized hoodie has a boxy fit with a bit of elastane in the fabric for stretch. A scuba hood with bungee adjusters lets you fine-tune the fit. Color Shown: White/Deep Night/Deep Night Style: HQ0466-100 Country/Region of Origin: Thailand"
+    },
+    {
+      "name": "Nike Dunk Low Retro Men's Shoe",
+      "price": "8295.00",
+      "description": "Created for the hardwood but taken to the streets, the Nike Dunk Low Retro returns with crisp overlays and original team colors. This basketball icon channels '80s vibes with premium leather in the upper that looks good and breaks in even better. Modern footwear technology helps bring the comfort into the 21st century. Color Shown: White/White/Black Style: DD1391-100 Country/Region of Origin: China, Indonesia, Vietnam"
+    }}]
+2025-05-17 12:06:02 - app - ERROR - Error calling Deepseek API: Model returned invalid JSON: Expecting ',' delimiter: line 34 column 6 (char 2916)
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\multi_agent\pydantic_ai_client.py", line 217, in generate
+    parsed_data = json.loads(LLMClient.extract_json_only(content))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 34 column 6 (char 2916)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\multi_agent\pydantic_ai_client.py", line 233, in generate
+    raise ValueError(f"Model returned invalid JSON: {e}")
+ValueError: Model returned invalid JSON: Expecting ',' delimiter: line 34 column 6 (char 2916)
+2025-05-17 12:06:02 - app - ERROR - Error in ProductAgent: Model returned invalid JSON: Expecting ',' delimiter: line 34 column 6 (char 2916)
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\multi_agent\pydantic_ai_client.py", line 217, in generate
+    parsed_data = json.loads(LLMClient.extract_json_only(content))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 34 column 6 (char 2916)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\multi_agent\agents\product.py", line 90, in process
+    result = await LLMClient.generate(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\multi_agent\pydantic_ai_client.py", line 233, in generate
+    raise ValueError(f"Model returned invalid JSON: {e}")
+ValueError: Model returned invalid JSON: Expecting ',' delimiter: line 34 column 6 (char 2916)
+2025-05-17 12:06:02 - app - INFO - Transitioning from PROCESSING_PRODUCT to FALLBACK via 'error'
+2025-05-17 12:06:02 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:02 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:06:03 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:03 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:03 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:03 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:06:05 - app - INFO - Executing FALLBACK with FallbackAgent
+2025-05-17 12:06:05 - app - INFO - Cache hit for FallbackResponse
+2025-05-17 12:06:05 - app - INFO - FallbackAgent generated response: I apologize, I seem to have misunderstood your previous request. Could you please clarify what type of products you are interested in seeing? I'd be happy to show you some options from our available categories. Please let me know if you'd like to see products from a specific category, such as socks, athletic wear, or shirts, and I'll do my best to provide relevant recommendations.
+2025-05-17 12:06:05 - app - INFO - Transitioning from FALLBACK to FALLBACK via 'error'
+2025-05-17 12:12:42 - app - INFO - Agent system initialized in 0.0027s
+2025-05-17 12:12:44 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:12:44 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:12:44 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:12:46 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:12:46 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:12:48 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:12:52 - app - INFO - ProductAgent generated response of 369 chars
+2025-05-17 12:12:52 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 12:12:52 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:12:52 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:12:55 - app - INFO - Response quality score: 8.0
+2025-05-17 12:12:55 - app - INFO - Evaluation strengths: The response is relevant to the user's query, providing specific product recommendations that match the requested criteria. The information provided is accurate and concise.
+2025-05-17 12:12:55 - app - INFO - Evaluation weaknesses: The response could be slightly more complete by providing a few more product options to give the user more choices.
+2025-05-17 12:12:55 - app - INFO - Feedback: Overall, this is a strong response that addresses the user's needs. To further improve, consider providing 3-4 product recommendations that fit the specified criteria to give the user a more comprehensive set of options to choose from.
+2025-05-17 12:12:55 - app - INFO - Attempt count: 1
+2025-05-17 12:12:55 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:13:46 - app - INFO - Agent system initialized in 0.0032s
+2025-05-17 12:13:47 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:13:47 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:13:47 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:13:49 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:13:49 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:13:51 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:13:56 - app - INFO - ProductAgent generated response of 533 chars
+2025-05-17 12:13:56 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 12:13:56 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:13:56 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:14:00 - app - INFO - Response quality score: 8.0
+2025-05-17 12:14:00 - app - INFO - Evaluation strengths: The response is relevant to the user's query, providing specific product recommendations that match the requested criteria of summer-friendly, breathable fabric, and trending among college students. The information provided is accurate and the response is concise and clear.
+2025-05-17 12:14:00 - app - INFO - Evaluation weaknesses: The response could be slightly more complete by providing a bit more detail on the key features of each recommended product, such as the specific fabric type, breathability, and why they are considered trending among college students.
+2025-05-17 12:14:00 - app - INFO - Feedback: To improve the response, consider adding a sentence or two for each recommended product highlighting the key features that make it a good fit for the user's request. This would make the response more complete and informative without sacrificing conciseness.
+2025-05-17 12:14:00 - app - INFO - Attempt count: 1
+2025-05-17 12:14:00 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:19:01 - app - INFO - Agent system initialized in 0.0026s
+2025-05-17 12:19:02 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:19:02 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:19:02 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:19:04 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:19:04 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:19:05 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:19:08 - app - INFO - ProductAgent generated response of 446 chars
+2025-05-17 12:19:08 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 12:19:08 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:19:08 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:19:10 - app - INFO - Response quality score: 8.0
+2025-05-17 12:19:10 - app - INFO - Evaluation strengths: The assistant provided a relevant product recommendation that closely matched the user's specific criteria. The response was clear, concise, and provided the necessary details about the product.
+2025-05-17 12:19:10 - app - INFO - Evaluation weaknesses: The response could have been slightly more complete by offering an alternative recommendation in case the suggested product was out of stock, as requested in the user's query.
+2025-05-17 12:19:10 - app - INFO - Feedback: To improve the response, the assistant could have included an additional recommendation for a similar product in case the initial suggestion was unavailable. This would have fully addressed the user's request and provided a more comprehensive solution.
+2025-05-17 12:19:10 - app - INFO - Attempt count: 1
+2025-05-17 12:19:10 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:19:31 - app - INFO - Agent system initialized in 0.0054s
+2025-05-17 12:19:33 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:19:33 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:19:33 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:19:34 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_ORDER via 'order'
+2025-05-17 12:19:34 - app - INFO - Executing PROCESSING_ORDER with OrderAgent
+2025-05-17 12:19:34 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:19:35 - app - INFO - OrderAgent processed message: I want to cancel just the black hoodie from my recent order #82478, but keep the white shirt. Is that possible?
+2025-05-17 12:19:35 - app - INFO - Generated response: Unfortunately, we are unable to partially cancel items from an order. If you would like to cancel the entire order #82478, including both the black hoodie and white shirt, we can process that request for you. For specific details about your order or to take further action, please contact our support team at None or call us at None with your order number ready.
+2025-05-17 12:19:35 - app - INFO - Confidence score: 0.7
+2025-05-17 12:19:35 - app - INFO - OrderAgent generated response of 362 chars
+2025-05-17 12:19:35 - app - INFO - Transitioning from PROCESSING_ORDER to EVALUATING via 'processed'
+2025-05-17 12:19:35 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:19:35 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:19:38 - app - INFO - Response quality score: 8.0
+2025-05-17 12:19:38 - app - INFO - Evaluation strengths: The response is relevant to the user's request, providing a clear explanation of the order cancellation policy. It also offers a solution for the user to contact the support team to process the partial cancellation request.
+2025-05-17 12:19:38 - app - INFO - Evaluation weaknesses: The response could be slightly more concise and direct in communicating the inability to partially cancel items from an order.
+2025-05-17 12:19:38 - app - INFO - Feedback: The response is generally strong, but could be improved by being more succinct in explaining the policy and directing the user to the appropriate support channels. Consider rephrasing the explanation to be more direct, while still maintaining a helpful and understanding tone.
+2025-05-17 12:19:38 - app - INFO - Attempt count: 1
+2025-05-17 12:19:38 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:20:53 - app - INFO - Agent system initialized in 0.0023s
+2025-05-17 12:20:54 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:20:54 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:20:54 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:20:56 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_ORDER via 'order'
+2025-05-17 12:20:56 - app - INFO - Executing PROCESSING_ORDER with OrderAgent
+2025-05-17 12:20:56 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:20:58 - app - INFO - OrderAgent processed message: Order #51230 was supposed to arrive tomorrow, but I won’t be home. Can you change the delivery address to 32 Rosewood Street, Pune?
+2025-05-17 12:20:58 - app - INFO - Generated response: Unfortunately, I do not have access to your order details to make changes to the delivery address. For order #51230, please contact our support team at None or call us at None with your order number ready. They will be able to assist you with updating the delivery address.
+2025-05-17 12:20:58 - app - INFO - Confidence score: 0.7
+2025-05-17 12:20:58 - app - INFO - OrderAgent generated response of 273 chars
+2025-05-17 12:20:58 - app - INFO - Transitioning from PROCESSING_ORDER to EVALUATING via 'processed'
+2025-05-17 12:20:58 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:20:58 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:21:00 - app - INFO - Response quality score: 8.0
+2025-05-17 12:21:00 - app - INFO - Evaluation strengths: The response is relevant to the user's request, providing a clear explanation that the assistant does not have access to order details and cannot directly make changes. The tone is polite and helpful, directing the user to the appropriate support channels to resolve the issue.
+2025-05-17 12:21:00 - app - INFO - Evaluation weaknesses: The response could be slightly more concise, as the last sentence repeating the contact information is not strictly necessary.
+2025-05-17 12:21:00 - app - INFO - Feedback: Overall, this is a strong response that addresses the user's request effectively. To further improve, the assistant could consider removing the last sentence and simply stating the contact information for the support team.
+2025-05-17 12:21:00 - app - INFO - Attempt count: 1
+2025-05-17 12:21:00 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:21:18 - app - INFO - Agent system initialized in 0.0013s
+2025-05-17 12:21:19 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:21:19 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:21:19 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:21:21 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_TERMS via 'terms'
+2025-05-17 12:21:21 - app - INFO - Executing PROCESSING_TERMS with TermsAgent
+2025-05-17 12:21:23 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:21:25 - app - INFO - TermsAgent generated response of 894 chars
+2025-05-17 12:21:25 - app - INFO - Transitioning from PROCESSING_TERMS to EVALUATING via 'processed'
+2025-05-17 12:21:25 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:21:25 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:21:27 - app - INFO - Response quality score: 7.0
+2025-05-17 12:21:27 - app - INFO - Evaluation strengths: The response acknowledges the unusual nature of the scenario and provides clear explanations for why the standard policies do not apply. It also offers suggestions on how the customer could proceed, such as placing a new order.
+2025-05-17 12:21:27 - app - INFO - Evaluation weaknesses: The response could be more empathetic and offer to explore alternative solutions, even if they are not guaranteed to work. It could also provide more details on the specific policies that would apply.
+2025-05-17 12:21:27 - app - INFO - Feedback: To improve the response, consider adding a more empathetic tone, offering to explore alternative solutions, and providing more detailed information on the relevant policies. This would help make the response more comprehensive and tailored to the customer's unique situation.
+2025-05-17 12:21:27 - app - INFO - Attempt count: 1
+2025-05-17 12:21:27 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:27:26 - app - INFO - Agent system initialized in 0.0034s
+2025-05-17 12:27:27 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:27:27 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:27:27 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:27:29 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:27:29 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:27:31 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:27:33 - app - INFO - ProductAgent generated response of 217 chars
+2025-05-17 12:27:33 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 12:27:33 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:27:33 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:27:35 - app - INFO - Response quality score: 8.0
+2025-05-17 12:27:35 - app - INFO - Evaluation strengths: The response is relevant to the user's query, providing specific product details for navy and black shirts. The information provided is accurate and concise.
+2025-05-17 12:27:35 - app - INFO - Evaluation weaknesses: The response could be slightly more complete by offering additional options or details about the shirts beyond just the price and color.
+2025-05-17 12:27:35 - app - INFO - Feedback: Overall, this is a strong response that addresses the user's request effectively. To further improve, consider providing more context about the shirt styles, materials, or other relevant details that may help the user make a purchasing decision.
+2025-05-17 12:27:35 - app - INFO - Attempt count: 1
+2025-05-17 12:27:35 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 12:28:36 - app - INFO - Agent system initialized in 0.0023s
+2025-05-17 12:28:38 - app - INFO - Executing INIT with InitAgent
+2025-05-17 12:28:38 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 12:28:38 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 12:28:40 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 12:28:40 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 12:28:43 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:28:45 - app - INFO - ProductAgent generated response of 183 chars
+2025-05-17 12:28:45 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 12:28:45 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 12:28:45 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 12:28:48 - app - INFO - Response quality score: 8.0
+2025-05-17 12:28:48 - app - INFO - Evaluation strengths: The response is relevant to the user's latest query, providing specific product recommendations for black t-shirts. The information provided is accurate and concise.
+2025-05-17 12:28:48 - app - INFO - Evaluation weaknesses: The response could be slightly more complete by providing additional details about the t-shirt options, such as fabric, fit, or any other distinguishing features.
+2025-05-17 12:28:48 - app - INFO - Feedback: Overall, the response is strong and addresses the user's request effectively. To further improve, consider adding a bit more detail about the t-shirt options to give the user a more comprehensive understanding of the available products.
+2025-05-17 12:28:48 - app - INFO - Attempt count: 1
+2025-05-17 12:28:48 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'
+2025-05-17 13:03:16 - app - INFO - Agent system initialized in 0.0068s
+2025-05-17 13:03:19 - app - INFO - Agent system initialized in 0.0042s
+2025-05-17 13:03:24 - app - INFO - Agent system initialized in 0.0019s
+2025-05-17 13:03:26 - app - INFO - Agent system initialized in 0.0072s
+2025-05-17 13:03:27 - app - INFO - Agent system initialized in 0.0057s
+2025-05-17 13:03:29 - app - INFO - Agent system initialized in 0.0026s
+2025-05-17 13:03:32 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:03:32 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:03:32 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 13:03:34 - app - INFO - Agent system initialized in 0.0020s
+2025-05-17 13:03:37 - app - INFO - Agent system initialized in 0.0032s
+2025-05-17 13:03:40 - app - INFO - Agent system initialized in 0.0101s
+2025-05-17 13:03:44 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 13:03:44 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:03:47 - app - INFO - Agent system initialized in 0.0057s
+2025-05-17 13:03:51 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:04:03 - app - ERROR - Error fetching products from Shopify: Request URL is missing an 'http://' or 'https://' protocol.
+2025-05-17 13:04:03 - app - ERROR - Error syncing products to vector DB: Failed to fetch products from Shopify
+2025-05-17 13:04:03 - app - ERROR - Error in sync-products endpoint: 500: Failed to sync products to vector DB
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 207, in handle_async_request
+    raise UnsupportedProtocol(
+httpcore.UnsupportedProtocol: Request URL is missing an 'http://' or 'https://' protocol.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\external_service\shopify_service.py", line 70, in fetch_products_and_collections
+    response = await client.post(
+               ^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.UnsupportedProtocol: Request URL is missing an 'http://' or 'https://' protocol.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\services\products_service.py", line 19, in create
+    products, collections = await get_products_from_admin( self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\utils\products_utils.py", line 10, in get_products_from_admin
+    shopify_data = await shopify_service.fetch_products_and_collections()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\external_service\shopify_service.py", line 116, in fetch_products_and_collections
+    raise ValueError("Failed to fetch products from Shopify")
+ValueError: Failed to fetch products from Shopify
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\routes\products.py", line 36, in create
+    result = await products_service.create(namespace)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\services\products_service.py", line 41, in create
+    raise HTTPException(status_code=500, detail="Failed to sync products to vector DB")
+fastapi.exceptions.HTTPException: 500: Failed to sync products to vector DB
+2025-05-17 13:05:32 - app - INFO - Agent system initialized in 0.0049s
+2025-05-17 13:05:42 - app - INFO - Agent system initialized in 0.0057s
+2025-05-17 13:06:05 - app - ERROR - Error fetching products from Shopify: 
+2025-05-17 13:06:05 - app - ERROR - Error syncing products to vector DB: Failed to fetch products from Shopify
+2025-05-17 13:06:05 - app - ERROR - Error in sync-products endpoint: 500: Failed to sync products to vector DB
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\http11.py", line 136, in handle_async_request
+    raise exc
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_async\http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_backends\anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\external_service\shopify_service.py", line 70, in fetch_products_and_collections
+    response = await client.post(
+               ^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "D:\Tasks\test-app\api\venv\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\services\products_service.py", line 19, in create
+    products, collections = await get_products_from_admin( self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\utils\products_utils.py", line 10, in get_products_from_admin
+    shopify_data = await shopify_service.fetch_products_and_collections()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\external_service\shopify_service.py", line 116, in fetch_products_and_collections
+    raise ValueError("Failed to fetch products from Shopify")
+ValueError: Failed to fetch products from Shopify
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Tasks\test-app\api\app\routes\products.py", line 36, in create
+    result = await products_service.create(namespace)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tasks\test-app\api\app\services\products_service.py", line 41, in create
+    raise HTTPException(status_code=500, detail="Failed to sync products to vector DB")
+fastapi.exceptions.HTTPException: 500: Failed to sync products to vector DB
+2025-05-17 13:13:41 - app - INFO - Agent system initialized in 0.0028s
+2025-05-17 13:13:45 - app - INFO - Agent system initialized in 0.0073s
+2025-05-17 13:15:46 - app - INFO - Agent system initialized in 0.0021s
+2025-05-17 13:15:49 - app - INFO - Agent system initialized in 0.0020s
+2025-05-17 13:15:55 - app - INFO - Agent system initialized in 0.0092s
+2025-05-17 13:15:57 - app - INFO - Agent system initialized in 0.0048s
+2025-05-17 13:16:00 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 13:16:06 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 13:16:08 - app - INFO - Agent system initialized in 0.0065s
+2025-05-17 13:16:09 - app - INFO - Agent system initialized in 0.0050s
+2025-05-17 13:16:13 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:16:13 - app - WARNING - No color preference found for shop: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW, returning default
+2025-05-17 13:16:17 - app - INFO - Agent system initialized in 0.0056s
+2025-05-17 13:16:20 - app - WARNING - No shop found with name: test-chatbot201.myshopify.com?oseid=2DwaM4f8EaJFGeEymnHuvwdW
+2025-05-17 13:16:33 - app - INFO - Agent system initialized in 0.0062s
+2025-05-17 13:16:35 - app - INFO - Executing INIT with InitAgent
+2025-05-17 13:16:35 - app - INFO - Transitioning from INIT to CLASSIFYING via 'start'
+2025-05-17 13:16:35 - app - INFO - Executing CLASSIFYING with ClassifierAgent
+2025-05-17 13:16:37 - app - INFO - Transitioning from CLASSIFYING to PROCESSING_PRODUCT via 'product'
+2025-05-17 13:16:37 - app - INFO - Executing PROCESSING_PRODUCT with ProductAgent
+2025-05-17 13:16:43 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 13:16:45 - app - INFO - ProductAgent generated response of 233 chars
+2025-05-17 13:16:45 - app - INFO - Transitioning from PROCESSING_PRODUCT to EVALUATING via 'processed'
+2025-05-17 13:16:45 - app - INFO - Executing EVALUATING with EvaluatorAgent
+2025-05-17 13:16:45 - app - INFO - Calling Claude Haiku API with 3 messages
+2025-05-17 13:16:48 - app - INFO - Response quality score: 8.0
+2025-05-17 13:16:48 - app - INFO - Evaluation strengths: The response is relevant to the user's latest query, providing specific product recommendations for a black t-shirt. The information provided is accurate and concise.
+2025-05-17 13:16:48 - app - INFO - Evaluation weaknesses: While the response addresses the latest query, it could be improved by considering the full context of the previous interactions. The user may have been looking for a more specific type of black t-shirt based on their earlier requests.
+2025-05-17 13:16:48 - app - INFO - Feedback: To improve the response, consider reviewing the full conversation history to better understand the user's preferences and needs. Provide additional context or clarification if the user's requirements are not fully clear from the latest query alone. This will help ensure the recommendations are more tailored to the user's overall needs.
+2025-05-17 13:16:48 - app - INFO - Attempt count: 1
+2025-05-17 13:16:48 - app - INFO - Transitioning from EVALUATING to COMPLETE via 'good_quality'

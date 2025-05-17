@@ -1,19 +1,20 @@
 import json
+import re
 from pathlib import Path
 from app.multi_agent.agents.base import Agent
 from app.multi_agent.context.agent_context import AgentContext
+from app.services.embeddings_service import EmbeddingService
 from app.multi_agent.pydantic_ai_client import LLMClient
-from app.models.api.agent_router import OrderResponse
-from app.dbhandlers.shop_admin_handler import ShopAdminHandler
+from app.models.api.agent_router import TermsResponse
 from app.utils.logger import logger
 
-class OrderAgent(Agent):
-    """Handles all order-related queries including shipping, returns, and order status"""
+class TermsAgent(Agent):
+    """Handles terms, policies, and related queries"""
     def __init__(self):
-        prompt_path = Path(__file__).parent.parent / "prompt" / "order_prompt.json"
+        prompt_path = Path(__file__).parent.parent / "prompt" / "terms_prompt.json"
 
         with open(prompt_path) as f:
-            self.prompt_config = json.load(f)['order_agent_prompt']
+            self.prompt_config = json.load(f)['terms_agent_prompt']
     
     async def process(self, context: AgentContext) -> AgentContext:
         try:
@@ -26,7 +27,6 @@ class OrderAgent(Agent):
                      if fb["agent"] == "EvaluatorAgent"),
                     None
                 )
-                
                 if recent_feedback:
                     feedback_instruction = self.prompt_config['feedback_instruction_template']['template'].format(
                         quality_score=recent_feedback['quality_score'],
@@ -34,100 +34,108 @@ class OrderAgent(Agent):
                     )
                     previous_response = f"Previous response: {context.response}\n\n"
 
+            if context.attempts == 0:
+                user_message_embeddings = EmbeddingService.create_embeddings(context.user_message)
+
+                query_response = await EmbeddingService.get_embeddings(
+                    vector=user_message_embeddings,
+                    namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
+                    agent_type="TermsAgent"
+                )
+
+                context_texts = []
+                for vec in query_response:
+                    text = None
+                    if isinstance(vec.metadata, dict):
+                        text = vec.metadata.get("text")
+                    else:
+                        text = getattr(vec.metadata, "text", None)
+
+                    if text:
+                        context_texts.append(text)
+
             history_context = self._build_history_context(context)
 
-            shop_handler = ShopAdminHandler()
-            shop_contact = await shop_handler.get_support_contact(context.namespace)
-
-            support_email = shop_contact.get("support_email", "email not available")
-            support_phone = shop_contact.get("support_phone", "phone number not available")
-
             system_message = self.prompt_config['base_system_message'].format(history=history_context)
-
-            support_contact_message = self.prompt_config['support_contact_message'].format(
-                support_email=support_email,
-                support_phone=support_phone
-            )
-
-            system_message += f"\n\n{support_contact_message}"
-
             if feedback_instruction:
                 system_message += f"\n\n{feedback_instruction}\n\n{previous_response}"
 
             user_message = "\n\n".join([
                 section.format(
                     user_message=context.user_message,
-                    namespace=context.namespace
+                    context_data="\n".join(context_texts) if context_texts else self.prompt_config['user_message_template']['default_values']['context_data']
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             ])
 
             result = await LLMClient.generate(
-                model_class=OrderResponse,
+                model_class=TermsResponse,
                 user_message=user_message,
                 system_message=system_message,
                 temperature=self.prompt_config['parameters']['temperature'],
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
 
-            response_text = result.response_text
+            response_text = result.response
+
             context.response = response_text
 
             context.response, confidence_score = self._extract_confidence_score(context.response)
             context.confidence_score = confidence_score
             context.metadata["confidence_score"] = confidence_score
-            
-            logger.info(f"OrderAgent processed message: {context.user_message}")
-            logger.info(f"Generated response: {context.response}")
-            logger.info(f"Confidence score: {confidence_score}")
 
             if self.prompt_config['logging']['log_response_length']:
-                logger.info(f"OrderAgent generated response of {len(context.response)} chars")
+                logger.info(f"TermsAgent generated response of {len(context.response)} chars")
             if self.prompt_config['logging']['log_retry_attempts'] and context.attempts > 0:
-                logger.info(f"OrderAgent RETRY #{context.attempts} generated improved response")
+                logger.info(f"TermsAgent RETRY #{context.attempts} generated improved response")
             
             return context
 
         except Exception as e:
-            logger.error(f"Error in OrderAgent: {str(e)}", exc_info=True)
-            context.metadata["error"] = f"Order agent error: {str(e)}"
+            logger.error(f"Error in TermsAgent: {str(e)}", exc_info=True)
+            context.metadata["error"] = f"Terms agent error: {str(e)}"
             context.confidence_score = 0.0
-            
-            context.response = f"{self.prompt_config['fallback_responses']['general_error']} {support_contact_message}"
-                
+            context.response = self.prompt_config['response_structure']['fallback_response']
             return context
 
     def _build_history_context(self, context: AgentContext) -> str:
-        """Format conversation history focusing on order-related exchanges"""
+        """Format conversation history focusing on policy-related exchanges"""
         if not context.conversation_history:
-            return "No previous conversation about orders"
+            return "No previous conversation about policies or terms."
         
-        order_relevant = []
+        policy_relevant = []
+        keywords_pattern = re.compile(r"\b(policy|terms|privacy|legal|refund|return)\b", re.IGNORECASE)
+
         for msg in context.conversation_history:
-            if any(term in msg.get("user", "").lower() 
-                  for term in ["order", "shipping", "delivery", "return", "track", "cancel", "refund"]):
-                if msg.get("user"):
-                    order_relevant.append(f"User: {msg['user']}")
+            user_msg = msg.get("user", "")
+            if keywords_pattern.search(user_msg):
+                if user_msg:
+                    policy_relevant.append(f"User: {msg['user']}")
                 if msg.get("agent"):
-                    order_relevant.append(f"Assistant: {msg['agent']}")
-        
-        return "\n".join(order_relevant[-6:]) if order_relevant else "No relevant order history"
+                    policy_relevant.append(f"Assistant: {msg['agent']}")
+
+        MAX_POLICY_HISTORY_ENTRIES = 6
+
+        if policy_relevant:
+            recent_policy_history = policy_relevant[-MAX_POLICY_HISTORY_ENTRIES:]
+            return "\n".join(recent_policy_history)
+        else:
+            return "No relevant policy history"
 
     def _extract_confidence_score(self, response_text: str) -> float:
         """Extract confidence score from the response text"""
         try:
-            import re
+            DEFAULT_CONFIDENCE_SCORE = 0.7
+
             confidence_pattern = r'<confidence>(0\.\d+)</confidence>'
             match = re.search(confidence_pattern, response_text)
 
             if match:
                 confidence_score = float(match.group(1))
-    
                 response_text_cleaned = re.sub(confidence_pattern, '', response_text).strip()
-
                 return response_text_cleaned, confidence_score
             else:
-                return response_text, 0.7
+                return response_text, DEFAULT_CONFIDENCE_SCORE
         except Exception as e:
             logger.error(f"Error extracting confidence score: {str(e)}")
-            return response_text, 0.7
+            return response_text, DEFAULT_CONFIDENCE_SCORE
