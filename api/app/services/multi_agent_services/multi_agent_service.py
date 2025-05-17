@@ -4,104 +4,125 @@ from typing import Dict, Any
 from datetime import datetime
 from app.multi_agent.context.agent_context import AgentContext
 from app.multi_agent.context.agent_state import AgentState
-from app.multi_agent.context.state_machine import StateMachine
 from app.multi_agent.context.agent_config import AgentConfig
+from app.multi_agent.context.agent_registry import AgentRegistry
+from app.multi_agent.context.transition_manager import TransitionManager
+from app.multi_agent.context.state_machine import StateMachine
 from app.utils.logger import logger
 
 class MultiAgentService:
-    """Service that coordinates the multi-agent system"""
-    
     def __init__(self):
         init_start = time.perf_counter()
-
-        self.state_machine = StateMachine()
-        self.agent_config = AgentConfig()
-        self._setup_state_machine()
-
-        init_end = time.perf_counter()
-        logger.info(f"[Timing] Agent system initialized in {init_end - init_start:.4f} seconds.")
-    
-    def _setup_state_machine(self):
-        """Set up the state machine with agents and transitions"""
-        for agent in self.agent_config.get_agent_classes():
-            self.state_machine.register_agent(agent["state"], agent["class"]())
         
-        for transition in self.agent_config.get_transitions():
-            self.state_machine.register_transition(
-                transition["from_state"],
-                transition["condition"],
-                transition["to_state"]
-            )
-    
+        self.agent_config = AgentConfig()
+        self.agent_registry = AgentRegistry()
+        self.transition_manager = TransitionManager()
+        
+        self._register_core_components()
+        self._register_agents()
+        self._register_transitions()
+        
+        self.state_machine = StateMachine(
+            self.transition_manager,
+            self.agent_registry
+        )
+        
+        logger.info(f"Agent system initialized in {time.perf_counter() - init_start:.4f}s")
+
+    def _register_core_components(self) -> None:
+        """Register immutable core agents"""
+        self.agent_registry.register_core_agents()
+
+        classifier_config = next(
+            (a for a in self.agent_config.get_agent_configs() 
+             if a["state"] == "CLASSIFYING"),
+            None
+        )
+        if classifier_config:
+            state = AgentState[classifier_config["state"]]
+            agent_class = self.agent_config.get_agent_class(classifier_config["agent_class"])
+            self.agent_registry.register_agent(state, agent_class())
+
+    def _register_agents(self) -> None:
+        """Register all agents from config"""
+        for agent_config in self.agent_config.get_agent_configs():
+            state = AgentState[agent_config["state"]]
+            if not self.agent_registry.get_agent(state):
+                agent_class = self.agent_config.get_agent_class(agent_config["agent_class"])
+                self.agent_registry.register_agent(state, agent_class())
+
+    def _register_transitions(self) -> None:
+        """Automatically register transitions from config"""
+        self.transition_manager.register_agent_transition(
+            AgentState.INIT,
+            "start",
+            AgentState.CLASSIFYING
+        )
+        
+        # Register classifier -> processing state transitions
+        for agent_config in self.agent_config.get_agent_configs():
+            state = AgentState[agent_config["state"]]
+            if state.is_processing_state:
+                for condition in agent_config.get("trigger_conditions", []):
+                    self.transition_manager.register_agent_transition(
+                        AgentState.CLASSIFYING,
+                        condition,
+                        state
+                    )
+
+        # Processing state transitions
+        for state in AgentState:
+            if state.is_processing_state:
+                self.transition_manager.register_agent_transition(
+                    state, "processed", AgentState.EVALUATING
+                )
+                self.transition_manager.register_agent_transition(
+                    state, "low_confidence", AgentState.EVALUATING
+                )
+                self.transition_manager.register_agent_transition(
+                    state, "default", AgentState.FALLBACK
+                )
+        
+         # Evaluator transitions
+        self.transition_manager.register_agent_transition(
+            AgentState.EVALUATING, "good_quality", AgentState.COMPLETE
+        )
+        self.transition_manager.register_agent_transition(
+            AgentState.EVALUATING, "low_quality", AgentState.FALLBACK
+        )
+
     async def generate_agent_response(self, shopId: str, user_message: str, contents: list) -> Dict[str, Any]:
-        """Process a user message through the multi-agent system"""
-        total_start = time.perf_counter()
+        """Process user message through the agent system"""
         try:
-            # Reset state machine
             self.state_machine.state = AgentState.INIT
-            
-            # Create initial context
-            context_start = time.perf_counter()
+
             context = AgentContext(
                 user_message=user_message,
                 namespace=shopId,
                 max_attempts=3,
                 conversation_history=contents
             )
-            context_end = time.perf_counter()
-            logger.info(f"[Timing] Context preparation took {context_end - context_start:.4f} seconds.")
             
-            # Execute state machine
-            transition_start = time.perf_counter()
             result_context = await self.state_machine.execute(context)
-            transition_end = time.perf_counter()
-            logger.info(f"[Timing] State transitions took {transition_end - transition_start:.4f} seconds.")
-
-            # Update the conversation history with the agent's response
-            updated_history = self._update_conversation_history(
-                result_context.conversation_history,
-                user_message,
-                result_context.response
-            )
             
-            # Check for errors
-            if result_context.metadata.get("final_state") == "error":
-                error_msg = result_context.metadata.get("error", "Unknown error")
-                logger.error(f"Agent processing error: {error_msg}")
-                
-                # Even on error, try to return something useful
-                if not result_context.response:
-                    result_context.response = (
-                        "I'm sorry, I encountered an issue while processing your request. "
-                        "Please try again or ask a different question."
-                    )
-
-            categories = [
-                str(cat) for cat in (result_context.categories or [])
-                if str(cat).strip()
-            ]
-
-            total_end = time.perf_counter()
-            logger.info(f"[Timing] Total processing time: {total_end - total_start:.4f} seconds.")
-            
-            # Return the response and any products/categories
             return {
-                "answer": result_context.response,
+                "answer": result_context.response or "Sorry, I couldn't process your request.",
                 "products": result_context.products or [],
-                "categories": categories,
-                "history": updated_history
+                "categories": [str(c) for c in (result_context.categories or []) if str(c).strip()],
+                "history": self._update_conversation_history(
+                    result_context.conversation_history,
+                    user_message,
+                    result_context.response
+                )
             }
             
         except Exception as error:
-            logger.error(f"Error in agent router: {str(error)}", exc_info=True)
-            raise HTTPException(
-                status_code=500, detail="Failed to process your request"
-            )
+            logger.error(f"Agent system error: {str(error)}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to process request")
 
     def _update_conversation_history(self, history: list, user_message: str, agent_response: str) -> list:
-        """Update the conversation history with the latest interaction"""
+        """Update conversation history with new interaction"""
         if not history:
-            # If no history exists, create a new entry
             return [{
                 "id": 0,
                 "user": user_message,
@@ -109,22 +130,19 @@ class MultiAgentService:
                 "timestamp": datetime.now().isoformat()
             }]
         
-        # Find the last incomplete message (user message without agent response)
-        last_incomplete = None
-        for msg in reversed(history):
-            if msg.get("user") and not msg.get("agent"):
-                last_incomplete = msg
-                break
+        last_incomplete = next(
+            (msg for msg in reversed(history) if msg.get("user") and not msg.get("agent")),
+            None
+        )
         
         if last_incomplete:
-            # Update the existing incomplete message
-            last_incomplete["agent"] = agent_response
-            last_incomplete["timestamp"] = datetime.now().isoformat()
+            last_incomplete.update({
+                "agent": agent_response,
+                "timestamp": datetime.now().isoformat()
+            })
         else:
-            # Add a new message if all previous ones are complete
-            new_id = max(msg["id"] for msg in history) + 1 if history else 0
             history.append({
-                "id": new_id,
+                "id": max(msg["id"] for msg in history) + 1,
                 "user": user_message,
                 "agent": agent_response,
                 "timestamp": datetime.now().isoformat()
