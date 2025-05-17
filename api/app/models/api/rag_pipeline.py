@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from pydantic import BaseModel
 
 # Request Model
@@ -20,7 +20,7 @@ class ErrorResponse(BaseModel):
     success: bool
 
 class ProductEmbedding(BaseModel):
-    id: str
+    id: int
     values: List[float]
     metadata: Dict[str, Any]
 
@@ -36,9 +36,9 @@ class VectorMetadata(BaseModel):
     variant_id: str
 
 class Vector(BaseModel):
-    id: str
+    id: int
     values: List[float]
-    metadata: VectorMetadata
+    metadata: Union[VectorMetadata, Dict[str, Any]]
 
 class LLMResponse(BaseModel):
     response: str

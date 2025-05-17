@@ -9,7 +9,7 @@ from app.utils.rag_pipeline_utils import (
     extract_categories,
     extract_metadata_from_message
 )
-from app.multi_agent.pydantic_ai_client import DeepseekAIClient
+from app.multi_agent.pydantic_ai_client import LLMClient
 from app.models.api.agent_router import ProductResponse
 from app.utils.logger import logger
 
@@ -48,21 +48,14 @@ class ProductAgent(Agent):
                 query_response = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings,
                     namespace=self.prompt_config['rag_settings']['namespace'].format(namespace=context.namespace),
-                    metadata_filters=metadata_filters
+                    metadata_filters=metadata_filters,
+                    agent_type="ProductAgent"
                 )
 
                 products = extract_products_from_response(query_response)
 
-                # full_product_count = len(products)
-                # max_display = self.prompt_config['rag_settings']['max_product_display']
-                # note = ""
-
-                # if full_product_count > max_display:
-                    # note = f"Note: We found {full_product_count} matching products, but only the top {max_display} are shown here."
-
                 context_texts = format_context_texts(query_response)
-                
-                # context.products = products[:self.prompt_config['rag_settings']['max_products_first_pass']]
+           
                 context.products = products 
                 context.categories = extract_categories(products) if products else []
 
@@ -72,12 +65,12 @@ class ProductAgent(Agent):
             product_data = []
             for p in context.products:
                 product_data.append({
+                    "id": p.get("id", ""), 
                     "name": p.get("title", "Unknown Product"),
                     "price": p.get("price", "N/A"),
                     "description": p.get("description", ""),
                     "category": p.get("category", "")
                 })
-            logger.info(f"Number of products passed to generate(): {len(product_data)}")
 
             history_context = self._build_history_context(context)
 
@@ -93,27 +86,46 @@ class ProductAgent(Agent):
                 )
                 for section in self.prompt_config['user_message_template']['sections']
             ])
-            logger.info(f"User Message: {user_message}")
-            
-            # if note:
-                # user_message += f"\n\n{note}"
 
-            logger.info(f"User Message: {user_message}")
-
-            result = await DeepseekAIClient.generate(
+            result = await LLMClient.generate(
                 model_class=ProductResponse,
                 user_message=user_message,
                 system_message=system_message,
                 temperature=self.prompt_config['parameters']['temperature'],
                 max_tokens=self.prompt_config['parameters']['max_tokens']
             )
-            logger.info(f"LLM RESPONSE: {result}")
+
+            requested_ids = set()
+            if hasattr(result, 'id') and result.id:
+                if isinstance(result.id, str):
+                    if result.id.strip().startswith('[') and result.id.strip().endswith(']'):
+                        try:
+                            id_list = json.loads(result.id)
+                            requested_ids.update(str(id_).strip() for id_ in id_list)
+                        except json.JSONDecodeError:
+                            requested_ids.add(str(result.id).strip())
+                    else:
+                        requested_ids.add(str(result.id).strip())
+                elif isinstance(result.id, list):
+                    requested_ids.update(str(id_).strip() for id_ in result.id)
+                elif isinstance(result.id, int):
+                    requested_ids.add(str(result.id).strip())
+
+            if requested_ids:
+                filtered_products = [
+                    p for p in context.products
+                    if str(p.get("id", "")).strip() in requested_ids
+                ]
+
+                if filtered_products:
+                    context.products = filtered_products
+           
             response_text = result.introduction
 
             if result.products:
                 response_text += f"\n\nHere are {len(result.products)} matching products:"
                 for product in result.products:
-                    response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"
+                    response_text += f"\n{self.prompt_config['response_structure']['product_format'].format(name=product.name, price=product.price)}"   
 
             if result.suggestions:
                 response_text += "\n\n" if not result.products else ""
@@ -127,10 +139,6 @@ class ProductAgent(Agent):
             context.response, confidence_score = self._extract_confidence_score(context.response)
             context.confidence_score = confidence_score
             context.metadata["confidence_score"] = confidence_score
-
-            logger.info(f"ProductAgent processed message: {context.user_message}")
-            logger.info(f"Generated response: {context.response}")
-            logger.info(f"Confidence score: {confidence_score}")
 
             if self.prompt_config['logging']['log_response_length']:
                 logger.info(f"ProductAgent generated response of {len(context.response)} chars")

@@ -5,6 +5,7 @@ import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
 import { FetcherResponse, LoaderData } from "app/common/types";
+import { textTrain } from "./text_train";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -24,38 +25,53 @@ export default function TrainingPage() {
   const fetcher = useFetcher<FetcherResponse>();
   const processingRef = useRef(false);
   const { shop, accessToken } = useLoaderData<LoaderData>();
+  const MAX_CHAR_LIMIT = 1000;
 
   useEffect(() => {
     setMessages([{ 
       sender: "bot", 
-      text: "Fetch the products by clicking on the 'Fetch Products' button or provide a JSON input to train the LLM with the products." 
+      text: "Fetch the products by clicking on the 'Fetch Products' button or provide text input to train the LLM with your own data." 
     }]);
   }, []);
 
   const handleSend = async () => {
     if (!input.trim() || processingRef.current) return;
-    processingRef.current = true;
 
-    setMessages((prev) => [...prev, { sender: "user", text: input }]);
-
-    try {
-      JSON.parse(input); 
-      
-      fetcher.submit({
-        messages: JSON.stringify([{ role: "user", content: input }]),
-        isTrainingPage: "true"
-      }, {
-        method: "POST",
-        encType: "application/json"
-      });
-    } catch (jsonError) {
-      setMessages((prev) => [...prev, { 
-        sender: "bot", 
-        text: "Please provide a valid JSON input to train the LLM." 
-      }]);
-      setInput("");
-      processingRef.current = false;
+    if (input.length > MAX_CHAR_LIMIT) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: `Your message is too long. Please shorten it to under ${MAX_CHAR_LIMIT} characters.` },
+      ]);
+      return;
     }
+
+    processingRef.current = true;
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: input },
+      { sender: "bot", text: "Chatbot is triggered with your data..." },
+    ]);
+
+    setInput("");
+
+    await textTrain({
+      input,
+      shop,
+      onSuccess: () => {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: "Chatbot trained successfully with the above data." },
+        ]);
+      },
+      onError: () => {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: "Failed to train, Please try again." },
+        ]);
+        setInput("");
+        processingRef.current = false;
+      },
+    });
   };
 
   const handleFetchProducts = async () => {
@@ -107,18 +123,25 @@ export default function TrainingPage() {
             ))}
           </div>
           <div className={styles.inputArea}>
-            <input
-              type="text"
+            <textarea
+              className={styles.textarea}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your query..."
+              placeholder="Type your training data..."
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
             />
             <button 
               onClick={handleSend} 
               className={styles.sendButton}
-              disabled={fetcher.state !== "idle"}
+              disabled={!input.trim() || processingRef.current}
             >
-              {fetcher.state !== "idle" ? "Sending..." : "Send"}
+              {processingRef.current ? "Sending..." : "Send"}
             </button>
           </div>
         </div>

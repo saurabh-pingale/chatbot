@@ -2,7 +2,7 @@ import { API } from "app/constants/api.constants";
 
 export const saveColorPreference = async (shopId: string, color: string) => {
   try {
-    const response = await fetch(`${API.BACKEND_URL}/store-admin/save-color-preference?shopId=${shopId}`, {
+    const response = await fetch(`${API.SAVE_COLOR_PREFERENCE}?shopId=${shopId}`, {
       method: "POST",
       body: JSON.stringify({ color }),
       headers: {

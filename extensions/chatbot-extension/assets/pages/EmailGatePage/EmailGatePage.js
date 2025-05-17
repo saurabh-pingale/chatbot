@@ -2,12 +2,14 @@ import { isValidEmail } from '../../utils/helpers';
 import { initializeUserSession } from '../../modules/user/session.module';
 import { createLoader } from '../../components/ui/Loader/Loader';
 
-export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryColor) {
+export function createEmailGatePage(chatbotTitle = 'Store Assistant', primaryColor, finalImageUrl) {
   const page = document.createElement('div');
   page.className = 'email-gate-page';
-  
+  page.style.borderColor = primaryColor;
+    
   page.innerHTML = `
     <div class="chatbot-header" style="background-color: ${primaryColor}">
+      <img src="${finalImageUrl}" alt="Logo" class="chatbot-logo" />
       <h3 class="chatbot-header-title">${chatbotTitle}</h3>
     </div>
     <div class="email-collection-content">

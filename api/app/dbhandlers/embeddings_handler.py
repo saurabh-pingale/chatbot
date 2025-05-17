@@ -1,7 +1,8 @@
-import time 
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+from pydantic import ValidationError
+
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
 from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
@@ -56,17 +57,14 @@ class EmbeddingsHandler:
         namespace: Optional[str] = None,
         includes_values: bool = False,
         metadata_filters: Optional[Dict[str, Any]] = None,
+        agent_type: Optional[str] = None
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
 
-        query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}"
+        query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
 
-        start_time = time.perf_counter()
-
-        cached_result = query_cache.get(query_key)
+        cached_result = self.get_cache_results(query_key)
         if cached_result:
-            elapsed_time = time.perf_counter() - start_time
-            logger.info(f"Query result served from cache in {elapsed_time:.4f} seconds.")
             return cached_result
 
         norm = (sum(value**2 for value in vector)) ** 0.5
@@ -115,19 +113,24 @@ class EmbeddingsHandler:
                 if not payload:
                     continue
                 
-                results.append(
-                    Vector(
-                        id=str(match.id),
-                        values=match.vector if includes_values and match.vector else [],
-                        metadata=VectorMetadata(**payload),
-                        score=match.score 
+                try:
+                    results.append(
+                        Vector(
+                            id=match.id,
+                            values=match.vector if includes_values and match.vector else [],
+                            metadata=VectorMetadata(**payload) if agent_type == "ProductAgent" else payload,
+                            score=match.score 
+                        )
                     )
-                )
+                except ValidationError as e:
+                    logger.error(f"Product validation failed: {e}")
 
             query_cache.put(query_key, results)
-            elapsed_time = time.perf_counter() - start_time
-            logger.info(f"Query result served from Qdrant in {elapsed_time:.4f} seconds.")
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)
             return []
+
+    def get_cache_results(self, query_key: str) -> Optional[List[Vector]]:
+        """Fetch results from query cache using the query key."""
+        return query_cache.get(query_key)    

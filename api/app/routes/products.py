@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException, Header
+
 from app.services.products_service import ProductsService
-from app.utils.app_utils import get_app
 from app.utils.logger import logger
 
 products_router = APIRouter(prefix="/products_router", tags=["products_router"])
@@ -25,7 +25,6 @@ async def create(
                 detail="Both X-Shopify-Store and X-Shopify-Access-Token headers are required"
             )
 
-        app = get_app()
         products_service = ProductsService(
             shopify_store=x_shopify_store,
             shopify_access_token=x_shopify_access_token

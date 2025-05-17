@@ -24,7 +24,7 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
 def format_context_texts(query_results: List[Any]) -> str:
     """Formats context texts from query results."""
     return "\n".join(
-        f"Product: Title: {result.metadata.title}, Description: {result.metadata.description}, "
+        f"Product: ID: {getattr(result, 'id', 'N/A')}, Title: {result.metadata.title}, Description: {result.metadata.description}, "
         f"Category: {result.metadata.category}, Price: {result.metadata.price}."
         for result in query_results
         if result and result.metadata

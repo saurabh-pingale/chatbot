@@ -1,12 +1,12 @@
-import { API } from "app/constants/api.constants";
+import { CLOUDINARY } from "app/constants/api.constants";
 
 export async function uploadToCloudinary(file: File): Promise<string | null> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", API.UPLOAD_PRESET);
+  formData.append("upload_preset", CLOUDINARY.UPLOAD_PRESET);
 
   try {
-    const response = await fetch(API.CLOUDINARY_URL, {
+    const response = await fetch(CLOUDINARY.URL, {
       method: "POST",
       body: formData,
     });

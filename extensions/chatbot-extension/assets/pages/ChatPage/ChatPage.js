@@ -6,8 +6,9 @@ import { createUserQuerySlider } from '../../components/query-slider/UserQuerySl
 export function createChatPage(chatbotTitle, primaryColor, userQueries, finalImageUrl) { 
     const page = document.createElement('div');
     page.className = 'chat-page';
+    page.style.borderColor = primaryColor;
 
-    const header = createChatHeader('#00A8E8', chatbotTitle, finalImageUrl);
+    const header = createChatHeader(primaryColor, chatbotTitle, finalImageUrl);
     page.appendChild(header);
 
     const chatContent = document.createElement('div');

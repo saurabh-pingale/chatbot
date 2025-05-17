@@ -1,4 +1,4 @@
-export function createCartIcon() {
+export function createCartIcon(primaryColor) {
     const cartIcon = document.createElement('div');
     cartIcon.className = 'chatbot-cart-icon';
     cartIcon.innerHTML = `
@@ -9,5 +9,11 @@ export function createCartIcon() {
       </svg>
       <span class="cart-count">0</span>
     `;
+    
+    const cartCount = cartIcon.querySelector('.cart-count');
+    if (cartCount) {
+        cartCount.style.backgroundColor = primaryColor;
+    }
+
     return cartIcon;
 }

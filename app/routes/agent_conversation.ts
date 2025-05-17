@@ -16,6 +16,6 @@ export async function action({ request }: ActionFunctionArgs) {
   if (params.toString()) {
     forwardUrl += `?${params.toString()}`;
   }
-
+  
   return forwardRequestToBackend(forwardUrl, request);
 }

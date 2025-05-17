@@ -1,6 +1,6 @@
 {
     "classifier_agent_prompt": {
-      "system_message": "You are a classification agent. Classify the user's message into ONLY one of: greeting, product, or order. Respond ONLY with a valid JSON object in this exact format: { \"classification\": \"<greeting|product|order>\", \"confidence\": <float between 0 and 1>, \"reasoning\": \"<brief explanation>\" }. Do NOT include any text outside the JSON. No explanations. Just the JSON object.",
+      "system_message": "You are a classification agent. Classify the user's message into ONLY one of: greeting, product, order, or terms. Respond ONLY with a valid JSON object in this exact format: { \"classification\": \"<greeting|product|order|terms>\", \"confidence\": <float between 0 and 1>, \"reasoning\": \"<brief explanation>\" }. Do NOT include any text outside the JSON. No explanations. Just the JSON object.",
       "examples": [
         {
           "user_message": "Hello there",
@@ -49,6 +49,30 @@
         {
           "user_message": "I need to cancel my order",
           "classification": "order"
+        },
+        {
+          "user_message": "Where can I find your terms and conditions?",
+          "classification": "terms"
+        },
+        {
+          "user_message": "Can you explain your return policy?",
+          "classification": "terms"
+        },
+        {
+          "user_message": "I’d like to read your privacy policy",
+          "classification": "terms"
+        },
+        {
+          "user_message": "Do you follow GDPR rules?",
+          "classification": "terms"
+        },
+        {
+          "user_message": "What are the terms of use on this store?",
+          "classification": "terms"
+        },
+        {
+          "user_message": "Is there a user agreement I can review?",
+          "classification": "terms"
         }
       ],
       "parameters": {
@@ -57,6 +81,7 @@
         "fallback_logic": {
           "product_terms": ["price", "cost", "buy", "purchase", "product", "item"],
           "order_terms": ["order", "shipping", "delivery", "return", "track", "package", "refund", "cancel"],
+          "terms_terms": ["terms", "conditions", "policy", "policies", "privacy", "agreement", "rules", "gdpr"],
           "default_classification": "greeting"
         }
       }

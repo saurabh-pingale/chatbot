@@ -1,16 +1,16 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
 from app.models.db.base import Base
 
-class StoreModel(Base):
-    __tablename__ = 'stores'
+class ShopModel(Base):
+    __tablename__ = 'shops'
     
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime)
-    store_name = Column(String)
-    store_description = Column(Text, nullable=True)
+    shop_id = Column(String)
+    shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
     updated_at = Column(DateTime)
     region = Column(String, nullable=True)
@@ -19,8 +19,9 @@ class StoreModel(Base):
     support_phone = Column(Text, nullable=True)
     image = Column(String, nullable=True)
 
-    conversations = relationship("ConversationModel", back_populates="store")
-    users = relationship("UserModel", back_populates="store")
+    conversations = relationship("ConversationModel", back_populates="shop")
+    users = relationship("UserModel", back_populates="shop")
+    checkout_products = relationship("CheckoutProductModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -33,10 +34,11 @@ class UserModel(Base):
     country = Column(Text, nullable=True) 
     ip_address = Column(Text, nullable=True)
     updated_at = Column(DateTime)
-    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
 
     conversations = relationship("ConversationModel", back_populates="user")
-    store = relationship("StoreModel", back_populates="users")
+    shop = relationship("ShopModel", back_populates="users")
+    checkout_products = relationship("CheckoutProductModel", back_populates="user")
 
 class CollectionModel(Base):
     __tablename__ = 'collections'
@@ -46,16 +48,14 @@ class CollectionModel(Base):
     products_count = Column(Integer)
     
     products = relationship("ProductModel", back_populates="collection")
+    checkout_products = relationship("CheckoutProductModel", back_populates="collection")
 
 class ProductModel(Base):
     __tablename__ = 'products'
-    __table_args__ = (
-        UniqueConstraint('title', 'category', name='uq_title_category'),
-        {'sqlite_autoincrement': True, 'extend_existing': True}
-    )
+    __table_args__ = {'sqlite_autoincrement': True, 'extend_existing': True}
     
-    id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
+    title = Column(String)
     description = Column(String)
     category = Column(String)
     url = Column(String)
@@ -64,6 +64,7 @@ class ProductModel(Base):
     collection_id = Column(Integer, ForeignKey('collections.id'))
     
     collection = relationship("CollectionModel", back_populates="products")
+    checkout_products = relationship("CheckoutProductModel", back_populates="product")
     
 # class ChatbotAnalytics(Base):
 #     __tablename__ = 'chatbot_analytics'

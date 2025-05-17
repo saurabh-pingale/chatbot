@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field, validator
 from enum import Enum
 
@@ -24,6 +24,7 @@ class ClassificationType(str, Enum):
     GREETING = "greeting"
     PRODUCT = "product"
     ORDER = "order"
+    TERMS = "terms"
 
 class MessageClassification(BaseModel):
     """Schema for message classification"""
@@ -84,7 +85,6 @@ class FallbackResponse(BaseModel):
         description="Suggestion for how to proceed or what information might help"
     )
 
-
 class GreetingResponse(BaseModel):
     """Schema for generating greeting responses"""
     welcome_message: str = Field(
@@ -112,6 +112,10 @@ class ProductResponse(BaseModel):
         ...,
         description="Brief introduction or acknowledgment of the user's query"
     )
+    id: Optional[Union[List[str], List[int], str, int]] = Field(
+        None,
+        description="Product IDs referenced in the response, can be a single ID or a list of IDs"
+    )
     products: Optional[List[Product]] = Field(
         None,
         description="List of relevant products matching the query"
@@ -136,3 +140,6 @@ class OrderResponse(BaseModel):
 class ConfidenceResponse(BaseModel):
     """Model for confidence score responses"""
     confidence_score: float = Field(..., description="Confidence score from 0 to 1 indicating how well the response addresses the user's needs")
+
+class TermsResponse(BaseModel):
+    response: str

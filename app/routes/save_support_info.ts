@@ -2,8 +2,7 @@ import { API } from "app/constants/api.constants";
 
 export const saveSupportInfo = async (shopId: string, supportEmail: string, supportPhone: string) => {
   try {
-    const response = await fetch(
-      `${API.BACKEND_URL}/store-admin/save-support-info?shopId=${shopId}`,
+    const response = await fetch(`${API.SAVE_SUPPORT_INFO}?shopId=${shopId}`,
       {
         method: "POST",
         body: JSON.stringify({ supportEmail, supportPhone }),

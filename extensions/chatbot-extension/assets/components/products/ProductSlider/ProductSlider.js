@@ -11,7 +11,7 @@ export function createProductSlider(products, primaryColor, onAddToCart) {
     const card = createProductCard(product, primaryColor);
     card.addEventListener('addToCart', (e) => {
       e.stopPropagation();
-      onAddToCart(e.detail)
+      onAddToCart(e.detail);
     });
     slider.appendChild(card);
   });

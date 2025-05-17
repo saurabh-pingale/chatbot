@@ -68,7 +68,12 @@ export function initChatModule(primaryColor) {
       return;
     }
 
-    if(!messageFromQuery) inputBox.value = '';
+    if(!messageFromQuery) {
+      inputBox.value = '';
+      inputBox.style.height = 'auto'; 
+      inputBox.focus();
+      inputBox.setSelectionRange(0, 0);
+    }
     
     trackEvent('interactions', {});
 
@@ -98,13 +103,17 @@ export function initChatModule(primaryColor) {
     } finally {
       typingIndicator.remove();
       inputBox.focus();
+      inputBox.setSelectionRange(0, 0);
     }
   };
 
   window.sendChatMessage = handleSend;
   
   inputBox.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSend();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   });
   
   sendButton.addEventListener('click', () => {
