@@ -1,24 +1,27 @@
-import { createChatPage } from '../../pages/ChatPage/ChatPage';
-import { createEmailGatePage } from '../../pages/EmailGatePage/EmailGatePage';
-import { hasSubmittedEmail } from '../user/session.module';
-import { userQueries } from '../../utils/queris.config';
+import { hasSubmittedEmail } from '../user/session.module.js';
 
-export function renderContent(container, primaryColor, shouldOpen = false, finalImageUrl) {
-    const hasEmail = hasSubmittedEmail();
-    const content = hasEmail
-      ? createChatPage('Store Assistant', primaryColor, userQueries, finalImageUrl)
-      : createEmailGatePage('Store Assistant', primaryColor, finalImageUrl);
-  
-    const existingContent = container.querySelector('.chat-page, .email-gate-page');
-    if (existingContent) container.removeChild(existingContent);
+export async function renderContent(containerId = 'chatbot-container', primaryColor, finalImageUrl) {
+  const hasEmail = hasSubmittedEmail();
+  const htmlPath = hasEmail
+    ? '/pages/ChatPage/ChatPage.html'
+    : '/pages/EmailGatePage/EmailGatePage.html';
+  const jsPath = hasEmail
+    ? '/pages/ChatPage/ChatPage.js'
+    : '/pages/EmailGatePage/EmailGatePage.js';
 
-    content.classList.add('hidden');
-    container.appendChild(content);
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
-    if (shouldOpen) {
-        content.classList.remove('hidden');
-        content.classList.add('open');
-    }
-  
-    return content;
+  container.innerHTML = '';
+
+  const response = await fetch(htmlPath);
+  const html = await response.text();
+  container.innerHTML = html;
+
+  const script = document.createElement('script');
+  script.src = jsPath;
+  script.type = 'module';
+  document.body.appendChild(script);
+
+  window.chatbotConfig = { primaryColor, finalImageUrl };
 }

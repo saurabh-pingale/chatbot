@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Page</title>
+    <link rel="stylesheet" href="../../chatbot.css">
+</head>
+<body>
+    <div id="chat-page" class="chat-page">
+        <div class="chatbot-header-glass" id="chat-header">
+            <div class="chatbot-header-left">
+                <img id="chat-logo" alt="Logo" class="chatbot-logo" />
+                <h3 class="chatbot-header-title" id="chat-title"></h3>
+            </div>
+            <div id="cart-icon"></div>
+        </div>
+
+        <div class="chat-content">
+            <div class="message-list" id="message-list"></div>
+        </div>
+
+        <div class="user-query-slider" id="query-slider"></div>
+
+        <div class="input-component">
+            <textarea class="input-box" placeholder="Type your message..." rows="1" maxlength="200"></textarea>
+            <button class="send-button" disabled>Send</button>
+        </div>
+    </div>
+
+    <script src="ChatPage.js"></script>
+</body>
+</html>
