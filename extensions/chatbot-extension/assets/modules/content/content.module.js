@@ -1,24 +1,20 @@
 import { hasSubmittedEmail } from '../user/session.module.js';
 import { userQueries } from '../../utils/queris.config.js';
+import EmailGatePage from '../../pages/EmailGatePage/EmailGatePage.html';
+import ChatPage from '../../pages/ChatPage/ChatPage.html'
 
 let currentScript = null;
 
-export async function renderContent(container, primaryColor, finalImageUrl) {
+export async function renderContent(container, primaryColor, shouldOpen = false, finalImageUrl) {
   if (!container) return null;
 
   const hasEmail = hasSubmittedEmail();
-  const htmlPath = hasEmail
-    ? '/pages/ChatPage/ChatPage.html'
-    : '/pages/EmailGatePage/EmailGatePage.html';
-  const jsPath = hasEmail
-    ? '/pages/ChatPage/ChatPage.js'
-    : '/pages/EmailGatePage/EmailGatePage.js';
-
-  container.innerHTML = '';
-
-  const response = await fetch(htmlPath);
-  const html = await response.text();
-  container.innerHTML = html;
+  const html = hasEmail ? ChatPage : EmailGatePage;
+  
+  const contentWrapper = container.querySelector('#chatbot-content');
+  if (contentWrapper) {
+    contentWrapper.innerHTML = html;
+  }
 
   if (currentScript) {
     document.body.removeChild(currentScript);
@@ -28,11 +24,25 @@ export async function renderContent(container, primaryColor, finalImageUrl) {
   window.chatbotConfig = { primaryColor, finalImageUrl, userQueries };
 
   const script = document.createElement('script');
-  script.src = jsPath;
   script.type = 'module';
-  document.body.appendChild(script);
 
+  script.src = hasEmail
+    ? new URL('../../pages/ChatPage/ChatPage.js', import.meta.url).href
+    : new URL('../../pages/EmailGatePage/EmailGatePage.js', import.meta.url).href;
+
+
+  document.body.appendChild(script);
   currentScript = script;
 
-  return container.querySelector('.chat-page') || container.querySelector('.email-gate-page');
+  const contentElement = container.querySelector('.chat-page') || container.querySelector('.email-gate-page');
+
+  if (contentElement) {
+    contentElement.classList.add('hidden');
+    if (shouldOpen) {
+      contentElement.classList.remove('hidden');
+      contentElement.classList.add('open');
+    }
+  }
+
+  return contentElement;
 }

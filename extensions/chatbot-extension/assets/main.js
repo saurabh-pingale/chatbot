@@ -34,11 +34,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const finalImageUrl = imageUrl || IMAGE.FALLBACK;
     
+    const contentWrapper = document.createElement('div');
+    contentWrapper.id = 'chatbot-content';
+    container.appendChild(contentWrapper);
+    
     const toggleButton = createToggleButton(primaryColor, finalImageUrl); 
     container.appendChild(toggleButton);
 
     window.chatbotRenderContent = (shouldOpen) => {
         currentContent = renderContent(container, primaryColor, shouldOpen, finalImageUrl);
+        console.log('-------Current Content: ---------:', currentContent);
         if (shouldOpen && hasSubmittedEmail()) {
             initChatModule(primaryColor);
         }
