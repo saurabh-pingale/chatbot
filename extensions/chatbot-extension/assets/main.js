@@ -49,25 +49,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         return currentContent;
     };
 
-    currentContent = renderContent(container, primaryColor, false, finalImageUrl);
+    currentContent = await renderContent(container, primaryColor, false, finalImageUrl);
     
     toggleButton.addEventListener('click', () => {
         isOpen = !isOpen;
         
         if (isOpen) {
-            currentContent.classList.remove('hidden');
+            if (currentContent) {
+                currentContent.classList.remove('hidden');
                 currentContent.classList.add('open');
-                if (hasSubmittedEmail()) {
-                    initChatModule(primaryColor);
-                    document.querySelector('.input-box')?.focus();
-                }
+            }
 
-                if (currentContent.classList.contains('chat-page')) {
-                    initCartModule();
-                }
+            if (hasSubmittedEmail()) {
+                initChatModule(primaryColor);
+                document.querySelector('.input-box')?.focus();
+            }
+
+            if (currentContent?.classList.contains('chat-page')) {
+                initCartModule();
+            }
         } else {
-            currentContent.classList.remove('open');
-            currentContent.classList.add('hidden');
+            if (currentContent) {
+                currentContent.classList.remove('open');
+                currentContent.classList.add('hidden');
+            }
         }
         
         toggleButton.innerHTML = isOpen ? 

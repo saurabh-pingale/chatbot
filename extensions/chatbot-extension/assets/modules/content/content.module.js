@@ -1,7 +1,11 @@
 import { hasSubmittedEmail } from '../user/session.module.js';
 import { userQueries } from '../../utils/queris.config.js';
 
-export async function renderContent(containerId = 'chatbot-container', primaryColor, finalImageUrl) {
+let currentScript = null;
+
+export async function renderContent(container, primaryColor, finalImageUrl) {
+  if (!container) return null;
+
   const hasEmail = hasSubmittedEmail();
   const htmlPath = hasEmail
     ? '/pages/ChatPage/ChatPage.html'
@@ -9,9 +13,6 @@ export async function renderContent(containerId = 'chatbot-container', primaryCo
   const jsPath = hasEmail
     ? '/pages/ChatPage/ChatPage.js'
     : '/pages/EmailGatePage/EmailGatePage.js';
-
-  const container = document.getElementById(containerId);
-  if (!container) return;
 
   container.innerHTML = '';
 
@@ -32,4 +33,6 @@ export async function renderContent(containerId = 'chatbot-container', primaryCo
   document.body.appendChild(script);
 
   currentScript = script;
+
+  return container.querySelector('.chat-page') || container.querySelector('.email-gate-page');
 }
