@@ -1,4 +1,5 @@
 import { hasSubmittedEmail } from '../user/session.module.js';
+import { userQueries } from '../../utils/queris.config.js';
 
 export async function renderContent(containerId = 'chatbot-container', primaryColor, finalImageUrl) {
   const hasEmail = hasSubmittedEmail();
@@ -18,10 +19,17 @@ export async function renderContent(containerId = 'chatbot-container', primaryCo
   const html = await response.text();
   container.innerHTML = html;
 
+  if (currentScript) {
+    document.body.removeChild(currentScript);
+    currentScript = null;
+  }
+
+  window.chatbotConfig = { primaryColor, finalImageUrl, userQueries };
+
   const script = document.createElement('script');
   script.src = jsPath;
   script.type = 'module';
   document.body.appendChild(script);
 
-  window.chatbotConfig = { primaryColor, finalImageUrl };
+  currentScript = script;
 }

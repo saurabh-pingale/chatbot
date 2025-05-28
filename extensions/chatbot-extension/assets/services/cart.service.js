@@ -1,75 +1,21 @@
-import { createCartDrawer } from '../components/cart/CartDrawer/cartDrawer';
 import { createCartItem } from '../components/cart/CartItem/CartItem';
 import { LOCAL_STORAGE } from '../constants/storage.constants';
 import { arraysEqual, extractVariantId } from '../utils/shopify.utils';
 import { clearStoreCart, addItemsToStoreCart, getStoreCart } from '../modules/api/cart.module';
 import { removeCartItem, createCart } from '../modules/api/api.module';
-import { createLoader } from '../components/ui/Loader/Loader';
 import { createErrorPopup } from '../components/ui/ErrorPopup/ErrorPopup';
 import { SHOPIFY_PRODUCT_VARIANT_PREFIX } from '../constants/api.constants';
 
 let drawerInstance = null;
-let currentChatPage = null;
 let isStoreCartUpdating = false;
 
-function ensureCartDrawerExists() {
-  if (!drawerInstance) {
-    drawerInstance = createCartDrawer();
-  }
-
-  const chatPage = document.querySelector('.chat-page');
-  if (chatPage && chatPage !== currentChatPage) {
-    if (drawerInstance.parentNode) {
-      drawerInstance.parentNode.removeChild(drawerInstance);
-    }
-
-    chatPage.appendChild(drawerInstance);
-    currentChatPage = chatPage
-    
-    drawerInstance.querySelector('.cart-drawer-close')
-      .addEventListener('click', closeCartDrawer);
-
-    drawerInstance.querySelector('.checkout-button')
-    .addEventListener('click', async (e) => {
-      e.preventDefault();
-      const button = e.target;
-      const originalText = button.textContent;
-
-      const loader = createLoader();
-      button.innerHTML = '';
-      button.appendChild(loader);
-      button.disabled = true;
-
-      try {
-        const items = getCartItems();
-        const syncSuccess = await syncWithStoreCart(items);
-
-        if (syncSuccess) {
-            window.location.href = '/cart';
-        } else {
-          alert('Failed to sync cart. Please try again.');
-        }
-      } catch (error) {
-        console.error('Checkout error:', error);
-        alert('An error occurred during checkout.');
-      } finally {
-        button.removeChild(loader);
-        button.textContent = originalText;
-        button.disabled = false;
-      }
-    });
-  }
-}
-
 export function initCartService() {
-  ensureCartDrawerExists();
+  drawerInstance = document.querySelector('.cart-drawer');
   loadCartFromStorage();
   setupCartListeners();
 }
 
 export function openCartDrawer() {
-  ensureCartDrawerExists();
-  
   drawerInstance.style.display = 'block';
   drawerInstance.classList.add('open');
   drawerInstance.classList.remove('auto-close');
@@ -104,9 +50,7 @@ function setupCartItemEventListeners(cartItemElement, item) {
   });
 }
 
-export function updateCartDrawer(items) {
-  ensureCartDrawerExists();
-  
+export function updateCartDrawer(items) {  
   const content = drawerInstance.querySelector('.cart-drawer-content');
   content.innerHTML = '';
 
