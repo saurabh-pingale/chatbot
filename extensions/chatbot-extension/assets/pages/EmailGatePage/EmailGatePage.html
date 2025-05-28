@@ -8,15 +8,22 @@
 </head>
 <body>
     <div id="email-gate-container" class="email-gate-page">
+
+        <!-- Chat Hedaer -->
         <div class="chatbot-header" id="email-gate-header" style="--primary-color: #FF762C;">
             <img id="email-gate-logo" src="" alt="Logo" class="chatbot-logo" />
             <h3 class="chatbot-header-title" id="email-gate-title"></h3>
         </div>
+        <!-- Chat Hedaer -->
+
+        <!-- Main Content -->
         <div class="email-collection-content">
             <p>
                 To get started with our chat assistant, please enter your email address. This helps us 
                 personalize your experience
             </p>
+
+            <!-- Email Input -->
             <input 
                 type="email" 
                 class="email-input" 
@@ -25,10 +32,20 @@
                 aria-label="Email address"
                 aria-describedby="email-error"
             >
+            <!-- Email Input -->
+
+            <!-- Email Error -->
             <div id="email-error" class="error-message hidden">Please enter a valid email address</div>
+
+            <!-- Start Chat Button as User -->
             <button class="start-chat-button" id="start-chat-btn" style="background-color: #FF762C;">Continue to Chat</button>
+            
+            <!-- Start Chat Button as Guest -->
             <button class="skip-button" id="skip-btn">Continue as Guest</button> 
+
         </div>
+        <!-- Main Content -->
+         
     </div>
 
     <script src="EmailGatePage.js"></script>
