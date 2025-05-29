@@ -1,4 +1,4 @@
-import { initChatModule, loadChatHistoryFromSession } from '../../modules/chat.module.js';
+import { initChatModule, loadChatHistoryFromSession } from '../../modules/chat/chat.module.js';
 import { initCartModule } from '../../modules/cart/cart.module.js';
 import { openCartDrawer, closeCartDrawer, getCartItems, syncWithStoreCart } from '../../services/cart.service.js';
 import { createLoader } from '../../components/ui/Loader/Loader.js';

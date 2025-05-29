@@ -8,7 +8,8 @@ export default {
   output: {
     file: 'assets/chatbot.js',
     format: 'iife',
-    name: 'Chatbot'
+    name: 'Chatbot',
+    inlineDynamicImports: true,
   },
   plugins: [
     string({

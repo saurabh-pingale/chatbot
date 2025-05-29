@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://sapphire-ipaq-participants-seemed.trycloudflare.com"
+application_url = "https://online-election-survivors-excerpt.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = ""
 
 [auth]
 redirect_urls = [
-  "https://sapphire-ipaq-participants-seemed.trycloudflare.com/auth/callback",
-  "https://sapphire-ipaq-participants-seemed.trycloudflare.com/auth/shopify/callback",
-  "https://sapphire-ipaq-participants-seemed.trycloudflare.com/api/auth/callback"
+  "https://online-election-survivors-excerpt.trycloudflare.com/auth/callback",
+  "https://online-election-survivors-excerpt.trycloudflare.com/auth/shopify/callback",
+  "https://online-election-survivors-excerpt.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://sapphire-ipaq-participants-seemed.trycloudflare.com/apps/default-app-home"
+url = "https://online-election-survivors-excerpt.trycloudflare.com/apps/default-app-home"
 subpath = "chatbot-api"
 prefix = "apps"
 

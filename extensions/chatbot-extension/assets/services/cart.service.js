@@ -160,7 +160,7 @@ export function clearCart() {
   persistCart([]);
 }
 
-async function syncWithStoreCart(items) {
+export async function syncWithStoreCart(items) {
   if (isStoreCartUpdating) return true;
   isStoreCartUpdating = true;
 

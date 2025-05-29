@@ -16,23 +16,13 @@ export async function renderContent(container, primaryColor, shouldOpen = false,
     contentWrapper.innerHTML = html;
   }
 
-  if (currentScript) {
-    document.body.removeChild(currentScript);
-    currentScript = null;
-  }
-
   window.chatbotConfig = { primaryColor, finalImageUrl, userQueries };
 
-  const script = document.createElement('script');
-  script.type = 'module';
-
-  script.src = hasEmail
-    ? new URL('../../pages/ChatPage/ChatPage.js', import.meta.url).href
-    : new URL('../../pages/EmailGatePage/EmailGatePage.js', import.meta.url).href;
-
-
-  document.body.appendChild(script);
-  currentScript = script;
+  if (hasEmail) {
+    import('../../pages/ChatPage/ChatPage.js');
+  } else {
+    import('../../pages/EmailGatePage/EmailGatePage.js');
+  }
 
   const contentElement = container.querySelector('.chat-page') || container.querySelector('.email-gate-page');
 
