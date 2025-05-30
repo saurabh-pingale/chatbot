@@ -4,7 +4,8 @@ import regex
 import hashlib
 from typing import TypeVar, Type, Dict, Any, Optional
 from pydantic import BaseModel
-from app.config import CLAUDE_API_KEY
+# from app.config import CLAUDE_API_KEY
+from app.config import ANTHROPIC_API_KEY
 from app.constants import CLAUDE_API_URL
 from app.utils.logger import logger
 from datetime import datetime, timedelta
@@ -178,7 +179,7 @@ class LLMClient:
         try:
             logger.info(f"Calling Claude Haiku API with {len(messages)} messages")
             headers = {
-                "x-api-key": CLAUDE_API_KEY,
+                "x-api-key": ANTHROPIC_API_KEY,
                 "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }
