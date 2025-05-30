@@ -4,7 +4,7 @@ import styles from '../styles/training.module.css';
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
-import { FetcherResponse, LoaderData } from "app/common/types";
+import { FetcherResponse, LoaderData } from "../common/types/index";
 import { textTrain } from "./text_train";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

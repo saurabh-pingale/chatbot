@@ -17,7 +17,7 @@ import {
   Tooltip,
   TextField,
 } from "@shopify/polaris";
-import { ActionResponse } from "app/common/types";
+import { ActionResponse } from "../common/types/index";
 import { uploadToCloudinary } from "./cloudinary.api";
 import { saveImageURLs } from "./save_image_urls";
 

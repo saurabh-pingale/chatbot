@@ -1,4 +1,4 @@
-import { CLOUDINARY } from "app/constants/api.constants";
+import { CLOUDINARY } from "../constants/api.constants";
 
 export async function uploadToCloudinary(file: File): Promise<string | null> {
   const formData = new FormData();

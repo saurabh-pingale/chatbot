@@ -1,27 +1,27 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "a5e63b353544300e41f67086b871d4ae"
-application_url = "https://silent-spatial-rg-presentation.trycloudflare.com"
+client_id = "0b0088138bf915307e7b51a6a9973f68"
+name = "chatbot"
+handle = "chatbot-234"
+application_url = "https://colleagues-francisco-lounge-pipes.trycloudflare.com"
 embedded = true
-name = "chatbot-test"
-handle = "chatbot-test-15"
 
 [webhooks]
 api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products"
+scopes = ""
 
 [auth]
 redirect_urls = [
-  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/callback",
-  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/shopify/callback",
-  "https://silent-spatial-rg-presentation.trycloudflare.com/api/auth/callback"
+  "https://colleagues-francisco-lounge-pipes.trycloudflare.com/auth/callback",
+  "https://colleagues-francisco-lounge-pipes.trycloudflare.com/auth/shopify/callback",
+  "https://colleagues-francisco-lounge-pipes.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://silent-spatial-rg-presentation.trycloudflare.com"
+url = "https://colleagues-francisco-lounge-pipes.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

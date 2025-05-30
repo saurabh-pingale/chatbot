@@ -1,4 +1,4 @@
-import { API } from "app/constants/api.constants";
+import { API } from "../constants/api.constants";
 
 export const saveImageURLs = async (shopId: string, imageUrl: string) => {
   try {
