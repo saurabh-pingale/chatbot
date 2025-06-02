@@ -1,10 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { CartItem, Product } from '../types';
-import { getCart, syncCartWithShopify } from '../services/shopify';
 import { trackEvent } from '../services/chat';
-
-const CART_STORAGE_KEY = 'chatbotCartItems';
-const POLL_INTERVAL = 8000;
+import { getCart, syncCartWithShopify } from '../services/shopify';
+import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
+import type { CartItem, Product } from '../types';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -18,8 +16,10 @@ export const useCart = () => {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  
+  let lastToken: string | null = null;
+  let lastCount = 0;
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -28,42 +28,36 @@ export const useCart = () => {
     }
   }, [cartItems]);
 
-  // Poll for cart changes
-  useEffect(() => {
-    let lastToken: string | null = null;
-    let lastCount = 0;
+  const pollCart = async () => {
+    try {
+      const cart = await getCart();
+      if (!cart) return;
 
-    const pollCart = async () => {
-      try {
-        const cart = await getCart();
-        if (!cart) return;
-
-        // Check if cart has changed
-        if (cart.token === lastToken && cart.item_count === lastCount) {
-          return;
-        }
-
-        lastToken = cart.token;
-        lastCount = cart.item_count;
-
-        // Update local cart to match Shopify cart
-        const shopifyItems = cart.items.map(item => ({
-          id: String(item.id),
-          variant_id: `gid://shopify/ProductVariant/${item.id}`,
-          title: item.title,
-          price: item.price,
-          image: item.image,
-          description: '',
-          quantity: item.quantity,
-          properties: item.properties || {}
-        }));
-
-        setCartItems(shopifyItems);
-      } catch (err) {
-        console.error('Error polling cart:', err);
+      if (cart.token === lastToken && cart.item_count === lastCount) {
+        return;
       }
-    };
 
+      lastToken = cart.token;
+      lastCount = cart.item_count;
+
+      const shopifyItems = cart.items.map(item => ({
+        id: String(item.id),
+        variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
+        title: item.title,
+        price: item.price,
+        image: item.image,
+        description: '',
+        quantity: item.quantity,
+        properties: item.properties || {}
+      }));
+
+      setCartItems(shopifyItems);
+    } catch (err) {
+      console.error('Error polling cart:', err);
+    }
+  };
+
+  useEffect(() => {
     const intervalId = setInterval(pollCart, POLL_INTERVAL);
     return () => clearInterval(intervalId);
   }, []);
@@ -89,7 +83,6 @@ export const useCart = () => {
     setIsCartOpen(true);
     trackEvent('products_added_to_cart', { cart_items: cartItems });
 
-    // Sync with Shopify
     setIsSyncing(true);
     try {
       await syncCartWithShopify(cartItems);
@@ -122,7 +115,6 @@ export const useCart = () => {
       )
     );
 
-    // Sync with Shopify
     setIsSyncing(true);
     try {
       await syncCartWithShopify(cartItems);

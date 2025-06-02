@@ -1,23 +1,8 @@
 import { memo, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { motion } from 'framer-motion';
-import type { ChatbotConfig } from '../../types';
+import { validateEmail } from '../../utils/utils';
+import type { EmailGateProps, StyleWithCustomProps } from '../../types';
 import './EmailGate.scss';
-
-interface EmailGateProps {
-  config: ChatbotConfig;
-  onSubmit: (email: string) => Promise<void>;
-  onSkip: () => Promise<void>;
-}
-
-interface StyleWithCustomProps extends CSSProperties {
-  '--theme-primary-color'?: string;
-  '--theme-primary-color-rgb'?: string;
-}
-
-const validateEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
 
 export const EmailGate = memo<EmailGateProps>(({ 
   config,

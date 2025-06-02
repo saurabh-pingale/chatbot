@@ -1,18 +1,8 @@
 import { memo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { ErrorPopupProps } from '../../types';
+import { errorAnimation } from '../../styles/animations';
 import './ErrorPopup.scss';
-
-interface ErrorPopupProps {
-  message: string;
-  onClose: () => void;
-}
-
-const errorAnimation = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 20 },
-  transition: { duration: 0.2 }
-};
 
 export const ErrorPopup = memo<ErrorPopupProps>(({ 
   message,

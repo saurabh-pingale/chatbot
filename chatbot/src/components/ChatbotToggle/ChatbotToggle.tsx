@@ -1,43 +1,9 @@
 import { memo } from 'react';
-import type { CSSProperties } from 'react';
 import { motion } from 'framer-motion';
-import { IMAGE } from '../../constants/colors';
+import { IMAGE } from '../../constants/image';
+import type { ChatbotToggleProps, StyleWithCustomProps } from '../../types';
+import { iconAnimation, toggleAnimation } from '../../styles/animations';
 import './ChatbotToggle.scss';
-
-interface ChatbotToggleProps {
-  isOpen: boolean;
-  storeImage: string;
-  primaryColor: string;
-  onClick: () => void;
-}
-
-// Define a type for style objects that can include CSS custom properties
-interface StyleWithCustomProps extends CSSProperties {
-  '--theme-primary-color'?: string;
-  '--theme-primary-color-rgb'?: string; 
-}
-
-const toggleAnimation = {
-  initial: { scale: 0, opacity: 0 },
-  animate: { scale: 1, opacity: 1 },
-  exit: { scale: 0, opacity: 0 },
-  transition: {
-    type: 'spring',
-    stiffness: 260,
-    damping: 20
-  }
-};
-
-const iconAnimation = {
-  initial: { scale: 0, opacity: 0 },
-  animate: { scale: 1, opacity: 1 },
-  exit: { scale: 0, opacity: 0 },
-  transition: {
-    type: 'spring',
-    stiffness: 300,
-    damping: 25
-  }
-};
 
 export const ChatbotToggle = memo<ChatbotToggleProps>(({ 
   isOpen,

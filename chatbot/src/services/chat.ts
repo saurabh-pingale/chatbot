@@ -1,31 +1,8 @@
 import { API_ENDPOINTS } from '../constants/api';
-import type { Message, Product } from '../types';
-import { getShopId } from './shopify';
-
-interface ChatResponse {
-  answer: string;
-  products: Product[];
-  history: Message[];
-}
-
-interface LocationInfo {
-  country: string | null;
-  city: string | null;
-  region: string | null;
-}
-
-interface SessionData {
-  email: string;
-  ip: string;
-  country: string;
-  city: string;
-  region: string;
-  session_start: string;
-  interactions: number;
-  total_chat_interactions: number;
-  products_added_to_cart: number;
-  cart_items: any[];
-}
+import { COLORS } from '../constants/colors';
+import { IMAGE } from '../constants/image';
+import { getShopId } from '../utils/utils';
+import type { ChatResponse, LocationInfo, Message, SessionData } from '../types';
 
 export const getIpAddress = async (): Promise<string> => {
   try {
@@ -179,14 +156,14 @@ export const getStoreColor = async (): Promise<string> => {
     }
 
     const data = await response.json();
-    return data.color;
+    return data.color || COLORS.ORANGE_450;
   } catch (err) {
     console.error('Color fetch error:', err);
-    return '#008080'; // Default color
+    return COLORS.ORANGE_450;
   }
 };
 
-export const getStoreImage = async (): Promise<string | null> => {
+export const getStoreImage = async (): Promise<string> => {
   try {
     const shopId = getShopId();
     const response = await fetch(`${API_ENDPOINTS.GET_IMAGE}?shopId=${encodeURIComponent(shopId)}`);
@@ -196,9 +173,9 @@ export const getStoreImage = async (): Promise<string | null> => {
     }
 
     const data = await response.json();
-    return data.image;
+    return data.image || IMAGE.FALLBACK;
   } catch (err) {
     console.error('Error fetching store image:', err);
-    return null;
+    return IMAGE.FALLBACK;
   }
 }; 

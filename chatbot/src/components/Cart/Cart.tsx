@@ -1,43 +1,9 @@
 import { memo } from 'react';
-import type { CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { CartItem } from '../../types';
+import { hexToRgbArray } from '../../utils/utils';
+import type { CartProps, StyleWithCustomProps } from '../../types';
+import { cartAnimation } from '../../styles/animations';
 import './Cart.scss';
-
-// Define a type for style objects that can include CSS custom properties
-interface StyleWithCustomProps extends CSSProperties {
-  '--theme-primary-color'?: string;
-  '--theme-primary-color-rgb'?: string;
-}
-
-interface CartProps {
-  isOpen: boolean;
-  items: CartItem[];
-  onClose: () => void;
-  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
-  onCheckout: () => Promise<void>;
-  primaryColor: string;
-}
-
-const cartAnimation = {
-  initial: { x: '100%', opacity: 0 },
-  animate: { x: 0, opacity: 1 },
-  exit: { x: '100%', opacity: 0 },
-  transition: {
-    type: 'spring',
-    stiffness: 300,
-    damping: 30
-  }
-};
-
-const hexToRgbArray = (hex: string): [number, number, number] | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16)
-  ] : null;
-};
 
 export const Cart = memo<CartProps>(({
   isOpen,

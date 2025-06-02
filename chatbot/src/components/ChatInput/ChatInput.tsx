@@ -1,28 +1,7 @@
 import { memo, useState, useRef, useEffect } from 'react';
-import type { CSSProperties } from 'react';
+import { hexToRgbArray } from '../../utils/utils';
+import type { ChatInputProps, StyleWithCustomProps } from '../../types';
 import './ChatInput.scss';
-
-interface ChatInputProps {
-  onSendMessage: (message: string) => void;
-  disabled?: boolean;
-  primaryColor: string;
-}
-
-// Define a type for style objects that can include CSS custom properties
-interface StyleWithCustomProps extends CSSProperties {
-  '--theme-primary-color'?: string;
-  '--theme-primary-color-rgb'?: string;
-}
-
-// Helper function to convert hex color to RGB array
-const hexToRgbArray = (hex: string): [number, number, number] | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16)
-  ] : null;
-};
 
 export const ChatInput = memo<ChatInputProps>(({ 
   onSendMessage,
