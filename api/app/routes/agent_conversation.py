@@ -33,7 +33,8 @@ async def agent_conversation(request: Request):
         user_id = request.query_params.get("user_id")
         app = get_app()
         
-        response = await app.agent_router_service.generate_agent_response(shopId, user_message, contents)
+        # response = await app.agent_router_service.generate_agent_response(shopId, user_message, contents)
+        response = await app.claude_service.handle_user_message(shopId, user_message, contents)
 
         await app.conversation_service.store_conversation({
             "user_query": user_message,
