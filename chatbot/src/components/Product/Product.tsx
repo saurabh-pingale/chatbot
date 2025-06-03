@@ -23,9 +23,9 @@ export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) =>
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <img src={product.image} alt={product.title} className="product-image" />
+      <img src={product.image_url} alt={product.name} className="product-image" />
       <div className="product-info">
-        <h4 className="product-title">{product.title}</h4>
+        <h4 className="product-title">{product.name}</h4>
         <div className="product-price">{product.price}</div>
         <a href={`/products/${product.id}`} target="_blank" className="product-view-button">
           View

@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Message } from '../Message/Message';
 import { TypingIndicator } from '../TypingIndicator/TypingIndicator';
 import type { MessageListProps } from '../../types';
@@ -9,7 +9,8 @@ import './MessageList.scss';
 export const MessageList = memo<MessageListProps>(({ 
   messages,
   isTyping,
-  primaryColor 
+  primaryColor,
+  onProductAddToCart
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -31,24 +32,25 @@ export const MessageList = memo<MessageListProps>(({
 
   return (
     <div ref={containerRef} className="message-list-container">
-      <AnimatePresence initial={false}>
-        <motion.div
-          className="message-list-messages-wrapper"
-          variants={messageListVariants}
-          initial="initial"
-          animate="animate"
-        >
-          {messages.map((message, index) => (
-            <Message
-              key={message.id}
-              message={message}
-              primaryColor={primaryColor}
-              ref={index === messages.length - 1 ? lastMessageRef : null}
-            />
-          ))}
-          {isTyping && <TypingIndicator primaryColor={primaryColor} />}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div
+        className="message-list-messages-wrapper"
+        variants={messageListVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {messages.map((message, index) => (
+          <Message
+            key={message.id}
+            message={message}
+            primaryColor={primaryColor}
+            onProductAddToCart={onProductAddToCart}
+            ref={index === messages.length - 1 ? lastMessageRef : null}
+          />
+        ))}
+          {isTyping && (
+            <TypingIndicator primaryColor={primaryColor} />
+          )}
+      </motion.div>
     </div>
   );
 }); 

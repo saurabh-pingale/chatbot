@@ -10,6 +10,7 @@ from app.utils.rag_pipeline_utils import (
     extract_products_from_response,
     extract_categories
 )
+from app.utils.logger import logger
 
 class ProductTool(BaseTool):
     """Help users search for or learn about products"""
@@ -20,6 +21,7 @@ class ProductTool(BaseTool):
     def __init__(self, test_mode=False, failure_rate=0.5):
         self.test_mode = test_mode
         self.failure_rate = failure_rate
+        self.embeddings_handler = EmbeddingsHandler()
 
     def _should_simulate_failure(self) -> bool:
         """Simulate random failures in test mode"""
@@ -27,21 +29,25 @@ class ProductTool(BaseTool):
             return False
         return random.random() < self.failure_rate
     
-    async def run(self, ctx: RunContext[None], user_message: str) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None], user_message: str, **kwargs) -> Dict[str, Any]:
+        shopId = kwargs.get("shopId", "")
+
         if self._should_simulate_failure():
             print("TEST MODE: Simulating product tool failure")
             raise ModelRetry("Simulated failure for testing - retrying...")
 
         try:
             embedding = EmbeddingService.create_embeddings(user_message)
-            results = await EmbeddingsHandler.query_embeddings(
+            results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
-                namespace="test-chatbot201.myshopify.com", 
+                namespace=shopId, 
                 agent_type="ProductAgent"
             )
-            products = extract_products_from_response(results)
-            categories = extract_categories(products)
-            
+
+            products = extract_products_from_response(results) or []
+
+            categories = extract_categories(products) or []
+
             if not isinstance(products, list):
                 raise ModelRetry("Invalid product data format, retrying...")
             

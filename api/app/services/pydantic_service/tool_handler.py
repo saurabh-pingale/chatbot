@@ -20,6 +20,18 @@ class ToolHandler:
         """Get the response model for a tool"""
         return self._response_models.get(tool_name, GreetingResponse)
 
+    def tool_config(self, response_model: Type[BaseModel], processor: Callable[[Any, dict], None] = None):
+        """Decorator to register a tool's response model and processor."""
+        def decorator(func_or_class_method): 
+            tool_name = func_or_class_method.__name__
+    
+            self._response_models[tool_name] = response_model
+            if processor:
+                self._tool_processors[tool_name] = processor
+            
+            return func_or_class_method
+        return decorator
+
     def process_tool_output(self, tool_name: str, response: BaseModel, tool_output: Any):
         """Process tool output using the registered processor"""
         if isinstance(tool_output, str):

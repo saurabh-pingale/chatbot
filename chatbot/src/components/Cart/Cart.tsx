@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hexToRgbArray } from '../../utils/utils';
-import type { CartProps, StyleWithCustomProps } from '../../types';
+import type { CartProps, StyleWithCustomProps, CartItem } from '../../types';
 import { cartAnimation } from '../../styles/animations';
 import './Cart.scss';
 
@@ -13,7 +13,10 @@ export const Cart = memo<CartProps>(({
   onCheckout,
   primaryColor
 }) => {
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce((sum, item: CartItem) => {
+    const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+    return sum + price * item.quantity;
+  }, 0);
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const dynamicStyles: StyleWithCustomProps = {
@@ -49,18 +52,20 @@ export const Cart = memo<CartProps>(({
             {items.length === 0 ? (
               <p className="cart-empty-message">Your cart is empty</p>
             ) : (
-              items.map((item) => (
-                <div className="cart-item-container" key={item.id}>
-                  <img src={item.image} alt={item.title} className="cart-item-image" />
+              items.map((item: CartItem) => (
+                <div className="cart-item-container" key={String(item.id)}>
+                  <img src={item.image_url} alt={item.name} className="cart-item-image" />
                   <div className="cart-item-details">
-                    <h4 className="cart-item-name">{item.title}</h4>
-                    <p className="cart-item-price">${item.price.toFixed(2)}</p>
+                    <h4 className="cart-item-name">{item.name}</h4>
+                    <p className="cart-item-price">
+                      ${(typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2)}
+                    </p>
                   </div>
                   <div className="cart-quantity-controls">
                     <motion.button
                       className="cart-quantity-button"
                       style={dynamicStyles} 
-                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => onUpdateQuantity(String(item.id), item.quantity - 1)}
                       disabled={item.quantity <= 1}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
@@ -71,7 +76,7 @@ export const Cart = memo<CartProps>(({
                     <motion.button
                       className="cart-quantity-button"
                       style={dynamicStyles} 
-                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => onUpdateQuantity(String(item.id), item.quantity + 1)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                     >

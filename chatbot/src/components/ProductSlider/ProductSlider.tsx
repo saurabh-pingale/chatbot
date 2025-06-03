@@ -1,7 +1,11 @@
 import { memo } from 'react';
 import { Product } from '../Product/Product';
-import type { ProductSliderProps } from '../../types';
+import type { ProductSliderProps, ProductType } from '../../types';
 import './ProductSlider.scss';
+
+const defaultOnAddToCart = async (product: ProductType): Promise<void> => {
+  console.warn('ProductSlider: onAddToCart prop was not provided.', product);
+};
 
 export const ProductSlider = memo<ProductSliderProps>(({ 
   products,
@@ -10,6 +14,8 @@ export const ProductSlider = memo<ProductSliderProps>(({
 }) => {
   if (!products.length) return null;
 
+  const handleAddToCart = onAddToCart || defaultOnAddToCart;
+
   return (
     <div className="product-slider-container">
       <div className="product-slider-slider">
@@ -17,7 +23,7 @@ export const ProductSlider = memo<ProductSliderProps>(({
             <Product 
               key={product.id}
               product={product}
-              onAddToCart={onAddToCart}
+              onAddToCart={handleAddToCart}
               primaryColor={primaryColor}
             />
         ))}

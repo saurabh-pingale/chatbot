@@ -11,6 +11,8 @@
 
   &:not(.is-user) {
     justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -24,7 +26,7 @@
 
   &.is-user {
     border-radius: 18px 18px 0 18px;
-    background-color: $orange-450;
+    background-color: var(--theme-primary-color, #{$orange-450});
   }
 
   &:not(.is-user) {
@@ -67,4 +69,10 @@
     max-width: 85%;
     font-size: 13px;
   }
+}
+
+.product-slider-message-container {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 100%;
 } 

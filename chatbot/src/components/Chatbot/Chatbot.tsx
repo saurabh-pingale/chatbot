@@ -13,7 +13,7 @@ import { useCart } from '../../hooks/useCart';
 import { getSessionData, initializeSession, trackEvent, sendChatMessage } from '../../services/chat';
 import { syncCartWithShopify } from '../../services/shopify';
 import { hexToRgbArray } from '../../utils/utils';
-import type { ChatbotProps, StyleWithCustomProps } from '../../types';
+import type { ChatbotProps, StyleWithCustomProps, ProductType } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
@@ -25,8 +25,8 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     return !!session?.email;
   });
 
-  const { messages, isTyping, addMessage, setIsTyping, simulateBotTyping } = useChat();
-  const { cartItems, isCartOpen ,updateQuantity, toggleCart } = useCart();
+  const { messages, isTyping, addMessage, handleBotResponse } = useChat();
+  const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart } = useCart();
 
   const handleBeforeUnload = () => {
     const session = getSessionData();
@@ -80,24 +80,34 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     addMessage(content, 'user');
     trackEvent('message_sent');
 
-    setIsTyping(true);
-
     try {
       const session = getSessionData();
       const response = await sendChatMessage(
         [...messages, { id: Date.now().toString(), content, type: 'user', timestamp: new Date() }],
         session?.email || ''
       );
-
-      await simulateBotTyping(response.answer);
-
+      await handleBotResponse(response);
+      
       if (response.products?.length) {
         trackEvent('products_suggested', { products: response.products });
       }
     } catch (err) {
-      setError('Sorry, something went wrong! Please try again later.');
-      const fallbackMessage = 'Sorry, something went wrong! Can you please try again later.';
-      await simulateBotTyping(fallbackMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Sorry, something went wrong! Please try again later.';
+      setError(errorMessage);
+      
+      await handleBotResponse({
+        answer: `Sorry, an error occurred: ${errorMessage}`,
+      }, 1000);
+    }
+  };
+
+  const handleProductAddToCart = async (product: ProductType) => {
+    try {
+      await addToCart(product);
+      trackEvent('product_added_to_cart_via_slider', { productId: product.id, productName: product.name });
+    } catch (err) {
+      console.error("Error adding product to cart from Chatbot component:", err);
+      setError('Failed to add product to cart. Please try again.');
     }
   };
 
@@ -159,6 +169,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
                     messages={messages}
                     isTyping={isTyping}
                     primaryColor={config.primaryColor}
+                    onProductAddToCart={handleProductAddToCart}
                   />
                   <div className="chatbot-quick-replies" style={chatbotContainerStyles}>
                     {DEFAULT_QUICK_REPLIES.map((reply) => (

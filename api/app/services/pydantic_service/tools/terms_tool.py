@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
+from app.utils.logger import logger
 
 class TermsTool(BaseTool):
     """Answer queries related to store policies"""
@@ -12,13 +13,19 @@ class TermsTool(BaseTool):
     def tool_name(self) -> str:
         return "terms"
     
-    async def run(self, ctx: RunContext[None], user_message: str) -> Dict[str, Any]:
+    def __init__(self):
+        self.embeddings_handler = EmbeddingsHandler()
+
+    async def run(self, ctx: RunContext[None], user_message: str, **kwargs) -> Dict[str, Any]:
         try:
+            shopId = kwargs.get("shopId", "")
+
             embedding = EmbeddingService.create_embeddings(user_message)
-            results = await EmbeddingsHandler.query_embeddings(
+            results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
-                namespace="test-chatbot201.myshopify.com"
+                namespace=shopId
             )
+            logger.info(f"-------Terms Query Results: {results}")
             
             term_texts = []
             for hit in results:

@@ -24,21 +24,23 @@ async def agent_conversation(request: Request):
         contents = body["messages"]
 
         extract_last_message = next(
-            (msg for msg in reversed(contents) if msg["user"] and not msg["agent"]),
+            (msg for msg in reversed(contents) if msg["type"] == "user"),
             None
         )
-        user_message = extract_last_message["user"] if extract_last_message else None
+        user_message = extract_last_message["content"] if extract_last_message else None
         
-        shopId = request.query_params.get("shopId")
+        # shopId = request.query_params.get("shopId")
+        shopId = 'test-chatbot201.myshopify.com'
         user_id = request.query_params.get("user_id")
         app = get_app()
         
         # response = await app.agent_router_service.generate_agent_response(shopId, user_message, contents)
         response = await app.claude_service.handle_user_message(shopId, user_message, contents)
+        logger.info(f"------Response: {response}")
 
         await app.conversation_service.store_conversation({
             "user_query": user_message,
-            "agent_response": json.dumps(response['answer']),
+            "agent_response": response['answer'],
             "user_id": user_id,
             "shop_id": shopId
         })
@@ -46,4 +48,10 @@ async def agent_conversation(request: Request):
         return response
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get conversation")
+        return {
+            "answer": "I'm having trouble processing your request. Please try again later.",
+            "products": [],
+            "categories": [],
+            "success": False,
+            "error": str(e)
+        }

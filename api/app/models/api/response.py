@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Union
 
+class UnifiedResponse(BaseModel):
+    answer: str
+    products: List[dict] = Field(default_factory=list)
+    categories: List[str] = Field(default_factory=list)
+    additional_data: Optional[dict] = None
+
 class Product(BaseModel):
     """Model representing a product in the store"""
     id: str
@@ -9,6 +15,7 @@ class Product(BaseModel):
     category: str
     description: Optional[str] = None
     image_url: Optional[str] = None
+    variant_id: Optional[str] = None
 
 class BaseResponse(BaseModel):
     """Base response model with common fields"""

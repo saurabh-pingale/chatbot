@@ -9,12 +9,13 @@ export const messageListVariants = {
 };
 
 export const dotVariants = {
-  animate: {
+  animate: (i: number) => ({
     y: [0, -8, 0],
     transition: {
       duration: 0.6,
       repeat: Infinity,
       repeatType: 'loop' as const,
-    }
-  }
+      delay: i * 0.2,
+    },
+  }),
 };

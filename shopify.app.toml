@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://maintenance-question-theater-quiet.trycloudflare.com"
+application_url = "https://excluded-hot-dod-up.trycloudflare.com"
 embedded = true
 
 [webhooks]
@@ -15,13 +15,13 @@ scopes = ""
 
 [auth]
 redirect_urls = [
-  "https://maintenance-question-theater-quiet.trycloudflare.com/auth/callback",
-  "https://maintenance-question-theater-quiet.trycloudflare.com/auth/shopify/callback",
-  "https://maintenance-question-theater-quiet.trycloudflare.com/api/auth/callback"
+  "https://excluded-hot-dod-up.trycloudflare.com/auth/callback",
+  "https://excluded-hot-dod-up.trycloudflare.com/auth/shopify/callback",
+  "https://excluded-hot-dod-up.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://maintenance-question-theater-quiet.trycloudflare.com"
+url = "https://excluded-hot-dod-up.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

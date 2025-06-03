@@ -19,9 +19,9 @@ export const TypingIndicator = ({ primaryColor }: TypingIndicatorProps) => {
       animate="animate"
       exit="exit"
     >
-      <motion.div className="typing-indicator-dot" variants={dotVariants} animate="animate" style={{ transitionDelay: '0s' }} />
-      <motion.div className="typing-indicator-dot" variants={dotVariants} animate="animate" style={{ transitionDelay: '0.2s' }} />
-      <motion.div className="typing-indicator-dot" variants={dotVariants} animate="animate" style={{ transitionDelay: '0.4s' }} />
+      <motion.span className="typing-indicator-dot" variants={dotVariants} custom={0} animate="animate" />
+      <motion.span className="typing-indicator-dot" variants={dotVariants} custom={1} animate="animate" />
+      <motion.span className="typing-indicator-dot" variants={dotVariants} custom={2} animate="animate" />
     </motion.div>
   );
 };

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { trackEvent } from '../services/chat';
 import { getCart, syncCartWithShopify } from '../services/shopify';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
-import type { CartItem, Product } from '../types';
+import type { CartItem, ProductType } from '../types';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -15,7 +15,6 @@ export const useCart = () => {
     }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   
   let lastToken: string | null = null;
   let lastCount = 0;
@@ -40,15 +39,14 @@ export const useCart = () => {
       lastToken = cart.token;
       lastCount = cart.item_count;
 
-      const shopifyItems = cart.items.map(item => ({
+      const shopifyItems: CartItem[] = cart.items.map(item => ({
         id: String(item.id),
         variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
-        title: item.title,
-        price: item.price,
-        image: item.image,
+        name: item.title,
+        price: item.price / 100,
+        image_url: item.image,
         description: '',
         quantity: item.quantity,
-        properties: item.properties || {}
       }));
 
       setCartItems(shopifyItems);
@@ -62,39 +60,50 @@ export const useCart = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const addToCart = useCallback(async (product: Product) => {
+  const addToCart = useCallback(async (product: ProductType) => {
+    const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+
     const newItem: CartItem = {
       ...product,
-      quantity: 1
+      price: productPrice,
+      quantity: 1,
     };
 
-    setCartItems(prev => {
-      const existingItem = prev.find(item => item.id === product.id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: Math.min(item.quantity + 1, 10) }
-            : item
-        );
+    setCartItems(prevItems => {
+      const existingItemIndex = prevItems.findIndex(item => 
+        (item.variant_id && product.variant_id && item.variant_id === product.variant_id) || 
+        (!item.variant_id && !product.variant_id && item.id === product.id)
+      );
+
+      let updatedItems;
+      if (existingItemIndex > -1) {
+        updatedItems = [...prevItems];
+        const currentItem = updatedItems[existingItemIndex];
+        updatedItems[existingItemIndex] = {
+          ...currentItem,
+          quantity: Math.min(currentItem.quantity + 1, 10),
+        };
+      } else {
+        updatedItems = [...prevItems, newItem];
       }
-      return [...prev, newItem];
+      
+      syncCartWithShopify(updatedItems).catch(err => {
+        console.error('Failed to sync cart with Shopify after add:', err);
+      });
+      return updatedItems;
     });
 
     setIsCartOpen(true);
-    trackEvent('products_added_to_cart', { cart_items: cartItems });
+    trackEvent('products_added_to_cart', { cart_items: newItem });
 
-    setIsSyncing(true);
-    try {
-      await syncCartWithShopify(cartItems);
-    } catch (err) {
-      console.error('Failed to sync cart with Shopify:', err);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [cartItems]);
+  }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== productId));
+    setCartItems(prev => {
+        const updatedItems = prev.filter(item => String(item.id) !== productId);
+        syncCartWithShopify(updatedItems).catch(err => console.error('Failed to sync after remove:', err));
+        return updatedItems;
+    });
   }, []);
 
   const updateQuantity = useCallback(async (productId: string, quantity: number) => {
@@ -107,35 +116,35 @@ export const useCart = () => {
       quantity = 10;
     }
 
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === productId
-          ? { ...item, quantity }
-          : item
-      )
-    );
-
-    setIsSyncing(true);
-    try {
-      await syncCartWithShopify(cartItems);
-    } catch (err) {
-      console.error('Failed to sync cart with Shopify:', err);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [cartItems, removeFromCart]);
+    setCartItems(prev => {
+        let newItems;
+        if (quantity < 1) {
+            newItems = prev.filter(item => String(item.id) !== productId);
+        } else {
+            newItems = prev.map(item =>
+                String(item.id) === productId
+                ? { ...item, quantity: Math.min(quantity, 10) }
+                : item
+            );
+        }
+        syncCartWithShopify(newItems).catch(err => console.error('Failed to sync after update qty:', err));
+        return newItems;
+    });
+  }, [removeFromCart]);
 
   const toggleCart = useCallback(() => {
     setIsCartOpen(prev => !prev);
   }, []);
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalPrice = cartItems.reduce((sum, item) => {
+    const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+    return sum + (price * item.quantity);
+  },0);
 
   return {
     cartItems,
     isCartOpen,
-    isSyncing,
     totalItems,
     totalPrice,
     addToCart,

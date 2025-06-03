@@ -1,45 +1,25 @@
 import type { CSSProperties } from 'react';
 
-export interface Message {
-  id: string;
-  content: string;
-  type: 'user' | 'bot';
-  timestamp: Date;
-}
-
-export interface CartItem {
-  id: string;
-  title: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
-
-export interface ChatbotConfig {
-  shopId: string;
-  storeImage: string;
-  primaryColor: string;
-} 
-
-export interface Message {
-  id: string;
-  content: string;
-  type: 'user' | 'bot';
-  timestamp: Date;
-}
-
-export interface Product {
-  id: string;
-  title: string;
-  price: number;
-  image: string;
-  description: string;
-}
-
-export interface CartItem extends Product {
-  title: string;
-  quantity: number;
+export interface ProductType {
+  id: string | number;
+  name: string;
+  price: number | string;
+  image_url?: string;
+  description?: string;
+  category?: string;
   variant_id?: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  type: 'user' | 'bot';
+  timestamp: Date;
+  products?: ProductType[];
+}
+
+export interface CartItem extends ProductType {
+  quantity: number;
 }
 
 export interface ChatbotConfig {
@@ -63,8 +43,10 @@ declare global {
 
 export interface ChatResponse {
   answer: string;
-  products: Product[];
-  history: Message[];
+  products?: ProductType[];
+  categories?: string[];
+  success?: boolean;
+  error?: string | null;
 }
 
 export interface LocationInfo {
@@ -83,7 +65,7 @@ export interface SessionData {
   interactions: number;
   total_chat_interactions: number;
   products_added_to_cart: number;
-  cart_items: any[];
+  cart_items: CartItem[];
 }
 
 export interface ShopifyCartResponse {
@@ -102,6 +84,7 @@ export interface ShopifyCartResponse {
 export interface StyleWithCustomProps extends CSSProperties {
   '--theme-primary-color'?: string;
   '--theme-primary-color-rgb'?: string;
+  [key: `--${string}`]: string | number | undefined;
 }
 
 export interface CartProps {
@@ -152,26 +135,32 @@ export interface ErrorPopupProps {
 export interface MessageProps {
   message: Message;
   primaryColor?: string;
+  onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
 export interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
-  primaryColor: string;
+  primaryColor?: string;
+  onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
 export interface ProductProps {
-  product: Product;
-  onAddToCart: (product: Product) => Promise<void>;
+  product: ProductType;
+  onAddToCart: (product: ProductType) => Promise<void>;
   primaryColor?: string;
 }
 
 export interface ProductSliderProps {
-  products: Product[];
-  onAddToCart: (product: Product) => Promise<void>;
+  products: ProductType[];
+  onAddToCart?: (product: ProductType) => Promise<void>;
   primaryColor?: string;
 }
 
 export interface TypingIndicatorProps {
-  primaryColor: string;
+  primaryColor?: string;
+}
+
+export interface ExtendedMessageProps extends MessageProps {
+    onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
