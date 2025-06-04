@@ -5,10 +5,9 @@ class CustmFastAPI(FastAPI):
         super().__init__(*args, **kwargs)
         
         from app.services.shop_admin_service import ShopAdminService
-        from app.services.multi_agent_services.multi_agent_service import MultiAgentService
         from app.services.analytics_service import AnalyticsService
         from app.services.conversation_service import ConversationService
-        from app.services.pydantic_service.claude_service import ClaudeService
+        from api.app.services.pydantic_service.llm_service import LLMService
         from app.services.checkout_product_service import CheckoutProductService
         from app.dbhandlers.shop_admin_handler import ShopAdminHandler
         from app.dbhandlers.embeddings_handler import EmbeddingsHandler
@@ -17,10 +16,9 @@ class CustmFastAPI(FastAPI):
         from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
 
         self.shop_admin_service = ShopAdminService()
-        self.agent_router_service = MultiAgentService()
         self.analytics_service = AnalyticsService()
         self.conversation_service = ConversationService()
-        self.claude_service = ClaudeService()
+        self.claude_service = LLMService()
         self.checkout_product_service = CheckoutProductService()
         self.shop_admin_handler = ShopAdminHandler()
         self.rag_pipeline_handler = EmbeddingsHandler()

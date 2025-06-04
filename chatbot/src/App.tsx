@@ -11,7 +11,7 @@ function App() {
   }>(null);
 
   const fetchConfig = async () => {
-    const [storeColor, storeImage] = await Promise.all([
+    const [color, image] = await Promise.all([
       getStoreColor(),
       getStoreImage(),
     ]);
@@ -19,8 +19,8 @@ function App() {
     const shopId = getShopId();
     
     setConfig({
-      primaryColor: storeColor,
-      storeImage: storeImage,
+      primaryColor: color,
+      storeImage: image,
       shopId: shopId || 'demo-shop',
     });
   };

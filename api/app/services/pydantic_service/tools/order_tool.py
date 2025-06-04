@@ -1,7 +1,8 @@
-from .base_tool import BaseTool
 from pydantic_ai import RunContext
 from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
+
+from .base_tool import BaseTool
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.logger import logger
 
@@ -19,7 +20,6 @@ class OrderTool(BaseTool):
             shopId = kwargs.get("shopId", "")
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
-            print("--------Support Info: {support_info}")
             
             if not support_info or not isinstance(support_info, dict):
                 raise ModelRetry("Invalid support info, retrying...")
@@ -29,5 +29,5 @@ class OrderTool(BaseTool):
                 "phone": support_info.get("support_phone")
             }
         except Exception as e:
-            print(f"Error in order tool: {e}")
+            logger.error(f"Error in order tool: {e}")
             raise ModelRetry(f"Failed to fetch support info: {str(e)}, retrying...")

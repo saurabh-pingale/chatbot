@@ -9,7 +9,7 @@
   position: relative;
   z-index: 2;
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     padding: 12px;
   }
 }
@@ -68,7 +68,7 @@
     border-radius: 2px;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     padding: 10px 14px;
     font-size: 14px;
     min-height: 44px;
@@ -103,7 +103,7 @@
     box-shadow: 0 4px 14px rgba(var(--theme-primary-color-rgb), 0.2);
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     padding: 10px 16px;
     font-size: 14px;
   }

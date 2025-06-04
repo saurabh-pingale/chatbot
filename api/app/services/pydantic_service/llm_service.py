@@ -30,7 +30,7 @@ from app.utils.claude_utils import (
 )
 from app.utils.logger import logger
 
-class ClaudeService:
+class LLMService:
     """Main service handling Claude interactions with dynamic tool support"""
 
     GREETING_TOOL_NAME = "greeting"
@@ -242,10 +242,10 @@ class ClaudeService:
         enhanced_message: str
     ) -> BaseResponse:
         """Process the structured response from the agent."""
-        logger.info(f"---------Tool Name in process structured response: {tool_name}")
+        logger.info(f"Tool Name in process structured response: {tool_name}")
 
         response_model_cls = self.tool_handler.get_response_model(tool_name)
-        logger.info(f"------Response Model Class: {response_model_cls}")
+        logger.info(f"Response Model Class: {response_model_cls}")
 
         structured_agent = Agent(
             model=AnthropicModel(model_name=CLAUDE_MODEL_NAME),
@@ -256,7 +256,7 @@ class ClaudeService:
         
         try:
             agent_run_result = await structured_agent.run(enhanced_message.strip(), temperature=0.7)
-            logger.info(f"-------Structured Agent Run Result: {agent_run_result}")
+            logger.info(f"Structured Agent Run Result: {agent_run_result}")
             
             agent_pydantic_response = agent_run_result.data
 
@@ -305,22 +305,22 @@ class ClaudeService:
         """Main entry point for handling user messages"""
         try:
             tool_result = await self._execute_primary_agent_call(shopId, user_message)
-            logger.info(f"-------Tool Result: {tool_result}")
+            logger.info(f"Tool Result: {tool_result}")
             
             messages_from_agent = None
             if hasattr(tool_result, 'all_messages') and callable(tool_result.all_messages):
                 messages_from_agent = tool_result.all_messages()
-                logger.info(f"---------Raw Messages from Agent: {messages_from_agent}")
+                logger.info(f"Raw Messages from Agent: {messages_from_agent}")
             
             tool_name, tool_output_for_enhanced_msg, raw_tool_data_for_processing = extract_tool_data_from_agent_messages(
                 tool_result, messages_from_agent
             )
-            logger.info(f"---------Extracted Tool Name: {tool_name}")
-            logger.info(f"---------Tool Output for Enhanced Msg: {type(tool_output_for_enhanced_msg)}")
-            logger.info(f"---------Raw Tool Data for Processing: {type(raw_tool_data_for_processing)}")    
+            logger.info(f"Extracted Tool Name: {tool_name}")
+            logger.info(f"Tool Output for Enhanced Msg: {type(tool_output_for_enhanced_msg)}")
+            logger.info(f"Raw Tool Data for Processing: {type(raw_tool_data_for_processing)}")    
 
             enhanced_message = create_enhanced_message_for_llm(contents, tool_output_for_enhanced_msg)
-            logger.info(f"----------Enhanced Message for LLM: {enhanced_message[:300]}...")
+            logger.info(f"-Enhanced Message for LLM: {enhanced_message[:300]}...")
 
             response_data_model_instance = await self._process_structured_response(
                 tool_name, 
@@ -328,10 +328,10 @@ class ClaudeService:
                 raw_tool_data_for_processing,                
                 enhanced_message
             )
-            logger.info(f"---------Response Data Model Instance: {type(response_data_model_instance)}")
+            logger.info(f"Response Data Model Instance: {type(response_data_model_instance)}")
 
             structured_response_dict = format_agent_response_to_dict(response_data_model_instance)
-            logger.info(f"-----------Final Structured Response Dict: {structured_response_dict}")
+            logger.info(f"Final Structured Response Dict: {structured_response_dict}")
 
             return structured_response_dict    
         except Exception as e:

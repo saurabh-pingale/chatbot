@@ -1,9 +1,8 @@
-import random
-from .base_tool import BaseTool
 from pydantic_ai import RunContext
 from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
+from .base_tool import BaseTool
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.rag_pipeline_utils import (
@@ -18,23 +17,11 @@ class ProductTool(BaseTool):
     def tool_name(self) -> str:
         return "product"
     
-    def __init__(self, test_mode=False, failure_rate=0.5):
-        self.test_mode = test_mode
-        self.failure_rate = failure_rate
+    def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
-
-    def _should_simulate_failure(self) -> bool:
-        """Simulate random failures in test mode"""
-        if not self.test_mode:
-            return False
-        return random.random() < self.failure_rate
     
     async def run(self, ctx: RunContext[None], user_message: str, **kwargs) -> Dict[str, Any]:
         shopId = kwargs.get("shopId", "")
-
-        if self._should_simulate_failure():
-            print("TEST MODE: Simulating product tool failure")
-            raise ModelRetry("Simulated failure for testing - retrying...")
 
         try:
             embedding = EmbeddingService.create_embeddings(user_message)
@@ -56,5 +43,5 @@ class ProductTool(BaseTool):
                 "categories": categories
             }
         except Exception as e:
-            print(f"Error in product tool: {e}")
+            logger.error(f"Error in product tool: {e}")
             raise ModelRetry(f"Failed to fetch products: {str(e)}, retrying...")

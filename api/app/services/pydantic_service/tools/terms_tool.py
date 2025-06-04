@@ -1,8 +1,8 @@
-from .base_tool import BaseTool
 from pydantic_ai import RunContext
 from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
+from .base_tool import BaseTool
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.logger import logger
@@ -20,27 +20,29 @@ class TermsTool(BaseTool):
         try:
             shopId = kwargs.get("shopId", "")
 
-            embedding = EmbeddingService.create_embeddings(user_message)
-            results = await self.embeddings_handler.query_embeddings(
-                vector=embedding, 
+            user_message_embedding = EmbeddingService.create_embeddings(user_message)
+            terms_results = await self.embeddings_handler.query_embeddings(
+                vector=user_message_embedding, 
                 namespace=shopId
             )
-            logger.info(f"-------Terms Query Results: {results}")
             
-            term_texts = []
-            for hit in results:
-                md = hit.metadata
-                if isinstance(md, dict):
-                    text = md.get("text")
+            extracted_term_texts = []
+            for query_match in terms_results:
+                metadata_content = query_match.metadata
+                text_content = None
+                if isinstance(metadata_content, dict):
+                    text_content = metadata_content.get("text")
                 else:
-                    text = getattr(md, "text", None)
-                if text:
-                    term_texts.append(text)
+                    if metadata_content is not None:
+                        text_content = getattr(metadata_content, "text", None)
 
-            if not term_texts:
-                print("Warning: No terms found for query")
+                if text_content:
+                    extracted_term_texts.append(text_content)
+
+            if not extracted_term_texts:
+                logger.warning(f"Warning: No terms found for query: '{user_message}' in shop: {shopId}")
             
-            return {"terms": term_texts}
+            return {"terms": extracted_term_texts}
         except Exception as e:
-            print(f"Error in terms tool: {e}")
-            raise ModelRetry(f"Failed to fetch terms: {str(e)}, retrying...")
+            logger.error(f"Error in terms tool processing message for shopId '{shopId}': {e}")
+            raise ModelRetry(f"Failed to fetch terms for shopId '{shopId}': {str(e)}, retrying...")

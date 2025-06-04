@@ -1,5 +1,7 @@
-// const BACKEND_URL = "https://fastapi.formpilot.org";
-const BACKEND_URL = 'http://127.0.0.1:8000';
+import dotenv from "dotenv";
+dotenv.config();
+
+const BACKEND_URL = process.env.BACKEND_URL!;
 
 export const API = {
     BACKEND_URL,

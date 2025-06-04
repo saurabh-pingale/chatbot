@@ -53,7 +53,7 @@
     transform: scale(0.95);
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     width: 50px;
     height: 50px;
     bottom: 16px;
@@ -76,7 +76,7 @@
     transition: transform 0.3s ease;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     width: 28px;
     height: 28px;
   }
@@ -97,7 +97,7 @@
     fill: currentColor;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     width: 20px;
     height: 20px;
   }

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hexToRgbArray } from '../../utils/utils';
 import type { CartProps, StyleWithCustomProps, CartItem } from '../../types';
+import { CloseIcon } from '../../assets/close_icon';
 import { cartAnimation } from '../../styles/animations';
 import './Cart.scss';
 
@@ -43,9 +44,7 @@ export const Cart = memo<CartProps>(({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <svg viewBox="0 0 24 24">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-              </svg>
+              <CloseIcon />
             </motion.button>
           </div>
           <div className="cart-content">
