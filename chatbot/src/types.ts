@@ -55,17 +55,30 @@ export interface LocationInfo {
   region: string | null;
 }
 
-export interface SessionData {
+export interface AnalyticsData {
   email: string;
   ip: string;
-  country: string;
-  city: string;
-  region: string;
+  country: string | null;
+  city: string | null;
+  region: string | null;
   session_start: string;
+  session_end?: string;
   interactions: number;
   total_chat_interactions: number;
   products_added_to_cart: number;
   cart_items: CartItem[];
+  products_purchased: number;
+  total_purchase_value: number;
+  purchased_items: PurchasedItem[];
+  is_anonymous?: boolean;
+  shop_id?: string;
+}
+
+export interface PurchasedItem {
+  id: string;
+  name: string;
+  quantity: number;
+  revenue: number;
 }
 
 export interface ShopifyCartResponse {

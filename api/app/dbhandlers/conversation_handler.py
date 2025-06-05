@@ -62,6 +62,6 @@ class ConversationHandler:
                 await session.commit()
                 return conversation.id
             except SQLAlchemyError as error:
-                session.rollback()
+                await session.rollback()
                 logger.error(f"Database error in store_conversation: {str(error)}", exc_info=True)
                 raise error

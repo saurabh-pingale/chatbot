@@ -1,7 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-const BACKEND_URL = process.env.BACKEND_URL!;
+const BACKEND_URL = "http://127.0.0.1:8000";
 
 export const API = {
     BACKEND_URL,
@@ -9,7 +6,8 @@ export const API = {
     SAVE_COLOR_PREFERENCE: `${BACKEND_URL}/shop-admin/save-color-preference`,
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,
     CREATE_PRODUCTS : `${BACKEND_URL}/products_router/create`,
-    TEXT_TRAIN : `${BACKEND_URL}/text_training/train    `
+    TEXT_TRAIN : `${BACKEND_URL}/text_training/train`,
+    GET_ANALYTICS: `${BACKEND_URL}/analytics_router/analytics`
 } 
 
 export const CLOUDINARY = {

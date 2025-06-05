@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.sql.sqltypes import Boolean
 
 from app.models.db.base import Base
 
@@ -66,21 +67,27 @@ class ProductModel(Base):
     collection = relationship("CollectionModel", back_populates="products")
     checkout_products = relationship("CheckoutProductModel", back_populates="product")
     
-# class ChatbotAnalytics(Base):
-#     __tablename__ = 'chatbot_analytics'
+class AnalyticsModel(Base):
+    __tablename__ = 'analytics'
     
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     store_id = Column(String, ForeignKey('stores.id'))  
-#     email = Column(String)
-#     is_anonymous = Column(Boolean, default=False)
-#     anonymous_count = Column(Integer, default=0)  
-#     total_users = Column(Integer, default=0) 
-#     country = Column(String)
-#     region = Column(String)
-#     city = Column(String)
-#     ip = Column(String)
-#     chat_interactions = Column(Integer, default=0)
-#     first_interaction = Column(DateTime)
-#     last_interaction = Column(DateTime)
-#     products_added_to_cart = Column(Integer, default=0)
-#     products_purchased = Column(Integer, default=0)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    shop_id = Column(String, index=True, nullable=False)
+    # TODO - Take it as a foreign key from users table
+    email = Column(String, index=True, nullable=False)
+    is_anonymous = Column(Boolean, default=False)
+    
+    # TODO - WE're alreay storing it in the user, so removed it here
+    country = Column(String, nullable=True)
+    region = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    ip = Column(String, nullable=True) 
+    
+    session_start_time = Column(DateTime, nullable=False)
+    session_end_time = Column(DateTime, nullable=True)
+    
+    chat_interactions = Column(Integer, default=0)
+    products_added_to_cart = Column(Integer, default=0)
+    products_purchased = Column(Integer, default=0)
+    total_purchase_value = Column(Float, default=0.0)
+    
+    purchased_items_details = Column(Text, nullable=True)

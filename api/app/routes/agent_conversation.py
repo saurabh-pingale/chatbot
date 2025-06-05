@@ -30,9 +30,9 @@ async def agent_conversation(request: Request):
   
         shopId = request.query_params.get("shopId")
         user_id = request.query_params.get("user_id")
-        if not shopId or not user_id:
-            logger.error("shopId or user_id query parameter are missing or empty.")
-            raise HTTPException(status_code=400, detail="shopId or user_id query parameter are required.")
+        if not shopId:
+            logger.error("shopId query parameter is missing or empty.")
+            raise HTTPException(status_code=400, detail="shopId query parameter is required.")
         
         app = get_app()
         

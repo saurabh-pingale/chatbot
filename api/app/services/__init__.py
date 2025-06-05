@@ -3,7 +3,7 @@ from app.custom_fastapi import CustmFastAPI
 def init_services(app: CustmFastAPI):
     """Initialize services in the app state."""
     from app.services.shop_admin_service import ShopAdminService
-    from api.app.services.pydantic_service.llm_service import LLMService
+    from app.services.pydantic_service.llm_service import LLMService
     from app.services.conversation_service import ConversationService
     from app.services.analytics_service import AnalyticsService
     from app.services.checkout_product_service import CheckoutProductService

@@ -85,10 +85,7 @@ class LLMService:
     - Ensure your textual response (for the Pydantic model) contains enough detail (product names, prices, IDs for *selected and matching* products) for any subsequent filtering steps to work correctly, OR clearly states that no matching products were found in the provided tool data.
     """
 
-    def __init__(self, test_mode=False, failure_rate=0.5):
-        self.test_mode = test_mode
-        self.failure_rate = failure_rate
-        
+    def __init__(self):
         self.agent = Agent(
             model=AnthropicModel(model_name=CLAUDE_MODEL_NAME),
             system_prompt=self.SYSTEM_MESSAGE,
@@ -120,7 +117,7 @@ class LLMService:
 
     def _register_product_tool(self):
         """Register product tool"""
-        product_tool = ProductTool(self.test_mode, self.failure_rate)
+        product_tool = ProductTool()
         self._register_tool_instance(
             product_tool,
             response_model=ProductResponse,

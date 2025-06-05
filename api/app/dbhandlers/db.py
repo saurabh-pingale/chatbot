@@ -6,7 +6,7 @@ from app.models.db.base import Base
 if not DATABASE_URL:
     raise ValueError("Database URL must be provided in the environment variables.")
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(DATABASE_URL, echo=False, pool_pre_ping=True, connect_args={"statement_cache_size": 0})
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 async def create_all_tables():
