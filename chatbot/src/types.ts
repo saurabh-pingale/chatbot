@@ -22,10 +22,28 @@ export interface CartItem extends ProductType {
   quantity: number;
 }
 
+export interface ChatbotAppConfig {
+  primaryColor: string;
+  storeImage: string;
+  shopId: string;
+  showEmailGate: boolean;
+  setupCompleted: boolean;
+}
+
 export interface ChatbotConfig {
   primaryColor: string;
   storeImage: string;
   shopId: string;
+  greetingMessage?: string;
+  displayShopLogo?: boolean;
+  shopLogoUrl?: string;
+  emailGateMessage?: string;
+  emailInputPlaceholder?: string;
+  emailLoadingText?: string;
+  emailContinueButtonText?: string;
+  allowGuestMode?: boolean;
+  emailSkipButtonText?: string;
+  showEmailGate: boolean;
 }
 
 export interface UserSession {
@@ -50,9 +68,10 @@ export interface ChatResponse {
 }
 
 export interface LocationInfo {
-  country: string | null;
-  city: string | null;
-  region: string | null;
+  country?: string | null;
+  region?: string | null;
+  city?: string | null;
+  ip?: string | null;
 }
 
 export interface AnalyticsData {
@@ -126,6 +145,8 @@ export interface ChatHeaderProps {
   cartItemCount: number; 
   primaryColor: string;
   showCartIcon?: boolean;
+  onToggleOffers?: () => void;
+  showOffersIcon?: boolean;
 }
 
 export interface ChatInputProps {
@@ -176,4 +197,28 @@ export interface TypingIndicatorProps {
 
 export interface ExtendedMessageProps extends MessageProps {
     onProductAddToCart?: (product: ProductType) => Promise<void>;
+}
+
+export interface InitiateSessionRequest {
+  email: string;
+  shopId: string;
+}
+
+export interface InitiateSessionResponse {
+  token: string;
+}
+
+export interface AgentConversationRequestPayload {
+  messages: Message[];
+  token: string;
+  location_info?: LocationInfo; 
+}
+
+export interface OffersPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  offerTags: string[];
+  primaryColor: string;
+  onOfferClick: (tag: string) => void;
+  shopDomain: string; 
 }

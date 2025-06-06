@@ -1,37 +1,115 @@
 import {
   Page,
   Layout,
-  Text,
   Card,
-  BlockStack,
   Box,
+  BlockStack,
   List,
+  Text,
   InlineStack,
+  Button,
   Banner,
 } from "@shopify/polaris";
+import { json, LoaderFunction } from "@remix-run/node";
+import { useLoaderData, useNavigate } from "@remix-run/react";
+import { authenticate } from "../shopify.server";
+import { getShopStatus } from "./get_shop_status";
+import React from "react";
 
-export default function ChatbotIndex() {
+interface LoaderData {
+  shop: string;
+  plan: string | null;
+  setupCompleted: boolean;
+}
 
-  const features = [
+const features = [
     "Trained with specialized vectors for accurate responses",
     "Answers product-specific questions instantly",
     "Reduces customer support workload",
     "Improves customer satisfaction with 24/7 availability",
     "Customizable to match your brand voice"
-  ];
+];
 
-  const exampleQuestions = [
+const exampleQuestions = [
     "How do I track my order?",
     "What's your return policy?",
     "Are there any active promotions?",
     "Do you ship internationally?",
     "How can I contact customer support?"
-  ];
+];
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
+  const shopId = session.shop;
+
+  try {
+    const { plan, setup_completed } = await getShopStatus(shopId);
+    return json({ shop: shopId, plan, setupCompleted: setup_completed });
+  } catch (error) {
+    console.error("Failed to fetch shop status:", error);
+    return json({ shop: shopId, plan: null, setupCompleted: false });
+  }
+};
+
+export default function Index() {
+  const { plan, setupCompleted } = useLoaderData<LoaderData>();
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <Page>
       <BlockStack gap="500">
-        <Layout>
+        <Card>
+          <BlockStack gap="200">
+            <Text as="h2" variant="headingLg">
+              Welcome to the Smart Chatbot App!
+            </Text>
+            <Text as="p" variant="bodyMd">
+              Your current plan is: <strong>{plan || "Not selected"}</strong>
+            </Text>
+            {!setupCompleted && (
+              <Banner
+                title="Setup required"
+                tone="warning"
+                action={{
+                  content: "Complete Setup",
+                  onAction: () => handleNavigation("/app/settings"),
+                }}
+              >
+                <p>
+                  Please complete the setup process to activate the chatbot for
+                  your store.
+                </p>
+              </Banner>
+            )}
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h3" variant="headingMd">
+              Quick Actions
+            </Text>
+            <InlineStack gap="400" align="center">
+              <Button onClick={() => handleNavigation("/app/settings")}>
+                Go to Settings
+              </Button>
+              <Button onClick={() => handleNavigation("/app/training")}>
+                Train Chatbot
+              </Button>
+              <Button onClick={() => handleNavigation("/app/analytics")}>
+                View Analytics
+              </Button>
+              <Button onClick={() => handleNavigation("/app/billings")}>
+                View Billing
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Card>
+      <Layout>
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -110,7 +188,6 @@ export default function ChatbotIndex() {
                   </List>
                 </BlockStack>
               </Card>
-
               <Card>
                 <BlockStack gap="200">
                   <InlineStack align="center" gap="200">

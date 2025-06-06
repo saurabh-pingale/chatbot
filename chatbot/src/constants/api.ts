@@ -4,7 +4,9 @@ export const API_ENDPOINTS = {
   COLOR_PREFERENCE: '/apps/chatbot-api/color-preference',
   STORE_CHECKOUT_PRODUCT: '/apps/chatbot-api/store_checkout_product',
   REMOVE_CHECKOUT_PRODUCT: '/apps/chatbot-api/remove_checkout_product',
-  ANALYTICS_STORE: '/apps/chatbot-api/analytics',
+  INITIATE_SESSION: '/apps/chatbot-api/initiate_session',
+  EMAIL_PAGE_PREFERENCE: '/apps/chatbot-api/email-gate-preference',
+  SHOP_STATUS: '/apps/chatbot-api/shop-status',
   IP_INFO: 'https://api.ipify.org?format=json',
   LOCATION_INFO: 'https://ipapi.co'
 };

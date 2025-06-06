@@ -35,3 +35,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 #Deepseek
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+
+#JWT
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

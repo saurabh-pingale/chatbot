@@ -1,6 +1,7 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { validateEmail } from '../../utils/utils';
+import { validateEmail, getShopId } from '../../utils/utils';
+import { initiateUserSession } from '../../services/chat';
 import type { EmailGateProps, StyleWithCustomProps } from '../../types';
 import './EmailGate.scss';
 
@@ -12,6 +13,17 @@ export const EmailGate = memo<EmailGateProps>(({
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentShopId, setCurrentShopId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const shopId = getShopId();
+    if (shopId) {
+      setCurrentShopId(shopId);
+    } else {
+      setError('Configuration error: Shop ID is missing.');
+      console.error('EmailGate: Shop ID could not be determined.');
+    }
+  }, []);
 
   const primaryColorFromConfig = config.primaryColor;
   const dynamicStyles: StyleWithCustomProps = {
@@ -23,12 +35,31 @@ export const EmailGate = memo<EmailGateProps>(({
       setError('Please enter a valid email address');
       return;
     }
+    if (!currentShopId) {
+      setError('Cannot proceed: Shop ID is not configured.');
+      return;
+    }
 
     setIsLoading(true);
+    setError('');
     try {
-      await onSubmit(email);
+      const response = await initiateUserSession({
+        email: email,
+        shopId: currentShopId,
+      });
+
+      if (response.token) {
+        localStorage.setItem('user_jwt_token', response.token);
+        if (onSubmit) {
+            await onSubmit(email);
+        }       
+      } else {
+        setError('Failed to authenticate. Please try again.');
+      }
     } catch (err) {
-      setError('Failed to start chat. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to start chat: ${errorMessage}. Please try again.`);
+      console.error("Error during handleSubmit in EmailGate:", err);
     } finally {
       setIsLoading(false);
     }
@@ -36,10 +67,12 @@ export const EmailGate = memo<EmailGateProps>(({
 
   const handleSkip = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      await onSkip();
+      await onSkip(); 
     } catch (err) {
-      setError('Failed to start chat. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to continue as guest: ${errorMessage}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -54,20 +87,22 @@ export const EmailGate = memo<EmailGateProps>(({
       transition={{ duration: 0.2 }}
     >
       <div className="email-gate-content">
+        {config.displayShopLogo && config.shopLogoUrl && (
+          <img src={config.shopLogoUrl} alt="Shop Logo" className="shop-logo-email-gate" />
+        )}
         <p className="email-gate-description">
-          To get started with our chat assistant, please enter your email address.
-          This helps us personalize your experience.
+          To get started with our chat assistant, please enter your email address. This helps us personalize your experience.
         </p>
         <input
           type="email"
           className={`email-gate-input ${error ? 'has-error' : ''}`}
-          placeholder="Your email address"
+          placeholder='Your email address'
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
             if (error) setError('');
           }}
-          disabled={isLoading}
+          disabled={isLoading || !currentShopId}
           aria-label="Email address"
           aria-describedby="email-error"
           style={dynamicStyles}
@@ -81,18 +116,18 @@ export const EmailGate = memo<EmailGateProps>(({
         <button
           className="email-gate-continue-button"
           onClick={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || !currentShopId}
           style={dynamicStyles}
         >
           {isLoading ? 'Loading...' : 'Continue to Chat'}
         </button>
-        <button
-          className="email-gate-skip-button"
-          onClick={handleSkip}
-          disabled={isLoading}
-        >
-          Continue as Guest
-        </button>
+            <button
+                className="email-gate-skip-button"
+                onClick={handleSkip}
+                disabled={isLoading}
+            >
+              Continue as Guest
+            </button>
       </div>
     </motion.div>
   );

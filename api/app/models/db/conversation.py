@@ -11,7 +11,7 @@ class ConversationModel(Base):
     user_query = Column(Text, nullable=False)
     agent_response = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
 
     user = relationship("UserModel", back_populates="conversations")

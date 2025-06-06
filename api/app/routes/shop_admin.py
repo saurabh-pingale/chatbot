@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
+from datetime import datetime, timedelta
 
 from app.utils.app_utils import get_app
 from app.models.api.shop_admin import (
@@ -8,7 +9,11 @@ from app.models.api.shop_admin import (
     SupportInfoRequest,
     ShopImageResponse,
     ShopImageRequest,
-    GetImageResponse
+    GetImageResponse,
+    PlanDetailsRequest,
+    ShopStatusResponse,
+    EmailGatePreferenceRequest,
+    EmailGatePreferenceResponse
 )
 from app.utils.logger import logger
 
@@ -127,3 +132,111 @@ async def get_image(request: Request):
     except Exception as error:
         logger.error("Error in get_image: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch image")
+
+@shop_admin_router.post(
+    "/save-plan-details",
+    summary="Save plan details and owner information for the shop",
+    response_model=dict,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def save_plan_details(request: Request, body: PlanDetailsRequest):
+    shop_id = request.query_params.get("shopId")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+
+    try:
+        app = get_app()
+        
+        plan_start_date = datetime.utcnow()
+        plan_end_date = plan_start_date + timedelta(days=30) if body.plan == "free" else None
+
+        await app.shop_admin_service.save_plan_details(
+            shop_id=shop_id,
+            owner_name=body.owner_name,
+            owner_email=body.owner_email,
+            owner_location=body.owner_location,
+            plan=body.plan,
+            plan_start_date=plan_start_date,
+            plan_end_date=plan_end_date,
+            setup_completed=True 
+        )
+        return {"success": True, "message": "Plan details saved successfully."}
+    except Exception as error:
+        logger.error(f"Error in save_plan_details for shop {shop_id}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save plan details.")
+
+@shop_admin_router.get(
+    "/shop-status",
+    summary="Get the setup status and plan for the shop",
+    response_model=ShopStatusResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        404: {"model": ErrorResponse, "description": "Shop not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def get_shop_status(request: Request):
+    shop_id = request.query_params.get("shopId")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+
+    extracted_shop_id = shop_id.split('?')[0]
+    
+    try:
+        app = get_app()
+        
+        status = await app.shop_admin_service.get_shop_status(extracted_shop_id)
+        return status
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as error:
+        logger.error(f"Error in get_shop_status for shop {extracted_shop_id}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch shop status.")
+
+@shop_admin_router.post(
+    "/save-email-gate-preference",
+    summary="Save Email Gate preference for the shop",
+    response_model=dict,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request (e.g., missing shopId or preference)"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def save_email_gate_preference(request: Request, body: EmailGatePreferenceRequest):
+    shop_id = request.query_params.get("shopId")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+
+    try:
+        app = get_app()
+        await app.shop_admin_service.save_email_gate_preference(shop_id, body.show_email_gate)
+        return {"success": True, "message": "Email Gate preference saved successfully."}
+    except Exception as error:
+        logger.error(f"Error in save_email_gate_preference_route for shop {shop_id}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save Email Gate preference.")
+
+@shop_admin_router.get(
+    "/email-gate-preference",
+    summary="Get Email Gate preference for the shop",
+    response_model=EmailGatePreferenceResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request (e.g., missing shopId)"},
+        404: {"model": ErrorResponse, "description": "Shop not found or preference not set (though service provides default)"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def get_email_gate_preference(request: Request):
+    shop_id = request.query_params.get("shopId")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+
+    try:
+        app = get_app()
+        preference = await app.shop_admin_service.get_email_gate_preference(shop_id)
+        return EmailGatePreferenceResponse(show_email_gate=preference, shop_id=shop_id)
+    except Exception as error:
+        logger.error(f"Error in get_email_gate_preference_route for shop {shop_id}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch Email Gate preference.")

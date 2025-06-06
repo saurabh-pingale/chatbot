@@ -2,6 +2,7 @@ from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from datetime import datetime
 
 from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel
 from app.models.api.shop_admin import (ProductRequest)
@@ -203,4 +204,102 @@ class ShopAdminHandler:
                 return shop.image
             except SQLAlchemyError as error:
                 logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
+                raise error
+
+    async def save_plan_details(
+        self,
+        shop_id: str,
+        owner_name: str,
+        owner_email: str,
+        owner_location: str,
+        plan: str,
+        plan_start_date: datetime,
+        plan_end_date: Optional[datetime],
+        setup_completed: bool,
+    ) -> None:
+        """Saves plan details for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            try:
+                shop = await session.execute(
+                    select(ShopModel).where(ShopModel.shop_id == shop_id)
+                )
+                shop = shop.scalars().first()
+
+                if not shop:
+                    shop = ShopModel(shop_id=shop_id)
+                    session.add(shop)
+
+                shop.owner_name = owner_name
+                shop.owner_email = owner_email
+                shop.owner_location = owner_location
+                shop.plan = plan
+                shop.plan_start_date = plan_start_date
+                shop.plan_end_date = plan_end_date
+                shop.setup_completed = setup_completed
+                await session.commit()
+            except SQLAlchemyError as error:
+                await session.rollback()
+                logger.error("Database error in save_plan_details: %s", str(error), exc_info=True)
+                raise
+
+    async def get_shop_status(self, shop_id: str) -> Optional[ShopModel]:
+        """Fetches a shop by its ID to check its status."""
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await session.execute(
+                    select(ShopModel).filter(ShopModel.shop_id == shop_id)
+                )
+                shop = result.scalars().first()
+                
+                if shop:
+                    return {
+                        "setup_completed": shop.setup_completed,
+                        "plan": shop.plan or "Not Selected"
+                    }
+                else:
+                    return {
+                        "setup_completed": False,
+                        "plan": "Not Selected"
+                    }
+            except SQLAlchemyError as error:
+                logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
+                raise error
+
+    async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
+        """Saves the email gate preference for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    shop_result = await session.execute(
+                        select(ShopModel).where(ShopModel.shop_id == shop_id)
+                    )
+                    shop = shop_result.scalars().first()
+
+                    if not shop:
+                        shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
+                        session.add(shop)
+                        logger.info(f"New shop created with shop_id {shop_id} and email gate preference {show_email_gate}")
+                    else:
+                        shop.show_email_gate = show_email_gate
+                        logger.info(f"Updated email gate preference for shop_id {shop_id} to {show_email_gate}")
+         
+                except SQLAlchemyError as error:
+                    logger.error(f"Database error in save_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
+                    raise error
+
+    async def get_email_gate_preference(self, shop_id: str) -> Optional[bool]:
+        """Fetches the email gate preference for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            try:
+                shop_result = await session.execute(
+                    select(ShopModel.show_email_gate).where(ShopModel.shop_id == shop_id)
+                )
+                preference = shop_result.scalar_one_or_none()
+                
+                if preference is None:
+                    logger.warning(f"No email gate preference found for shop: {shop_id}, returning default (False as per model)")
+                    return None 
+                return preference
+            except SQLAlchemyError as error:
+                logger.error(f"Database error in get_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
                 raise error

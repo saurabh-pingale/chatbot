@@ -80,7 +80,8 @@
   gap: 8px;
 }
 
-.chat-header-cart-icon-wrapper {
+// Common style for icon wrappers
+.chat-header-icon-wrapper {
   position: relative;
   cursor: pointer;
   padding: 8px;
@@ -101,6 +102,16 @@
     stroke: currentColor;
     fill: none;
   }
+}
+
+// Specific class for cart if needed, though common one might suffice now
+.chat-header-cart-icon-wrapper {
+  // Can add specific styles here if it diverges from chat-header-icon-wrapper
+}
+
+// Specific class for offers icon
+.chat-header-offers-icon-wrapper {
+  // Can add specific styles here if it diverges from chat-header-icon-wrapper
 }
 
 .chat-header-cart-count-badge {

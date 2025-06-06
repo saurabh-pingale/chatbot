@@ -2,9 +2,14 @@ import { API_ENDPOINTS } from '../constants/api';
 import { COLORS } from '../constants/colors';
 import { IMAGE } from '../constants/image';
 import { getShopId } from '../utils/utils';
-import type { ChatResponse, LocationInfo, Message, AnalyticsData, PurchasedItem, CartItem } from '../types';
-
-let hasAttemptedAnalyticsSend = false;
+import type {
+  ChatResponse,
+  LocationInfo,
+  Message,
+  InitiateSessionRequest,
+  InitiateSessionResponse,
+  AgentConversationRequestPayload
+} from '../types';
 
 export const getIpAddress = async (): Promise<string> => {
   try {
@@ -25,9 +30,10 @@ export const getIpAddress = async (): Promise<string> => {
 export const getLocationInfo = async (ip: string): Promise<LocationInfo> => {
   if (ip === 'unknown' || !ip) {
     return {
-      country: 'unknown',
+      country: null,
       city: null,
-      region: null
+      region: null,
+      ip: ip
     };
   }
 
@@ -39,158 +45,30 @@ export const getLocationInfo = async (ip: string): Promise<LocationInfo> => {
       return {
         country: null,
         city: null,
-        region: null
+        region: null,
+        ip: ip
       };
     }
     const data = await response.json();
     return {
       country: data.country_name || null,
       city: data.city || null,
-      region: data.region || null
+      region: data.region || null,
+      ip: ip
     };
   } catch (err) {
     console.error('Location fetch failed:', err);
     return {
       country: null,
       city: null,
-      region: null
+      region: null,
+      ip: ip
     };
-  }
-};
-
-export const initializeSession = async (email: string): Promise<AnalyticsData> => {
-  try {
-    const ip = await getIpAddress();
-    const location = await getLocationInfo(ip);
-    const shopId = getShopId();
-
-    const analyticsData: AnalyticsData = {
-      email,
-      ip,
-      country: location.country || 'unknown',
-      city: location.city || 'unknown',
-      region: location.region || 'unknown',
-      session_start: new Date().toISOString(),
-      interactions: 0,
-      total_chat_interactions: 0,
-      products_added_to_cart: 0,
-      cart_items: [],
-      products_purchased: 0,
-      total_purchase_value: 0,
-      purchased_items: [],
-      is_anonymous: email.startsWith('Anonymous_'),
-      shop_id: shopId
-    };
-
-    sessionStorage.setItem('AnalyticsData', JSON.stringify(analyticsData));
-    hasAttemptedAnalyticsSend = false;
-    return analyticsData;
-  } catch (err) {
-    console.error('Session initialization failed:', err);
-    throw err;
-  }
-};
-
-export const getSessionData = (): AnalyticsData | null => {
-  try {
-    const data = sessionStorage.getItem('AnalyticsData');
-    return data ? JSON.parse(data) : null;
-  } catch (err) {
-    console.error('Failed to parse session data:', err);
-    return null;
-  }
-};
-
-export const updateSessionData = (data: Partial<AnalyticsData>): boolean => {
-  try {
-    const currentData = getSessionData();
-    const newData = { ...currentData, ...data, shop_id: currentData?.shop_id || getShopId() };
-    sessionStorage.setItem('AnalyticsData', JSON.stringify(newData));
-    return true;
-  } catch (err) {
-    console.error('Failed to update session:', err);
-    return false;
   }
 };
 
 export const trackEvent = (eventName: string, eventData: Record<string, any> = {}): void => {
-  const session = getSessionData();
-  if (!session) {
-    console.warn('trackEvent: No session data found. Cannot track event:', eventName);
-    return;
-  }
-
-  let updatedSession: Partial<AnalyticsData> = {
-    interactions: (session.interactions || 0) + 1,
-  };
-
-  if (eventName.toLowerCase().includes('message') || eventName.toLowerCase().includes('chat')) {
-    updatedSession.total_chat_interactions = (session.total_chat_interactions || 0) + 1;
-  }
-
-  if (eventName === 'productAddedToCart') {
-    const itemToAdd = eventData.item as CartItem;
-    if (!itemToAdd || !itemToAdd.id || typeof itemToAdd.quantity !== 'number') {
-      console.warn('trackEvent: Invalid item data for productAddedToCart', itemToAdd);
-      return;
-    }
-
-    updatedSession.products_added_to_cart = (session.products_added_to_cart || 0) + itemToAdd.quantity;
-    
-    const existingCartItems = session.cart_items || [];
-    const itemIndex = existingCartItems.findIndex(ci => ci.id === itemToAdd.id && ci.variant_id === itemToAdd.variant_id); // Consider variants
-
-    let newCartItems: CartItem[];
-    if (itemIndex > -1) {
-      newCartItems = existingCartItems.map((ci, index) => 
-        index === itemIndex ? { ...ci, quantity: ci.quantity + itemToAdd.quantity } : ci
-      );
-    } else {
-      newCartItems = [...existingCartItems, itemToAdd];
-    }
-    updatedSession.cart_items = newCartItems;
-    console.log('productAddedToCart: Updated cart items', newCartItems);
-  }
-
-  if (eventName === 'productPurchased') {
-    const purchasedItemsArray = eventData.items as PurchasedItem[] | undefined;
-    const totalValue = eventData.value as number | undefined;
-
-    if (!purchasedItemsArray || !Array.isArray(purchasedItemsArray) || purchasedItemsArray.length === 0) {
-      console.warn('trackEvent: Invalid items data for productPurchased', purchasedItemsArray);
-      if (typeof totalValue === 'number') {
-         updatedSession.total_purchase_value = (session.total_purchase_value || 0) + totalValue;
-      } else {
-        return;
-      }
-    } else { 
-      updatedSession.products_purchased = (session.products_purchased || 0) + purchasedItemsArray.reduce((sum, item) => sum + item.quantity, 0);
-      updatedSession.purchased_items = [...(session.purchased_items || []), ...purchasedItemsArray];
-  
-      if (typeof totalValue === 'number') {
-        updatedSession.total_purchase_value = (session.total_purchase_value || 0) + totalValue;
-      } else {
-        const calculatedValue = purchasedItemsArray.reduce((sum, item) => sum + (item.revenue || 0), 0);
-        if (calculatedValue > 0) {
-            updatedSession.total_purchase_value = (session.total_purchase_value || 0) + calculatedValue;
-        } else {
-            console.warn('trackEvent(productPurchased): Items provided but no total value or item revenue to sum.');
-        }
-      }
-    }
-    
-    updatedSession.cart_items = [];
-    updatedSession.products_added_to_cart = 0;
-    console.log('productPurchased: Updated purchase analytics', updatedSession);
-  }
-
-  if (eventName === 'cartCleared') {
-    updatedSession.cart_items = [];
-    updatedSession.products_added_to_cart = 0;
-    console.log('cartCleared: Cart has been cleared.');
-  }
-  
-  updateSessionData(updatedSession);
+  console.log(`Track Event: ${eventName}`, eventData);
 };
 
 export const sendChatMessage = async (
@@ -200,9 +78,13 @@ export const sendChatMessage = async (
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-  const shopId = getShopId();
+  let shopId = getShopId();
+  if (shopId) {
+    shopId = shopId.split('?')[0];
+  }
+
   const params = new URLSearchParams({
-    shopId: shopId,
+    shopId: shopId || '',
     user_id: userId || ''
   });
 
@@ -250,8 +132,9 @@ export const sendChatMessage = async (
 
 export const getStoreColor = async (): Promise<string> => {
   try {
-    const shopId = getShopId();
+    let shopId = getShopId();
     if (!shopId) return COLORS.ORANGE_450;
+    shopId = shopId.split('?')[0];
 
     const response = await fetch(`${API_ENDPOINTS.COLOR_PREFERENCE}?shopId=${encodeURIComponent(shopId)}`);
     
@@ -270,8 +153,9 @@ export const getStoreColor = async (): Promise<string> => {
 
 export const getStoreImage = async (): Promise<string> => {
   try {
-    const shopId = getShopId();
+    let shopId = getShopId();
     if (!shopId) return IMAGE.FALLBACK;
+    shopId = shopId.split('?')[0];
 
     const response = await fetch(`${API_ENDPOINTS.GET_IMAGE}?shopId=${encodeURIComponent(shopId)}`);
     
@@ -288,59 +172,122 @@ export const getStoreImage = async (): Promise<string> => {
   }
 };
 
-export const sendAnalyticsDataOnSessionEnd = (): void => {
-  if (hasAttemptedAnalyticsSend) {
-    return;
-  }
+export const getShopStatus = async (): Promise<{ setupCompleted: boolean }> => {
+  try {
+    let shopId = getShopId();
+    if (!shopId) return { setupCompleted: false };
+    shopId = shopId.split('?')[0];
 
-  const analyticsData = getSessionData();
-  if (analyticsData) {
-    hasAttemptedAnalyticsSend = true; 
-
-    const shopId = analyticsData.shop_id || getShopId();
-    if (!shopId) {
-      console.error("Cannot send analytics: shopId is missing.");
-      hasAttemptedAnalyticsSend = false;
-      return;
+    const response = await fetch(`${API_ENDPOINTS.SHOP_STATUS}?shopId=${encodeURIComponent(shopId)}`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch shop status:', response.status, await response.text());
+      return { setupCompleted: false };
     }
 
-    const dataToSend: Partial<AnalyticsData> & { session_end: string } = {
-      ...analyticsData,
-      session_end: new Date().toISOString(),
-    };
+    const data = await response.json();
+    return { setupCompleted: data.setup_completed || false };
+  } catch (err) {
+    console.error('Error fetching shop status:', err);
+    return { setupCompleted: false };
+  }
+};
 
-    const payload = {
-        email: dataToSend.email,
-        shop_id: shopId,
-        is_anonymous: dataToSend.is_anonymous,
-        country: dataToSend.country,
-        region: dataToSend.region,
-        city: dataToSend.city,
-        ip: dataToSend.ip,
-        session_start: dataToSend.session_start,
-        session_end: dataToSend.session_end,
-        total_chat_interactions: dataToSend.total_chat_interactions || 0,
-        products_added_to_cart: dataToSend.products_added_to_cart || 0,
-        products_purchased: dataToSend.products_purchased || 0,
-        total_purchase_value: dataToSend.total_purchase_value || 0,
-        top_purchased_products: dataToSend.purchased_items || [], 
-    };
+export const initiateUserSession = async (
+  payload: InitiateSessionRequest
+): Promise<InitiateSessionResponse> => {
+  const response = await fetch(`${API_ENDPOINTS.INITIATE_SESSION}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to initiate session" }));
+    throw new Error(errorData.detail || "Failed to initiate session");
+  }
+  return response.json();
+};
+
+export const sendAgentMessage = async (
+  shopId: string,
+  payload: AgentConversationRequestPayload
+): Promise<ChatResponse> => { 
+  const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?shopId=${encodeURIComponent(shopId)}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to send message" }));
+    throw new Error(errorData.error || errorData.detail || "Failed to send message to agent");
+  }
+  return response.json();
+};
+
+export const getEmailGatePreference = async (): Promise<boolean> => {
+  try {
+    let shopId = getShopId();
+    if (!shopId) return false;
+    shopId = shopId.split('?')[0];
+
+    const response = await fetch(`${API_ENDPOINTS.EMAIL_PAGE_PREFERENCE}?shopId=${encodeURIComponent(shopId)}`);
     
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json; charset=UTF-8' });
-    const beaconUrl = `${API_ENDPOINTS.ANALYTICS_STORE}?shopId=${encodeURIComponent(shopId)}`;
-    
-    try {
-      const success = navigator.sendBeacon(beaconUrl, blob);
-      if (success) {
-        console.log('Analytics data beacon queued successfully.');
-        sessionStorage.removeItem('AnalyticsData');
-      } else {
-        console.error('Failed to queue analytics data beacon. Data might be lost.');
-        hasAttemptedAnalyticsSend = false;
+    if (!response.ok) {
+      console.error('Failed to fetch email gate preference:', response.status, await response.text());
+      return false;
+    }
+
+    const data = await response.json();
+    return data.show_email_gate || false;
+  } catch (err) {
+    console.error('Error fetching email gate preference:', err);
+    return false;
+  }
+};
+
+export const getShopOfferTags = async (
+  shopDomain: string,
+  storefrontAccessToken: string
+): Promise<string[]> => {
+  const query = `
+    query {
+        productTags(first: 100) {
+          edges {
+            node
+        }
       }
-    } catch (error) {
-        console.error('Error sending analytics data beacon:', error);
-        hasAttemptedAnalyticsSend = false;
     }
+  `;
+
+  try {
+    const response = await fetch(`https://${shopDomain}/api/2024-04/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': storefrontAccessToken,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Shopify GraphQL error:', errorText);
+      return [];
+    }
+
+    const json = await response.json();
+    const edges = json?.data?.productTags?.edges ?? [];
+    const tags = edges.map((edge: { node: string }) => edge.node);
+    return Array.from(new Set(tags));
+  } catch (err) {
+    console.error('Error fetching Shopify product tags:', err);
+    return [];
   }
-}; 
+};

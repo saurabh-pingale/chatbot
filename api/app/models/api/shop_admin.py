@@ -63,3 +63,32 @@ class ShopImageResponse(BaseModel):
 
 class GetImageResponse(BaseModel):
     image: Optional[str]
+
+class UserInitiateRequest(BaseModel):
+    email: str
+    shopId: str 
+
+class UserInitiateResponse(BaseModel):
+    token: str
+
+class ShopAnalyticsSummaryResponse(BaseModel):
+    total_users: int
+    total_chat_interactions: int
+    error: Optional[str] = None
+
+class PlanDetailsRequest(BaseModel):
+    owner_name: str
+    owner_email: str
+    owner_location: str
+    plan: str
+
+class ShopStatusResponse(BaseModel):
+    plan: Optional[str]
+    setup_completed: bool
+
+class EmailGatePreferenceResponse(BaseModel):
+    show_email_gate: bool
+    shop_id: str
+
+class EmailGatePreferenceRequest(BaseModel):
+    show_email_gate: bool

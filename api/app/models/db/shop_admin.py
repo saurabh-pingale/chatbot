@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.sql.sqltypes import Boolean
 
 from app.models.db.base import Base
 
@@ -19,6 +18,14 @@ class ShopModel(Base):
     support_email = Column(Text, nullable=True)
     support_phone = Column(Text, nullable=True)
     image = Column(String, nullable=True)
+    show_email_gate = Column(Boolean, default=False, nullable=False)
+    owner_name = Column(String, nullable=True)
+    owner_email = Column(String, nullable=True)
+    owner_location = Column(String, nullable=True)
+    plan = Column(String, nullable=True)
+    plan_start_date = Column(DateTime, nullable=True)
+    plan_end_date = Column(DateTime, nullable=True)
+    setup_completed = Column(Boolean, default=False, nullable=False)
 
     conversations = relationship("ConversationModel", back_populates="shop")
     users = relationship("UserModel", back_populates="shop")
@@ -29,7 +36,7 @@ class UserModel(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_at = Column(DateTime)
-    email = Column(Text)
+    email = Column(Text, nullable=False)
     city = Column(Text, nullable=True)
     region = Column(Text, nullable=True) 
     country = Column(Text, nullable=True) 
@@ -40,6 +47,9 @@ class UserModel(Base):
     conversations = relationship("ConversationModel", back_populates="user")
     shop = relationship("ShopModel", back_populates="users")
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
+    analytics = relationship("UserShopAnalyticsModel", back_populates="user", uselist=False)
+
+    __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 
 class CollectionModel(Base):
     __tablename__ = 'collections'
@@ -67,27 +77,14 @@ class ProductModel(Base):
     collection = relationship("CollectionModel", back_populates="products")
     checkout_products = relationship("CheckoutProductModel", back_populates="product")
     
-class AnalyticsModel(Base):
-    __tablename__ = 'analytics'
+class UserShopAnalyticsModel(Base):
+    __tablename__ = 'user_shop_analytics'
+    __table_args__ = (UniqueConstraint('user_id', 'shop_id', name='uq_user_shop_analytics_user_shop'),)
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    shop_id = Column(String, index=True, nullable=False)
-    # TODO - Take it as a foreign key from users table
-    email = Column(String, index=True, nullable=False)
-    is_anonymous = Column(Boolean, default=False)
-    
-    # TODO - WE're alreay storing it in the user, so removed it here
-    country = Column(String, nullable=True)
-    region = Column(String, nullable=True)
-    city = Column(String, nullable=True)
-    ip = Column(String, nullable=True) 
-    
-    session_start_time = Column(DateTime, nullable=False)
-    session_end_time = Column(DateTime, nullable=True)
-    
-    chat_interactions = Column(Integer, default=0)
-    products_added_to_cart = Column(Integer, default=0)
-    products_purchased = Column(Integer, default=0)
-    total_purchase_value = Column(Float, default=0.0)
-    
-    purchased_items_details = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
+    chat_interactions_count = Column(Integer, default=0, nullable=False)
+
+    user = relationship("UserModel", back_populates="analytics")
+    shop = relationship("ShopModel")

@@ -7,7 +7,9 @@ export const API = {
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,
     CREATE_PRODUCTS : `${BACKEND_URL}/products_router/create`,
     TEXT_TRAIN : `${BACKEND_URL}/text_training/train`,
-    GET_ANALYTICS: `${BACKEND_URL}/analytics_router/analytics`
+    GET_ANALYTICS: `${BACKEND_URL}/analytics_router/analytics`,
+    SAVE_EMAIL_PAGE_PREFERENCE:`${BACKEND_URL}/shop-admin/save-email-gate-preference`,
+    SAVE_PLAN_DETAILS: `${BACKEND_URL}/shop-admin/save-plan-details`,
 } 
 
 export const CLOUDINARY = {

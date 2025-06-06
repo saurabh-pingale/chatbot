@@ -1,21 +1,31 @@
-import { useEffect, useRef, useState } from "react";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import React, { useEffect, useRef, useState } from "react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import styles from '../styles/training.module.css';
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
 import { FetcherResponse, LoaderData } from "../common/types/index";
 import { textTrain } from "./text_train";
+import SetupStepper from "../components/SetupStepper";
+import { Page } from "@shopify/polaris";
+import { getShopStatus } from "./get_shop_status";
+
+interface TrainingLoaderData extends LoaderData {
+  setupCompleted: boolean;
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   if (!session?.shop || !session?.accessToken) {
-    return json({ shop: null, accessToken: null });
+    return json({ shop: null, accessToken: null, setupCompleted: false });
   }
+
+  const { setup_completed } = await getShopStatus(session.shop);
 
   return json({ 
     shop: session.shop,
-    accessToken: session.accessToken 
+    accessToken: session.accessToken,
+    setupCompleted: setup_completed,
   });
 };
 
@@ -24,7 +34,8 @@ export default function TrainingPage() {
   const [input, setInput] = useState("");
   const fetcher = useFetcher<FetcherResponse>();
   const processingRef = useRef(false);
-  const { shop, accessToken } = useLoaderData<LoaderData>();
+  const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
+  const navigate = useNavigate();
   const MAX_CHAR_LIMIT = 1000;
 
   useEffect(() => {
@@ -62,6 +73,7 @@ export default function TrainingPage() {
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
+        navigate('/app/billing');
       },
       onError: () => {
         setMessages((prev) => [
@@ -85,6 +97,7 @@ export default function TrainingPage() {
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
       }]);
+      navigate('/app/billing');
     } catch (error) {
       setMessages((prev) => [...prev, { 
         sender: "bot", 
@@ -104,64 +117,67 @@ export default function TrainingPage() {
   }, [fetcher.data, fetcher.state]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>SmartBot Training</h2>
-        <p>Train your SmartBot with your shop's products</p>
-      </div>
-
-      <div className={styles.content}>
-        <div className={styles.chatbotSection}>
-          <div className={styles.chatHeader}>
-            <h3>Training Chat</h3>
-          </div>
-          <div className={styles.chatWindow}>
-            {messages.map((msg, index) => (
-              <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
-                {msg.text}
-              </div>
-            ))}
-          </div>
-          <div className={styles.inputArea}>
-            <textarea
-              className={styles.textarea}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your training data..."
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-            />
-            <button 
-              onClick={handleSend} 
-              className={styles.sendButton}
-              disabled={!input.trim() || processingRef.current}
-            >
-              {processingRef.current ? "Sending..." : "Send"}
-            </button>
-          </div>
+    <Page>
+      <SetupStepper currentStep={1} setupCompleted={setupCompleted} />
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h2>SmartBot Training</h2>
+          <p>Train your SmartBot with your shop's products</p>
         </div>
 
-        <div className={styles.trainingSection}>
-          <div className={styles.trainingHeader}>
-            <h3>Training Options</h3>
+        <div className={styles.content}>
+          <div className={styles.chatbotSection}>
+            <div className={styles.chatHeader}>
+              <h3>Training Chat</h3>
+            </div>
+            <div className={styles.chatWindow}>
+              {messages.map((msg, index) => (
+                <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+            <div className={styles.inputArea}>
+              <textarea
+                className={styles.textarea}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your training data..."
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+              />
+              <button 
+                onClick={handleSend} 
+                className={styles.sendButton}
+                disabled={!input.trim() || processingRef.current}
+              >
+                {processingRef.current ? "Sending..." : "Send"}
+              </button>
+            </div>
           </div>
-          <div className={styles.trainingContent}>
-            <p>Fetch your store's products to train the SmartBot</p>
-            <button 
-              onClick={handleFetchProducts} 
-              className={styles.fetchButton}
-              disabled={processingRef.current}
-            >
-              {processingRef.current ? "Fetching..." : "Fetch Products"}
-            </button>
+
+          <div className={styles.trainingSection}>
+            <div className={styles.trainingHeader}>
+              <h3>Training Options</h3>
+            </div>
+            <div className={styles.trainingContent}>
+              <p>Fetch your store's products to train the SmartBot</p>
+              <button 
+                onClick={handleFetchProducts} 
+                className={styles.fetchButton}
+                disabled={processingRef.current}
+              >
+                {processingRef.current ? "Fetching..." : "Fetch Products"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

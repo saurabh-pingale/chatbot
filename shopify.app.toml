@@ -3,30 +3,31 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://arizona-yarn-venice-single.trycloudflare.com"
+application_url = "https://e-nickname-utilize-cheaper.trycloudflare.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://arizona-yarn-venice-single.trycloudflare.com/auth/callback",
-  "https://arizona-yarn-venice-single.trycloudflare.com/auth/shopify/callback",
-  "https://arizona-yarn-venice-single.trycloudflare.com/api/auth/callback"
+  "https://e-nickname-utilize-cheaper.trycloudflare.com/auth/callback",
+  "https://e-nickname-utilize-cheaper.trycloudflare.com/auth/shopify/callback",
+  "https://e-nickname-utilize-cheaper.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://arizona-yarn-venice-single.trycloudflare.com"
+url = "https://e-nickname-utilize-cheaper.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true

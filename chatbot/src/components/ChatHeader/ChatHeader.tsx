@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { hexToRgbArray } from '../../utils/utils';
 import { CartIconSVG } from '../../assets/cart_icon';
+import { RingBellIconSVG } from '../../assets/RingBellIcon';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../types';
 import './ChatHeader.scss';
 
@@ -10,7 +11,9 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   onToggleCart,
   cartItemCount,
   primaryColor,
-  showCartIcon 
+  showCartIcon,
+  onToggleOffers,
+  showOffersIcon
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -37,12 +40,24 @@ export const ChatHeader = memo<ChatHeaderProps>(({
         <h2 className="chat-header-title">Store Assistant</h2>
       </div>
       <div className="chat-header-right-section">
+        {showOffersIcon && onToggleOffers && (
+          <motion.div 
+            className="chat-header-icon-wrapper chat-header-offers-icon-wrapper"
+            onClick={onToggleOffers}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            title="View Offers"
+          >
+            <RingBellIconSVG />
+          </motion.div>
+        )}
         {showCartIcon && (
           <motion.div 
-            className="chat-header-cart-icon-wrapper"
+            className="chat-header-icon-wrapper chat-header-cart-icon-wrapper"
             onClick={onToggleCart}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
+            title="View Cart"
           >
             <CartIconSVG />
             {cartItemCount > 0 && (

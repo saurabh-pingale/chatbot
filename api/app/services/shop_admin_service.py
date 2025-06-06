@@ -1,6 +1,8 @@
 from typing import Optional
+from datetime import datetime
 
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
+from app.models.db.shop_admin import ShopModel
 
 class ShopAdminService:
     def __init__(self):
@@ -25,3 +27,41 @@ class ShopAdminService:
     async def get_image(self, shop_id: str) -> Optional[str]:
         """Fetch image from DB via handler."""
         return await self.db_handler.get_image(shop_id)
+
+    async def save_plan_details(
+        self,
+        shop_id: str,
+        owner_name: str,
+        owner_email: str,
+        owner_location: str,
+        plan: str,
+        plan_start_date: datetime,
+        plan_end_date: Optional[datetime],
+        setup_completed: bool,
+    ) -> None:
+        """Save plan details to the DB via handler."""
+        await self.db_handler.save_plan_details(
+            shop_id=shop_id,
+            owner_name=owner_name,
+            owner_email=owner_email,
+            owner_location=owner_location,
+            plan=plan,
+            plan_start_date=plan_start_date,
+            plan_end_date=plan_end_date,
+            setup_completed=setup_completed,
+        )
+
+    async def get_shop_status(self, shop_id: str) -> Optional[ShopModel]:
+        """Fetch shop by ID from DB via handler to check its status."""
+        return await self.db_handler.get_shop_status(shop_id)
+
+    async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
+        """Save the email gate preference to the DB via handler."""
+        await self.db_handler.save_email_gate_preference(shop_id, show_email_gate)
+
+    async def get_email_gate_preference(self, shop_id: str) -> Optional[bool]:
+        """Fetch the email gate preference from DB via handler."""
+        preference = await self.db_handler.get_email_gate_preference(shop_id)
+        if preference is None:
+            return False 
+        return preference
