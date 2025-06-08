@@ -24,6 +24,7 @@ class ProductsService:
                 collection["title"]: collection["id"] for collection in stored_collections
             }
 
+            #TODO: Rename store products into record_products_handler
             await self.shop_admin_handler.store_products(products, collection_id_map)
         
             products_embeddings = await create_product_embeddings(products)

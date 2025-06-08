@@ -59,6 +59,7 @@ class ProductResponse(BaseResponse):
         None,
         description="Product category suggestions if no direct matches found"
     )
+    #TODO: What is closing?
     closing: Optional[str] = Field(
         None,
         description="Optional closing remark or follow-up question"

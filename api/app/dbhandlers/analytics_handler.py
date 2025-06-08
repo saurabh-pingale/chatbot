@@ -83,6 +83,7 @@ class AnalyticsHandler:
 
                     if user:
                         logger.info(f"DB: Existing user {email}, shop_pk {shop_id_pk}")
+                        #TODO: deprecated utcnow() please replace it, or else will face prod issues 
                         user.updated_at = datetime.utcnow()
                         user_id_to_return = user.id
                     else:
@@ -90,6 +91,7 @@ class AnalyticsHandler:
                         new_user = UserModel(
                             email=email,
                             shop_id=shop_id_pk,
+                             #TODO: deprecated utcnow() please replace it, or else will face prod issues 
                             created_at=datetime.utcnow(),
                             updated_at=datetime.utcnow()
                         )
@@ -146,6 +148,7 @@ class AnalyticsHandler:
                     if user.shop_id != shop_id:
                         logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
                     else:
+                        #TODO: Move this location to seperate function
                         updated_location = False
                         if country and not user.country:
                             user.country = country

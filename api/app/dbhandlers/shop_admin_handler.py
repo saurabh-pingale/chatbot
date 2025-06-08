@@ -88,6 +88,7 @@ class ShopAdminHandler:
                 
                 stmt = insert(ProductModel).values(insert_data)
                 
+                #TODO - what is this on_conflict_do_update ? what does it do ?
                 stmt = stmt.on_conflict_do_update(
                     index_elements=['id'], 
                     set_={

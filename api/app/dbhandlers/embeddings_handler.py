@@ -45,6 +45,7 @@ class EmbeddingsHandler:
                 payload=payload
             ))
 
+        #TODO: Please reverify are we creating any duplicates in embedding vector db?
         self.client.upsert(
             collection_name=QDRANT_COLLECTION_NAME,
             points=points
@@ -63,6 +64,7 @@ class EmbeddingsHandler:
 
         query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
 
+        #TODO: Are we caching every query key ?,
         cached_result = self.get_cache_results(query_key)
         if cached_result:
             return cached_result

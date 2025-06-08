@@ -35,6 +35,7 @@ async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
     """Generates embeddings for a list of products"""
     embeddings = []
     for product in products:
+        #TODO: Are we embedding tags field ? and check are we embedding all product fields ?
         embedding_text = f"Product: {product.title}. Description: {product.description}. Category: {product.category}. Price: {product.price}"
         embedding_values = EmbeddingService.create_embeddings(embedding_text)
         

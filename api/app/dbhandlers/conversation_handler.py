@@ -14,6 +14,7 @@ class ConversationHandler:
             async with session.begin():
                 try:
                     shop_pk = conversation_data["shop_id"]
+                    #TODO: If shop_pk is not there in shopModel table because of db down etc, how are we handling it?
                     shop_stmt = select(ShopModel).where(ShopModel.id == shop_pk)
                     shop_result = await session.execute(shop_stmt)
                     shop_record = shop_result.scalars().first()
@@ -41,11 +42,11 @@ class ConversationHandler:
                     )
                     session.add(conversation)
                     await session.flush()
-                    
                     logger.info(f"Successfully stored conversation with id {conversation.id} for user_pk {user_pk}, shop_pk {shop_pk}")
                     await session.commit()
                     return conversation.id
                 except SQLAlchemyError as error:
+                    #TODO: Are we rollback if any error cause ?
                     logger.error(f"Database error in store_conversation: {str(error)}", exc_info=True)
                     raise 
                 except ValueError as ve:

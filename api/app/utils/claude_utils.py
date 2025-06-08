@@ -171,6 +171,7 @@ def filter_products_from_tool_output(llm_response_text: str, all_tool_products: 
                 f"LLM response sample: '{llm_response_text_lower[:200]}...'")
     return filtered_list
 
+#TODO: Didn't understand this function
 def get_llm_text_from_product_response(product_response_data: ProductResponse) -> str:
     """Extracts and concatenates textual fields from ProductResponse for filtering purposes."""
     text_parts = []

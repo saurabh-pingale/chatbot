@@ -27,6 +27,7 @@ async def agent_conversation(request: Request, payload: AgentConversationPayload
             logger.error("shopId query parameter is missing or empty.")
             raise HTTPException(status_code=400, detail="shopId query parameter is required.")
 
+        #TODO: Move these decode_access_token to middleware, if you are not sure, please read or check blogs etc
         decoded_token = decode_access_token(payload.token)
         if not decoded_token:
             logger.warning("Invalid or expired JWT token received.")
@@ -66,8 +67,9 @@ async def agent_conversation(request: Request, payload: AgentConversationPayload
         if not analytics_success:
             logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {jwt_shop_id_pk}")
         
-        agent_response = await app.llm_service.handle_user_message(query_param_shop_id_str, user_message, contents)
+        agent_response = await app.llm_service.handle_user_message(user_message, contents)
 
+        #TODO - This "store" is confusing with shopify store, please rename it as record_conversation_into_db
         await app.conversation_service.store_conversation({
             "user_query": user_message,
             "agent_response": agent_response.get('answer'),
