@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { hexToRgbArray } from '../../utils/utils';
-import { CartIconSVG } from '../../assets/cart_icon';
-import { RingBellIconSVG } from '../../assets/RingBellIcon';
-import type { ChatHeaderProps, StyleWithCustomProps } from '../../types';
+import { hexToRgbArray } from '../../../utils/utils';
+import { CartIconSVG } from '../../../assets/cart_icon';
+import { RingBellIconSVG } from '../../../assets/RingBellIcon';
+import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
 
 export const ChatHeader = memo<ChatHeaderProps>(({ 
@@ -16,6 +16,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   showOffersIcon
 }) => {
 
+  //TODO: Why to convert hex to rgb?, if use primaryColor directly as rgb?
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const headerStyles: StyleWithCustomProps = {
     '--theme-primary-color': primaryColor,

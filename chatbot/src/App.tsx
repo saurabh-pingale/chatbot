@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Chatbot } from './components/Chatbot/Chatbot';
-import { getStoreColor, getStoreImage, getEmailGatePreference, getShopStatus } from './services/chat';
-import { getShopId } from './utils/utils';
+import { Chatbot } from './pages/Chatbot/Chatbot';
+import { getShopConfig } from './utils/utils';
 import type { ChatbotAppConfig } from './types';
 
 function App() {
@@ -10,22 +9,8 @@ function App() {
 
   const fetchConfig = async () => {
     try {
-      const shopId = getShopId();
-
-      const [status, color, image, showEmailGate] = await Promise.all([
-        getShopStatus(),
-        getStoreColor(), 
-        getStoreImage(), 
-        getEmailGatePreference(),
-      ]);
-      
-      setConfig({
-        setupCompleted: status.setupCompleted,
-        primaryColor: color,
-        storeImage: image,
-        shopId: shopId || 'demo-shop',
-        showEmailGate: showEmailGate,
-      });
+      const config = await getShopConfig();
+      setConfig(config);
     } catch (error) {
       console.error("Failed to fetch configuration:", error);
     } finally {
@@ -41,6 +26,7 @@ function App() {
     return null;
   }
 
+  //TODO: move below 3 elements to a css file
   const popupStyles: React.CSSProperties = {
     position: 'fixed',
     bottom: '20px',

@@ -222,3 +222,45 @@ export interface OffersPopupProps {
   onOfferClick: (tag: string) => void;
   shopDomain: string; 
 }
+
+export interface ChatBodyProps {
+  messages: Message[];
+  isTyping: boolean;
+  config: ChatbotConfig;
+  handleSendMessage: (message: string) => Promise<void>;
+  isCartOpen: boolean;
+  cartItems: CartItem[];
+  toggleCart: () => void;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  isOffersPopupOpen: boolean;
+  offerTagsList: string[];
+  handleCloseOffers: () => void;
+  handleOfferClick: (tag: string) => void;
+  jwtToken: string | null;
+  isEmailGateVisible: boolean;
+  handleError: (error: string) => void;
+}
+
+export interface CartBodyProps {
+  id: string;
+  name: string;
+  image_url: string;
+  price: number;
+  quantity: number;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  dynamicStyles: StyleWithCustomProps;
+}
+
+export interface MinusIconProps {
+  dynamicStyles: StyleWithCustomProps;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  id: string;
+  quantity: number;
+}
+
+export interface PlusIconProps {
+  dynamicStyles: StyleWithCustomProps;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  id: string;
+  quantity: number;
+} 

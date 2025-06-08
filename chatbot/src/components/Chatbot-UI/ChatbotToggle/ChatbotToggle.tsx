@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { IMAGE } from '../../constants/image';
-import type { ChatbotToggleProps, StyleWithCustomProps } from '../../types';
-import { iconAnimation, toggleAnimation } from '../../styles/animations';
+import { IMAGE } from '../../../constants/image';
+import type { ChatbotToggleProps, StyleWithCustomProps } from '../../../types';
+import { iconAnimation, toggleAnimation } from '../../../styles/animations';
 import './ChatbotToggle.scss';
 
 export const ChatbotToggle = memo<ChatbotToggleProps>(({ 

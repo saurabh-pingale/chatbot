@@ -121,6 +121,7 @@ export const EmailGate = memo<EmailGateProps>(({
         >
           {isLoading ? 'Loading...' : 'Continue to Chat'}
         </button>
+        {/* TODO: We won't be having guest so you can remove this button  and other functions of guest  */}
             <button
                 className="email-gate-skip-button"
                 onClick={handleSkip}

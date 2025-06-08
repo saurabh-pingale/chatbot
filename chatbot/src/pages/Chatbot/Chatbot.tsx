@@ -1,20 +1,15 @@
 import { memo, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChatbotToggle } from '../ChatbotToggle/ChatbotToggle';
-import { ChatHeader } from '../ChatHeader/ChatHeader';
-import { MessageList } from '../MessageList/MessageList';
-import { ChatInput } from '../ChatInput/ChatInput';
+import ChatBody from '../../components/Chatbot-UI/ChatBody/ChatBody';
+import { ChatHeader } from '../../components/Chatbot-UI/ChatHeader/ChatHeader';
+import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/ChatbotToggle';
 import { EmailGate } from '../EmailGate/EmailGate';
-import { ErrorPopup } from '../ErrorPopup/ErrorPopup';
-import { OffersPopup } from '../OffersPopup/OffersPopup';
-import { DEFAULT_QUICK_REPLIES } from '../../constants/default_quick_replies';
-import { Cart } from '../Cart/Cart';
+import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { useChat } from '../../hooks/useChat';
 import { useCart } from '../../hooks/useCart';
 import { trackEvent, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags } from '../../services/chat';
-import { syncCartWithShopify } from '../../services/shopify';
 import { hexToRgbArray } from '../../utils/utils';
-import type { ChatbotProps, StyleWithCustomProps, ProductType, LocationInfo, Message } from '../../types';
+import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
@@ -25,28 +20,24 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const [capturedLocationInfo, setCapturedLocationInfo] = useState<LocationInfo | null>(null);  
   const [isOffersPopupOpen, setIsOffersPopupOpen] = useState(false);
   const [offerTagsList, setOfferTagsList] = useState<string[]>([]); 
-  const [isEmailGateVisible, setIsEmailGateVisible] = useState(() => {
-    if (!config.showEmailGate) {
-      return false;
-    }
-    return !localStorage.getItem('user_jwt_token');
-  });
+  const [isEmailGateVisible, setIsEmailGateVisible] = useState(false);
+
+  const { cartItems, isCartOpen, updateQuantity, toggleCart } = useCart();
+  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const { messages, isTyping, addMessage, handleBotResponse } = useChat();
-  const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart } = useCart();
-
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
     const tokenFromStorage = localStorage.getItem('user_jwt_token');
     setJwtToken(tokenFromStorage);
 
-    if (config.showEmailGate) {
+    if (config?.showEmailGate) {
       setIsEmailGateVisible(!tokenFromStorage);
     } else {
       setIsEmailGateVisible(false);
     }
-  }, [config.showEmailGate]);
+  }, [config?.showEmailGate]);
 
   const captureLocation = async () => {
     try {
@@ -55,9 +46,9 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
       const location: LocationInfo = {
         ip: ip,
-        country: ipLocation.country || null,
-        city: ipLocation.city || null,
-        region: ipLocation.region || null,
+        country: ipLocation?.country || null,
+        city: ipLocation?.city || null,
+        region: ipLocation?.region || null,
       };
 
       setCapturedLocationInfo(location);
@@ -145,30 +136,9 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     }
   };
 
-  const handleProductAddToCart = async (product: ProductType) => {
-    try {
-      await addToCart(product);
-      trackEvent('product_added_to_cart_via_slider', { productId: product.id, productName: product.name });
-    } catch (err) {
-      console.error("Error adding product to cart from Chatbot component:", err);
-      setError('Failed to add product to cart. Please try again.');
-    }
-  };
-
-  const handleCheckout = async () => {
-    try {
-      const success = await syncCartWithShopify(cartItems);
-      if (success) {
-        window.location.href = '/cart';
-      } else {
-        throw new Error('Failed to sync cart');
-      }
-    } catch (err) {
-      setError('An error occurred during checkout. Please try again.');
-    }
-  };
-
-  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const handleError = (error: string) => {
+    setError(error);
+  }
 
   const primaryColorRgb = hexToRgbArray(config.primaryColor);
   const chatbotContainerStyles: StyleWithCustomProps = {
@@ -179,9 +149,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     chatbotContainerStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
   }
 
-  const showChatInterface = !isEmailGateVisible;
-
-   const handleOpenOffers = useCallback(async () => {
+  const handleOpenOffers = useCallback(async () => {
     setIsOffersPopupOpen(true);
 
     try {
@@ -200,8 +168,8 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
   const handleOfferClick = useCallback((tag: string) => {
     const offerUrl = `https://${config.shopId}/collections/all?constraint=${encodeURIComponent(tag)}`;
-    console.log(`Redirecting to offer: ${offerUrl}`)
     window.open(offerUrl, '_blank');
+    //TODO: Why do we need setIsOffersPopupOpen(false) here? anyway its redirecting to next screen right?
     setIsOffersPopupOpen(false);
   }, [config.shopId]);
 
@@ -225,58 +193,35 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               onToggleCart={toggleCart}
               cartItemCount={totalCartItems}
               primaryColor={config.primaryColor}
-              showCartIcon={showChatInterface}
+              showCartIcon={!isEmailGateVisible}
               onToggleOffers={handleOpenOffers}
-              showOffersIcon={showChatInterface}
+              showOffersIcon={!isEmailGateVisible}
             />
             <div className="chatbot-content">
-              {!showChatInterface ? (
+              {isEmailGateVisible ? (
                 <EmailGate
                   config={config}
                   onSubmit={handleEmailGateSubmit}
                   onSkip={handleEmailGateSkip}
                 />
               ) : (
-                <>
-                  <MessageList
-                    messages={messages}
-                    isTyping={isTyping}
-                    primaryColor={config.primaryColor}
-                    onProductAddToCart={handleProductAddToCart}
-                  />
-                  <div className="chatbot-quick-replies" style={chatbotContainerStyles}>
-                    {DEFAULT_QUICK_REPLIES.map((reply) => (
-                      <button
-                        key={reply}
-                        className="chatbot-quick-reply-button"
-                        onClick={() => handleSendMessage(reply)}
-                      >
-                        {reply}
-                      </button>
-                    ))}
-                  </div>
-                  <ChatInput
-                    onSendMessage={handleSendMessage}
-                    disabled={isTyping || (!jwtToken && !config.allowGuestMode && !config.showEmailGate ) || (isEmailGateVisible && config.showEmailGate) }
-                    primaryColor={config.primaryColor}
-                  />
-                  <Cart
-                    isOpen={isCartOpen}
-                    items={cartItems}
-                    onClose={toggleCart}
-                    onUpdateQuantity={updateQuantity}
-                    onCheckout={handleCheckout}
-                    primaryColor={config.primaryColor}
-                  />
-                  <OffersPopup 
-                    isOpen={isOffersPopupOpen}
-                    onClose={handleCloseOffers} 
-                    offerTags={offerTagsList}
-                    primaryColor={config.primaryColor}
-                    onOfferClick={handleOfferClick}
-                    shopDomain={config.shopId} 
-                  />
-                </>
+                <ChatBody
+                  messages={messages}
+                  isTyping={isTyping}
+                  config={config}
+                  handleSendMessage={handleSendMessage}
+                  isCartOpen={isCartOpen}
+                  cartItems={cartItems}
+                  toggleCart={toggleCart}
+                  updateQuantity={updateQuantity}
+                  isOffersPopupOpen={isOffersPopupOpen}
+                  offerTagsList={offerTagsList}
+                  handleCloseOffers={handleCloseOffers}
+                  handleOfferClick={handleOfferClick}
+                  jwtToken={jwtToken}
+                  isEmailGateVisible={isEmailGateVisible}
+                  handleError={handleError}
+                />
               )}
               {error && (
                 <ErrorPopup
@@ -288,7 +233,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
           </motion.div>
         )}
       </AnimatePresence>
-      
     </>
   );
 }); 
