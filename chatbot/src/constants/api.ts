@@ -7,6 +7,8 @@ export const API_ENDPOINTS = {
   INITIATE_SESSION: '/apps/chatbot-api/initiate_session',
   EMAIL_PAGE_PREFERENCE: '/apps/chatbot-api/email-gate-preference',
   SHOP_STATUS: '/apps/chatbot-api/shop-status',
+  SEND_OTP: '/apps/chatbot-api/send-otp',
+  VERIFY_OTP: '/apps/chatbot-api/verify-otp',
   IP_INFO: 'https://api.ipify.org?format=json',
   LOCATION_INFO: 'https://ipapi.co'
 };

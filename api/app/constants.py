@@ -8,3 +8,6 @@ CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 CLAUDE_MODEL_NAME = "claude-3-haiku-20240307"
 
 SHOPIFY_GRAPHQL_URL = "https://{shop}/admin/api/2023-10/graphql.json"
+
+MESSAGE_LIMIT = 30
+SESSION_TIMEOUT_HOURS = 1

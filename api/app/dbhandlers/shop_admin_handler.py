@@ -13,6 +13,18 @@ class ShopAdminHandler:
     def __init__(self):
         pass
 
+    async def get_shop_by_domain(self, shop_domain: str) -> Optional[ShopModel]:
+        """Fetches a shop by its domain."""
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await session.execute(
+                    select(ShopModel).filter(ShopModel.shop_id == shop_domain)
+                )
+                return result.scalars().first()
+            except SQLAlchemyError as error:
+                logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
+                raise error
+
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetches color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:

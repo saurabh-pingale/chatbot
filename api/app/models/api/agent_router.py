@@ -18,5 +18,5 @@ class LocationInfo(BaseModel):
 
 class AgentConversationPayload(BaseModel):
     messages: List[Dict[str, Any]]
-    token: str
+    token: Optional[str] = None
     location_info: Optional[LocationInfo] = None

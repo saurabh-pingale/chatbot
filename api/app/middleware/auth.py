@@ -1,4 +1,3 @@
-# app/dependencies/auth.py
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, Any

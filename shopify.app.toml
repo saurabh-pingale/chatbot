@@ -1,25 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "cf18231712db608526c917dad536a85a"
+client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://postage-rica-hopefully-pre.trycloudflare.com"
+application_url = "https://plaintiff-wichita-vacation-rewards.trycloudflare.com"
 embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -27,15 +15,18 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://postage-rica-hopefully-pre.trycloudflare.com/auth/callback",
-  "https://postage-rica-hopefully-pre.trycloudflare.com/auth/shopify/callback",
-  "https://postage-rica-hopefully-pre.trycloudflare.com/api/auth/callback"
+  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/auth/callback",
+  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/auth/shopify/callback",
+  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://postage-rica-hopefully-pre.trycloudflare.com"
+url = "https://plaintiff-wichita-vacation-rewards.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
 embedded = false
+
+[build]
+automatically_update_urls_on_dev = true

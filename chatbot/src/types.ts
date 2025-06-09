@@ -65,6 +65,7 @@ export interface ChatResponse {
   categories?: string[];
   success?: boolean;
   error?: string | null;
+  limit_reached?: boolean;
 }
 
 export interface LocationInfo {
@@ -210,7 +211,7 @@ export interface InitiateSessionResponse {
 
 export interface AgentConversationRequestPayload {
   messages: Message[];
-  token: string;
+  token?: string;
   location_info?: LocationInfo; 
 }
 
@@ -239,6 +240,7 @@ export interface ChatBodyProps {
   jwtToken: string | null;
   isEmailGateVisible: boolean;
   handleError: (error: string) => void;
+  isChatLimitReached?: boolean;
 }
 
 export interface CartBodyProps {

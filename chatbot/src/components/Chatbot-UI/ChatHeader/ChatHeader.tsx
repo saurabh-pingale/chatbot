@@ -16,13 +16,12 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   showOffersIcon
 }) => {
 
-  //TODO: Why to convert hex to rgb?, if use primaryColor directly as rgb?
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const headerStyles: StyleWithCustomProps = {
     '--theme-primary-color': primaryColor,
   };
   if (primaryColorRgb) {
-    headerStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
+    headerStyles['--theme-primary-color-values'] = primaryColorRgb.join(' ');
   }
 
   return (

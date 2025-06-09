@@ -19,7 +19,8 @@ const ChatBody = ({
     handleOfferClick,
     jwtToken,
     isEmailGateVisible = false,
-    handleError
+    handleError,
+    isChatLimitReached
 }: ChatBodyProps) => {
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart} = useCart();
 
@@ -71,7 +72,7 @@ const ChatBody = ({
             </div>
             <ChatInput
                 onSendMessage={handleSendMessage}
-                disabled={isTyping || (!jwtToken && !config.allowGuestMode && !config.showEmailGate) || (isEmailGateVisible && config.showEmailGate)}
+                disabled={isTyping || (!jwtToken && !config.allowGuestMode && !config.showEmailGate) || (isEmailGateVisible && config.showEmailGate) || isChatLimitReached}
                 primaryColor={config.primaryColor}
             />
             <Cart

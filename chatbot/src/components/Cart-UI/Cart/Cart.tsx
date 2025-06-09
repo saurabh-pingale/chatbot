@@ -20,14 +20,13 @@ export const Cart = memo<CartProps>(({
     return sum + price * item.quantity;
   }, 0);
 
-  //TODO: whole rgb to hex its getting mess, please remove this and use primaryColor directly as rgb
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const dynamicStyles: StyleWithCustomProps = {
     '--theme-primary-color': primaryColor,
   };
 
   if (primaryColorRgb) {
-    dynamicStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
+    dynamicStyles['--theme-primary-color-values'] = primaryColorRgb.join(' ');
   }
 
   return (

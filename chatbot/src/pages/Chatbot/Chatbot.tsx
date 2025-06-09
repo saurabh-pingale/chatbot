@@ -21,6 +21,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const [isOffersPopupOpen, setIsOffersPopupOpen] = useState(false);
   const [offerTagsList, setOfferTagsList] = useState<string[]>([]); 
   const [isEmailGateVisible, setIsEmailGateVisible] = useState(false);
+  const [chatLimitReached, setChatLimitReached] = useState(false);
 
   const { cartItems, isCartOpen, updateQuantity, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -118,6 +119,11 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       }
       
       const response = await sendAgentMessage(config.shopId, payloadBase as import('../../types').AgentConversationRequestPayload);
+      
+      if (response.limit_reached) {
+        setChatLimitReached(true);
+      }
+      
       await handleBotResponse(response);
       
       if (response.products?.length) {
@@ -169,8 +175,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const handleOfferClick = useCallback((tag: string) => {
     const offerUrl = `https://${config.shopId}/collections/all?constraint=${encodeURIComponent(tag)}`;
     window.open(offerUrl, '_blank');
-    //TODO: Why do we need setIsOffersPopupOpen(false) here? anyway its redirecting to next screen right?
-    setIsOffersPopupOpen(false);
   }, [config.shopId]);
 
   return (
@@ -221,6 +225,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
                   jwtToken={jwtToken}
                   isEmailGateVisible={isEmailGateVisible}
                   handleError={handleError}
+                  isChatLimitReached={chatLimitReached}
                 />
               )}
               {error && (

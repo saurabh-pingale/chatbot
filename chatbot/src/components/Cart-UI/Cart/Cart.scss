@@ -1,4 +1,4 @@
-@use '../../styles/colors.scss' as *;
+@use '../../../styles/colors.scss' as *;
 
 .cart-container {
   position: absolute;
@@ -22,7 +22,7 @@
     background: linear-gradient(
       to bottom,
       transparent,
-      rgba(var(--theme-primary-color-rgb), 0.15),
+      rgb(var(--theme-primary-color-values) / 0.15),
       transparent
     );
     opacity: 0.8;
@@ -211,7 +211,7 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--theme-primary-color-rgb), 0.4);
+    box-shadow: 0 4px 12px rgb(var(--theme-primary-color-values) / 0.4);
   }
 
   &:active:not(:disabled) {

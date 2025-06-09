@@ -148,7 +148,7 @@ class AnalyticsHandler:
                     if user.shop_id != shop_id:
                         logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
                     else:
-                        updated_location = update_user_location_if_missing(user, country, region, city. ip_address)
+                        updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
                         if updated_location:
                             logger.info(f"Updating location on UserModel for user_id: {user_id}")
 

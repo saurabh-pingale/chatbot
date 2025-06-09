@@ -1,18 +1,19 @@
 import { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { validateEmail, getShopId } from '../../utils/utils';
-import { initiateUserSession } from '../../services/chat';
+import { sendOTP, verifyOTP } from '../../services/auth';
 import type { EmailGateProps, StyleWithCustomProps } from '../../types';
 import './EmailGate.scss';
 
 export const EmailGate = memo<EmailGateProps>(({ 
   config,
-  onSubmit,
-  onSkip 
+  onSubmit
 }) => {
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [currentShopId, setCurrentShopId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export const EmailGate = memo<EmailGateProps>(({
     '--theme-primary-color': primaryColorFromConfig,
   };
 
-  const handleSubmit = async () => {
+  const handleEmailSubmit = async () => {
     if (!validateEmail(email)) {
       setError('Please enter a valid email address');
       return;
@@ -43,38 +44,40 @@ export const EmailGate = memo<EmailGateProps>(({
     setIsLoading(true);
     setError('');
     try {
-      const response = await initiateUserSession({
-        email: email,
-        shopId: currentShopId,
-      });
-
-      if (response.token) {
-        localStorage.setItem('user_jwt_token', response.token);
-        if (onSubmit) {
-            await onSubmit(email);
-        }       
-      } else {
-        setError('Failed to authenticate. Please try again.');
-      }
+      await sendOTP(email, currentShopId);
+      setOtpSent(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(`Failed to start chat: ${errorMessage}. Please try again.`);
-      console.error("Error during handleSubmit in EmailGate:", err);
+      setError(`Failed to send OTP: ${errorMessage}. Please try again.`);
+      console.error("Error during handleEmailSubmit in EmailGate:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSkip = async () => {
+  const handleOtpSubmit = async () => {
+    if (otp.length !== 6) {
+        setError('Please enter a valid 6-digit OTP');
+        return;
+    }
+    if (!currentShopId) {
+        setError('Cannot proceed: Shop ID is not configured.');
+        return;
+    }
+
     setIsLoading(true);
     setError('');
     try {
-      await onSkip(); 
+        await verifyOTP(email, otp, currentShopId);
+        if (onSubmit) {
+            await onSubmit(email);
+        }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(`Failed to continue as guest: ${errorMessage}. Please try again.`);
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(`Failed to verify OTP: ${errorMessage}. Please try again.`);
+        console.error("Error during handleOtpSubmit in EmailGate:", err);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 
@@ -91,22 +94,41 @@ export const EmailGate = memo<EmailGateProps>(({
           <img src={config.shopLogoUrl} alt="Shop Logo" className="shop-logo-email-gate" />
         )}
         <p className="email-gate-description">
-          To get started with our chat assistant, please enter your email address. This helps us personalize your experience.
+          {otpSent 
+            ? `We've sent an OTP to ${email}. Please enter it below.`
+            : "To get started with our chat assistant, please enter your email address. This helps us personalize your experience."}
         </p>
-        <input
-          type="email"
-          className={`email-gate-input ${error ? 'has-error' : ''}`}
-          placeholder='Your email address'
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (error) setError('');
-          }}
-          disabled={isLoading || !currentShopId}
-          aria-label="Email address"
-          aria-describedby="email-error"
-          style={dynamicStyles}
-        />
+        {!otpSent ? (
+            <input
+              type="email"
+              className={`email-gate-input ${error ? 'has-error' : ''}`}
+              placeholder='Your email address'
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError('');
+              }}
+              disabled={isLoading || !currentShopId}
+              aria-label="Email address"
+              aria-describedby="email-error"
+              style={dynamicStyles}
+            />
+        ) : (
+            <input
+                type="text"
+                className={`email-gate-input ${error ? 'has-error' : ''}`}
+                placeholder='Enter your 6-digit OTP'
+                value={otp}
+                onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (error) setError('');
+                }}
+                disabled={isLoading}
+                aria-label="OTP"
+                aria-describedby="otp-error"
+                style={dynamicStyles}
+            />
+        )}
         <div
           id="email-error"
           className={`email-gate-error-message ${error ? 'visible' : ''}`}
@@ -115,21 +137,13 @@ export const EmailGate = memo<EmailGateProps>(({
         </div>
         <button
           className="email-gate-continue-button"
-          onClick={handleSubmit}
+          onClick={otpSent ? handleOtpSubmit : handleEmailSubmit}
           disabled={isLoading || !currentShopId}
           style={dynamicStyles}
         >
-          {isLoading ? 'Loading...' : 'Continue to Chat'}
+          {isLoading ? 'Loading...' : (otpSent ? 'Verify OTP' : 'Continue')}
         </button>
-        {/* TODO: We won't be having guest so you can remove this button  and other functions of guest  */}
-            <button
-                className="email-gate-skip-button"
-                onClick={handleSkip}
-                disabled={isLoading}
-            >
-              Continue as Guest
-            </button>
       </div>
     </motion.div>
   );
-}); 
+});
