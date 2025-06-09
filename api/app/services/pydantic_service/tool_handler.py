@@ -19,7 +19,6 @@ class ToolHandler:
 
     def get_response_model(self, tool_name: str) -> Type[BaseModel]:
         """Get the response model for a tool"""
-        #TODO: Why are we hard coding this GreetingResponse in resuable one?
         return self._response_models.get(tool_name, GreetingResponse)
 
     def tool_config(self, response_model: Type[BaseModel], processor: Callable[[Any, dict], None] = None):

@@ -24,7 +24,6 @@ class OrderTool(BaseTool):
             if not support_info or not isinstance(support_info, dict):
                 raise ModelRetry("Invalid support info, retrying...")
             
-            #TODO: Are we asking store owner in admin to get the support customer details?
             return {
                 "email": support_info.get("support_email"),
                 "phone": support_info.get("support_phone")

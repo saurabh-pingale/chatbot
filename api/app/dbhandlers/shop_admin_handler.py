@@ -68,7 +68,7 @@ class ShopAdminHandler:
                 logger.error("Database error in store_collections: %s", str(error), exc_info=True)
                 raise error
 
-    async def store_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
+    async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
         """Stores products in the database and links them to collections using bulk insert."""
         async with AsyncSessionLocal() as session:
             try:
@@ -88,7 +88,6 @@ class ShopAdminHandler:
                 
                 stmt = insert(ProductModel).values(insert_data)
                 
-                #TODO - what is this on_conflict_do_update ? what does it do ?
                 stmt = stmt.on_conflict_do_update(
                     index_elements=['id'], 
                     set_={
@@ -106,7 +105,7 @@ class ShopAdminHandler:
                 await session.commit()
 
             except Exception as error:
-                logger.error("Error in store_products: %s", str(error), exc_info=True)
+                logger.error("Error in record_products_handler: %s", str(error), exc_info=True)
                 raise error
 
     async def get_support_contact(self, shop_id: str) -> Optional[dict]:

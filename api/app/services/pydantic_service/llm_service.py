@@ -1,35 +1,22 @@
-"""
-TODO: 
-Move all register to register class
-Move all processing to processing class
-
-"""
-from typing import Optional, Any, Type, Callable
-from pydantic import BaseModel
-from pydantic_ai import Agent, RunContext
+from typing import Optional, Any
+from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 
 from app.services.pydantic_service.tool_handler import ToolHandler
-from app.services.pydantic_service.tools.base_tool import BaseTool
-from app.services.pydantic_service.tools.greeting_tool import GreetingTool
-from app.services.pydantic_service.tools.product_tool import ProductTool 
-from app.services.pydantic_service.tools.order_tool import OrderTool
-from app.services.pydantic_service.tools.terms_tool import TermsTool
+from app.services.pydantic_service.register import Register
+from app.services.pydantic_service.processing import Processing
 from app.constants import CLAUDE_MODEL_NAME
 from app.utils.rag_pipeline_utils import extract_categories
 from app.models.api.response import (
     Product,
-    GreetingResponse,
     ProductResponse,
-    OrderResponse,
-    TermsResponse,
     BaseResponse
 )
 from app.utils.claude_utils import (
     extract_tool_data_from_agent_messages,
     create_enhanced_message_for_llm,
-    get_llm_text_from_product_response,
+    extract_normalized_response_text,
     create_error_greeting_response,
     format_agent_response_to_dict,
     format_error_dict_for_client
@@ -99,143 +86,13 @@ class LLMService:
         )
         
         self.tool_handler = ToolHandler()
-        self._register_tools()
+        self.register = Register(self.tool_handler)
+        self.processing = Processing()
 
-    def _register_tools(self):
-        """Register all available tools"""
-        self._register_greeting_tool()
-        self._register_product_tool()
-        self._register_order_tool()
-        self._register_terms_tool()
-
-    def _register_greeting_tool(self):
-        """Register greeting tool"""
-        greeting_tool = GreetingTool()
-        self._register_tool_instance(
-            greeting_tool,
-            response_model=GreetingResponse,
-            #TODO: Didn't understand this category mention, please explain it
-            processor=lambda response, output: setattr(
-                response, 
-                'category_mention', 
-                f"Some popular categories: {', '.join(output['categories'])}"
-            ) if output.get("categories") else None
-        )
-
-    def _register_product_tool(self):
-        """Register product tool"""
-        product_tool = ProductTool()
-        self._register_tool_instance(
-            product_tool,
-            response_model=ProductResponse,
-            processor=self._process_product_output
-        )
-
-    def _register_order_tool(self):
-        """Register order tool"""
-        order_tool = OrderTool()
-        self._register_tool_instance(
-            order_tool,
-            response_model=OrderResponse,
-            processor=self._process_order_output
-        )
-
-    def _register_terms_tool(self):
-        """Register terms tool"""
-        terms_tool = TermsTool()
-        self._register_tool_instance(
-            terms_tool,
-            response_model=TermsResponse,
-            processor=lambda response, output: setattr(response, 'sources', output['terms'])
-            if output.get('terms') else None
-        )
-
-    #TODO: Did you understand below code, if not please understand it most of the bugs might come here
-    def _register_tool_instance(self, tool_instance: BaseTool, response_model: Type[BaseModel], processor: Optional[Callable[[Any, dict], None]] = None):
-        """Helper method to register a tool instance with the agent and configure it with ToolHandler using a decorator."""
-        async def tool_wrapper(ctx: RunContext[None], **kwargs):
-            shop_id_from_context = ""
-            if hasattr(ctx, 'data') and isinstance(ctx.data, dict):
-                shop_id_from_context = ctx.data.get("shopId", "")
-                
-            user_message_for_tool = kwargs.get("query") or \
-                                  kwargs.get("input") or \
-                                  kwargs.get("user_message") or \
-                                  kwargs.get("text")
-            if user_message_for_tool is None:
-                 user_message_for_tool = ""
-
-            actual_result = await tool_instance.run(ctx, shopId=shop_id_from_context, user_message=user_message_for_tool)
-            return actual_result
-    
-        tool_wrapper.__name__ = tool_instance.tool_name
-
-        configured_tool_wrapper = self.tool_handler.tool_config(
-            response_model=response_model,
-            processor=processor
-        )(tool_wrapper)
-        
-        self.agent.tool(configured_tool_wrapper)
-
-    def _process_product_output(self, response: ProductResponse, output: dict):
-        """Special processing for product tool output"""
-        processed_products = []
-        if output.get("products") and isinstance(output["products"], list):
-            for product_item in output["products"]:
-                if not isinstance(product_item, dict):
-                    logger.warning(f"Skipping non-dict product data: {product_item}")
-                    continue
-                try:
-                    product_id = str(product_item.get("id"))
-                    product_name = product_item.get("name") or product_item.get("title")
-                    product_price_str = product_item.get("price")
-                    product_price = float(product_price_str) if product_price_str is not None else 0.0
-                    product_category = product_item.get("category")
-                    product_description = product_item.get("description")
-                    product_image_url = product_item.get("image_url") or product_item.get("image")
-                    product_variant_id = product_item.get("variant_id")
-
-                    if not all([product_id, product_name, product_category]):
-                        logger.warning(f"Skipping product with missing essential fields (id, name/title, category): {product_item}")
-                        continue
-
-                    processed_products.append(Product(
-                        id=product_id,
-                        name=product_name,
-                        price=product_price,
-                        category=product_category,
-                        description=product_description,
-                        image_url=product_image_url,
-                        variant_id=product_variant_id 
-                    ))
-                except Exception as e:
-                    logger.error(f"Error processing individual product data: {product_item}. Error: {e}")
-
-        if processed_products:
-            response.products = processed_products
-            response.id = [p.id for p in processed_products]
-        else:
-            response.products = []
-            response.id = []
-            
-        if output.get("categories"):
-            response.categories = output["categories"]
-        elif processed_products:
-            response.categories = extract_categories([p.model_dump() for p in processed_products])
-        else:
-            response.categories = []
-
-    def _process_order_output(self, response: OrderResponse, output: dict):
-        """Special processing for order tool output"""
-        if output.get("email"):
-            response.email = output["email"]
-        if output.get("phone"):
-            response.phone = output["phone"]
+        self.register.register_all_tools()
 
     async def _execute_primary_agent_call(self, user_message: str) -> Any:
-        """Execute the initial agent call with tools. Returns AgentRunResult.
-           pydantic-ai handles RunContext creation for tools internally.
-        """
+        """Execute the initial agent call with tools."""
         tool_result = await self.agent.run(user_message, temperature=0.7)
         return tool_result
 
@@ -266,7 +123,7 @@ class LLMService:
             agent_pydantic_response = agent_run_result.data
 
             if tool_name == self.PRODUCT_TOOL_NAME and isinstance(agent_pydantic_response, ProductResponse):
-                llm_textual_content = get_llm_text_from_product_response(agent_pydantic_response)
+                llm_textual_content = extract_normalized_response_text(agent_pydantic_response)
                 logger.info(f"LLM textual product response: '{llm_textual_content[:300]}...'")
                 logger.info(f"Product tool: LLM directly selected {len(agent_pydantic_response.products if agent_pydantic_response.products else [])} products in the structured response.")
 

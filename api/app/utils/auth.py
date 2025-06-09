@@ -48,7 +48,6 @@ def validate_token(token: str, shop_domain: str):
 async def get_shopify_auth(request: Request):
     """Extract and validate Shopify authentication details."""
     signature = request.query_params.get("signature")
-    #TODO - Check below modified condition : if not signature or not verify_app_proxy_signature(request.query_params, api_secret=SHOPIFY_API_SECRET):
     if not signature:
         raise HTTPException(status_code=401, detail="Unauthorized access")
 

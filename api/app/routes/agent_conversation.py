@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Request, HTTPException
-from typing import Optional
+from fastapi import APIRouter, Request, HTTPException, Depends
+from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
 from app.utils.message_utils import get_last_user_message_content
-from app.utils.jwt_utils import decode_access_token
+from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
 from app.utils.logger import logger
 
@@ -19,19 +19,16 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def agent_conversation(request: Request, payload: AgentConversationPayload):
+async def agent_conversation(
+    request: Request, 
+    payload: AgentConversationPayload,
+    decoded_token: Dict[str, Any] = Depends(get_current_user_payload)):
     try:
         query_param_shop_id_str = request.query_params.get("shopId")
 
         if not query_param_shop_id_str:
             logger.error("shopId query parameter is missing or empty.")
             raise HTTPException(status_code=400, detail="shopId query parameter is required.")
-
-        #TODO: Move these decode_access_token to middleware, if you are not sure, please read or check blogs etc
-        decoded_token = decode_access_token(payload.token)
-        if not decoded_token:
-            logger.warning("Invalid or expired JWT token received.")
-            raise HTTPException(status_code=401, detail="Invalid or expired authentication token.")
 
         jwt_user_id_pk: Optional[int] = decoded_token.get("user_id")
         jwt_shop_id_pk: Optional[int] = decoded_token.get("shop_id")
@@ -69,8 +66,7 @@ async def agent_conversation(request: Request, payload: AgentConversationPayload
         
         agent_response = await app.llm_service.handle_user_message(user_message, contents)
 
-        #TODO - This "store" is confusing with shopify store, please rename it as record_conversation_into_db
-        await app.conversation_service.store_conversation({
+        await app.conversation_service.record_conversation_into_db({
             "user_query": user_message,
             "agent_response": agent_response.get('answer'),
             "user_id": jwt_user_id_pk,

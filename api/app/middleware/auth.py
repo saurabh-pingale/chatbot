@@ -1,16 +1,18 @@
-from functools import wraps
-from fastapi import Request
-from app.utils.auth import get_shopify_auth
+# app/dependencies/auth.py
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Dict, Any
+from app.utils.jwt_utils import decode_access_token
 
-def require_auth(func):
-    """Decorator to enforce Shopify authentication."""
-    @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs):
-        shop_auth = await get_shopify_auth(request)
-        
-        # Attach auth details to the request
-        request.shop = shop_auth  
+bearer_scheme = HTTPBearer()
 
-        return await func(request, *args, **kwargs)
-
-    return wrapper
+async def get_current_user_payload(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+) -> Dict[str, Any]:
+    token = credentials.credentials
+    decoded_token = decode_access_token(token)
+    if not decoded_token:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    if "user_id" not in decoded_token or "shop_id" not in decoded_token:
+        raise HTTPException(status_code=401, detail="Malformed token.")
+    return decoded_token
