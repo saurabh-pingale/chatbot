@@ -12,6 +12,7 @@ class GreetingTool(BaseTool):
     def tool_name(self) -> str:
         return "greeting"
     
+    #TODO: Why categories comes under greeting tool ?
     async def run(self, ctx: RunContext[None], **kwargs) -> Dict[str, Any]:
         try:
             return {"categories": []}
