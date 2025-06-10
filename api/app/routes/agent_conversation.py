@@ -38,6 +38,7 @@ async def agent_conversation(
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
+        #TODO: can you keep this in middleware decoded token and get it from request ?
         jwt_user_id_pk: Optional[int] = decoded_token.get("user_id")
         jwt_shop_id_pk: Optional[int] = decoded_token.get("shop_id")
         is_guest = decoded_token.get("is_guest", False)
@@ -49,9 +50,16 @@ async def agent_conversation(
             raise HTTPException(status_code=403, detail="User not authorized for this shop.")
 
         if not is_guest:
+            #TODO: Are you checking and quering this table for every conversation ?, i don't think so, is it necessary ? correct ?
             chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
             
             if chat_limit:
+                #TODO: Please don't use utcnow, its deprecated
+                #TODO: Please add brackets correctly -> if (datetime.utcnow() - (chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS))):
+                #TODO: Also can you specify something like isTimeLeft = datetime.utcnow() - (chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)) to make it more readable
+                #TODO: Don't blindly use isTimeLeft, use some appropriate readable variable name
+
+                #TODO: If this condition fails what will happen ?
                 if (datetime.utcnow() - chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)):
                     await chat_limit_handler.reset_chat_limit(jwt_user_id_pk)
                     chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
@@ -83,6 +91,8 @@ async def agent_conversation(
         if payload.location_info:
             country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
 
+        #TODO: Don't try to update chat interactions for every request, rather once session is completed then you can update the final count
+        #TODO: db calls are cost intensive, if there is always efficient way, is there then please choose efficient way
         analytics_success = await app.analytics_service.record_chat_interaction(user_id=jwt_user_id_pk, shop_id=shop.id, country=country, region=region, city=city, ip_address=ip)
         if not analytics_success:
             logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")

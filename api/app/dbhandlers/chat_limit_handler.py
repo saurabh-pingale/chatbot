@@ -1,4 +1,5 @@
 from sqlalchemy import select, update, func
+#TODO: Please remove imports if you are not using them
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 
@@ -24,7 +25,7 @@ class ChatLimitHandler:
                 new_limit = ChatLimitModel(user_id=user_id, message_count=1)
                 session.add(new_limit)
                 await session.commit()
-                await session.refresh(new_limit)
+                await session.refresh(new_limit) #TODO: Do we need this refresh ?, if not please remove it
                 return new_limit
             except Exception as e:
                 logger.error(f"Error creating chat limit for user {user_id}: {e}", exc_info=True)

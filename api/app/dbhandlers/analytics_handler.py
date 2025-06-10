@@ -174,9 +174,11 @@ class AnalyticsHandler:
                     return True
 
                 except SQLAlchemyError as error:
+                     #TODO: Please add rollback here
                     logger.error(f"DB error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {error}", exc_info=True)
                     return False
                 except Exception as e:
+                     #TODO: Please add rollback here
                     logger.error(f"General error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {e}", exc_info=True)
                     return False
 
@@ -200,6 +202,7 @@ class AnalyticsHandler:
                     "total_chat_interactions": total_chat_interactions
                 }
             except SQLAlchemyError as e:
+                #TODO: Please add rollback here
                 logger.error(f"Database error in get_shop_analytics_summary_db for shop_id_pk {shop_id_pk}: {e}", exc_info=True)
                 return {
                     "total_users": 0,
@@ -207,6 +210,7 @@ class AnalyticsHandler:
                     "error": f"Database error: {str(e)}"
                 }
             except Exception as e:
+                 #TODO: Please add rollback here
                 logger.error(f"General error in get_shop_analytics_summary_db for shop_id_pk {shop_id_pk}: {e}", exc_info=True)
                 return {
                     "total_users": 0,
