@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException
 from typing import Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import random
 
 from app.dbhandlers.otp_handler import OTPHandler
@@ -25,7 +25,7 @@ async def send_otp(payload: SendOTPRequest):
             raise HTTPException(status_code=404, detail="Shop not found")
 
         otp = str(random.randint(100000, 999999))
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        expires_at = datetime.now(UTC) + timedelta(minutes=10)
 
         await otp_handler.store_otp(email=payload.email, otp=otp, expires_at=expires_at)
         await send_otp_email(to_email=payload.email, otp=otp)
@@ -47,7 +47,7 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
         if not stored_otp or stored_otp.otp != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
 
-        if datetime.utcnow() > stored_otp.expires_at:
+        if datetime.now(UTC) > stored_otp.expires_at:
             await otp_handler.delete_otp(email=payload.email)
             raise HTTPException(status_code=400, detail="OTP has expired")
         

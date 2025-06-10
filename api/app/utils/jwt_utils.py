@@ -1,5 +1,5 @@
 import jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Optional, Dict, Any
 
 from app.config import JWT_SECRET_KEY
@@ -26,9 +26,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     
     to_encode.update({"exp": expire})
     

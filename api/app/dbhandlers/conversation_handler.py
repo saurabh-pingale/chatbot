@@ -8,7 +8,7 @@ from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class ConversationHandler:
-    async def record_conversation_into_db(self, conversation_data: Dict[str, Any]) -> int:
+    async def record_conversation_handler(self, conversation_data: Dict[str, Any]) -> int:
         """Stores a conversation entry in the database."""
         async with AsyncSessionLocal() as session:
             async with session.begin():

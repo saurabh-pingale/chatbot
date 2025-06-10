@@ -10,7 +10,7 @@ class ConversationService:
     async def record_conversation_into_db(self, conversation_data: Dict[str, Any]) -> int:
         """Store conversation in the database."""
         try:
-            return await self.db_handler.record_conversation_into_db(conversation_data)
+            return await self.db_handler.record_conversation_handler(conversation_data)
         except Exception as error:
             logger.error(f"Error in record_conversation_into_db service: {str(error)}", exc_info=True)
             raise

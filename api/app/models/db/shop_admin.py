@@ -8,11 +8,11 @@ class ShopModel(Base):
     __tablename__ = 'shops'
     
     id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
     shop_id = Column(String)
     shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
-    updated_at = Column(DateTime)
+    updated_at = Column(DateTime, nullable=False, onupdate=func.now())
     region = Column(String, nullable=True)
     country = Column(String, nullable=True)
     support_email = Column(Text, nullable=True)

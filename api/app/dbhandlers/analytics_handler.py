@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Optional, Tuple, Dict, Any
 
 from app.dbhandlers.db import AsyncSessionLocal
@@ -85,15 +85,15 @@ class AnalyticsHandler:
 
                     if user:
                         logger.info(f"DB: Existing user {email}, shop_pk {shop_id_pk}")
-                        user.updated_at = datetime.now(timezone.utc)
+                        user.updated_at = datetime.now(UTC)
                         user_id_to_return = user.id
                     else:
                         logger.info(f"DB: New user {email}, shop_pk {shop_id_pk}. Creating.")
                         new_user = UserModel(
                             email=email,
                             shop_id=shop_id_pk, 
-                            created_at=datetime.now(timezone.utc),
-                            updated_at=datetime.now(timezone.utc)
+                            created_at=datetime.now(UTC),
+                            updated_at=datetime.now(UTC)
                         )
                         session.add(new_user)
                         await session.flush() 
@@ -174,11 +174,11 @@ class AnalyticsHandler:
                     return True
 
                 except SQLAlchemyError as error:
-                     #TODO: Please add rollback here
+                    await session.rollback()
                     logger.error(f"DB error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {error}", exc_info=True)
                     return False
                 except Exception as e:
-                     #TODO: Please add rollback here
+                    await session.rollback()
                     logger.error(f"General error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {e}", exc_info=True)
                     return False
 
@@ -202,7 +202,7 @@ class AnalyticsHandler:
                     "total_chat_interactions": total_chat_interactions
                 }
             except SQLAlchemyError as e:
-                #TODO: Please add rollback here
+                await session.rollback()
                 logger.error(f"Database error in get_shop_analytics_summary_db for shop_id_pk {shop_id_pk}: {e}", exc_info=True)
                 return {
                     "total_users": 0,
@@ -210,7 +210,7 @@ class AnalyticsHandler:
                     "error": f"Database error: {str(e)}"
                 }
             except Exception as e:
-                 #TODO: Please add rollback here
+                await session.rollback()
                 logger.error(f"General error in get_shop_analytics_summary_db for shop_id_pk {shop_id_pk}: {e}", exc_info=True)
                 return {
                     "total_users": 0,

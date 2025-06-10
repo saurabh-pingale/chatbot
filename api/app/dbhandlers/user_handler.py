@@ -1,6 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.models.db.shop_admin import UserModel

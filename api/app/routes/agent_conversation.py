@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.utils.app_utils import get_app
 from app.utils.message_utils import get_last_user_message_content
@@ -28,7 +28,7 @@ shop_admin_handler = ShopAdminHandler()
 async def agent_conversation(
     request: Request, 
     payload: AgentConversationPayload,
-    decoded_token: Dict[str, Any] = Depends(get_current_user_payload)):
+    _: Dict[str, Any] = Depends(get_current_user_payload)):
     try:
         query_param_shop_id_str = request.query_params.get("shopId")
         if not query_param_shop_id_str:
@@ -38,31 +38,26 @@ async def agent_conversation(
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
-        #TODO: can you keep this in middleware decoded token and get it from request ?
-        jwt_user_id_pk: Optional[int] = decoded_token.get("user_id")
-        jwt_shop_id_pk: Optional[int] = decoded_token.get("shop_id")
-        is_guest = decoded_token.get("is_guest", False)
+        jwt_user_id_pk: Optional[int] = request.state.jwt_user_id
+        jwt_shop_id_pk: Optional[int] = request.state.jwt_shop_id
+        is_guest: bool = request.state.is_guest
 
         if not jwt_user_id_pk or not jwt_shop_id_pk:
             raise HTTPException(status_code=401, detail="Token is malformed.")
-
         if jwt_shop_id_pk != shop.id:
             raise HTTPException(status_code=403, detail="User not authorized for this shop.")
 
+        chat_limit = None
         if not is_guest:
-            #TODO: Are you checking and quering this table for every conversation ?, i don't think so, is it necessary ? correct ?
             chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
             
             if chat_limit:
-                #TODO: Please don't use utcnow, its deprecated
-                #TODO: Please add brackets correctly -> if (datetime.utcnow() - (chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS))):
-                #TODO: Also can you specify something like isTimeLeft = datetime.utcnow() - (chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)) to make it more readable
-                #TODO: Don't blindly use isTimeLeft, use some appropriate readable variable name
+                session_expired = datetime.now(UTC) - chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)
 
-                #TODO: If this condition fails what will happen ?
-                if (datetime.utcnow() - chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)):
+                if session_expired:
                     await chat_limit_handler.reset_chat_limit(jwt_user_id_pk)
                     chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
+                # else: session still active; use existing chat_limit 
 
                 if chat_limit and chat_limit.message_count >= MESSAGE_LIMIT:
                     static_response_content = "You have reached the message limit. Please try again after some time."
@@ -91,11 +86,17 @@ async def agent_conversation(
         if payload.location_info:
             country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
 
-        #TODO: Don't try to update chat interactions for every request, rather once session is completed then you can update the final count
-        #TODO: db calls are cost intensive, if there is always efficient way, is there then please choose efficient way
-        analytics_success = await app.analytics_service.record_chat_interaction(user_id=jwt_user_id_pk, shop_id=shop.id, country=country, region=region, city=city, ip_address=ip)
-        if not analytics_success:
-            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
+        if not is_guest and session_expired:
+            analytics_success = await app.analytics_service.record_chat_interaction(
+                user_id=jwt_user_id_pk, 
+                shop_id=shop.id, 
+                country=country, 
+                region=region, 
+                city=city, 
+                ip_address=ip
+            )
+            if not analytics_success:
+                logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
         
         agent_response = await app.llm_service.handle_user_message(user_message, contents)
         

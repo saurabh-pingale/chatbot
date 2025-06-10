@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, func
 from app.models.db.base import Base
-from datetime import datetime
 
 class ChatLimitModel(Base):
     __tablename__ = 'chat_limits'

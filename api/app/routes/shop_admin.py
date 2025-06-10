@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.utils.app_utils import get_app
 from app.models.api.shop_admin import (
@@ -150,7 +150,7 @@ async def save_plan_details(request: Request, body: PlanDetailsRequest):
     try:
         app = get_app()
         
-        plan_start_date = datetime.utcnow()
+        plan_start_date = datetime.now(UTC)
         plan_end_date = plan_start_date + timedelta(days=30) if body.plan == "free" else None
 
         await app.shop_admin_service.save_plan_details(

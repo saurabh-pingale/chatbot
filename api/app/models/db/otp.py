@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Integer, DateTime, func
 from app.models.db.base import Base
-from datetime import datetime, timezone
 
 class OTPModel(Base):
     __tablename__ = 'otps'
