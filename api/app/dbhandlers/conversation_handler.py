@@ -8,6 +8,7 @@ from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class ConversationHandler:
+    #TODO: Are you storing conversation once session got timeout ?
     async def record_conversation_into_db(self, conversation_data: Dict[str, Any]) -> int:
         """Stores a conversation entry in the database."""
         async with AsyncSessionLocal() as session:
@@ -19,7 +20,7 @@ class ConversationHandler:
                     shop_record = shop_result.scalars().first()
 
                     if not shop_record:
-                        logger.error(f"Shop with PK {shop_pk} not found (DB issue or record missing). Skipping conversation storage.")
+                        logger.error(f"Shop with PK {shop_pk} not found (DB issue or record missing). Skipping conversation storage.") #TODO: What is conversation storage ? 
                         return None
 
                     user_pk = conversation_data["user_id"]
