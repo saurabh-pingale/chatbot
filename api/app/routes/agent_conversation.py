@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta, UTC
 
 from app.utils.app_utils import get_app
 from app.utils.message_utils import get_last_user_message_content
@@ -9,7 +8,6 @@ from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
 from app.dbhandlers.chat_limit_handler import ChatLimitHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.logger import logger
-from app.constants import MESSAGE_LIMIT, SESSION_TIMEOUT_HOURS
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
 chat_limit_handler = ChatLimitHandler()
@@ -47,33 +45,21 @@ async def agent_conversation(
         if jwt_shop_id_pk != shop.id:
             raise HTTPException(status_code=403, detail="User not authorized for this shop.")
 
-        chat_limit = None
         if not is_guest:
-            chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
-            
-            if chat_limit:
-                session_expired = datetime.now(UTC) - chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)
-
-                if session_expired:
-                    await chat_limit_handler.reset_chat_limit(jwt_user_id_pk)
-                    chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
-                # else: session still active; use existing chat_limit 
-
-                if chat_limit and chat_limit.message_count >= MESSAGE_LIMIT:
-                    static_response_content = "You have reached the message limit. Please try again after some time."
-                    
-                    if chat_limit.message_count == MESSAGE_LIMIT:
-                        user_message = get_last_user_message_content(payload.messages)
-                        app = get_app()
-                        await app.conversation_service.record_conversation_into_db({
-                            "user_query": user_message,
-                            "agent_response": static_response_content,
-                            "user_id": jwt_user_id_pk,
-                            "shop_id": shop.id,
-                        })
-                        await chat_limit_handler.increment_message_count(jwt_user_id_pk)
-
-                    return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
+            limit_exceeded = await chat_limit_handler.check_and_update_limit(jwt_user_id_pk)
+            if limit_exceeded:
+                static_response_content = "You have reached the message limit. Please try again after some time."
+                
+                user_message = get_last_user_message_content(payload.messages)
+                app = get_app()
+                await app.conversation_service.record_conversation_into_db({
+                    "user_query": user_message,
+                    "agent_response": static_response_content,
+                    "user_id": jwt_user_id_pk,
+                    "shop_id": shop.id,
+                })
+                
+                return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
 
         contents = payload.messages
         if not isinstance(contents, list):
@@ -86,7 +72,7 @@ async def agent_conversation(
         if payload.location_info:
             country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
 
-        if not is_guest and session_expired:
+        if not is_guest:
             analytics_success = await app.analytics_service.record_chat_interaction(
                 user_id=jwt_user_id_pk, 
                 shop_id=shop.id, 
@@ -107,13 +93,6 @@ async def agent_conversation(
             "shop_id": shop.id,
         })
         
-        if not is_guest:
-            current_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
-            if not current_limit:
-                await chat_limit_handler.create_chat_limit(jwt_user_id_pk)
-            else:
-                await chat_limit_handler.increment_message_count(jwt_user_id_pk)
-
         return agent_response
 
     except HTTPException as http_exc:

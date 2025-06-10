@@ -10,6 +10,9 @@ export const API = {
     GET_ANALYTICS: `${BACKEND_URL}/analytics_router/analytics`,
     SAVE_EMAIL_PAGE_PREFERENCE:`${BACKEND_URL}/shop-admin/save-email-gate-preference`,
     SAVE_PLAN_DETAILS: `${BACKEND_URL}/shop-admin/save-plan-details`,
+    TRACK_OPENED_CHATBOT: `${BACKEND_URL}/analytics_router/track_opened_chatbot`,
+    TRACK_ADDED_TO_CART: `${BACKEND_URL}/analytics_router/track_added_to_cart`,
+    TRACK_PURCHASE: `${BACKEND_URL}/analytics_router/track_purchase`,
 } 
 
 export const CLOUDINARY = {

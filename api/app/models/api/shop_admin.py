@@ -74,7 +74,14 @@ class UserInitiateResponse(BaseModel):
 class ShopAnalyticsSummaryResponse(BaseModel):
     total_users: int
     total_chat_interactions: int
+    total_opened_chatbot: int
+    total_added_to_cart: int
+    total_purchased: int
+    total_purchase_amount: float
     error: Optional[str] = None
+
+class TrackPurchaseRequest(BaseModel):
+    amount: float
 
 class PlanDetailsRequest(BaseModel):
     owner_name: str

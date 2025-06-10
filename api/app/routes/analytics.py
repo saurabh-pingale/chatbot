@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from datetime import datetime
+from typing import Optional
 
 from app.utils.app_utils import get_app
-from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse
+from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse, TrackPurchaseRequest
 from app.utils.logger import logger
+from app.utils.jwt_utils import get_current_user_payload
 
 analytics_router = APIRouter(prefix="/analytics_router", tags=["analytics_router"])
 
@@ -47,16 +50,20 @@ async def initiate_user_session(payload: UserInitiateRequest):
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def get_shop_analytics_summary_route(shopId: str = Query(..., description="The string identifier of the shop")):
+async def get_shop_analytics_summary_route(
+    shopId: str = Query(..., description="The string identifier of the shop"),
+    startDate: Optional[datetime] = Query(None, description="Start date for filtering analytics"),
+    endDate: Optional[datetime] = Query(None, description="End date for filtering analytics")
+):
     """
-    Endpoint to retrieve aggregated analytics (total users, total chat interactions) for a shop.
+    Endpoint to retrieve aggregated analytics for a shop, with optional date filtering.
     """
     if not shopId:
         raise HTTPException(status_code=400, detail="shopId query parameter is required.")
     
     try:
         app = get_app()
-        summary_data = await app.analytics_service.fetch_shop_analytics_summary(shopId)
+        summary_data = await app.analytics_service.fetch_shop_analytics_summary(shopId, startDate, endDate)
 
         if summary_data is None:
             logger.warning(f"No analytics summary returned for shopId {shopId}, likely shop not found.")
@@ -68,7 +75,11 @@ async def get_shop_analytics_summary_route(shopId: str = Query(..., description=
 
         return ShopAnalyticsSummaryResponse(
             total_users=summary_data.get("total_users", 0),
-            total_chat_interactions=summary_data.get("total_chat_interactions", 0)
+            total_chat_interactions=summary_data.get("total_chat_interactions", 0),
+            total_opened_chatbot=summary_data.get("total_opened_chatbot", 0),
+            total_added_to_cart=summary_data.get("total_added_to_cart", 0),
+            total_purchased=summary_data.get("total_purchased", 0),
+            total_purchase_amount=summary_data.get("total_purchase_amount", 0.0)
         )
 
     except HTTPException as http_exc:
@@ -76,3 +87,51 @@ async def get_shop_analytics_summary_route(shopId: str = Query(..., description=
     except Exception as e:
         logger.error(f"Unexpected error in get_shop_analytics_summary_route for shopId {shopId}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred while fetching analytics summary.")
+
+@analytics_router.post(
+    "/track_opened_chatbot",
+    summary="Track when a user opens the chatbot",
+    status_code=204,
+)
+async def track_opened_chatbot(payload: dict = Depends(get_current_user_payload)):
+    """Endpoint to track when a user opens the chatbot."""
+    try:
+        app = get_app()
+        user_id = payload.get("user_id")
+        shop_id = payload.get("shop_id")
+        await app.analytics_service.track_opened_chatbot(user_id, shop_id)
+    except Exception as e:
+        logger.error(f"Error tracking opened chatbot: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to track event.")
+
+@analytics_router.post(
+    "/track_added_to_cart",
+    summary="Track when a user adds a product to the cart",
+    status_code=204,
+)
+async def track_added_to_cart(payload: dict = Depends(get_current_user_payload)):
+    """Endpoint to track when a user adds a product to the cart."""
+    try:
+        app = get_app()
+        user_id = payload.get("user_id")
+        shop_id = payload.get("shop_id")
+        await app.analytics_service.track_added_to_cart(user_id, shop_id)
+    except Exception as e:
+        logger.error(f"Error tracking added to cart: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to track event.")
+
+@analytics_router.post(
+    "/track_purchase",
+    summary="Track a purchase event",
+    status_code=204,
+)
+async def track_purchase(request: TrackPurchaseRequest, payload: dict = Depends(get_current_user_payload)):
+    """Endpoint to track a purchase event."""
+    try:
+        app = get_app()
+        user_id = payload.get("user_id")
+        shop_id = payload.get("shop_id")
+        await app.analytics_service.track_purchase(user_id, shop_id, request.amount)
+    except Exception as e:
+        logger.error(f"Error tracking purchase: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to track event.")

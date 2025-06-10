@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://plaintiff-wichita-vacation-rewards.trycloudflare.com"
+application_url = "https://fixes-accordance-remarkable-charging.trycloudflare.com"
 embedded = true
 
 [webhooks]
@@ -15,13 +15,13 @@ scopes = "read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/auth/callback",
-  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/auth/shopify/callback",
-  "https://plaintiff-wichita-vacation-rewards.trycloudflare.com/api/auth/callback"
+  "https://fixes-accordance-remarkable-charging.trycloudflare.com/auth/callback",
+  "https://fixes-accordance-remarkable-charging.trycloudflare.com/auth/shopify/callback",
+  "https://fixes-accordance-remarkable-charging.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://plaintiff-wichita-vacation-rewards.trycloudflare.com"
+url = "https://fixes-accordance-remarkable-charging.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

@@ -7,4 +7,5 @@ class ChatLimitModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, unique=True)
     message_count = Column(Integer, default=0)
-    session_start_time = Column(DateTime, default=func.now()) 
+    first_message_at = Column(DateTime, default=func.now())
+    limit_reached_at = Column(DateTime, nullable=True) 

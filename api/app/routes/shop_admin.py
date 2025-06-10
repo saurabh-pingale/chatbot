@@ -19,6 +19,13 @@ from app.utils.logger import logger
 
 shop_admin_router = APIRouter(prefix="/shop-admin", tags=["shop", "admin"])
 
+def _get_cleaned_shop_id(request: Request) -> str:
+    """Extracts and cleans the shopId from query parameters."""
+    shop_id = request.query_params.get("shopId")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+    return shop_id.split('?')[0]
+
 @shop_admin_router.get(
     "/color-preference",
     summary="Color preference for shopify shop admin",
@@ -30,7 +37,7 @@ shop_admin_router = APIRouter(prefix="/shop-admin", tags=["shop", "admin"])
     },
 )
 async def get_color_preference(request: Request):
-    shop_id = request.query_params.get("shopId")
+    shop_id = _get_cleaned_shop_id(request)
     try:
         app = get_app()
         color = await app.shop_admin_service.get_color_preference(shop_id)
@@ -50,10 +57,10 @@ async def get_color_preference(request: Request):
     },
 )
 async def save_color_preference(request: Request, body: ColorPreferenceRequest):
-    shop_id = request.query_params.get("shopId")
+    shop_id = _get_cleaned_shop_id(request)
     color = body.color
-    if not shop_id or not color:
-        raise HTTPException(status_code=400, detail="Missing shopId or color")
+    if not color:
+        raise HTTPException(status_code=400, detail="Missing color")
 
     try:
         app = get_app()
@@ -74,12 +81,12 @@ async def save_color_preference(request: Request, body: ColorPreferenceRequest):
     }
 )
 async def save_support_info(request: Request, body: SupportInfoRequest):
-    shop_id = request.query_params.get("shopId")
+    shop_id = _get_cleaned_shop_id(request)
     email = body.supportEmail
     phone = body.supportPhone
 
-    if not shop_id or not email or not phone:
-        raise HTTPException(status_code=400, detail="Missing shopId or email or phone")
+    if not email or not phone:
+        raise HTTPException(status_code=400, detail="Missing email or phone")
 
     try:
         app = get_app()
@@ -100,11 +107,11 @@ async def save_support_info(request: Request, body: SupportInfoRequest):
     },
 )
 async def save_shop_image(request: Request, body: ShopImageRequest):
-    shop_id = request.query_params.get("shopId")
+    shop_id = _get_cleaned_shop_id(request)
     image_url = body.imageUrl
 
-    if not shop_id or not image_url:    
-        raise HTTPException(status_code=400, detail="Missing shopId or image")
+    if not image_url:    
+        raise HTTPException(status_code=400, detail="Missing image")
     try:
         app = get_app()
         await app.shop_admin_service.save_shop_image(shop_id, image_url)
@@ -124,7 +131,7 @@ async def save_shop_image(request: Request, body: ShopImageRequest):
     },
 )
 async def get_image(request: Request):
-    shop_id = request.query_params.get("shopId")
+    shop_id = _get_cleaned_shop_id(request)
     try:
         app = get_app()
         image = await app.shop_admin_service.get_image(shop_id)
@@ -143,9 +150,7 @@ async def get_image(request: Request):
     },
 )
 async def save_plan_details(request: Request, body: PlanDetailsRequest):
-    shop_id = request.query_params.get("shopId")
-    if not shop_id:
-        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+    shop_id = _get_cleaned_shop_id(request)
 
     try:
         app = get_app()
@@ -179,21 +184,17 @@ async def save_plan_details(request: Request, body: PlanDetailsRequest):
     },
 )
 async def get_shop_status(request: Request):
-    shop_id = request.query_params.get("shopId")
-    if not shop_id:
-        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
-
-    extracted_shop_id = shop_id.split('?')[0]
+    shop_id = _get_cleaned_shop_id(request)
     
     try:
         app = get_app()
         
-        status = await app.shop_admin_service.get_shop_status(extracted_shop_id)
+        status = await app.shop_admin_service.get_shop_status(shop_id)
         return status
     except HTTPException as http_exc:
         raise http_exc
     except Exception as error:
-        logger.error(f"Error in get_shop_status for shop {extracted_shop_id}: {error}", exc_info=True)
+        logger.error(f"Error in get_shop_status for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch shop status.")
 
 @shop_admin_router.post(
@@ -206,9 +207,7 @@ async def get_shop_status(request: Request):
     },
 )
 async def save_email_gate_preference(request: Request, body: EmailGatePreferenceRequest):
-    shop_id = request.query_params.get("shopId")
-    if not shop_id:
-        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+    shop_id = _get_cleaned_shop_id(request)
 
     try:
         app = get_app()
@@ -229,9 +228,7 @@ async def save_email_gate_preference(request: Request, body: EmailGatePreference
     },
 )
 async def get_email_gate_preference(request: Request):
-    shop_id = request.query_params.get("shopId")
-    if not shop_id:
-        raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+    shop_id = _get_cleaned_shop_id(request)
 
     try:
         app = get_app()

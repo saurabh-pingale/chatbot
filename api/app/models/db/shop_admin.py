@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
@@ -79,12 +79,18 @@ class ProductModel(Base):
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'
-    __table_args__ = (UniqueConstraint('user_id', 'shop_id', name='uq_user_shop_analytics_user_shop'),)
+    __table_args__ = (UniqueConstraint('user_id', 'shop_id', 'date', name='uq_user_shop_analytics_user_shop_date'),)
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
+    date = Column(Date, default=func.current_date(), nullable=False, index=True)
     chat_interactions_count = Column(Integer, default=0, nullable=False)
+    opened_chatbot_count = Column(Integer, default=0, nullable=False)
+    added_to_cart_count = Column(Integer, default=0, nullable=False)
+    purchased_count = Column(Integer, default=0, nullable=False)
+    purchase_amount = Column(Float, default=0.0, nullable=False)
+    utm_source = Column(String, default='chatbot', nullable=False)
 
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")
