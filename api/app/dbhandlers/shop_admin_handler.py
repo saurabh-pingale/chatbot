@@ -13,6 +13,18 @@ class ShopAdminHandler:
     def __init__(self):
         pass
 
+    async def get_shop_by_domain(self, shop_domain: str) -> Optional[ShopModel]:
+        """Fetches a shop by its domain."""
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await session.execute(
+                    select(ShopModel).filter(ShopModel.shop_id == shop_domain)
+                )
+                return result.scalars().first()
+            except SQLAlchemyError as error:
+                logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
+                raise error
+
     async def get_color_preference(self, shop_id: str) -> Optional[str]:
         """Fetches color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
@@ -68,7 +80,7 @@ class ShopAdminHandler:
                 logger.error("Database error in store_collections: %s", str(error), exc_info=True)
                 raise error
 
-    async def store_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
+    async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
         """Stores products in the database and links them to collections using bulk insert."""
         async with AsyncSessionLocal() as session:
             try:
@@ -105,7 +117,7 @@ class ShopAdminHandler:
                 await session.commit()
 
             except Exception as error:
-                logger.error("Error in store_products: %s", str(error), exc_info=True)
+                logger.error("Error in record_products_handler: %s", str(error), exc_info=True)
                 raise error
 
     async def get_support_contact(self, shop_id: str) -> Optional[dict]:

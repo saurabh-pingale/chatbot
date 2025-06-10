@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
@@ -35,13 +35,13 @@ class UserModel(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
     email = Column(Text, nullable=False)
     city = Column(Text, nullable=True)
     region = Column(Text, nullable=True) 
     country = Column(Text, nullable=True) 
     ip_address = Column(Text, nullable=True)
-    updated_at = Column(DateTime)
+    updated_at = Column(DateTime, onupdate=func.now())
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
 
     conversations = relationship("ConversationModel", back_populates="user")

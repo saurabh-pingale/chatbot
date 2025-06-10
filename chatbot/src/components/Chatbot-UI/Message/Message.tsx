@@ -1,9 +1,9 @@
 import { memo, forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { formatMessage } from '../../utils/utils';
-import type { MessageProps, ProductType } from '../../types';
-import { messageAnimation } from '../../styles/animations';
-import { ProductSlider } from '../ProductSlider/ProductSlider';
+import { formatMessage } from '../../../utils/utils';
+import type { MessageProps, ProductType } from '../../../types';
+import { messageAnimation } from '../../../styles/animations';
+import { ProductSlider } from '../../ProductSlider/ProductSlider';
 import './Message.scss';
 
 export interface ExtendedMessageProps extends MessageProps {

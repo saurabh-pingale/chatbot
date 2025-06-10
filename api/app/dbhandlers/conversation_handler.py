@@ -8,7 +8,7 @@ from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class ConversationHandler:
-    async def store_conversation(self, conversation_data: Dict[str, Any]) -> int:
+    async def record_conversation_into_db(self, conversation_data: Dict[str, Any]) -> int:
         """Stores a conversation entry in the database."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
@@ -19,8 +19,8 @@ class ConversationHandler:
                     shop_record = shop_result.scalars().first()
 
                     if not shop_record:
-                        logger.error(f"Shop with PK {shop_pk} not found while trying to store conversation.")
-                        raise ValueError(f"Shop with PK {shop_pk} not found.")
+                        logger.error(f"Shop with PK {shop_pk} not found (DB issue or record missing). Skipping conversation storage.")
+                        return None
 
                     user_pk = conversation_data["user_id"]
 
@@ -41,13 +41,12 @@ class ConversationHandler:
                     )
                     session.add(conversation)
                     await session.flush()
-                    
                     logger.info(f"Successfully stored conversation with id {conversation.id} for user_pk {user_pk}, shop_pk {shop_pk}")
                     await session.commit()
                     return conversation.id
                 except SQLAlchemyError as error:
-                    logger.error(f"Database error in store_conversation: {str(error)}", exc_info=True)
-                    raise 
-                except ValueError as ve:
-                    logger.error(f"ValueError in store_conversation: {str(ve)}")
-                    raise
+                    logger.error(f"Database error in record_conversation_into_db: {error}", exc_info=True)
+                    return None 
+                except Exception as e:
+                    logger.error(f"Unhandled error in record_conversation_into_db: {e}", exc_info=True)
+                    return None

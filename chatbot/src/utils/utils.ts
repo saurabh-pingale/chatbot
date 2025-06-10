@@ -1,4 +1,5 @@
 import { SHOPIFY_VARIANT_PREFIX } from "../constants/cart";
+import { getEmailGatePreference, getShopStatus, getStoreColor, getStoreImage } from "../services/chat";
 
 export const getShopId = (): string => {
   return window.Shopify?.shop || '';
@@ -82,3 +83,21 @@ export const formatMessage = (text: string): string => {
   }
   return formattedHtml;
 };
+
+export const getShopConfig = async () => {
+  const safe = (p: Promise<any>) => p.then(v => ({ status: 'fulfilled', value: v })).catch(e => ({ status: 'rejected', reason: e }));
+    const [status, color, image, showEmailGate] = await Promise.all([
+      safe(getShopStatus()),
+      safe(getStoreColor()),
+      safe(getStoreImage()),
+      safe(getEmailGatePreference())
+    ]).then(results => results.map((r:any) => r.status === 'fulfilled' ? r.value : null));
+
+    return {
+      setupCompleted: status.setupCompleted,
+      primaryColor: color,
+      storeImage: image,
+      shopId: getShopId() || 'demo-shop',
+      showEmailGate: showEmailGate,
+    }
+}

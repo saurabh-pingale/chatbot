@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useEffect } from 'react';
-import { hexToRgbArray } from '../../utils/utils';
-import type { ChatInputProps, StyleWithCustomProps } from '../../types';
+import { hexToRgbArray } from '../../../utils/utils';
+import type { ChatInputProps, StyleWithCustomProps } from '../../../types';
 import './ChatInput.scss';
 
 export const ChatInput = memo<ChatInputProps>(({ 

@@ -65,6 +65,7 @@ export interface ChatResponse {
   categories?: string[];
   success?: boolean;
   error?: string | null;
+  limit_reached?: boolean;
 }
 
 export interface LocationInfo {
@@ -210,7 +211,7 @@ export interface InitiateSessionResponse {
 
 export interface AgentConversationRequestPayload {
   messages: Message[];
-  token: string;
+  token?: string;
   location_info?: LocationInfo; 
 }
 
@@ -222,3 +223,46 @@ export interface OffersPopupProps {
   onOfferClick: (tag: string) => void;
   shopDomain: string; 
 }
+
+export interface ChatBodyProps {
+  messages: Message[];
+  isTyping: boolean;
+  config: ChatbotConfig;
+  handleSendMessage: (message: string) => Promise<void>;
+  isCartOpen: boolean;
+  cartItems: CartItem[];
+  toggleCart: () => void;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  isOffersPopupOpen: boolean;
+  offerTagsList: string[];
+  handleCloseOffers: () => void;
+  handleOfferClick: (tag: string) => void;
+  jwtToken: string | null;
+  isEmailGateVisible: boolean;
+  handleError: (error: string) => void;
+  isChatLimitReached?: boolean;
+}
+
+export interface CartBodyProps {
+  id: string;
+  name: string;
+  image_url: string;
+  price: number;
+  quantity: number;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  dynamicStyles: StyleWithCustomProps;
+}
+
+export interface MinusIconProps {
+  dynamicStyles: StyleWithCustomProps;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  id: string;
+  quantity: number;
+}
+
+export interface PlusIconProps {
+  dynamicStyles: StyleWithCustomProps;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  id: string;
+  quantity: number;
+} 

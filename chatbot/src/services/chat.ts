@@ -214,14 +214,22 @@ export const initiateUserSession = async (
 export const sendAgentMessage = async (
   shopId: string,
   payload: AgentConversationRequestPayload
-): Promise<ChatResponse> => { 
+): Promise<ChatResponse> => {
+  const { token, ...bodyPayload } = payload;
+  
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?shopId=${encodeURIComponent(shopId)}`,
   {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
+    headers: headers,
+    body: JSON.stringify(bodyPayload),
   });
 
   if (!response.ok) {

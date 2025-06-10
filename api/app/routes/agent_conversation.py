@@ -1,13 +1,19 @@
-from fastapi import APIRouter, Request, HTTPException
-from typing import Optional
+from fastapi import APIRouter, Request, HTTPException, Depends
+from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
 
 from app.utils.app_utils import get_app
 from app.utils.message_utils import get_last_user_message_content
-from app.utils.jwt_utils import decode_access_token
+from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
+from app.dbhandlers.chat_limit_handler import ChatLimitHandler
+from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.logger import logger
+from app.constants import MESSAGE_LIMIT, SESSION_TIMEOUT_HOURS
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
+chat_limit_handler = ChatLimitHandler()
+shop_admin_handler = ShopAdminHandler()
 
 @agent_conversation_router.post(
     "/agent_conversation",
@@ -19,61 +25,83 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def agent_conversation(request: Request, payload: AgentConversationPayload):
+async def agent_conversation(
+    request: Request, 
+    payload: AgentConversationPayload,
+    decoded_token: Dict[str, Any] = Depends(get_current_user_payload)):
     try:
         query_param_shop_id_str = request.query_params.get("shopId")
-
         if not query_param_shop_id_str:
-            logger.error("shopId query parameter is missing or empty.")
             raise HTTPException(status_code=400, detail="shopId query parameter is required.")
-
-        decoded_token = decode_access_token(payload.token)
-        if not decoded_token:
-            logger.warning("Invalid or expired JWT token received.")
-            raise HTTPException(status_code=401, detail="Invalid or expired authentication token.")
+            
+        shop = await shop_admin_handler.get_shop_by_domain(query_param_shop_id_str)
+        if not shop:
+            raise HTTPException(status_code=404, detail="Shop not found.")
 
         jwt_user_id_pk: Optional[int] = decoded_token.get("user_id")
         jwt_shop_id_pk: Optional[int] = decoded_token.get("shop_id")
+        is_guest = decoded_token.get("is_guest", False)
 
         if not jwt_user_id_pk or not jwt_shop_id_pk:
-            logger.error(f"Token is missing user_id or shop_id. Token payload: {decoded_token}")
             raise HTTPException(status_code=401, detail="Token is malformed.")
+
+        if jwt_shop_id_pk != shop.id:
+            raise HTTPException(status_code=403, detail="User not authorized for this shop.")
+
+        if not is_guest:
+            chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
+            
+            if chat_limit:
+                if (datetime.utcnow() - chat_limit.session_start_time > timedelta(hours=SESSION_TIMEOUT_HOURS)):
+                    await chat_limit_handler.reset_chat_limit(jwt_user_id_pk)
+                    chat_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
+
+                if chat_limit and chat_limit.message_count >= MESSAGE_LIMIT:
+                    static_response_content = "You have reached the message limit. Please try again after some time."
+                    
+                    if chat_limit.message_count == MESSAGE_LIMIT:
+                        user_message = get_last_user_message_content(payload.messages)
+                        app = get_app()
+                        await app.conversation_service.record_conversation_into_db({
+                            "user_query": user_message,
+                            "agent_response": static_response_content,
+                            "user_id": jwt_user_id_pk,
+                            "shop_id": shop.id,
+                        })
+                        await chat_limit_handler.increment_message_count(jwt_user_id_pk)
+
+                    return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
 
         contents = payload.messages
         if not isinstance(contents, list):
-            logger.error(f"Invalid messages format: {contents}")
             raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
 
         user_message = get_last_user_message_content(contents)
-  
         app = get_app()
         
         country, region, city, ip = (None, None, None, None)
         if payload.location_info:
-            country = payload.location_info.country
-            region = payload.location_info.region
-            city = payload.location_info.city
-            ip = payload.location_info.ip
+            country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
 
-        analytics_success = await app.analytics_service.record_chat_interaction(
-            user_id=jwt_user_id_pk,
-            shop_id=jwt_shop_id_pk,
-            country=country,
-            region=region,
-            city=city,
-            ip_address=ip
-        )
+        analytics_success = await app.analytics_service.record_chat_interaction(user_id=jwt_user_id_pk, shop_id=shop.id, country=country, region=region, city=city, ip_address=ip)
         if not analytics_success:
-            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {jwt_shop_id_pk}")
+            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
         
-        agent_response = await app.llm_service.handle_user_message(query_param_shop_id_str, user_message, contents)
-
-        await app.conversation_service.store_conversation({
+        agent_response = await app.llm_service.handle_user_message(user_message, contents)
+        
+        await app.conversation_service.record_conversation_into_db({
             "user_query": user_message,
             "agent_response": agent_response.get('answer'),
             "user_id": jwt_user_id_pk,
-            "shop_id": jwt_shop_id_pk,
+            "shop_id": shop.id,
         })
+        
+        if not is_guest:
+            current_limit = await chat_limit_handler.get_chat_limit(jwt_user_id_pk)
+            if not current_limit:
+                await chat_limit_handler.create_chat_limit(jwt_user_id_pk)
+            else:
+                await chat_limit_handler.increment_message_count(jwt_user_id_pk)
 
         return agent_response
 
@@ -82,10 +110,4 @@ async def agent_conversation(request: Request, payload: AgentConversationPayload
         raise http_exc
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
-        return {
-            "answer": "I'm having trouble processing your request. Please try again later.",
-            "products": [],
-            "categories": [],
-            "success": False,
-            "error": str(e)
-        }
+        return {"answer": "I'm having trouble processing your request. Please try again later.", "products": [], "categories": [], "success": False, "error": str(e)}

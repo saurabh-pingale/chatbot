@@ -24,7 +24,6 @@ def configure_logger(
 
     formatter = logging.Formatter(log_format, datefmt=date_format)
 
-    # Console handler
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)

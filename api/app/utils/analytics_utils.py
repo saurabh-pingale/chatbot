@@ -1,13 +1,30 @@
-import json
-from typing import Dict
-# Removed: from app.models.db.shop_admin import AnalyticsModel -> This model is replaced
-from app.utils.logger import logger
-from datetime import datetime
+from typing import Optional
+from app.models.db.shop_admin import UserModel
 
-# The function create_analytics_record was here and is now removed 
-# as it pertains to the old AnalyticsModel and data structure.
-# New analytics data handling will be done directly in the dbhandler or route logic
-# based on the new UserShopAnalyticsModel and UserModel.
+def update_user_location_if_missing(
+    user: UserModel,
+    country: Optional[str] = None,
+    region: Optional[str] = None,
+    city: Optional[str] = None,
+    ip_address: Optional[str] = None
+) -> bool:
+    """
+    Updates user location fields only if they are not already set.
+    Returns True if any field was updated, else False.
+    """
+    updated = False
 
-# If any other utility functions were in this file and are still needed, they would remain.
-# For now, this file will be mostly empty or could be removed if no other analytics utils are needed.
+    if country and not user.country:
+        user.country = country
+        updated = True
+    if region and not user.region:
+        user.region = region
+        updated = True
+    if city and not user.city:
+        user.city = city
+        updated = True
+    if ip_address and not user.ip_address:
+        user.ip_address = ip_address
+        updated = True
+
+    return updated

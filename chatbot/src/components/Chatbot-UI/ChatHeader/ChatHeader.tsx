@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { hexToRgbArray } from '../../utils/utils';
-import { CartIconSVG } from '../../assets/cart_icon';
-import { RingBellIconSVG } from '../../assets/RingBellIcon';
-import type { ChatHeaderProps, StyleWithCustomProps } from '../../types';
+import { hexToRgbArray } from '../../../utils/utils';
+import { CartIconSVG } from '../../../assets/cart_icon';
+import { RingBellIconSVG } from '../../../assets/RingBellIcon';
+import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
 
 export const ChatHeader = memo<ChatHeaderProps>(({ 
@@ -21,7 +21,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
     '--theme-primary-color': primaryColor,
   };
   if (primaryColorRgb) {
-    headerStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
+    headerStyles['--theme-primary-color-values'] = primaryColorRgb.join(' ');
   }
 
   return (

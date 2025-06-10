@@ -1,11 +1,13 @@
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
+from datetime import datetime, timezone
+from typing import Optional, Tuple, Dict, Any
+
 from app.dbhandlers.db import AsyncSessionLocal
 from app.models.db.shop_admin import UserModel, ShopModel, UserShopAnalyticsModel
+from app.utils.analytics_utils import update_user_location_if_missing
 from app.utils.logger import logger
-from typing import Optional, Tuple, Dict, Any
-from datetime import datetime, timezone
 
 class AnalyticsHandler:
     def __init__(self):
@@ -83,15 +85,15 @@ class AnalyticsHandler:
 
                     if user:
                         logger.info(f"DB: Existing user {email}, shop_pk {shop_id_pk}")
-                        user.updated_at = datetime.utcnow()
+                        user.updated_at = datetime.now(timezone.utc)
                         user_id_to_return = user.id
                     else:
                         logger.info(f"DB: New user {email}, shop_pk {shop_id_pk}. Creating.")
                         new_user = UserModel(
                             email=email,
-                            shop_id=shop_id_pk,
-                            created_at=datetime.utcnow(),
-                            updated_at=datetime.utcnow()
+                            shop_id=shop_id_pk, 
+                            created_at=datetime.now(timezone.utc),
+                            updated_at=datetime.now(timezone.utc)
                         )
                         session.add(new_user)
                         await session.flush() 
@@ -146,19 +148,7 @@ class AnalyticsHandler:
                     if user.shop_id != shop_id:
                         logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
                     else:
-                        updated_location = False
-                        if country and not user.country:
-                            user.country = country
-                            updated_location = True
-                        if region and not user.region:
-                            user.region = region
-                            updated_location = True
-                        if city and not user.city:
-                            user.city = city
-                            updated_location = True
-                        if ip_address and not user.ip_address:
-                            user.ip_address = ip_address
-                            updated_location = True
+                        updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
                         if updated_location:
                             logger.info(f"Updating location on UserModel for user_id: {user_id}")
 

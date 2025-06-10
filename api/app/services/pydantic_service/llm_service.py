@@ -1,29 +1,22 @@
-from typing import Optional, Any, Type, Callable
-from pydantic import BaseModel
-from pydantic_ai import Agent, RunContext
+from typing import Optional, Any
+from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 
 from app.services.pydantic_service.tool_handler import ToolHandler
-from app.services.pydantic_service.tools.base_tool import BaseTool
-from app.services.pydantic_service.tools.greeting_tool import GreetingTool
-from app.services.pydantic_service.tools.product_tool import ProductTool 
-from app.services.pydantic_service.tools.order_tool import OrderTool
-from app.services.pydantic_service.tools.terms_tool import TermsTool
+from app.services.pydantic_service.register import Register
+from app.services.pydantic_service.processing import Processing
 from app.constants import CLAUDE_MODEL_NAME
 from app.utils.rag_pipeline_utils import extract_categories
 from app.models.api.response import (
     Product,
-    GreetingResponse,
     ProductResponse,
-    OrderResponse,
-    TermsResponse,
     BaseResponse
 )
 from app.utils.claude_utils import (
     extract_tool_data_from_agent_messages,
     create_enhanced_message_for_llm,
-    get_llm_text_from_product_response,
+    extract_normalized_response_text,
     create_error_greeting_response,
     format_agent_response_to_dict,
     format_error_dict_for_client
@@ -43,10 +36,10 @@ class LLMService:
     You MUST use the appropriate tools for ALL user interactions. Never respond directly without using a tool.
 
     Available tools and when to use them:
-    - **greeting**: Use for greetings, welcome messages, general hellos, or when users ask how you are
-    - **product**: Use for product searches, product inquiries, browsing requests, or category questions
+    - **greeting**: Use for greetings, welcome messages, general hi, hellos, or when users ask how you are
+    - **product**: Use for product or product item searches, product inquiries, browsing requests, or category queries or questions
     - **order**: Use for order status, shipping questions, or customer support contact requests
-    - **terms**: Use for policy questions, return policies, shipping terms, or store regulations
+    - **terms**: Use for legal or policy questions, return policies, shipping terms, or store regulations or policies
 
     IMPORTANT: Always select and use the most appropriate tool. Do not provide direct responses.
     
@@ -57,7 +50,7 @@ class LLMService:
     """
     
     FINAL_SYSTEM_MESSAGE = """
-    You are a smart, friendly, and helpful AI assistant for a Shopify store. You are capable of handling various customer support and product-related tasks using a set of specialized tools.
+    You are a smart, friendly, and helpful AI assistant for a Shopify store. You are capable of handling various customer support and category or product-related tasks using a set of specialized tools.
     Your goal is to generate a response that will be parsed into a structured Pydantic model based *strictly* on the provided "Tool Output".
 
     When a user asks for products (e.g., "show me red shirts"), the prior "product" tool will provide you with a list of potentially relevant items in the "Tool Output" section of the prompt.
@@ -72,8 +65,8 @@ class LLMService:
     - For **product inquiries**:
         - Critically evaluate the "Tool Output". Do NOT assume it perfectly matches the user query.
         - Filter these products to *strictly* match the user's specific query (e.g., color, type, features mentioned by the user) based *only* on the information in the "Tool Output".
-        - If, after careful evaluation, products from the "Tool Output" meet the user's criteria: List their `name`, `price`, and `id` (e.g., "Product Name [id: 123]") in your textual response. Example: "Okay, I found some red shirts for you from the provided list! We have the 'Awesome Red Tee [id: 456]' for $25.00 and the 'Vibrant Red Polo [id: 789]' for $30.00."
-        - If *no products* in the "Tool Output" are a good match for the specific request: Politely state this. You can then ask if the user wants to see the available items from the tool output anyway, or if they want to try a different search. Example: "I looked through the available products from the tool, but I couldn't find any [specific user request, e.g., 'red shirts'] in that list. I did find [other types of items in Tool Output, e.g., 'blue shirts and red pants']. Would you like to hear about those, or should I search for something else?"
+        - If, after careful evaluation, products from the "Tool Output" meet the user's criteria to be shown to the user: List their `name`, `price`, and `id` (e.g., "Product Name [id: 123]") in your textual response. Example: "Okay, I found some red shirts for you from the provided list! We have the 'Awesome Red Tee [id: 456]' for $25.00 and the 'Vibrant Red Polo [id: 789]' for $30.00."
+        - If *no products* in the "Tool Output" are a good match for the specific request: Politely state this. You can then ask if the user wants to see the available items from the store anyway, or if they want to try a different search. Example: "I looked through the available products from the store, but I couldn't find any [specific user request, e.g., 'red shirts'] in that list. I did find [other types of items in store, e.g., 'blue shirts and red pants']. Would you like to hear about those, or should I search for something else?"
         - You MUST NOT invent products or categories. You MUST NOT describe a product from the "Tool Output" as matching the user's query if it clearly does not (e.g., do not offer a blue shirt if the user asked for a red one, unless you explicitly state it's not red but is an alternative).
     - For **order support**: Answer user questions about order status, how to contact support (email or phone), or related logistics, based on information from the relevant tool.
     - For **terms or policies**: Use the knowledge from the store's terms context (from the tool) to answer questions related to shipping, return policies, or store regulations.
@@ -93,141 +86,13 @@ class LLMService:
         )
         
         self.tool_handler = ToolHandler()
-        self._register_tools()
+        self.register = Register(self.tool_handler)
+        self.processing = Processing()
 
-    def _register_tools(self):
-        """Register all available tools"""
-        self._register_greeting_tool()
-        self._register_product_tool()
-        self._register_order_tool()
-        self._register_terms_tool()
+        self.register.register_all_tools()
 
-    def _register_greeting_tool(self):
-        """Register greeting tool"""
-        greeting_tool = GreetingTool()
-        self._register_tool_instance(
-            greeting_tool,
-            response_model=GreetingResponse,
-            processor=lambda response, output: setattr(
-                response, 
-                'category_mention', 
-                f"Some popular categories: {', '.join(output['categories'])}"
-            ) if output.get("categories") else None
-        )
-
-    def _register_product_tool(self):
-        """Register product tool"""
-        product_tool = ProductTool()
-        self._register_tool_instance(
-            product_tool,
-            response_model=ProductResponse,
-            processor=self._process_product_output
-        )
-
-    def _register_order_tool(self):
-        """Register order tool"""
-        order_tool = OrderTool()
-        self._register_tool_instance(
-            order_tool,
-            response_model=OrderResponse,
-            processor=self._process_order_output
-        )
-
-    def _register_terms_tool(self):
-        """Register terms tool"""
-        terms_tool = TermsTool()
-        self._register_tool_instance(
-            terms_tool,
-            response_model=TermsResponse,
-            processor=lambda response, output: setattr(response, 'sources', output['terms'])
-            if output.get('terms') else None
-        )
-
-    def _register_tool_instance(self, tool_instance: BaseTool, response_model: Type[BaseModel], processor: Optional[Callable[[Any, dict], None]] = None):
-        """Helper method to register a tool instance with the agent and configure it with ToolHandler using a decorator."""
-        async def tool_wrapper(ctx: RunContext[None], **kwargs):
-            shop_id_from_context = ""
-            if hasattr(ctx, 'data') and isinstance(ctx.data, dict):
-                shop_id_from_context = ctx.data.get("shopId", "")
-                
-            user_message_for_tool = kwargs.get("query") or \
-                                  kwargs.get("input") or \
-                                  kwargs.get("user_message") or \
-                                  kwargs.get("text")
-            if user_message_for_tool is None:
-                 user_message_for_tool = ""
-
-            actual_result = await tool_instance.run(ctx, shopId=shop_id_from_context, user_message=user_message_for_tool)
-            return actual_result
-    
-        tool_wrapper.__name__ = tool_instance.tool_name
-
-        configured_tool_wrapper = self.tool_handler.tool_config(
-            response_model=response_model,
-            processor=processor
-        )(tool_wrapper)
-        
-        self.agent.tool(configured_tool_wrapper)
-
-    def _process_product_output(self, response: ProductResponse, output: dict):
-        """Special processing for product tool output"""
-        processed_products = []
-        if output.get("products") and isinstance(output["products"], list):
-            for p_data in output["products"]:
-                if not isinstance(p_data, dict):
-                    logger.warning(f"Skipping non-dict product data: {p_data}")
-                    continue
-                try:
-                    product_id = str(p_data.get("id"))
-                    product_name = p_data.get("name") or p_data.get("title")
-                    product_price_str = p_data.get("price")
-                    product_price = float(product_price_str) if product_price_str is not None else 0.0
-                    product_category = p_data.get("category")
-                    product_description = p_data.get("description")
-                    product_image_url = p_data.get("image_url") or p_data.get("image")
-                    product_variant_id = p_data.get("variant_id")
-
-                    if not all([product_id, product_name, product_category]):
-                        logger.warning(f"Skipping product with missing essential fields (id, name/title, category): {p_data}")
-                        continue
-
-                    processed_products.append(Product(
-                        id=product_id,
-                        name=product_name,
-                        price=product_price,
-                        category=product_category,
-                        description=product_description,
-                        image_url=product_image_url,
-                        variant_id=product_variant_id 
-                    ))
-                except Exception as e:
-                    logger.error(f"Error processing individual product data: {p_data}. Error: {e}")
-
-        if processed_products:
-            response.products = processed_products
-            response.id = [p.id for p in processed_products]
-        else:
-            response.products = []
-            response.id = []
-            
-        if output.get("categories"):
-            response.categories = output["categories"]
-        elif processed_products:
-            response.categories = extract_categories([p.model_dump() for p in processed_products])
-        else:
-            response.categories = []
-
-    def _process_order_output(self, response: OrderResponse, output: dict):
-        """Special processing for order tool output"""
-        if output.get("email"):
-            response.email = output["email"]
-        if output.get("phone"):
-            response.phone = output["phone"]
-
-    async def _execute_primary_agent_call(self, shopId: str, user_message: str) -> Any:
-        """Execute the initial agent call with tools. Returns AgentRunResult.
-           pydantic-ai handles RunContext creation for tools internally.
-        """
+    async def _execute_primary_agent_call(self, user_message: str) -> Any:
+        """Execute the initial agent call with tools."""
         tool_result = await self.agent.run(user_message, temperature=0.7)
         return tool_result
 
@@ -258,20 +123,20 @@ class LLMService:
             agent_pydantic_response = agent_run_result.data
 
             if tool_name == self.PRODUCT_TOOL_NAME and isinstance(agent_pydantic_response, ProductResponse):
-                llm_textual_content = get_llm_text_from_product_response(agent_pydantic_response)
+                llm_textual_content = extract_normalized_response_text(agent_pydantic_response)
                 logger.info(f"LLM textual product response: '{llm_textual_content[:300]}...'")
                 logger.info(f"Product tool: LLM directly selected {len(agent_pydantic_response.products if agent_pydantic_response.products else [])} products in the structured response.")
 
                 product_dicts_from_llm_selection = []
                 if agent_pydantic_response.products:
-                    for p_model in agent_pydantic_response.products:
-                        if isinstance(p_model, Product):
-                            product_dicts_from_llm_selection.append(p_model.model_dump()) 
-                        elif isinstance(p_model, dict):
-                            product_dicts_from_llm_selection.append(p_model)
+                    for product_model in agent_pydantic_response.products:
+                        if isinstance(product_model, Product):
+                            product_dicts_from_llm_selection.append(product_model.model_dump()) 
+                        elif isinstance(product_model, dict):
+                            product_dicts_from_llm_selection.append(product_model)
                             logger.warning("Product item from LLM was a dict, not Pydantic model. Used as is.")
                         else:
-                            logger.warning(f"Skipping unexpected product item type from LLM: {type(p_model)}")
+                            logger.warning(f"Skipping unexpected product item type from LLM: {type(product_model)}")
                 
                 final_categories = extract_categories(product_dicts_from_llm_selection)
                 
@@ -298,10 +163,10 @@ class LLMService:
             logger.error(f"Unexpected error in structured response for tool '{tool_name}': {e}", exc_info=True)
             return create_error_greeting_response()
 
-    async def handle_user_message(self, shopId: str, user_message: str, contents: str) -> dict:
+    async def handle_user_message(self, user_message: str, contents: str) -> dict:
         """Main entry point for handling user messages"""
         try:
-            tool_result = await self._execute_primary_agent_call(shopId, user_message)
+            tool_result = await self._execute_primary_agent_call(user_message)
             logger.info(f"Tool Result: {tool_result}")
             
             messages_from_agent = None
@@ -314,7 +179,7 @@ class LLMService:
             )
             logger.info(f"Extracted Tool Name: {tool_name}")
             logger.info(f"Tool Output for Enhanced Msg: {type(tool_output_for_enhanced_msg)}")
-            logger.info(f"Raw Tool Data for Processing: {type(raw_tool_data_for_processing)}")    
+            logger.info(f"Raw Tool Data for Processing: {type(raw_tool_data_for_processing)}")
 
             enhanced_message = create_enhanced_message_for_llm(contents, tool_output_for_enhanced_msg)
             logger.info(f"-Enhanced Message for LLM: {enhanced_message[:300]}...")

@@ -1,9 +1,9 @@
 import { memo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Message } from '../Message/Message';
-import { TypingIndicator } from '../TypingIndicator/TypingIndicator';
-import type { MessageListProps } from '../../types';
-import { messageListVariants } from '../../styles/variants';
+import type { MessageListProps } from '../../../types';
+import { messageListVariants } from '../../../styles/variants';
+import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import './MessageList.scss';
 
 export const MessageList = memo<MessageListProps>(({ 

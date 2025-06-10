@@ -1,4 +1,4 @@
-@use '../../styles/colors.scss' as *;
+@use '../../../styles/colors.scss' as *;
 
 .chat-header-container {
   display: flex;
@@ -21,7 +21,7 @@
     background: linear-gradient(
       to right,
       transparent,
-      rgba(var(--theme-primary-color-rgb), 0.2), // 0.33 transparency in original
+      rgb(var(--theme-primary-color-values) / 0.2),
       transparent
     );
   }
@@ -80,7 +80,6 @@
   gap: 8px;
 }
 
-// Common style for icon wrappers
 .chat-header-icon-wrapper {
   position: relative;
   cursor: pointer;
@@ -102,16 +101,6 @@
     stroke: currentColor;
     fill: none;
   }
-}
-
-// Specific class for cart if needed, though common one might suffice now
-.chat-header-cart-icon-wrapper {
-  // Can add specific styles here if it diverges from chat-header-icon-wrapper
-}
-
-// Specific class for offers icon
-.chat-header-offers-icon-wrapper {
-  // Can add specific styles here if it diverges from chat-header-icon-wrapper
 }
 
 .chat-header-cart-count-badge {
