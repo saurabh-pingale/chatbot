@@ -4,13 +4,9 @@ from typing import Optional, Dict, Any
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.dbhandlers.chat_limit_handler import ChatLimitHandler
-from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.logger import logger
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
-chat_limit_handler = ChatLimitHandler()
-shop_admin_handler = ShopAdminHandler()
 
 @agent_conversation_router.post(
     "/agent_conversation",
@@ -30,8 +26,10 @@ async def agent_conversation(
         shop_id = request.query_params.get("shopId")
         if not shop_id:
             raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+        
+        app = get_app()
             
-        shop = await shop_admin_handler.get_shop_by_domain(shop_id)
+        shop = await app.shop_admin_handler.get_shop_by_domain(shop_id)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
@@ -45,7 +43,7 @@ async def agent_conversation(
             raise HTTPException(status_code=403, detail="User not authorized for this shop.")
 
         if not is_guest:
-            limit_exceeded = await chat_limit_handler.check_and_update_limit(jwt_user_id_pk)
+            limit_exceeded = await app.chat_limit_handler.check_and_update_limit(jwt_user_id_pk)
             if limit_exceeded:
                 static_response_content = "You have reached the message limit. Please try again after some time."
                 
@@ -65,7 +63,6 @@ async def agent_conversation(
             raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
-        app = get_app()
         
         country, region, city, ip = (None, None, None, None)
         if payload.location_info:
@@ -83,9 +80,7 @@ async def agent_conversation(
             if not analytics_success:
                 logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
         
-        # shopID = "test-chatbot201.myshopify.com"
-        shopID = "test-store-chatbot-main.myshopify.com"
-        agent_response = await app.llm_service.handle_user_message(user_message, contents, shopID)
+        agent_response = await app.llm_service.handle_user_message(user_message, contents, shop_id)
         
         await app.conversation_service.record_conversation_into_db({
             "user_query": user_message,

@@ -35,8 +35,8 @@ const makeAuthenticatedRequest = async (endpoint: string, body: object = {}) => 
   return makeRequest(endpoint, body, true);
 };
 
-export const trackOpenedChatbot = () => {
-  makeRequest(API_ENDPOINTS.TRACK_OPENED_CHATBOT, {}, false);
+export const trackOpenedChatbot = (userId: string, shopId: string, utmParams: any) => {
+  makeRequest(API_ENDPOINTS.TRACK_OPENED_CHATBOT, { user_id: userId, shop_id: shopId, utm_params: utmParams }, false);
 };
 
 export const trackAddedToCart = () => {

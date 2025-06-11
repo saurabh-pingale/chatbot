@@ -1,11 +1,12 @@
 from sqlalchemy import select, func, Date
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
-from datetime import datetime, UTC
-from typing import Optional, Tuple, Dict, Any
+from datetime import datetime
+from typing import Optional, Tuple, Dict
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.models.db.shop_admin import UserModel, ShopModel, UserShopAnalyticsModel
+from app.models.api.shop_admin import UTMParameters
 from app.utils.analytics_utils import update_user_location_if_missing
 from app.utils.logger import logger
 
@@ -13,24 +14,88 @@ class AnalyticsHandler:
     def __init__(self):
         pass
 
-    async def _get_or_create_today_analytics_record(self, session, user_id: int, shop_id: int) -> Optional[UserShopAnalyticsModel]:
-        """Gets or creates an analytics record for the current day."""
+    async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
+        """
+        Retrieves or creates an analytics record. If creating, it populates UTM data.
+        """
         today = datetime.now().date()
-        
         stmt = select(UserShopAnalyticsModel).where(
-            UserShopAnalyticsModel.user_id == user_id,
             UserShopAnalyticsModel.shop_id == shop_id,
             UserShopAnalyticsModel.date == today
         )
+
+        if user_id:
+            stmt = stmt.where(UserShopAnalyticsModel.user_id == user_id)
+        else:
+            stmt = stmt.where(UserShopAnalyticsModel.user_id.is_(None))
+
         result = await session.execute(stmt)
-        record = result.scalar_one_or_none()
-        
-        if not record:
-            record = UserShopAnalyticsModel(user_id=user_id, shop_id=shop_id, date=today)
-            session.add(record)
+        analytics_record = result.scalar_one_or_none()
+
+        if not analytics_record:
+            logger.info(f"Creating analytics record for shop {shop_id}, user {user_id or 'anonymous'}.")
+            
+            utm_data = utm_params.dict() if utm_params else {}
+            
+            analytics_record = UserShopAnalyticsModel(
+                user_id=user_id,
+                shop_id=shop_id,
+                date=today,
+                utm_source=utm_data.get('utm_source') or 'direct',
+                utm_medium=utm_data.get('utm_medium'),
+                utm_campaign=utm_data.get('utm_campaign'),
+                utm_term=utm_data.get('utm_term'),
+                utm_content=utm_data.get('utm_content')
+            )
+            session.add(analytics_record)
+            await session.flush()
+        return analytics_record
+
+    async def process_user_and_get_token_data(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
+        """
+        Processes user initiation, creates/retrieves user with analytics record, and returns data for JWT token.
+        """
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    shop_pk_result = await session.execute(
+                        select(ShopModel.id).where(ShopModel.shop_id == shop_identifier)
+                    )
+                    shop_pk = shop_pk_result.scalar_one_or_none()
+
+                    if not shop_pk:
+                        logger.error(f"Session initiation for non-existent shop: {shop_identifier}")
+                        return None
+                    
+                    user = await self._get_or_create_user(session, email, shop_pk, utm_params)
+                    if not user:
+                        logger.error(f"Failed to get/create user for email {email}, shop {shop_identifier}")
+                        return None
+
+                    return {"user_id": user.id, "shop_id": shop_pk}
+
+                except SQLAlchemyError as e:
+                    logger.error(f"DB error during user processing for {email}, {shop_identifier}: {e}", exc_info=True)
+                    await session.rollback()
+                    return None
+    
+    async def _get_or_create_user(self, session, email: str, shop_id: int, utm_params: Optional[UTMParameters] = None) -> Optional[UserModel]:
+        """
+        Helper to retrieve or create a user record. Also ensures an analytics record is created.
+        """
+        stmt = select(UserModel).where(UserModel.email == email, UserModel.shop_id == shop_id)
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            logger.info(f"Creating new user for email {email} in shop {shop_id}.")
+            user = UserModel(email=email, shop_id=shop_id)
+            session.add(user)
             await session.flush()
         
-        return record
+        await self._get_or_create_today_analytics_record(session, shop_id=shop_id, user_id=user.id, utm_params=utm_params)
+
+        return user
 
     async def process_user_initiation_db(
         self, 
@@ -173,7 +238,7 @@ class AnalyticsHandler:
                         if updated_location:
                             logger.info(f"Updating location on UserModel for user_id: {user_id}")
 
-                    analytics_record = await self._get_or_create_today_analytics_record(session, user_id, shop_id)
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
                     if analytics_record:
                         analytics_record.chat_interactions_count += 1
                         logger.info(f"Incremented chat_interactions_count for user_id: {user_id}, shop_id: {shop_id} for date {analytics_record.date}")
@@ -192,20 +257,33 @@ class AnalyticsHandler:
                     logger.error(f"General error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {e}", exc_info=True)
                     return False
 
-    async def increment_opened_chatbot_count(self, user_id: int, shop_id: int) -> bool:
-        """Increments the count of how many times a user has opened the chatbot."""
+    async def increment_opened_chatbot_count(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None) -> bool:
+        """
+        Increments the chatbot open count. Handles both anonymous and identified users.
+        """
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, user_id, shop_id)
+                    shop_pk_result = await session.execute(select(ShopModel.id).where(ShopModel.shop_id == shop_domain))
+                    shop_pk = shop_pk_result.scalar_one_or_none()
+
+                    if not shop_pk:
+                        return False
+
+                    user_pk = None
+                    if user_identifier != 'anonymous_user':
+                        user_pk_result = await session.execute(select(UserModel.id).where(UserModel.email == user_identifier, UserModel.shop_id == shop_pk))
+                        user_pk = user_pk_result.scalar_one_or_none()
+
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id=shop_pk, user_id=user_pk, utm_params=utm_params)
+                    
                     if analytics_record:
                         analytics_record.opened_chatbot_count += 1
-                        logger.info(f"Successfully incremented opened_chatbot_count for user_id: {user_id}, shop_id: {shop_id}. New count: {analytics_record.opened_chatbot_count}")
                         return True
-                    logger.warning(f"Failed to find or create analytics record for user {user_id}, shop {shop_id} in increment_opened_chatbot_count.")
                     return False
                 except SQLAlchemyError as e:
-                    logger.error(f"DB error incrementing opened_chatbot_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
+                    logger.error(f"DB error in increment_opened_chatbot_count: {e}", exc_info=True)
+                    await session.rollback()
                     return False
 
     async def increment_added_to_cart_count(self, user_id: int, shop_id: int) -> bool:
@@ -213,7 +291,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, user_id, shop_id)
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
                     if analytics_record:
                         analytics_record.added_to_cart_count += 1
                         return True
@@ -227,7 +305,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, user_id, shop_id)
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
                     if analytics_record:
                         analytics_record.purchased_count += 1
                         analytics_record.purchase_amount += amount
@@ -237,56 +315,55 @@ class AnalyticsHandler:
                     logger.error(f"DB error incrementing purchased_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
                     return False
 
-    async def get_shop_analytics_summary_db(self, shop_id_pk: int, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Dict[str, Any]:
+    async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
         """
-        Fetches a summary of analytics for a specific shop_id_pk, optionally filtered by a date range.
+        Fetches aggregated analytics and daily chatbot open data for a given shop.
         """
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    date_filter = True
-                    if start_date and end_date:
-                        date_filter = UserShopAnalyticsModel.date.between(start_date.date(), end_date.date())
-    
-                    # Total unique users who were active in the period
-                    total_users_stmt = select(func.count(func.distinct(UserShopAnalyticsModel.user_id))).where(
-                        UserShopAnalyticsModel.shop_id == shop_id_pk,
-                        date_filter
-                    )
-                    total_users = (await session.execute(total_users_stmt)).scalar_one_or_none() or 0
-    
-                    analytics_stmt = select(
-                        func.sum(UserShopAnalyticsModel.chat_interactions_count),
-                        func.sum(UserShopAnalyticsModel.opened_chatbot_count),
-                        func.sum(UserShopAnalyticsModel.added_to_cart_count),
-                        func.sum(UserShopAnalyticsModel.purchased_count),
-                        func.sum(UserShopAnalyticsModel.purchase_amount)
-                    ).where(
-                        UserShopAnalyticsModel.shop_id == shop_id_pk,
-                        date_filter
-                    )
-                    
-                    result = (await session.execute(analytics_stmt)).first()
-                    
-                    total_chat_interactions, total_opened_chatbot, total_added_to_cart, total_purchased, total_purchase_amount = result if result else (0, 0, 0, 0, 0.0)
-    
-                    return {
-                        "total_users": total_users,
-                        "total_chat_interactions": total_chat_interactions or 0,
-                        "total_opened_chatbot": total_opened_chatbot or 0,
-                        "total_added_to_cart": total_added_to_cart or 0,
-                        "total_purchased": total_purchased or 0,
-                        "total_purchase_amount": total_purchase_amount or 0.0,
-                    }
-                except SQLAlchemyError as e:
-                    await session.rollback()
-                    logger.error(f"Database error in get_shop_analytics_summary_db for shop_id_pk {shop_id_pk}: {e}", exc_info=True)
-                    return {
-                        "total_users": 0,
-                        "total_chat_interactions": 0,
-                        "total_opened_chatbot": 0,
-                        "total_added_to_cart": 0,
-                        "total_purchased": 0,
-                        "total_purchase_amount": 0.0,
-                        "error": f"Database error: {str(e)}"
-                    }
+            try:
+                shop_pk_result = await session.execute(select(ShopModel.id).where(ShopModel.shop_id == shop_id))
+                shop_pk = shop_pk_result.scalar_one_or_none()
+
+                if not shop_pk:
+                    logger.warning(f"Analytics summary for non-existent shop: {shop_id}")
+                    return None
+
+                summary_query = select(
+                    func.count(func.distinct(UserShopAnalyticsModel.user_id)).label('total_users'),
+                    func.sum(UserShopAnalyticsModel.chat_interactions_count).label('total_chat_interactions'),
+                    func.sum(UserShopAnalyticsModel.opened_chatbot_count).label('total_opened_chatbot'),
+                    func.sum(UserShopAnalyticsModel.added_to_cart_count).label('total_added_to_cart'),
+                    func.sum(UserShopAnalyticsModel.purchased_count).label('total_purchased'),
+                    func.sum(UserShopAnalyticsModel.purchase_amount).label('total_purchase_amount')
+                ).where(UserShopAnalyticsModel.shop_id == shop_pk)
+
+                daily_query = select(
+                    UserShopAnalyticsModel.date,
+                    func.sum(UserShopAnalyticsModel.opened_chatbot_count).label('daily_opens')
+                ).where(UserShopAnalyticsModel.shop_id == shop_pk).group_by(UserShopAnalyticsModel.date).order_by(UserShopAnalyticsModel.date)
+
+                if start_date:
+                    summary_query = summary_query.where(UserShopAnalyticsModel.date >= start_date)
+                    daily_query = daily_query.where(UserShopAnalyticsModel.date >= start_date)
+                if end_date:
+                    summary_query = summary_query.where(UserShopAnalyticsModel.date <= end_date)
+                    daily_query = daily_query.where(UserShopAnalyticsModel.date <= end_date)
+
+                summary_result = await session.execute(summary_query)
+                summary = summary_result.first()
+
+                daily_result = await session.execute(daily_query)
+                daily_data = [{"date": row.date.isoformat(), "count": row.daily_opens or 0} for row in daily_result]
+
+                return {
+                    "total_users": summary.total_users or 0,
+                    "total_chat_interactions": summary.total_chat_interactions or 0,
+                    "total_opened_chatbot": summary.total_opened_chatbot or 0,
+                    "total_added_to_cart": summary.total_added_to_cart or 0,
+                    "total_purchased": summary.total_purchased or 0,
+                    "total_purchase_amount": summary.total_purchase_amount or 0.0,
+                    "daily_opened_chatbot": daily_data
+                }
+            except SQLAlchemyError as e:
+                logger.error(f"DB error in get_shop_analytics_summary for shop {shop_id}: {e}", exc_info=True)
+                return {"error": "A database error occurred."}

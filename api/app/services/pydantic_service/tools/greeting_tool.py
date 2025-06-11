@@ -12,7 +12,7 @@ class GreetingTool(BaseTool):
     def tool_name(self) -> str:
         return "greeting"
     
-    async def run(self, ctx: RunContext[None], **kwargs) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None]) -> Dict[str, Any]:
         try:
             return {"categories": []}
         except Exception as e:

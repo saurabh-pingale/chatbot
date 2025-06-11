@@ -1,38 +1,34 @@
 from typing import Optional, Dict, Any
+from datetime import datetime
+
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.models.api.shop_admin import UTMParameters
 from app.utils.jwt_utils import create_access_token
 from app.utils.logger import logger
-from datetime import datetime
 
 class AnalyticsService:
     def __init__(self):
         self.db_handler = AnalyticsHandler()
 
-    async def process_user_initiation(self, email: str, shop_identifier: str) -> Optional[str]:
+    async def process_user_initiation(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[str]:
         """
-        Processes user initiation:
-        1. Calls DB handler to get user_id and shop_id_pk.
-        2. Generates JWT token.
-        Returns the JWT token or None if an error occurs.
+        Processes user initiation, passing UTM parameters to the DB handler.
         """
-        user_id, shop_id_pk = await self.db_handler.process_user_initiation_db(
-            email,
-            shop_identifier
-        )
+        user_and_shop_ids = await self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params)
 
-        if not user_id or not shop_id_pk:
-            logger.error(f"Failed to process user initiation in DB for email: {email}, shop: {shop_identifier}. Token not created.")
+        if not user_and_shop_ids:
+            logger.error(f"Failed to process user initiation in DB for email: {email}, shop: {shop_identifier}.")
             return None
         
         token_data = {
-            "user_id": user_id,
-            "shop_id": shop_id_pk, 
+            "user_id": user_and_shop_ids['user_id'],
+            "shop_id": user_and_shop_ids['shop_id'], 
             "email": email
         }
         access_token = create_access_token(data=token_data)
         
         if not access_token:
-            logger.error(f"Failed to create access token in service for user_id: {user_id}")
+            logger.error(f"Failed to create access token for user_id: {user_and_shop_ids['user_id']}")
             return None
             
         return access_token
@@ -59,9 +55,9 @@ class AnalyticsService:
             ip_address=ip_address
         )
 
-    async def track_opened_chatbot(self, user_id: int, shop_id: int) -> bool:
-        """Tracks when a user opens the chatbot."""
-        return await self.db_handler.increment_opened_chatbot_count(user_id, shop_id)
+    async def track_opened_chatbot(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None) -> bool:
+        """Tracks when a user opens the chatbot. Handles string identifiers and UTM."""
+        return await self.db_handler.increment_opened_chatbot_count(user_identifier, shop_domain, utm_params)
 
     async def track_added_to_cart(self, user_id: int, shop_id: int) -> bool:
         """Tracks when a user adds a product to the cart."""
@@ -74,17 +70,15 @@ class AnalyticsService:
     async def fetch_shop_analytics_summary(self, shop_identifier: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
         """
         Fetches the analytics summary for a shop, optionally filtered by a date range.
+        Converts datetime to date before passing to the handler.
         """
-        shop_id_pk = await self.db_handler.get_shop_pk_by_identifier(shop_identifier)
+        start_date_only = start_date.date() if start_date else None
+        end_date_only = end_date.date() if end_date else None
 
-        if not shop_id_pk:
-            logger.warning(f"Could not retrieve shop_id_pk for identifier: {shop_identifier} in service.")
-            return None
-        
-        summary_data = await self.db_handler.get_shop_analytics_summary_db(shop_id_pk, start_date, end_date)
+        summary_data = await self.db_handler.get_shop_analytics_summary(shop_identifier, start_date_only, end_date_only)
 
-        if "error" in summary_data:
-            logger.warning(f"Error fetching analytics summary for shop_id_pk {shop_id_pk}: {summary_data['error']}")
-            return summary_data 
+        if summary_data and "error" in summary_data:
+            logger.warning(f"Error fetching analytics summary for shop {shop_identifier}: {summary_data['error']}")
+            return summary_data
             
         return summary_data

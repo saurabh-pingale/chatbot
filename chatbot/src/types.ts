@@ -203,6 +203,13 @@ export interface ExtendedMessageProps extends MessageProps {
 export interface InitiateSessionRequest {
   email: string;
   shopId: string;
+  utm_params?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_term?: string;
+    utm_content?: string;
+  } | null;
 }
 
 export interface InitiateSessionResponse {
@@ -280,3 +287,11 @@ export interface AnalyticsSummaryData {
 export interface LoaderData {
   shop: string | null;
 } 
+
+export interface UtmParams {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+}

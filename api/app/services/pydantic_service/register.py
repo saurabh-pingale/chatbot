@@ -1,6 +1,5 @@
 from typing import Optional, Callable, Type, Any
 from pydantic import BaseModel
-from pydantic_ai import RunContext
 import functools
 
 from app.services.pydantic_service.tools.base_tool import BaseTool

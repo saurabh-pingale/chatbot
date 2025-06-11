@@ -17,14 +17,10 @@ class OrderTool(BaseTool):
     async def run(self, ctx: RunContext[None]) -> Dict[str, Any]:
         try:
             shopId = ctx.deps.get("shopId")
-            logger.info(f"ShopID inside the Order Tool {shopId}")
             if not shopId:
                 return {"email": "", "phone": "", "message": "No store info found."}
-            
-            logger.info("-------------------------")
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
-            logger.info(f"Support info: {support_info}")
 
             if not support_info:
                 return {"email": "", "phone": "", "message": "Support contact not available."}

@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Body
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from app.utils.app_utils import get_app
 from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse, TrackPurchaseRequest
-from app.utils.logger import logger
+from app.models.api.shop_admin import UTMParameters
+from app.utils.app_utils import get_app
 from app.utils.jwt_utils import get_current_user_payload
+from app.utils.logger import logger
 
 analytics_router = APIRouter(prefix="/analytics_router", tags=["analytics_router"])
 
@@ -25,7 +26,8 @@ async def initiate_user_session(payload: UserInitiateRequest):
 
         access_token = await app.analytics_service.process_user_initiation(
             email=payload.email,
-            shop_identifier=payload.shopId
+            shop_identifier=payload.shopId,
+            utm_params=payload.utm_params
         )
 
         if not access_token:
@@ -79,7 +81,8 @@ async def get_shop_analytics_summary_route(
             total_opened_chatbot=summary_data.get("total_opened_chatbot", 0),
             total_added_to_cart=summary_data.get("total_added_to_cart", 0),
             total_purchased=summary_data.get("total_purchased", 0),
-            total_purchase_amount=summary_data.get("total_purchase_amount", 0.0)
+            total_purchase_amount=summary_data.get("total_purchase_amount", 0.0),
+            daily_opened_chatbot=summary_data.get("daily_opened_chatbot", [])
         )
 
     except HTTPException as http_exc:
@@ -93,23 +96,25 @@ async def get_shop_analytics_summary_route(
     summary="Track when a user opens the chatbot",
     status_code=204,
 )
-async def track_opened_chatbot(payload: dict = Depends(get_current_user_payload)):
+async def track_opened_chatbot(
+    payload: Dict[str, Any] = Body(..., example={"user_id": "some_user_id", "shop_id": "some_shop_id", "utm_params": {}})
+):
     """Endpoint to track when a user opens the chatbot."""
     logger.info("Received request to track chatbot open.")
-    if not payload:
-        logger.warning("Track chatbot open request failed: Invalid or missing token.")
-        raise HTTPException(status_code=401, detail="Invalid or missing token.")
     try:
         app = get_app()
         user_id = payload.get("user_id")
         shop_id = payload.get("shop_id")
+        utm_data = payload.get("utm_params")
+        
+        utm_params = UTMParameters(**utm_data) if utm_data else None
 
         if not user_id or not shop_id:
-            logger.error(f"Track chatbot open request failed: Missing user_id or shop_id in token payload. Payload: {payload}")
-            raise HTTPException(status_code=400, detail="Malformed token payload.")
+            logger.error(f"Track chatbot open request failed: Missing user_id or shop_id in payload. Payload: {payload}")
+            raise HTTPException(status_code=400, detail="Malformed request payload.")
 
         logger.info(f"Tracking chatbot open for user_id: {user_id}, shop_id: {shop_id}")
-        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id)
+        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id, utm_params)
         if not success:
             logger.error(f"Analytics service failed to track chatbot open for user_id: {user_id}, shop_id: {shop_id}")
             raise HTTPException(status_code=500, detail="Failed to track event due to service error.")

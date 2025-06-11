@@ -130,66 +130,46 @@ export const sendChatMessage = async (
   }
 };
 
-export const getStoreColor = async (): Promise<string> => {
+export const getShopConfiguration = async () => {
   try {
     let shopId = getShopId();
-    if (!shopId) return COLORS.ORANGE_450;
+    if (!shopId) {
+      return { 
+        preferred_color: COLORS.ORANGE_450,
+        image: IMAGE.FALLBACK,
+        setup_completed: false,
+        show_email_gate: false
+      };
+    }
     shopId = shopId.split('?')[0];
-
-    const response = await fetch(`${API_ENDPOINTS.COLOR_PREFERENCE}?shopId=${encodeURIComponent(shopId)}`);
+    
+    const response = await fetch(`${API_ENDPOINTS.SHOP_CONFIG}?shop_id=${encodeURIComponent(shopId)}`);
     
     if (!response.ok) {
-      console.error('Failed to fetch color:', response.status, await response.text());
-      return COLORS.ORANGE_450;
+      console.error('Failed to fetch shop config:', response.status, await response.text());
+      return { 
+        preferred_color: COLORS.ORANGE_450,
+        image: IMAGE.FALLBACK,
+        setup_completed: false,
+        show_email_gate: false
+      };
     }
 
     const data = await response.json();
-    return data.color || COLORS.ORANGE_450;
+    return {
+      preferred_color: data.preferred_color || COLORS.ORANGE_450,
+      image: data.image || IMAGE.FALLBACK,
+      setup_completed: data.setup_completed || false,
+      show_email_gate: data.show_email_gate || false,
+    };
   } catch (err) {
-    console.error('Color fetch error:', err);
-    return COLORS.ORANGE_450;
-  }
-};
-
-export const getStoreImage = async (): Promise<string> => {
-  try {
-    let shopId = getShopId();
-    if (!shopId) return IMAGE.FALLBACK;
-    shopId = shopId.split('?')[0];
-
-    const response = await fetch(`${API_ENDPOINTS.GET_IMAGE}?shopId=${encodeURIComponent(shopId)}`);
-    
-    if (!response.ok) {
-      console.error('Failed to fetch image:', response.status, await response.text());
-      return IMAGE.FALLBACK;
-    }
-
-    const data = await response.json();
-    return data.image || IMAGE.FALLBACK;
-  } catch (err) {
-    console.error('Error fetching store image:', err);
-    return IMAGE.FALLBACK;
-  }
-};
-
-export const getShopStatus = async (): Promise<{ setupCompleted: boolean }> => {
-  try {
-    let shopId = getShopId();
-    if (!shopId) return { setupCompleted: false };
-    shopId = shopId.split('?')[0];
-
-    const response = await fetch(`${API_ENDPOINTS.SHOP_STATUS}?shopId=${encodeURIComponent(shopId)}`);
-    
-    if (!response.ok) {
-      console.error('Failed to fetch shop status:', response.status, await response.text());
-      return { setupCompleted: false };
-    }
-
-    const data = await response.json();
-    return { setupCompleted: data.setup_completed || false };
-  } catch (err) {
-    console.error('Error fetching shop status:', err);
-    return { setupCompleted: false };
+    console.error('Config fetch error:', err);
+    return { 
+      preferred_color: COLORS.ORANGE_450,
+      image: IMAGE.FALLBACK,
+      setup_completed: false,
+      show_email_gate: false
+    };
   }
 };
 
@@ -237,27 +217,6 @@ export const sendAgentMessage = async (
     throw new Error(errorData.error || errorData.detail || "Failed to send message to agent");
   }
   return response.json();
-};
-
-export const getEmailGatePreference = async (): Promise<boolean> => {
-  try {
-    let shopId = getShopId();
-    if (!shopId) return false;
-    shopId = shopId.split('?')[0];
-
-    const response = await fetch(`${API_ENDPOINTS.EMAIL_PAGE_PREFERENCE}?shopId=${encodeURIComponent(shopId)}`);
-    
-    if (!response.ok) {
-      console.error('Failed to fetch email gate preference:', response.status, await response.text());
-      return false;
-    }
-
-    const data = await response.json();
-    return data.show_email_gate || false;
-  } catch (err) {
-    console.error('Error fetching email gate preference:', err);
-    return false;
-  }
 };
 
 export const getShopOfferTags = async (

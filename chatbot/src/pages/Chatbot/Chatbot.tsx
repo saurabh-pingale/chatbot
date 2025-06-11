@@ -7,8 +7,8 @@ import { EmailGate } from '../EmailGate/EmailGate';
 import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { useChat } from '../../hooks/useChat';
 import { useCart } from '../../hooks/useCart';
-import { trackOpenedChatbot } from '../../services/analytics';
 import { getAuthToken, setAuthToken } from '../../utils/auth';
+import { getStoredUtmParameters } from '../../utils/utm';
 import { initiateUserSession, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags, trackEvent } from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
@@ -68,20 +68,17 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   }, [jwtToken]);
 
   const handleToggle = () => {
-    setIsOpen(prev => {
-      if (!prev) {
-        trackOpenedChatbot();
-      }
-      return !prev;
-    });
+    setIsOpen(prev => !prev);
   };
 
   const handleEmailGateSubmit = async (email: string) => {
     try {
       setError(null);
+      const utmParams = getStoredUtmParameters();
       const response = await initiateUserSession({
         email,
         shopId: config.shopId,
+        utm_params: utmParams,
       });
 
       if (response.token) {

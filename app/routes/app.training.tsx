@@ -73,7 +73,9 @@ export default function TrainingPage() {
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
-        navigate('/app/billing');
+        if (!setupCompleted) {
+          navigate('/app/billing');
+        }
       },
       onError: () => {
         setMessages((prev) => [
@@ -97,7 +99,9 @@ export default function TrainingPage() {
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
       }]);
-      navigate('/app/billing');
+      if (!setupCompleted) {
+        navigate('/app/billing');
+      }
     } catch (error) {
       setMessages((prev) => [...prev, { 
         sender: "bot", 
