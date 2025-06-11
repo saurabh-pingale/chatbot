@@ -16,9 +16,9 @@ class TermsTool(BaseTool):
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
 
-    async def run(self, ctx: RunContext[None], user_message: str, **kwargs) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None], user_message: str) -> Dict[str, Any]:
         try:
-            shopId = kwargs.get("shopId", "")
+            shopId = ctx.deps.get("shopId")
 
             user_message_embedding = EmbeddingService.create_embeddings(user_message)
             terms_results = await self.embeddings_handler.query_embeddings(

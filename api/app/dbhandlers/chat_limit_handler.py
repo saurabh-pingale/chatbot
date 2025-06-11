@@ -1,5 +1,5 @@
 from sqlalchemy import select, update, func
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 
 from app.models.db.chat_limit import ChatLimitModel
 from app.dbhandlers.db import AsyncSessionLocal
@@ -14,7 +14,7 @@ class ChatLimitHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    now = datetime.now(UTC)
+                    now = datetime.utcnow()
                     
                     stmt = select(ChatLimitModel).where(ChatLimitModel.user_id == user_id)
                     result = await session.execute(stmt)

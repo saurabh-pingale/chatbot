@@ -37,77 +37,96 @@ def extract_tool_data_from_agent_messages(
     if messages_from_tool_result:
         # Phase 1: Identify the tool call (ToolCallPart) made by the assistant.
         for message in messages_from_tool_result:
-            message_parts = getattr(message, 'parts', None)
-            if isinstance(message_parts, list):
-                for part in message_parts:
-                    is_tool_call_part = (hasattr(part, 'tool_name') and
-                                         hasattr(part, 'tool_call_id') and
-                                         not hasattr(part, 'content'))
-                    if is_tool_call_part:
-                        extracted_tool_name = getattr(part, 'tool_name')
-                        found_tool_call_id = getattr(part, 'tool_call_id')
-                        logger.info(f"[Util] Identified ToolCall: Name='{extracted_tool_name}', ID='{found_tool_call_id}'")
-                        break 
-                if extracted_tool_name:
-                    break 
+            message_parts = getattr(message, 'parts', [])
+            for part in message_parts:
+                if getattr(part, 'tool_name', None) and getattr(part, 'tool_call_id', None):
+                    extracted_tool_name = part.tool_name
+                    found_tool_call_id = part.tool_call_id
+                    logger.info(f"[Util] Identified ToolCall: Name='{extracted_tool_name}', ID='{found_tool_call_id}'")
+                    break
+            if extracted_tool_name:
+                break
         
         # Phase 2: Find the result/return for the identified tool call (ToolReturnPart).
         if found_tool_call_id:
             for message in messages_from_tool_result:
-                message_parts = getattr(message, 'parts', None)
-                if isinstance(message_parts, list):
-                    for part in message_parts:
-                        is_tool_return_part = (hasattr(part, 'tool_call_id') and
-                                               getattr(part, 'tool_call_id') == found_tool_call_id and
-                                               hasattr(part, 'content'))
-                        if is_tool_return_part:
-                            raw_response_content = getattr(part, 'content')
-                            parsed_tool_output = _parse_tool_return_content(raw_response_content)
-                            logger.info(f"[Util] Found ToolReturn content for ID='{found_tool_call_id}': {type(parsed_tool_output)}")
-                            break  
-                    if parsed_tool_output is not None:
-                        break  
+                message_parts = getattr(message, 'parts', [])
+                for part in message_parts:
+                    if getattr(part, 'tool_call_id', None) == found_tool_call_id and hasattr(part, 'content'):
+                        raw_response_content = part.content
+                        parsed_tool_output = _parse_tool_return_content(raw_response_content)
+                        logger.info(f"[Util] Found ToolReturn content for ID='{found_tool_call_id}': {type(parsed_tool_output)}")
+                        break
+                if parsed_tool_output is not None:
+                    break 
 
-    # Fallback logic using `tool_result` if data wasn't found in `messages_from_tool_result` or to supplement missing pieces.
+    # Fallback: Use tool_result.data if nothing found
     if parsed_tool_output is None and hasattr(tool_result, 'data') and tool_result.data is not None:
         if isinstance(tool_result.data, str) and not extracted_tool_name:
             llm_summary_text = tool_result.data
             logger.info(f"[Util] Used tool_result.data as llm_summary_text (string): {llm_summary_text[:100]}...")
-        elif extracted_tool_name:
+        else:
             parsed_tool_output = tool_result.data
-            logger.info(f"[Util] Used tool_result.data as parsed_tool_output for tool: {extracted_tool_name}")
-        elif not isinstance(tool_result.data, str) and extracted_tool_name is None:
-             parsed_tool_output = tool_result.data
-             logger.info(f"[Util] Used tool_result.data as parsed_tool_output (no prior tool name): {type(parsed_tool_output)}")
+            logger.info(f"[Util] Used tool_result.data as parsed_tool_output: {type(parsed_tool_output)}")
 
-    # Try to get llm_summary_text from tool_result.output if not already set
+    # Fallback for output
     if llm_summary_text is None and hasattr(tool_result, 'output') and tool_result.output is not None:
         if isinstance(tool_result.output, str):
             llm_summary_text = tool_result.output
             logger.info(f"[Util] Captured llm_summary_text from tool_result.output: {llm_summary_text[:100]}...")
         elif parsed_tool_output is None:
             parsed_tool_output = tool_result.output
-            logger.info(f"[Util] Used tool_result.output as parsed_tool_output (was not string summary): {type(parsed_tool_output)}")
+            logger.info(f"[Util] Used tool_result.output as parsed_tool_output: {type(parsed_tool_output)}")
 
-    # Determine the primary data to be used by LLM: tool output takes precedence over summary.
+     # Determine the final content used by LLM
     final_content_for_llm = parsed_tool_output if parsed_tool_output is not None else llm_summary_text
-
-    if final_content_for_llm is parsed_tool_output and parsed_tool_output is not None:
+    if parsed_tool_output is not None:
         logger.info("[Util] final_content_for_llm is using parsed_tool_output.")
-    elif final_content_for_llm is llm_summary_text and llm_summary_text is not None:
+    elif llm_summary_text is not None:
         logger.info("[Util] final_content_for_llm is using llm_summary_text as fallback.")
 
-    # Fallback for extracting tool name directly from tool_result.data object if not found earlier
+    # New fallback: Regex to find tool name in summary text, e.g., **product**, [terms], or *uses the order tool*
+    if not extracted_tool_name and llm_summary_text:
+        # This regex looks for a tool name inside various delimiters: [], **, *
+        # The order of patterns is important to match more specific cases first.
+        match = re.search(
+            r'\*uses the (\w+) tool\*|' # *uses the terms tool* -> Group 1
+            r'\*\*(\w+)\*\*|'           # **product** -> Group 2
+            r'\[(\w+)\]|'              # [terms] -> Group 3
+            r'\*(\w+)\*',               # *order* -> Group 4
+            llm_summary_text
+        )
+
+        if match:
+            # Find the captured tool name from one of the groups
+            extracted_tool_name = next((g for g in match.groups() if g is not None), None)
+
+            if extracted_tool_name:
+                extracted_tool_name = extracted_tool_name.lower()
+                
+                full_match_str = match.group(0)
+                
+                # Clean the summary text by removing the matched pattern
+                llm_summary_text = llm_summary_text.replace(full_match_str, '', 1)
+                
+                # If the match was of type [tool], also remove a potential closing tag like [/tool]
+                if full_match_str.startswith('['):
+                    closing_tag = f'[/{extracted_tool_name}]'
+                    llm_summary_text = llm_summary_text.replace(closing_tag, '', 1)
+
+                final_content_for_llm = llm_summary_text.strip()
+                logger.info(f"[Util] Extracted tool name '{extracted_tool_name}' from summary text using regex.")
+
+    # Final fallback to get tool name
     if extracted_tool_name is None and hasattr(tool_result, 'data'):
         tool_name_on_data = getattr(tool_result.data, 'tool_name', None)
         if isinstance(tool_name_on_data, str):
             extracted_tool_name = tool_name_on_data
             logger.info(f"[Util] Tool name extracted from tool_result.data.tool_name as fallback: {extracted_tool_name}")
 
-    # The `raw_data_for_processing` was essentially `actual_tool_result_content` (now `parsed_tool_output`)
     raw_tool_output = parsed_tool_output
     if raw_tool_output is None:
-         logger.info("[Util] raw_tool_output is None as parsed_tool_output was not found or set.")
+        logger.info("[Util] raw_tool_output is None as parsed_tool_output was not found or set.")
 
     return extracted_tool_name, final_content_for_llm, raw_tool_output
 
@@ -157,7 +176,8 @@ def filter_products_from_tool_output(llm_response_text: str, all_tool_products: 
         if not product_id_str or product_id_str in found_products_map:
             continue
 
-        product_name_lower = str(product_data.get("title", "")).lower()
+        product_name = product_data.get("name") or product_data.get("title") or ""
+        product_name_lower = str(product_name).lower()
         if not product_name_lower: 
             continue
 

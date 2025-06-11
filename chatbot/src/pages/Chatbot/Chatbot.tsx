@@ -7,7 +7,9 @@ import { EmailGate } from '../EmailGate/EmailGate';
 import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { useChat } from '../../hooks/useChat';
 import { useCart } from '../../hooks/useCart';
-import { trackEvent, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags } from '../../services/chat';
+import { trackOpenedChatbot } from '../../services/analytics';
+import { getAuthToken, setAuthToken } from '../../utils/auth';
+import { initiateUserSession, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags, trackEvent } from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
 import { chatAnimation } from '../../styles/animations';
@@ -30,7 +32,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
-    const tokenFromStorage = localStorage.getItem('user_jwt_token');
+    const tokenFromStorage = getAuthToken();
     setJwtToken(tokenFromStorage);
 
     if (config?.showEmailGate) {
@@ -66,20 +68,33 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   }, [jwtToken]);
 
   const handleToggle = () => {
-    setIsOpen(prev => !prev);
-    if (!isOpen) {
-      trackEvent('chatbot_opened');
-    }
+    setIsOpen(prev => {
+      if (!prev) {
+        trackOpenedChatbot();
+      }
+      return !prev;
+    });
   };
 
   const handleEmailGateSubmit = async (email: string) => {
-    const tokenFromStorage = localStorage.getItem('user_jwt_token');
-    if (tokenFromStorage) {
-      setJwtToken(tokenFromStorage);
-      setIsEmailGateVisible(false); 
-      trackEvent('email_gate_submitted', { email });
-    } else {
-      setError("Failed to retrieve session token after email submission. Please try again.");
+    try {
+      setError(null);
+      const response = await initiateUserSession({
+        email,
+        shopId: config.shopId,
+      });
+
+      if (response.token) {
+        setAuthToken(response.token);
+        setJwtToken(response.token);
+        setIsEmailGateVisible(false);
+        trackEvent('email_gate_submitted', { email });
+      } else {
+        setError("Failed to initiate session. Please try again.");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during session initiation.';
+      setError(errorMessage);
     }
   };
 

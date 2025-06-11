@@ -1,5 +1,5 @@
 import { SHOPIFY_VARIANT_PREFIX } from "../constants/cart";
-import { getEmailGatePreference, getShopStatus, getStoreColor, getStoreImage } from "../services/chat";
+import { getShopStatus, getEmailGatePreference, getStoreColor, getStoreImage } from "../services/chat";
 
 export const getShopId = (): string => {
   return window.Shopify?.shop || '';

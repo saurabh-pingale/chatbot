@@ -2,7 +2,6 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
-from app.utils.message_utils import get_last_user_message_content
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
 from app.dbhandlers.chat_limit_handler import ChatLimitHandler
@@ -28,11 +27,11 @@ async def agent_conversation(
     payload: AgentConversationPayload,
     _: Dict[str, Any] = Depends(get_current_user_payload)):
     try:
-        query_param_shop_id_str = request.query_params.get("shopId")
-        if not query_param_shop_id_str:
+        shop_id = request.query_params.get("shopId")
+        if not shop_id:
             raise HTTPException(status_code=400, detail="shopId query parameter is required.")
             
-        shop = await shop_admin_handler.get_shop_by_domain(query_param_shop_id_str)
+        shop = await shop_admin_handler.get_shop_by_domain(shop_id)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
@@ -50,7 +49,7 @@ async def agent_conversation(
             if limit_exceeded:
                 static_response_content = "You have reached the message limit. Please try again after some time."
                 
-                user_message = get_last_user_message_content(payload.messages)
+                user_message = next((m.get('content') for m in reversed(payload.messages) if m.get('role', 'user') == 'user'), None)
                 app = get_app()
                 await app.conversation_service.record_conversation_into_db({
                     "user_query": user_message,
@@ -65,7 +64,7 @@ async def agent_conversation(
         if not isinstance(contents, list):
             raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
 
-        user_message = get_last_user_message_content(contents)
+        user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
         app = get_app()
         
         country, region, city, ip = (None, None, None, None)
@@ -84,7 +83,9 @@ async def agent_conversation(
             if not analytics_success:
                 logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
         
-        agent_response = await app.llm_service.handle_user_message(user_message, contents)
+        # shopID = "test-chatbot201.myshopify.com"
+        shopID = "test-store-chatbot-main.myshopify.com"
+        agent_response = await app.llm_service.handle_user_message(user_message, contents, shopID)
         
         await app.conversation_service.record_conversation_into_db({
             "user_query": user_message,

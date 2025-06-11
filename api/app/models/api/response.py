@@ -10,11 +10,11 @@ class UnifiedResponse(BaseModel):
 class Product(BaseModel):
     """Model representing a product in the store"""
     id: str
-    name: str
+    name: str = Field(..., alias='title')
     price: float
     category: str
     description: Optional[str] = None
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(None, alias='image')
     variant_id: Optional[str] = None
 
 class BaseResponse(BaseModel):
@@ -43,10 +43,7 @@ class ProductResponse(BaseResponse):
         ...,
         description="Brief introduction or acknowledgment of the user's query"
     )
-    id: Optional[Union[List[str], List[int], str, int]] = Field(
-        None,
-        description="Product IDs referenced in the response"
-    )
+    product_ids: Optional[List[str]] = []
     products: Optional[List[Product]] = Field(
         None,
         description="List of relevant products matching the query"

@@ -126,13 +126,16 @@ class ShopAdminHandler:
 
     async def get_support_contact(self, shop_id: str) -> Optional[dict]:
         """Fetches support email and phone for a given shop name."""
+        logger.info(f"------Trigerred get_support_contact---------")
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
                     shop = await session.execute(
                         select(ShopModel).filter(ShopModel.shop_id == shop_id)
                     )
+                    logger.info(f"Shop: {shop}")
                     shop = shop.scalars().first()
+                    logger.info(f"Shop: {shop}")
                     if not shop:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return None

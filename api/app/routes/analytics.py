@@ -95,11 +95,28 @@ async def get_shop_analytics_summary_route(
 )
 async def track_opened_chatbot(payload: dict = Depends(get_current_user_payload)):
     """Endpoint to track when a user opens the chatbot."""
+    logger.info("Received request to track chatbot open.")
+    if not payload:
+        logger.warning("Track chatbot open request failed: Invalid or missing token.")
+        raise HTTPException(status_code=401, detail="Invalid or missing token.")
     try:
         app = get_app()
         user_id = payload.get("user_id")
         shop_id = payload.get("shop_id")
-        await app.analytics_service.track_opened_chatbot(user_id, shop_id)
+
+        if not user_id or not shop_id:
+            logger.error(f"Track chatbot open request failed: Missing user_id or shop_id in token payload. Payload: {payload}")
+            raise HTTPException(status_code=400, detail="Malformed token payload.")
+
+        logger.info(f"Tracking chatbot open for user_id: {user_id}, shop_id: {shop_id}")
+        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id)
+        if not success:
+            logger.error(f"Analytics service failed to track chatbot open for user_id: {user_id}, shop_id: {shop_id}")
+            raise HTTPException(status_code=500, detail="Failed to track event due to service error.")
+
+    except HTTPException as http_exc:
+        logger.error(f"HTTP exception in track_opened_chatbot: {http_exc.detail}")
+        raise http_exc
     except Exception as e:
         logger.error(f"Error tracking opened chatbot: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to track event.")

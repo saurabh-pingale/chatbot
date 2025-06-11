@@ -15,7 +15,7 @@ class AnalyticsHandler:
 
     async def _get_or_create_today_analytics_record(self, session, user_id: int, shop_id: int) -> Optional[UserShopAnalyticsModel]:
         """Gets or creates an analytics record for the current day."""
-        today = datetime.now(UTC).date()
+        today = datetime.now().date()
         
         stmt = select(UserShopAnalyticsModel).where(
             UserShopAnalyticsModel.user_id == user_id,
@@ -105,15 +105,15 @@ class AnalyticsHandler:
 
                     if user:
                         logger.info(f"DB: Existing user {email}, shop_pk {shop_id_pk}")
-                        user.updated_at = datetime.now(UTC)
+                        user.updated_at = datetime.now()
                         user_id_to_return = user.id
                     else:
                         logger.info(f"DB: New user {email}, shop_pk {shop_id_pk}. Creating.")
                         new_user = UserModel(
                             email=email,
                             shop_id=shop_id_pk, 
-                            created_at=datetime.now(UTC),
-                            updated_at=datetime.now(UTC)
+                            created_at=datetime.now(),
+                            updated_at=datetime.now()
                         )
                         session.add(new_user)
                         await session.flush() 
@@ -124,7 +124,7 @@ class AnalyticsHandler:
                             user_id=user_id_to_return,
                             shop_id=shop_id_pk,
                             chat_interactions_count=0,
-                            date=datetime.now(UTC).date()
+                            date=datetime.now().date()
                         )
                         session.add(new_analytics_record)
                         logger.info(f"DB: Created analytics for new user_id: {user_id_to_return}")
@@ -200,7 +200,9 @@ class AnalyticsHandler:
                     analytics_record = await self._get_or_create_today_analytics_record(session, user_id, shop_id)
                     if analytics_record:
                         analytics_record.opened_chatbot_count += 1
+                        logger.info(f"Successfully incremented opened_chatbot_count for user_id: {user_id}, shop_id: {shop_id}. New count: {analytics_record.opened_chatbot_count}")
                         return True
+                    logger.warning(f"Failed to find or create analytics record for user {user_id}, shop {shop_id} in increment_opened_chatbot_count.")
                     return False
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing opened_chatbot_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
