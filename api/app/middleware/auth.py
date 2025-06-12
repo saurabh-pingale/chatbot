@@ -9,6 +9,7 @@ async def get_current_user_payload(
     request: Request,    
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ) -> Dict[str, Any]:
+    #todo: you should not add into decoded token, please check some blogs, how others are doing it
     token = credentials.credentials
     decoded_token = decode_access_token(token)
 

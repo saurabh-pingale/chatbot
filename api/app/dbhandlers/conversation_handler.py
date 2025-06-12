@@ -19,7 +19,7 @@ class ConversationHandler:
                     shop_record = shop_result.scalars().first()
 
                     if not shop_record:
-                        logger.error(f"Shop with PK {shop_pk} not found (DB issue or record missing). Skipping conversation storage.")
+                        logger.error(f"Shop with PK {shop_pk} not found (DB issue or record missing). Skipping conversation storage.") #TODO: What is conversation storage ? 
                         return None
 
                     user_pk = conversation_data["user_id"]
