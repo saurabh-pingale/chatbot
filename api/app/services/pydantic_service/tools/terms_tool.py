@@ -41,6 +41,7 @@ class TermsTool(BaseTool):
 
             if not extracted_term_texts:
                 logger.warning(f"Warning: No terms found for query: '{user_message}' in shop: {shopId}")
+                return {"terms": ["I'm sorry, but I could not find any information about the store's policies. Please contact the store directly for help with your question."]}
             
             return {"terms": extracted_term_texts}
         except Exception as e:

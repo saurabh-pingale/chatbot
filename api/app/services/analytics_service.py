@@ -35,8 +35,8 @@ class AnalyticsService:
 
     async def record_chat_interaction(
         self, 
-        user_id: int, 
         shop_id: int, 
+        user_id: Optional[int] = None,
         country: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
@@ -47,8 +47,8 @@ class AnalyticsService:
         The handler manages its own session and transaction for this specific operation.
         """
         return await self.db_handler.update_user_chat_analytics(
-            user_id=user_id,
             shop_id=shop_id,
+            user_id=user_id,
             country=country,
             region=region,
             city=city,
@@ -66,6 +66,10 @@ class AnalyticsService:
     async def track_purchase(self, user_id: int, shop_id: int, amount: float) -> bool:
         """Tracks a purchase event."""
         return await self.db_handler.increment_purchased_count(user_id, shop_id, amount)
+
+    async def track_purchase_from_webhook(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:
+        """Tracks a purchase event coming from a webhook, using email to identify the user."""
+        return await self.db_handler.increment_purchased_count_by_email(email, shop_identifier, amount, order_id)
 
     async def fetch_shop_analytics_summary(self, shop_identifier: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
         """

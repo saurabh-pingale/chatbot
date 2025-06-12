@@ -27,11 +27,13 @@
   &.is-user {
     border-radius: 18px 18px 0 18px;
     background-color: var(--theme-primary-color, #{$orange-450});
+    text-align: left;
   }
 
   &:not(.is-user) {
     border-radius: 18px 18px 18px 0;
     background-color: $gray-700;
+    text-align: left;
   }
 
   ul.message-list-items {

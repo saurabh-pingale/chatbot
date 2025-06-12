@@ -1,6 +1,7 @@
 from sqlalchemy import select, func, Date
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime
 from typing import Optional, Tuple, Dict
 
@@ -16,39 +17,64 @@ class AnalyticsHandler:
 
     async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
         """
-        Retrieves or creates an analytics record. If creating, it populates UTM data.
+        Atomically retrieves or creates an analytics record using INSERT ... ON CONFLICT.
+        This version correctly targets the partial unique index for anonymous users
+        and the full unique constraint for identified users.
         """
         today = datetime.now().date()
-        stmt = select(UserShopAnalyticsModel).where(
+    
+        utm_data = utm_params.dict() if utm_params else {}
+        insert_values = {
+            "user_id": user_id,
+            "shop_id": shop_id,
+            "date": today,
+            "utm_source": utm_data.get('utm_source') or 'direct',
+            "utm_medium": utm_data.get('utm_medium'),
+            "utm_campaign": utm_data.get('utm_campaign'),
+            "utm_term": utm_data.get('utm_term'),
+            "utm_content": utm_data.get('utm_content'),
+            "opened_chatbot_count": 0,
+            "chat_interactions_count": 0,
+            "added_to_cart_count": 0,
+            "purchased_count": 0,
+            "purchase_amount": 0.0
+        }
+
+        stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
+
+        if user_id is None:
+            logger.info("Applying ON CONFLICT for anonymous user with partial index condition.")
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=['shop_id', 'date'],
+                index_where=UserShopAnalyticsModel.user_id.is_(None)
+            )
+        else:
+            logger.info("Applying ON CONFLICT for identified user on columns (user_id, shop_id, date).")
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=['user_id', 'shop_id', 'date']
+            )
+
+        await session.execute(stmt)
+
+        get_stmt = select(UserShopAnalyticsModel).where(
             UserShopAnalyticsModel.shop_id == shop_id,
             UserShopAnalyticsModel.date == today
         )
-
         if user_id:
-            stmt = stmt.where(UserShopAnalyticsModel.user_id == user_id)
+            get_stmt = get_stmt.where(UserShopAnalyticsModel.user_id == user_id)
         else:
-            stmt = stmt.where(UserShopAnalyticsModel.user_id.is_(None))
+            get_stmt = get_stmt.where(UserShopAnalyticsModel.user_id.is_(None))
 
-        result = await session.execute(stmt)
+        result = await session.execute(get_stmt)
         analytics_record = result.scalar_one_or_none()
 
         if not analytics_record:
-            logger.info(f"Creating analytics record for shop {shop_id}, user {user_id or 'anonymous'}.")
-            
-            utm_data = utm_params.dict() if utm_params else {}
-            
-            analytics_record = UserShopAnalyticsModel(
-                user_id=user_id,
-                shop_id=shop_id,
-                date=today,
-                utm_source=utm_data.get('utm_source') or 'direct',
-                utm_medium=utm_data.get('utm_medium'),
-                utm_campaign=utm_data.get('utm_campaign'),
-                utm_term=utm_data.get('utm_term'),
-                utm_content=utm_data.get('utm_content')
+            logger.critical(
+                f"FATAL: Record for shop_id={shop_id}, user_id={user_id}, date={today} "
+                "was not found even after an atomic ON CONFLICT insert. Check DB transaction isolation levels."
             )
-            session.add(analytics_record)
-            await session.flush()
+            return None
+
         return analytics_record
 
     async def process_user_and_get_token_data(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
@@ -205,38 +231,39 @@ class AnalyticsHandler:
 
     async def update_user_chat_analytics(
         self, 
-        user_id: int, 
         shop_id: int, 
+        user_id: Optional[int] = None,
         country: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
         ip_address: Optional[str] = None
     ) -> bool:
         """
-        Updates user's location information (if not already set) and 
-        increments their chat interaction count. Manages its own session/transaction.
+        Updates chat analytics. For identified users, it also updates their location.
+        For anonymous users, it increments the interaction count on the shared anonymous record.
         """
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    user_stmt = (
-                        select(UserModel)
-                        .options(selectinload(UserModel.analytics))
-                        .where(UserModel.id == user_id)
-                    )
-                    result = await session.execute(user_stmt)
-                    user = result.scalar_one_or_none()
+                    if user_id:
+                        user_stmt = (
+                            select(UserModel)
+                            .options(selectinload(UserModel.analytics))
+                            .where(UserModel.id == user_id)
+                        )
+                        result = await session.execute(user_stmt)
+                        user = result.scalar_one_or_none()
 
-                    if not user:
-                        logger.error(f"User with id {user_id} not found. Cannot update analytics.")
-                        return False
-                    
-                    if user.shop_id != shop_id:
-                        logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
-                    else:
-                        updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
-                        if updated_location:
-                            logger.info(f"Updating location on UserModel for user_id: {user_id}")
+                        if not user:
+                            logger.error(f"User with id {user_id} not found. Cannot update analytics.")
+                            return False
+                        
+                        if user.shop_id != shop_id:
+                            logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
+                        else:
+                            updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
+                            if updated_location:
+                                logger.info(f"Updating location on UserModel for user_id: {user_id}")
 
                     analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
                     if analytics_record:
@@ -313,6 +340,48 @@ class AnalyticsHandler:
                     return False
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing purchased_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
+                    return False
+
+    async def increment_purchased_count_by_email(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:
+        """
+        Finds a user by email and shop identifier (or creates them if they don't exist)
+        and increments their purchase analytics for today. This is designed to be called 
+        from a webhook where we may not have our internal user_id.
+        """
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    shop_stmt = select(ShopModel).where(ShopModel.shop_id == shop_identifier)
+                    shop_result = await session.execute(shop_stmt)
+                    shop = shop_result.scalar_one_or_none()
+
+                    if not shop:
+                        logger.error(f"Webhook received for an unknown shop: {shop_identifier}. Cannot track purchase.")
+                        return False
+                    
+                    user_stmt = select(UserModel).where(UserModel.email == email, UserModel.shop_id == shop.id)
+                    user_result = await session.execute(user_stmt)
+                    user = user_result.scalar_one_or_none()
+                    
+                    if not user:
+                        logger.info(f"Purchase by new user via webhook. Creating user for email {email} in shop {shop.shop_id}.")
+                        user = UserModel(email=email, shop_id=shop.id)
+                        session.add(user)
+                        await session.flush()
+
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id=shop.id, user_id=user.id)
+
+                    if not analytics_record:
+                        logger.error(f"Could not get/create analytics record for user {user.id} on shop {shop.id} for purchase tracking.")
+                        return False
+                    
+                    analytics_record.purchased_count += 1
+                    analytics_record.purchase_amount = (analytics_record.purchase_amount or 0) + amount
+                    
+                    logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop.id}. New total purchases: {analytics_record.purchased_count}, New total amount: {analytics_record.purchase_amount}")
+                    return True
+                except SQLAlchemyError as e:
+                    logger.error(f"DB Error tracking purchase by email for {email}, shop {shop_identifier}: {e}", exc_info=True)
                     return False
 
     async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:

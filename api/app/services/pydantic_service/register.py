@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Type, Any
+from typing import Optional, Callable, Type, Any, Tuple, List
 from pydantic import BaseModel
 import functools
 
@@ -20,20 +20,24 @@ class Register:
     def __init__(self, tool_handler):
         self.tool_handler = tool_handler
     
-    def register_all_tools(self):
-        """Register all available tools and return them as a list."""
-        tools = [
+    def register_all_tools(self) -> Tuple[List[Callable], List[Type[BaseModel]]]:
+        """Register all available tools and return them as a list of tools and response models."""
+        tool_registrations = [
             self._register_greeting_tool(),
             self._register_product_tool(),
             self._register_order_tool(),
             self._register_terms_tool(),
         ]
-        return tools
+        
+        tools = [reg[0] for reg in tool_registrations]
+        response_models = [reg[1] for reg in tool_registrations]
+        
+        return tools, response_models
 
-    def _register_greeting_tool(self):
+    def _register_greeting_tool(self) -> Tuple[Callable, Type[BaseModel]]:
         """Register greeting tool"""
         greeting_tool = GreetingTool()
-        return self._register_tool_instance(
+        tool, response_model = self._register_tool_instance(
             greeting_tool,
             response_model=GreetingResponse,
             processor=lambda response, output: setattr(
@@ -42,8 +46,9 @@ class Register:
                 f"Some popular categories: {', '.join(output['categories'])}"
             ) if output.get("categories") else None
         )
+        return tool, response_model
 
-    def _register_product_tool(self):
+    def _register_product_tool(self) -> Tuple[Callable, Type[BaseModel]]:
         """Register product tool"""
         product_tool = ProductTool()
         return self._register_tool_instance(
@@ -52,7 +57,7 @@ class Register:
             processor=None
         )
 
-    def _register_order_tool(self):
+    def _register_order_tool(self) -> Tuple[Callable, Type[BaseModel]]:
         """Register order tool"""
         order_tool = OrderTool()
         return self._register_tool_instance(
@@ -61,7 +66,7 @@ class Register:
             processor=None
         )
 
-    def _register_terms_tool(self):
+    def _register_terms_tool(self) -> Tuple[Callable, Type[BaseModel]]:
         """Register terms tool"""
         terms_tool = TermsTool()
         return self._register_tool_instance(
@@ -72,7 +77,7 @@ class Register:
         )
 
     def _register_tool_instance(self, tool_instance: BaseTool, response_model: Type[BaseModel],
-                              processor: Optional[Callable[[Any, dict], None]] = None):
+                              processor: Optional[Callable[[Any, dict], None]] = None) -> Tuple[Callable, Type[BaseModel]]:
         """
         Helper method to register a tool instance with the agent.
         It creates a correctly named wrapper around the tool's run method to avoid naming conflicts.
@@ -91,4 +96,4 @@ class Register:
             tool_name=tool_instance.tool_name
         )(tool_wrapper)
         
-        return configured_tool
+        return configured_tool, response_model

@@ -12,6 +12,7 @@ import {
   TextField,
   Banner,
   InlineStack,
+  Spinner,
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import SetupStepper from "../components/SetupStepper";
@@ -79,11 +80,13 @@ export default function BillingPage() {
   const [ownerDetails, setOwnerDetails] = useState({ name: "", email: "", location: "" });
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (fetcher.state === 'idle' && fetcher.data?.success) {
         setActiveModal(null);
         setShowSuccessBanner(true);
+        setIsRedirecting(true);
         setTimeout(() => {
             setShowSuccessBanner(false);
             navigate('/app');
@@ -130,9 +133,28 @@ export default function BillingPage() {
   ];
 
   const isOwnerDetailsValid = ownerDetails.name && ownerDetails.email && ownerDetails.location;
+  const isLoading = fetcher.state !== "idle" || isRedirecting;
 
   return (
     <Page>
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Spinner accessibilityLabel="Processing..." />
+        </div>
+      )}
       <SetupStepper currentStep={2} setupCompleted={setupCompleted} />
       <BlockStack gap="500">
         <Layout>

@@ -5,6 +5,7 @@ import { trackOpenedChatbot } from './services/analytics';
 import { captureUtmParameters, getStoredUtmParameters } from './utils/utm';
 import type { ChatbotAppConfig } from './types';
 import './App.scss';
+import { CartProvider } from './context/CartContext';
 
 function App() {
   const [config, setConfig] = useState<null | ChatbotAppConfig>(null);
@@ -63,7 +64,9 @@ function App() {
 
   return (
     <div>
-      <Chatbot config={config} /> 
+      <CartProvider>
+        <Chatbot config={config} />
+      </CartProvider>
     </div>
   );
 }

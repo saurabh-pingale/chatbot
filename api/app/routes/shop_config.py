@@ -12,6 +12,7 @@ async def get_shop_config(
     """
     Retrieves consolidated shop configuration settings.
     """
+    cleaned_shop_id = shop_id.split('?')[0]
     app = get_app()
-    config = await app.shop_config_service.get_shop_config(shop_id)
+    config = await app.shop_config_service.get_shop_config(cleaned_shop_id)
     return config 

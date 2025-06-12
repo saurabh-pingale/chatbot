@@ -28,6 +28,7 @@ export interface ChatbotAppConfig {
   shopId: string;
   showEmailGate: boolean;
   setupCompleted: boolean;
+  allowGuestMode: boolean;
 }
 
 export interface ChatbotConfig {
@@ -41,9 +42,10 @@ export interface ChatbotConfig {
   emailInputPlaceholder?: string;
   emailLoadingText?: string;
   emailContinueButtonText?: string;
-  allowGuestMode?: boolean;
+  allowGuestMode: boolean;
   emailSkipButtonText?: string;
   showEmailGate: boolean;
+  setupCompleted: boolean;
 }
 
 export interface UserSession {
@@ -143,15 +145,19 @@ export interface ChatbotToggleProps {
 export interface ChatHeaderProps {
   storeImage: string;
   onToggleCart: () => void;
-  cartItemCount: number; 
+  cartItemCount: number;
   primaryColor: string;
-  showCartIcon?: boolean;
-  onToggleOffers?: () => void;
-  showOffersIcon?: boolean;
+  showCartIcon: boolean;
+  onToggleOffers: () => void;
+  showOffersIcon: boolean;
+  isOffersPopupOpen: boolean;
+  onCloseOffers: () => void;
+  offerTags: string[];
+  onOfferClick: (tag: string) => void;
 }
 
 export interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (text: string) => void;
   disabled?: boolean;
   primaryColor: string;
 }
@@ -228,24 +234,15 @@ export interface OffersPopupProps {
   offerTags: string[];
   primaryColor: string;
   onOfferClick: (tag: string) => void;
-  shopDomain: string; 
 }
 
 export interface ChatBodyProps {
   messages: Message[];
   isTyping: boolean;
-  config: ChatbotConfig;
-  handleSendMessage: (message: string) => Promise<void>;
-  isCartOpen: boolean;
-  cartItems: CartItem[];
-  toggleCart: () => void;
-  updateQuantity: (productId: string, quantity: number) => Promise<void>;
-  isOffersPopupOpen: boolean;
-  offerTagsList: string[];
-  handleCloseOffers: () => void;
-  handleOfferClick: (tag: string) => void;
+  config: ChatbotAppConfig;
+  handleSendMessage: (text: string) => void;
   jwtToken: string | null;
-  isEmailGateVisible: boolean;
+  isEmailGateVisible?: boolean;
   handleError: (error: string) => void;
   isChatLimitReached?: boolean;
 }

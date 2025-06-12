@@ -113,7 +113,7 @@ async def save_plan_details(request: Request, body: PlanDetailsRequest):
     try:
         app = get_app()
         
-        plan_start_date = datetime.now(UTC)
+        plan_start_date = datetime.utcnow()
         plan_end_date = plan_start_date + timedelta(days=30) if body.plan == "free" else None
 
         await app.shop_admin_service.save_plan_details(

@@ -22,6 +22,7 @@ import {
   Tooltip,
   TextField,
   RadioButton,
+  Spinner,
 } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
 
@@ -118,6 +119,7 @@ export default function Settings() {
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showErrorBanner, setShowErrorBanner] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if(session?.shop) {
@@ -139,13 +141,16 @@ export default function Settings() {
   useEffect(() => {
     if (fetcher.data?.success) {
       setShowSuccessBanner(true);
-      const timer = setTimeout(() => {
-        setShowSuccessBanner(false);
-        if (!setupCompleted) {
-          navigate('/app/training');
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
+      if (!setupCompleted) {
+        setIsRedirecting(true);
+        const timer = setTimeout(() => {
+          navigate("/app/training");
+        }, 2000);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => setShowSuccessBanner(false), 2000);
+        return () => clearTimeout(timer);
+      }
     } else if (fetcher.data?.error) {
       setShowErrorBanner(true);
       const timer = setTimeout(() => setShowErrorBanner(false), 5000);
@@ -211,10 +216,28 @@ export default function Settings() {
     }
   };
 
-  const isLoading = fetcher.state === "submitting";
+  const isLoading = fetcher.state !== "idle" || isRedirecting || uploading;
 
   return (
     <Page>
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Spinner accessibilityLabel="Loading..." />
+        </div>
+      )}
       <SetupStepper currentStep={0} setupCompleted={setupCompleted} />
       <BlockStack gap="500">
         {showSuccessBanner && (

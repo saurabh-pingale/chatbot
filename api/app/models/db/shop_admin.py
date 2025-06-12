@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from datetime import datetime
 
 from app.models.db.base import Base
 
@@ -8,11 +9,11 @@ class ShopModel(Base):
     __tablename__ = 'shops'
     
     id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime, default=func.now())
-    shop_id = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    shop_id = Column(String, unique=True, index=True, nullable=False)
     shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
-    updated_at = Column(DateTime, nullable=False, onupdate=func.now())
     region = Column(String, nullable=True)
     country = Column(String, nullable=True)
     support_email = Column(Text, nullable=True)

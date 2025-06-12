@@ -9,9 +9,10 @@ import {
   InlineStack,
   Button,
   Banner,
+  Spinner,
 } from "@shopify/polaris";
 import { json, LoaderFunction } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { getShopStatus } from "./get_shop_status";
 import React from "react";
@@ -54,13 +55,34 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Index() {
   const { plan, setupCompleted } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
+  const navigation = useNavigation();
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
+  const isLoading = navigation.state !== "idle";
+
   return (
     <Page>
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Spinner accessibilityLabel="Loading..." />
+        </div>
+      )}
       <BlockStack gap="500">
         <Card>
           <BlockStack gap="200">

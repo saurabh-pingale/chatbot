@@ -1,6 +1,6 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon } from '../../assets/XIcon';
 import { hexToRgbArray } from '../../utils/utils';
 import type { OffersPopupProps, StyleWithCustomProps } from '../../types';
 import './OffersPopup.scss';
@@ -12,6 +12,12 @@ export const OffersPopup = memo<OffersPopupProps>(({
   primaryColor, 
   onOfferClick
 }) => {
+  const [container, setContainer] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setContainer(document.querySelector('.chatbot-container'));
+  }, []);
+
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const headerStyles: StyleWithCustomProps = {
     '--theme-primary-color': primaryColor,
@@ -25,7 +31,7 @@ export const OffersPopup = memo<OffersPopupProps>(({
     onClose();
   };
 
-  return (
+  const popupJsx = (
     <AnimatePresence>
       {isOpen && (
         <motion.div 
@@ -37,18 +43,15 @@ export const OffersPopup = memo<OffersPopupProps>(({
         >
           <motion.div
             className="offers-popup-container"
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: "0%", opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
+            initial={{ y: -20, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -20, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()} 
             style={headerStyles}
           >
             <div className="offers-popup-header" style={headerStyles}>
               <h3 className="offers-popup-title">Latest Offers</h3>
-              <button className="offers-popup-close-btn" onClick={onClose} aria-label="Close offers popup">
-                <XIcon />
-              </button>
             </div>
             <div className="offers-popup-content">
               {offerTags.length === 0 ? (
@@ -70,4 +73,10 @@ export const OffersPopup = memo<OffersPopupProps>(({
       )}
     </AnimatePresence>
   );
+
+  if (!container) {
+    return null;
+  }
+
+  return createPortal(popupJsx, container);
 }); 

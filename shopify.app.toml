@@ -3,30 +3,31 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://turtle-recognised-latin-fuzzy.trycloudflare.com"
+application_url = "https://exercise-besides-myers-sharon.trycloudflare.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products"
+scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://turtle-recognised-latin-fuzzy.trycloudflare.com/auth/callback",
-  "https://turtle-recognised-latin-fuzzy.trycloudflare.com/auth/shopify/callback",
-  "https://turtle-recognised-latin-fuzzy.trycloudflare.com/api/auth/callback"
+  "https://exercise-besides-myers-sharon.trycloudflare.com/auth/callback",
+  "https://exercise-besides-myers-sharon.trycloudflare.com/auth/shopify/callback",
+  "https://exercise-besides-myers-sharon.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://turtle-recognised-latin-fuzzy.trycloudflare.com"
+url = "https://exercise-besides-myers-sharon.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true

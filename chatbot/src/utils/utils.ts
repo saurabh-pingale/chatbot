@@ -93,5 +93,6 @@ export const getShopConfig = async () => {
     storeImage: config.image,
     shopId: getShopId() || 'demo-shop',
     showEmailGate: config.show_email_gate,
+    allowGuestMode: !config.show_email_gate,
   }
 }

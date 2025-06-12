@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Union
+import json
 
 class UnifiedResponse(BaseModel):
     answer: str
@@ -9,7 +10,7 @@ class UnifiedResponse(BaseModel):
 
 class Product(BaseModel):
     """Model representing a product in the store"""
-    id: str
+    id: Union[str, int]
     name: str = Field(..., alias='title')
     price: float
     category: str
@@ -39,27 +40,35 @@ class GreetingResponse(BaseResponse):
 
 class ProductResponse(BaseResponse):
     """Schema for product query responses"""
-    introduction: str = Field(
+    answer: str = Field(
         ...,
-        description="Brief introduction or acknowledgment of the user's query"
+        description="The final, complete, and conversational answer to be shown to the user. This should incorporate an introduction, product details, suggestions, and a closing into one cohesive and natural-sounding text. If no products are found, it should still provide a helpful and complete response."
     )
-    product_ids: Optional[List[str]] = []
+    product_ids: Optional[List[str]] = Field(
+        default=[],
+        description="A list of product IDs that have been identified as relevant from the tool's results, which will be used for final filtering. This is a hidden field and should not be mentioned in the answer. You MUST populate this with the IDs of the products you discuss in the 'answer' field."
+    )
     products: Optional[List[Product]] = Field(
         None,
-        description="List of relevant products matching the query"
+        description="List of relevant products matching the query. This is populated by the system after filtering and should not be set by the AI."
     )
     categories: Optional[List[str]] = Field(
         None,
-        description="List of relevant categories"
+        description="List of relevant categories matching the query. This is populated by the system after filtering and should not be set by the AI."
     )
     suggestions: Optional[str] = Field(
         None,
         description="Product category suggestions if no direct matches found"
     )
-    closing: Optional[str] = Field(
-        None,
-        description="Optional closing remark or follow-up question"
-    )
+    
+    @field_validator('products', mode='before')
+    def validate_products(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON string for products")
+        return v
 
 class OrderResponse(BaseResponse):
     """Response model for order-related queries"""

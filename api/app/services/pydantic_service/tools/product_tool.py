@@ -3,7 +3,6 @@ from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
 from .base_tool import BaseTool
-from .entity_extraction_tool import ProductEntity
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.rag_pipeline_utils import (
@@ -13,7 +12,7 @@ from app.utils.rag_pipeline_utils import (
 from app.utils.logger import logger
 
 class ProductTool(BaseTool):
-    """Help users search for or learn about products by extracting entities from their query."""
+    """Tool to search for products based on a user's query."""
     @property
     def tool_name(self) -> str:
         return "product"
@@ -21,28 +20,48 @@ class ProductTool(BaseTool):
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
     
-    async def run(self, ctx: RunContext, product_query: ProductEntity) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext, query: str) -> Dict[str, Any]:
+        """
+        Performs a semantic search for products based on the user's query.
+
+        Args:
+            query: The user's search query as a string.
+        """
         shopId = ctx.deps.get("shopId")
+        logger.info(f"Performing product search for query: '{query}'")
 
         try:
-            refined_query = f"{product_query.color} {product_query.category} {' '.join(product_query.attributes)}".strip()
-            logger.info(f"Initial refined query from entities: '{refined_query}'")
-
-            if refined_query == "any product":
-                logger.warning("Entity extraction yielded default values. Using original query for semantic search.")
-                refined_query = product_query.query
-
-            logger.info(f"Final refined product query: '{refined_query}'")
-
-            embedding = EmbeddingService.create_embeddings(refined_query)
+            embedding = EmbeddingService.create_embeddings(query)
             results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
                 namespace=shopId, 
                 agent_type="ProductAgent"
             )
 
-            products = extract_products_from_response(results) or []
+            logger.info(f"Raw Result: {results}")
+
+            unique_results = []
+            seen_variant_ids = set()
+            if results:
+                for result in results:
+                    variant_id = getattr(result.metadata, 'variant_id', None)
+                    if variant_id and variant_id not in seen_variant_ids:
+                        unique_results.append(result)
+                        seen_variant_ids.add(variant_id)
+                    elif not variant_id:
+                        if result.id not in seen_variant_ids:
+                             unique_results.append(result)
+                             seen_variant_ids.add(result.id)
+
+            logger.info(f"--------------------------------------------------------------------")
+
+            products = extract_products_from_response(unique_results) or []
+            logger.info(f"Products: {products}")
+
             categories = extract_categories(products) or []
+            logger.info(f"Categories: {categories}")
+
+            ctx.deps["original_products"] = products
 
             if not isinstance(products, list):
                 raise ModelRetry("Invalid product data format, retrying...")
@@ -50,8 +69,8 @@ class ProductTool(BaseTool):
             return {
                 "products": products,
                 "categories": categories,
-                "refined_query": refined_query,
-                "original_query": product_query.query
+                "refined_query": query,
+                "original_query": query
             }
         except Exception as e:
             logger.error(f"Error in product tool: {e}")
