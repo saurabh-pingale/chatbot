@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://exercise-besides-myers-sharon.trycloudflare.com"
+application_url = "https://rescue-belt-cholesterol-myrtle.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://exercise-besides-myers-sharon.trycloudflare.com/auth/callback",
-  "https://exercise-besides-myers-sharon.trycloudflare.com/auth/shopify/callback",
-  "https://exercise-besides-myers-sharon.trycloudflare.com/api/auth/callback"
+  "https://rescue-belt-cholesterol-myrtle.trycloudflare.com/auth/callback",
+  "https://rescue-belt-cholesterol-myrtle.trycloudflare.com/auth/shopify/callback",
+  "https://rescue-belt-cholesterol-myrtle.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://exercise-besides-myers-sharon.trycloudflare.com"
+url = "https://rescue-belt-cholesterol-myrtle.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 
