@@ -73,14 +73,14 @@ class Processing:
             }
         elif isinstance(response, GreetingResponse):
             return {
-                "answer": response.response_text,
+                "answer": response.welcome_message,
                 "categories": [],
                 "success": True
             }
         elif isinstance(response, TermsResponse):
             return {
-                "answer": response.response_text,
-                "terms": response.terms,
+                "answer": response.response,
+                "sources": response.sources,
                 "success": True
             }
         else:

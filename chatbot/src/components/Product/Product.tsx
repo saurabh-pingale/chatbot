@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { ProductProps, StyleWithCustomProps } from '../../types';
 import './Product.scss';
+import { hexToRgbArray } from '../../utils/utils';
 
 export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) => {
   const handleAddToCart = async () => {
@@ -11,9 +12,12 @@ export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) =>
     }
   };
 
-  const dynamicButtonStyles: StyleWithCustomProps = {};
+  const primaryColorRgb = hexToRgbArray(primaryColor);
+  const dynamicButtonStyles: StyleWithCustomProps = {
+    '--theme-primary-color': primaryColor,
+  };
   if (primaryColor) {
-    dynamicButtonStyles['--theme-primary-color'] = primaryColor;
+    dynamicButtonStyles['--theme-primary-color-rgb'] = primaryColorRgb?.join(', ');
   }
 
   return (

@@ -16,7 +16,7 @@ class CustmFastAPI(FastAPI):
         from app.dbhandlers.conversation_handler import ConversationHandler
         from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
         from app.dbhandlers.shop_config_handler import ShopConfigHandler
-        from app.dbhandlers.chat_limit_handler import ChatLimitHandler
+        # from app.dbhandlers.chat_limit_handler import ChatLimitHandler
         from app.dbhandlers.otp_handler import OTPHandler
         from app.dbhandlers.user_handler import UserHandler
 
@@ -32,6 +32,6 @@ class CustmFastAPI(FastAPI):
         self.conversation_handler = ConversationHandler()
         self.checkout_product_handler = CheckoutProductHandler()
         self.shop_config_handler = ShopConfigHandler()
-        self.chat_limit_handler = ChatLimitHandler()
+        # self.chat_limit_handler = ChatLimitHandler()
         self.otp_handler = OTPHandler()
         self.user_handler = UserHandler()

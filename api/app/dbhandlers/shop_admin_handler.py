@@ -125,8 +125,8 @@ class ShopAdminHandler:
                     }
                 except SQLAlchemyError as error:
                     logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
-                    raise error
-            
+                    return None
+
     async def save_color_preference(self, shop_id: str, color: str) -> None:
         """Saves the color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:

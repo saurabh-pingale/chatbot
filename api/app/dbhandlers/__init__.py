@@ -7,7 +7,7 @@ from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.conversation_handler import ConversationHandler
 from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
 from app.dbhandlers.shop_config_handler import ShopConfigHandler
-from app.dbhandlers.chat_limit_handler import ChatLimitHandler
+# from app.dbhandlers.chat_limit_handler import ChatLimitHandler
 from app.dbhandlers.otp_handler import OTPHandler
 from app.dbhandlers.user_handler import UserHandler
 
@@ -19,7 +19,7 @@ def init_handlers(app: 'CustmFastAPI'):
     app.conversation_handler = ConversationHandler()
     app.checkout_product_handler = CheckoutProductHandler()
     app.shop_config_handler = ShopConfigHandler()
-    app.chat_limit_handler = ChatLimitHandler()
+    # app.chat_limit_handler = ChatLimitHandler()
     app.otp_handler = OTPHandler()
     app.user_handler = UserHandler()
 

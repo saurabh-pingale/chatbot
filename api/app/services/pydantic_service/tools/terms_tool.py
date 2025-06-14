@@ -41,9 +41,22 @@ class TermsTool(BaseTool):
 
             if not extracted_term_texts:
                 logger.warning(f"Warning: No terms found for query: '{user_message}' in shop: {shopId}")
-                return {"terms": ["I'm sorry, but I could not find any information about the store's policies. Please contact the store directly for help with your question."]}
+                return {
+                    "terms": [
+                        "I apologize, but I couldn't find any specific information about this policy in the store's documentation. "
+                        "For the most accurate and up-to-date information about store policies, I recommend:\n"
+                        "1. Checking the store's policy pages directly\n"
+                        "2. Contacting the store's customer service\n"
+                        "3. Looking for policy information during checkout"
+                    ]
+                }
             
             return {"terms": extracted_term_texts}
         except Exception as e:
             logger.error(f"Error in terms tool processing message for shopId '{shopId}': {e}")
-            raise ModelRetry(f"Failed to fetch terms for shopId '{shopId}': {str(e)}, retrying...")
+            return {
+                "terms": [
+                    "I'm having trouble accessing the store's policy information right now. "
+                    "Please try again later or contact the store directly for immediate assistance."
+                ]
+            }

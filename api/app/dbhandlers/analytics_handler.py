@@ -15,67 +15,64 @@ class AnalyticsHandler:
     def __init__(self):
         pass
 
-    async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
+    async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, guest_id: Optional[str] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
         """
-        Atomically retrieves or creates an analytics record using INSERT ... ON CONFLICT.
-        This version correctly targets the partial unique index for anonymous users
-        and the full unique constraint for identified users.
+        Atomically retrieves or creates an analytics record for the current day.
+        It first attempts to insert a new record. If a record for the user/guest and date
+        already exists (violating a unique constraint), it does nothing.
+        It then reliably fetches and returns the record for the current day.
         """
         today = datetime.now().date()
     
-        utm_data = utm_params.dict() if utm_params else {}
-        insert_values = {
-            "user_id": user_id,
-            "shop_id": shop_id,
-            "date": today,
-            "utm_source": utm_data.get('utm_source') or 'direct',
-            "utm_medium": utm_data.get('utm_medium'),
-            "utm_campaign": utm_data.get('utm_campaign'),
-            "utm_term": utm_data.get('utm_term'),
-            "utm_content": utm_data.get('utm_content'),
-            "opened_chatbot_count": 0,
-            "chat_interactions_count": 0,
-            "added_to_cart_count": 0,
-            "purchased_count": 0,
-            "purchase_amount": 0.0
-        }
-
-        stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
-
-        if user_id is None:
-            logger.info("Applying ON CONFLICT for anonymous user with partial index condition.")
-            stmt = stmt.on_conflict_do_nothing(
-                index_elements=['shop_id', 'date'],
-                index_where=UserShopAnalyticsModel.user_id.is_(None)
-            )
+        insert_values = {"shop_id": shop_id, "date": today}
+        if user_id:
+            insert_values["user_id"] = user_id
+        elif guest_id:
+            insert_values["guest_id"] = guest_id
         else:
-            logger.info("Applying ON CONFLICT for identified user on columns (user_id, shop_id, date).")
-            stmt = stmt.on_conflict_do_nothing(
-                index_elements=['user_id', 'shop_id', 'date']
-            )
+            logger.error("Both user_id and guest_id are None. Cannot create analytics record.")
+            return None
 
+        # Add UTM parameters for new records
+        if utm_params:
+            insert_values.update({
+                "utm_source": utm_params.utm_source or 'direct',
+                "utm_medium": utm_params.utm_medium,
+                "utm_campaign": utm_params.utm_campaign,
+                "utm_term": utm_params.utm_term,
+                "utm_content": utm_params.utm_content
+            })
+        else:
+            insert_values["utm_source"] = 'direct'
+        
+        # Prepare the insert statement with ON CONFLICT DO NOTHING
+        stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
+        
+        if user_id:
+            conflict_target = ['user_id', 'shop_id', 'date']
+            index_where = UserShopAnalyticsModel.user_id.isnot(None)
+        else: # guest_id
+            conflict_target = ['guest_id', 'shop_id', 'date']
+            index_where = UserShopAnalyticsModel.guest_id.isnot(None)
+
+        stmt = stmt.on_conflict_do_nothing(
+            index_elements=conflict_target,
+            index_where=index_where
+        )
         await session.execute(stmt)
 
-        get_stmt = select(UserShopAnalyticsModel).where(
+        # Now, reliably select the record
+        select_stmt = select(UserShopAnalyticsModel).where(
             UserShopAnalyticsModel.shop_id == shop_id,
             UserShopAnalyticsModel.date == today
         )
         if user_id:
-            get_stmt = get_stmt.where(UserShopAnalyticsModel.user_id == user_id)
-        else:
-            get_stmt = get_stmt.where(UserShopAnalyticsModel.user_id.is_(None))
-
-        result = await session.execute(get_stmt)
-        analytics_record = result.scalar_one_or_none()
-
-        if not analytics_record:
-            logger.critical(
-                f"FATAL: Record for shop_id={shop_id}, user_id={user_id}, date={today} "
-                "was not found even after an atomic ON CONFLICT insert. Check DB transaction isolation levels."
-            )
-            return None
-
-        return analytics_record
+            select_stmt = select_stmt.where(UserShopAnalyticsModel.user_id == user_id)
+        else: # guest_id must exist if user_id does not, based on check above
+            select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
+            
+        result = await session.execute(select_stmt)
+        return result.scalar_one_or_none()
 
     async def process_user_and_get_token_data(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
         """
@@ -233,6 +230,7 @@ class AnalyticsHandler:
         self, 
         shop_id: int, 
         user_id: Optional[int] = None,
+        guest_id: Optional[str] = None,
         country: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
@@ -245,7 +243,9 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    if user_id:
+                    is_guest = guest_id is not None
+                    
+                    if not is_guest and user_id:
                         user_stmt = (
                             select(UserModel)
                             .options(selectinload(UserModel.analytics))
@@ -264,14 +264,19 @@ class AnalyticsHandler:
                             updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
                             if updated_location:
                                 logger.info(f"Updating location on UserModel for user_id: {user_id}")
+                    
+                    analytics_record = await self._get_or_create_today_analytics_record(
+                        session, 
+                        shop_id=shop_id, 
+                        user_id=user_id, 
+                        guest_id=guest_id
+                    )
 
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
                     if analytics_record:
                         analytics_record.chat_interactions_count += 1
-                        logger.info(f"Incremented chat_interactions_count for user_id: {user_id}, shop_id: {shop_id} for date {analytics_record.date}")
+                        logger.info(f"Incremented chat_interactions_count for {'guest_id' if is_guest else 'user_id'}: {guest_id if is_guest else user_id}, shop_id: {shop_id} for date {analytics_record.date}")
                     else:
-                         logger.error(f"Failed to get/create analytics record for user {user_id}")
-                         return False
+                         logger.info(f"Chat interaction recorded for {'guest_id' if is_guest else 'user_id'}: {guest_id if is_guest else user_id}, shop_id: {shop_id}")
 
                     return True
 
@@ -284,7 +289,7 @@ class AnalyticsHandler:
                     logger.error(f"General error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {e}", exc_info=True)
                     return False
 
-    async def increment_opened_chatbot_count(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None) -> bool:
+    async def increment_opened_chatbot_count(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:
         """
         Increments the chatbot open count. Handles both anonymous and identified users.
         """
@@ -298,48 +303,56 @@ class AnalyticsHandler:
                         return False
 
                     user_pk = None
-                    if user_identifier != 'anonymous_user':
+                    guest_id = None
+
+                    if is_guest:
+                        guest_id = user_identifier
+                    else:
                         user_pk_result = await session.execute(select(UserModel.id).where(UserModel.email == user_identifier, UserModel.shop_id == shop_pk))
                         user_pk = user_pk_result.scalar_one_or_none()
 
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id=shop_pk, user_id=user_pk, utm_params=utm_params)
+                    analytics_record = await self._get_or_create_today_analytics_record(
+                        session, 
+                        shop_id=shop_pk, 
+                        user_id=user_pk,
+                        guest_id=guest_id,
+                        utm_params=utm_params
+                    )
                     
                     if analytics_record:
                         analytics_record.opened_chatbot_count += 1
-                        return True
-                    return False
+                        
+                    return True
                 except SQLAlchemyError as e:
                     logger.error(f"DB error in increment_opened_chatbot_count: {e}", exc_info=True)
                     await session.rollback()
                     return False
 
-    async def increment_added_to_cart_count(self, user_id: int, shop_id: int) -> bool:
+    async def increment_added_to_cart_count(self, shop_id: int, user_id: Optional[int] = None, guest_id: Optional[str] = None) -> bool:
         """Increments the count of how many times a user has added a product to the cart."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.added_to_cart_count += 1
-                        return True
-                    return False
+                    return True
                 except SQLAlchemyError as e:
-                    logger.error(f"DB error incrementing added_to_cart_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
+                    logger.error(f"DB error incrementing added_to_cart_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
                     return False
 
-    async def increment_purchased_count(self, user_id: int, shop_id: int, amount: float) -> bool:
+    async def increment_purchased_count(self, shop_id: int, amount: float, user_id: Optional[int] = None, guest_id: Optional[str] = None) -> bool:
         """Increments the purchase count and adds the purchase amount for a user."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id)
+                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.purchased_count += 1
                         analytics_record.purchase_amount += amount
-                        return True
-                    return False
+                    return True
                 except SQLAlchemyError as e:
-                    logger.error(f"DB error incrementing purchased_count for user {user_id}, shop {shop_id}: {e}", exc_info=True)
+                    logger.error(f"DB error incrementing purchased_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
                     return False
 
     async def increment_purchased_count_by_email(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:

@@ -20,7 +20,7 @@ function App() {
         setConfig(config);
 
         if (config.setupCompleted) {
-          const userId = localStorage.getItem('user_id') || 'anonymous_user'; 
+          const userId = localStorage.getItem('user_id');
           const utmParams = getStoredUtmParameters();
           trackOpenedChatbot(userId, config.shopId, utmParams);
         }

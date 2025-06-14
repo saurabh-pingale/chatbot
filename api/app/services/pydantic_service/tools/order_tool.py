@@ -18,22 +18,26 @@ class OrderTool(BaseTool):
         try:
             shopId = ctx.deps.get("shopId")
             if not shopId:
-                return {"email": "", "phone": "", "message": "No store info found."}
+                return {
+                    "email": "",
+                    "phone": ""
+                }
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
 
-            if not support_info:
-                return {"email": "", "phone": "", "message": "Support contact not available."}
+            if not support_info or (not support_info.get("support_email") and not support_info.get("support_phone")):
+                return {
+                    "email": "",
+                    "phone": ""
+                }
             
             return {
                 "email": support_info.get("support_email", ""),
-                "phone": support_info.get("support_phone", ""),
-                "message": "Here's the support contact you requested."
+                "phone": support_info.get("support_phone", "")
             }
         except Exception as e:
             logger.error(f"Error in order tool: {e}")
             return {
-                "email": None,
-                "phone": None,
-                "message": "Sorry, something went wrong while fetching the support contact. Please try again later."
+                "email": "",
+                "phone": ""
             }

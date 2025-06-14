@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from '../constants/api';
 import { COLORS } from '../constants/colors';
 import { IMAGE } from '../constants/image';
 import { getShopId } from '../utils/utils';
+import { getOrCreateGuestId } from '../utils/guest';
 import type {
   ChatResponse,
   LocationInfo,
@@ -73,7 +74,7 @@ export const trackEvent = (eventName: string, eventData: Record<string, any> = {
 
 export const sendChatMessage = async (
   messages: Message[],
-  userId: string
+  userId: string | null
 ): Promise<ChatResponse> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -85,8 +86,13 @@ export const sendChatMessage = async (
 
   const params = new URLSearchParams({
     shopId: shopId || '',
-    user_id: userId || ''
   });
+
+  if (userId) {
+    params.set('user_id', userId);
+  } else {
+    params.set('guest_id', getOrCreateGuestId());
+  }
 
   trackEvent('chatMessageSent');
 
@@ -201,11 +207,17 @@ export const sendAgentMessage = async (
     "Content-Type": "application/json",
   };
 
+  const params = new URLSearchParams({
+    shopId: shopId,
+  });
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    params.set('guest_id', getOrCreateGuestId());
   }
   
-  const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?shopId=${encodeURIComponent(shopId)}`,
+  const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`,
   {
     method: "POST",
     headers: headers,

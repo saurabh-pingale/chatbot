@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
+from app.constants import MESSAGE_LIMIT
 from app.utils.logger import logger
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
@@ -24,9 +25,10 @@ async def agent_conversation(
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
     try:
+        logger.info(f"Payload: {payload}")
         shop_id = request.query_params.get("shopId")
         if not shop_id:
-            raise HTTPException(status_code=400, detail="shopId query parameter is required.")
+            raise HTTPException(status_code=400, detail="shopId is required.")
         
         app = get_app()
             
@@ -34,34 +36,23 @@ async def agent_conversation(
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
+        guest_id = request.query_params.get("guest_id")
+        jwt_user_id_pk = None
+        is_guest = True
+
         if auth_payload:
             jwt_user_id_pk = auth_payload.get("user_id")
             jwt_shop_id_pk = auth_payload.get("shop_id")
-            is_guest = auth_payload.get("is_guest", True)
+            is_guest = auth_payload.get("is_guest", False)
 
             if not jwt_user_id_pk or not jwt_shop_id_pk:
                 raise HTTPException(status_code=401, detail="Token is malformed.")
             if jwt_shop_id_pk != shop.id:
                 raise HTTPException(status_code=403, detail="User not authorized for this shop.")
 
-            if not is_guest:
-                limit_exceeded = await app.chat_limit_handler.check_and_update_limit(jwt_user_id_pk)
-                if limit_exceeded:
-                    static_response_content = "You have reached the message limit. Please try again after some time."
-                    
-                    user_message = next((m.get('content') for m in reversed(payload.messages) if m.get('role', 'user') == 'user'), None)
-                    app = get_app()
-                    await app.conversation_service.record_conversation_into_db({
-                        "user_query": user_message,
-                        "agent_response": static_response_content,
-                        "user_id": jwt_user_id_pk,
-                        "shop_id": shop.id,
-                    })
-                    
-                    return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
-        else:
-            is_guest = True
-            jwt_user_id_pk = None
+        if len(payload.messages) > MESSAGE_LIMIT * 2:
+            static_response_content = "Your limit is reached"
+            return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
 
         contents = payload.messages
         if not isinstance(contents, list):
@@ -75,23 +66,28 @@ async def agent_conversation(
 
         analytics_success = await app.analytics_service.record_chat_interaction(
             user_id=jwt_user_id_pk, 
-            shop_id=shop.id, 
+            shop_id=shop.id,
+            guest_id=guest_id,
             country=country, 
             region=region, 
             city=city, 
             ip_address=ip
         )
         if not analytics_success:
-            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, shop_id: {shop.id}")
+            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, guest_id: {guest_id}, shop_id: {shop.id}")
         
         agent_response = await app.llm_service.handle_user_message(user_message, contents, shop_id)
         
-        await app.conversation_service.record_conversation_into_db({
+        conversation_log_data = {
             "user_query": user_message,
             "agent_response": agent_response.get('answer'),
             "user_id": jwt_user_id_pk,
             "shop_id": shop.id,
-        })
+        }
+        if is_guest:
+            conversation_log_data["guest_id"] = guest_id
+
+        await app.conversation_service.record_conversation_into_db(conversation_log_data)
         
         return agent_response
 

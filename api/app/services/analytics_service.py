@@ -11,32 +11,14 @@ class AnalyticsService:
         self.db_handler = AnalyticsHandler()
 
     async def process_user_initiation(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[str]:
-        """
-        Processes user initiation, passing UTM parameters to the DB handler.
-        """
-        user_and_shop_ids = await self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params)
-
-        if not user_and_shop_ids:
-            logger.error(f"Failed to process user initiation in DB for email: {email}, shop: {shop_identifier}.")
-            return None
-        
-        token_data = {
-            "user_id": user_and_shop_ids['user_id'],
-            "shop_id": user_and_shop_ids['shop_id'], 
-            "email": email
-        }
-        access_token = create_access_token(data=token_data)
-        
-        if not access_token:
-            logger.error(f"Failed to create access token for user_id: {user_and_shop_ids['user_id']}")
-            return None
-            
-        return access_token
+        """Processes user initiation and returns a JWT token."""
+        return await self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params)
 
     async def record_chat_interaction(
         self, 
         shop_id: int, 
         user_id: Optional[int] = None,
+        guest_id: Optional[str] = None,
         country: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
@@ -49,27 +31,32 @@ class AnalyticsService:
         return await self.db_handler.update_user_chat_analytics(
             shop_id=shop_id,
             user_id=user_id,
+            guest_id=guest_id,
             country=country,
             region=region,
             city=city,
             ip_address=ip_address
         )
 
-    async def track_opened_chatbot(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None) -> bool:
-        """Tracks when a user opens the chatbot. Handles string identifiers and UTM."""
-        return await self.db_handler.increment_opened_chatbot_count(user_identifier, shop_domain, utm_params)
+    async def track_opened_chatbot(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:
+        """Tracks when a user opens the chatbot. Handles both guest and authenticated users."""
+        return await self.db_handler.increment_opened_chatbot_count(user_identifier, shop_domain, utm_params, is_guest)
 
-    async def track_added_to_cart(self, user_id: int, shop_id: int) -> bool:
+    async def track_added_to_cart(self, user_id: Optional[int], shop_id: int, guest_id: Optional[str] = None) -> bool:
         """Tracks when a user adds a product to the cart."""
-        return await self.db_handler.increment_added_to_cart_count(user_id, shop_id)
+        return await self.db_handler.increment_added_to_cart_count(user_id=user_id, shop_id=shop_id, guest_id=guest_id)
 
-    async def track_purchase(self, user_id: int, shop_id: int, amount: float) -> bool:
+    async def track_purchase(self, user_id: Optional[int], shop_id: int, amount: float, guest_id: Optional[str] = None) -> bool:
         """Tracks a purchase event."""
-        return await self.db_handler.increment_purchased_count(user_id, shop_id, amount)
+        return await self.db_handler.increment_purchased_count(user_id=user_id, shop_id=shop_id, amount=amount, guest_id=guest_id)
 
     async def track_purchase_from_webhook(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:
         """Tracks a purchase event coming from a webhook, using email to identify the user."""
         return await self.db_handler.increment_purchased_count_by_email(email, shop_identifier, amount, order_id)
+
+    async def get_shop_pk(self, shop_domain: str) -> Optional[int]:
+        """Convenience method to get shop PK from domain."""
+        return await self.db_handler.get_shop_pk_by_identifier(shop_domain)
 
     async def fetch_shop_analytics_summary(self, shop_identifier: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
         """

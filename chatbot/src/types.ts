@@ -175,27 +175,27 @@ export interface ErrorPopupProps {
 
 export interface MessageProps {
   message: Message;
-  primaryColor?: string;
+  primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
 export interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
-  primaryColor?: string;
+  primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
 export interface ProductProps {
   product: ProductType;
   onAddToCart: (product: ProductType) => Promise<void>;
-  primaryColor?: string;
+  primaryColor: string;
 }
 
 export interface ProductSliderProps {
   products: ProductType[];
   onAddToCart?: (product: ProductType) => Promise<void>;
-  primaryColor?: string;
+  primaryColor: string;
 }
 
 export interface TypingIndicatorProps {
