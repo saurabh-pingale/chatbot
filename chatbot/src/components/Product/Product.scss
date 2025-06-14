@@ -61,7 +61,7 @@
 .product-add-to-cart-button {
   width: 100%;
   padding: 8px;
-  background: $orange-450;
+  background: var(--theme-primary-color);
   color: $white-100;
   border: none;
   border-radius: 6px;
@@ -70,7 +70,7 @@
   transition: background-color 0.2s;
 
   &:hover:not(:disabled) {
-    background: $orange-450;
+    background: var(--theme-primary-color);
   }
 
   &:disabled {

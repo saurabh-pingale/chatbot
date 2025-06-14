@@ -8,10 +8,6 @@ class ShopAdminService:
     def __init__(self):
         self.db_handler = ShopAdminHandler()
 
-    async def get_color_preference(self, shop_id: str) -> Optional[str]:
-        """Fetch color preference from DB via handler."""
-        return await self.db_handler.get_color_preference(shop_id)
-
     async def save_color_preference(self, shop_id: str, color: str) -> None:
         """Save the color preference to the DB via handler."""
         await self.db_handler.save_color_preference(shop_id, color)
@@ -23,10 +19,6 @@ class ShopAdminService:
     async def save_shop_image(self, shop_id: str, image_url: str):
         """Save image URL to the DB via handler."""
         await self.db_handler.save_shop_image(shop_id, image_url)
-
-    async def get_image(self, shop_id: str) -> Optional[str]:
-        """Fetch image from DB via handler."""
-        return await self.db_handler.get_image(shop_id)
 
     async def save_plan_details(
         self,
@@ -58,10 +50,3 @@ class ShopAdminService:
     async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
         """Save the email gate preference to the DB via handler."""
         await self.db_handler.save_email_gate_preference(shop_id, show_email_gate)
-
-    async def get_email_gate_preference(self, shop_id: str) -> Optional[bool]:
-        """Fetch the email gate preference from DB via handler."""
-        preference = await self.db_handler.get_email_gate_preference(shop_id)
-        if preference is None:
-            return False 
-        return preference

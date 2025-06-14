@@ -16,7 +16,7 @@ import {
   LegacyStack,
   Spinner,
 } from "@shopify/polaris";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { API } from '../constants/api.constants';
 import { authenticate } from '../shopify.server';
 import { AnalyticsSummaryData, LoaderData } from '../common/types';
@@ -39,6 +39,7 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const today = new Date();
+
   const [dateRange, setDateRange] = useState({
     start: today,
     end: today,
@@ -95,9 +96,13 @@ export default function AnalyticsPage() {
     handleFetchAnalytics(dateRange.start, dateRange.end);
   }, [shop, dateRange, handleFetchAnalytics]);
   
-  const chartData = data ? [
-    { name: 'Chatbot Openers', count: data.total_opened_chatbot || 0 },
-  ] : [];
+  const chartData = data?.daily_opened_chatbot?.map(item => {
+    const localDate = new Date(item.date + 'T00:00:00');
+    return {
+      date: localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: item.count,
+    };
+  }) || [];
   
   const formattedStartDate = dateRange.start.toLocaleDateString();
   const formattedEndDate = dateRange.end.toLocaleDateString();
@@ -165,14 +170,14 @@ export default function AnalyticsPage() {
           </Grid>
           <LegacyCard title="Chatbot Engagement" sectioned>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="date" minTickGap={20} />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#8884d8" />
-              </BarChart>
+                <Line type="monotone" dataKey="count" name="Chatbot Opens" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
             </ResponsiveContainer>
           </LegacyCard>
         </BlockStack>

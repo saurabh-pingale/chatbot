@@ -26,7 +26,8 @@ export interface AnalyticsSummaryData {
   total_added_to_cart: number;
   total_purchased: number;
   total_purchase_amount: number;
-  error?: string | null;
+  daily_opened_chatbot: { date: string; count: number }[];
+  error?: string;
 };
 
 export interface SaveEmailGatePreferencePayload {

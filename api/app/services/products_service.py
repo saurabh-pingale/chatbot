@@ -24,7 +24,8 @@ class ProductsService:
                 collection["title"]: collection["id"] for collection in stored_collections
             }
 
-            await self.shop_admin_handler.record_products_handler(products, collection_id_map)
+            unique_products = list({product.id: product for product in products}.values())
+            await self.shop_admin_handler.record_products_handler(unique_products, collection_id_map)
         
             products_embeddings = await create_product_embeddings(products)
             await self.embeddings_handler.store_embeddings(products_embeddings, namespace)

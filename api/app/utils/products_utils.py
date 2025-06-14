@@ -35,21 +35,27 @@ async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
     """Generates embeddings for a list of products"""
     embeddings = []
     for product in products:
-        embedding_text = f"Product: {product.title}. Description: {product.description}. Category: {product.category}. Price: {product.price}"
+        metafields_str = " ".join([f"{key}: {value}" for key, value in product.metafields.items() if value])
+        embedding_text = f"Product: {product.title}. Description: {product.description}. Category: {product.category}. Price: {product.price}. {metafields_str}"
         embedding_values = EmbeddingService.create_embeddings(embedding_text)
         
+        variant_id = extract_shopify_id(product.variant_id)
+
+        metadata = {
+            "title": product.title,
+            "description": product.description,
+            "category": product.category,
+            "price": product.price,
+            "url": product.url,
+            "image": product.image,
+            "variant_id": product.variant_id,
+            "type": "product"
+        }
+        metadata.update(product.metafields)
+
         embeddings.append(ProductEmbedding(
-            id=product.id,
+            id=variant_id,
             values=embedding_values,
-            metadata={
-                "title": product.title,
-                "description": product.description,
-                "category": product.category,
-                "price": product.price,
-                "url": product.url,
-                "image": product.image,
-                "variant_id": product.variant_id,
-                "type": "product"
-            }
+            metadata=metadata
         ))
     return embeddings

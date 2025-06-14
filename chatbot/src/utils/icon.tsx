@@ -21,7 +21,6 @@ export const MinusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity}: Minus
         className="cart-quantity-button"
         style={dynamicStyles} 
         onClick={() => onUpdateQuantity(String(id), quantity - 1)}
-        disabled={quantity <= 1}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >

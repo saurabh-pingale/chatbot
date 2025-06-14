@@ -1,5 +1,13 @@
-from typing import List, Optional, Dict
-from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, EmailStr
+
+class UTMParameters(BaseModel):
+    """Defines the structure for UTM parameters."""
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_campaign: Optional[str] = None
+    utm_term: Optional[str] = None
+    utm_content: Optional[str] = None
 
 class ErrorResponse(BaseModel):
     message: str
@@ -65,19 +73,24 @@ class GetImageResponse(BaseModel):
     image: Optional[str]
 
 class UserInitiateRequest(BaseModel):
-    email: str
-    shopId: str 
+    """Defines the structure for the user initiation request."""
+    email: EmailStr
+    shopId: str
+    utm_params: Optional[UTMParameters] = None
 
 class UserInitiateResponse(BaseModel):
+    """Defines the structure for the user initiation response."""
     token: str
 
 class ShopAnalyticsSummaryResponse(BaseModel):
+    """Defines the structure for the analytics summary response."""
     total_users: int
     total_chat_interactions: int
     total_opened_chatbot: int
     total_added_to_cart: int
     total_purchased: int
     total_purchase_amount: float
+    daily_opened_chatbot: List[Dict[str, Any]] = []
     error: Optional[str] = None
 
 class TrackPurchaseRequest(BaseModel):

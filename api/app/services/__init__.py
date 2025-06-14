@@ -7,9 +7,11 @@ def init_services(app: CustmFastAPI):
     from app.services.conversation_service import ConversationService
     from app.services.analytics_service import AnalyticsService
     from app.services.checkout_product_service import CheckoutProductService
+    from app.services.shop_config_service import ShopConfigService
  
     app.shop_admin_service = ShopAdminService()
     app.llm_service = LLMService()
     app.conversation_service = ConversationService()
     app.analytics_service = AnalyticsService()
     app.checkout_product_service = CheckoutProductService()
+    app.shop_config_service = ShopConfigService()
