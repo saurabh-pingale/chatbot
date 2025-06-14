@@ -7,7 +7,7 @@ import { fetchProducts } from "./products"
 import { FetcherResponse, LoaderData } from "../common/types/index";
 import { textTrain } from "./text_train";
 import SetupStepper from "../components/SetupStepper";
-import { Page } from "@shopify/polaris";
+import { Page, Spinner } from "@shopify/polaris";
 import { getShopStatus } from "./get_shop_status";
 
 interface TrainingLoaderData extends LoaderData {
@@ -37,6 +37,7 @@ export default function TrainingPage() {
   const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
   const navigate = useNavigate();
   const MAX_CHAR_LIMIT = 1000;
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     setMessages([{ 
@@ -57,6 +58,7 @@ export default function TrainingPage() {
     }
 
     processingRef.current = true;
+    setIsProcessing(true);
     setMessages((prev) => [
       ...prev,
       { sender: "user", text: input },
@@ -73,7 +75,12 @@ export default function TrainingPage() {
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
-        navigate('/app/billing');
+        if (!setupCompleted) {
+          navigate('/app/billings');
+        } else {
+          processingRef.current = false;
+          setIsProcessing(false);
+        }
       },
       onError: () => {
         setMessages((prev) => [
@@ -82,6 +89,7 @@ export default function TrainingPage() {
         ]);
         setInput("");
         processingRef.current = false;
+        setIsProcessing(false);
       },
     });
   };
@@ -89,6 +97,7 @@ export default function TrainingPage() {
   const handleFetchProducts = async () => {
     if (processingRef.current) return;
     processingRef.current = true;
+    setIsProcessing(true);
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
@@ -97,14 +106,19 @@ export default function TrainingPage() {
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
       }]);
-      navigate('/app/billing');
+      if (!setupCompleted) {
+        navigate('/app/billings');
+      } else {
+        processingRef.current = false;
+        setIsProcessing(false);
+      }
     } catch (error) {
       setMessages((prev) => [...prev, { 
         sender: "bot", 
         text: "Failed to fetch products. Please try again." 
       }]);
-    } finally {
       processingRef.current = false;
+      setIsProcessing(false);
     }
   };
 
@@ -118,6 +132,24 @@ export default function TrainingPage() {
 
   return (
     <Page>
+      {isProcessing && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Spinner accessibilityLabel="Processing..." />
+        </div>
+      )}
       <SetupStepper currentStep={1} setupCompleted={setupCompleted} />
       <div className={styles.container}>
         <div className={styles.header}>
@@ -154,9 +186,9 @@ export default function TrainingPage() {
               <button 
                 onClick={handleSend} 
                 className={styles.sendButton}
-                disabled={!input.trim() || processingRef.current}
+                disabled={!input.trim() || processingRef.current || isProcessing}
               >
-                {processingRef.current ? "Sending..." : "Send"}
+                {isProcessing ? "Sending..." : "Send"}
               </button>
             </div>
           </div>
@@ -170,9 +202,9 @@ export default function TrainingPage() {
               <button 
                 onClick={handleFetchProducts} 
                 className={styles.fetchButton}
-                disabled={processingRef.current}
+                disabled={processingRef.current || isProcessing}
               >
-                {processingRef.current ? "Fetching..." : "Fetch Products"}
+                {isProcessing ? "Fetching..." : "Fetch Products"}
               </button>
             </div>
           </div>

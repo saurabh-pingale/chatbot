@@ -1,12 +1,16 @@
 import jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Optional, Dict, Any
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 from app.config import JWT_SECRET_KEY
 from app.utils.logger import logger
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/analytics_router/initiate_session")
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> Optional[str]:
     """
@@ -26,9 +30,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     
     to_encode.update({"exp": expire})
     
@@ -64,4 +68,26 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return None
     except Exception as e:
         logger.error(f"Error decoding JWT: {e}", exc_info=True)
-        return None 
+        return None
+
+def get_current_user_payload(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    """
+    Dependency to decode and validate JWT token from the Authorization header.
+
+    Args:
+        token: The token from the Authorization header.
+
+    Returns:
+        The decoded token payload.
+
+    Raises:
+        HTTPException: If the token is invalid or expired.
+    """
+    payload = decode_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return payload 

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from datetime import datetime
 
 from app.models.db.base import Base
 
@@ -8,11 +9,11 @@ class ShopModel(Base):
     __tablename__ = 'shops'
     
     id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime)
-    shop_id = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    shop_id = Column(String, unique=True, index=True, nullable=False)
     shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
-    updated_at = Column(DateTime)
     region = Column(String, nullable=True)
     country = Column(String, nullable=True)
     support_email = Column(Text, nullable=True)
@@ -79,12 +80,34 @@ class ProductModel(Base):
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'
-    __table_args__ = (UniqueConstraint('user_id', 'shop_id', name='uq_user_shop_analytics_user_shop'),)
+    __table_args__ = (
+        Index('uq_user_shop_date', 'user_id', 'shop_id', 'date', unique=True, postgresql_where=Column('user_id').isnot(None)),
+        Index('uq_guest_shop_date', 'guest_id', 'shop_id', 'date', unique=True, postgresql_where=Column('guest_id').isnot(None)),
+        
+        CheckConstraint(
+            '(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)', 
+            name='check_user_or_guest'
+        ),
+        
+        Index('ix_user_shop_analytics_date', 'date'),
+        Index('ix_user_shop_analytics_shop_id', 'shop_id'),
+    )
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    guest_id = Column(String(255), nullable=True, index=True)
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
+    date = Column(Date, default=func.current_date(), nullable=False, index=True)
     chat_interactions_count = Column(Integer, default=0, nullable=False)
+    opened_chatbot_count = Column(Integer, default=0, nullable=False)
+    added_to_cart_count = Column(Integer, default=0, nullable=False)
+    purchased_count = Column(Integer, default=0, nullable=False)
+    purchase_amount = Column(Float, default=0.0, nullable=False)
+    utm_source = Column(String, nullable=True)
+    utm_medium = Column(String, nullable=True)
+    utm_campaign = Column(String, nullable=True)
+    utm_term = Column(String, nullable=True)
+    utm_content = Column(String, nullable=True)
 
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")

@@ -1,5 +1,6 @@
 import { CART } from '../constants/cart';
 import { parseVariantId } from '../utils/utils';
+import { trackAddedToCart } from './analytics';
 import type { CartItem, ShopifyCartResponse } from '../types';
 
 export const getCart = async (): Promise<ShopifyCartResponse | null> => {
@@ -83,6 +84,7 @@ export const addToCart = async (items: CartItem[]): Promise<boolean> => {
     }
 
     await response.json();
+    trackAddedToCart();
     return true;
   } catch (err) {
     console.error('Error adding items to cart:', err);

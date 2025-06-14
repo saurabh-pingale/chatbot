@@ -6,25 +6,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: transparent;
   z-index: 100;
-  padding: 16px;
 }
 
 .offers-popup-container {
+  position: absolute;
+  top: 55px;
+  right: 65px;
   background-color: $white-100;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 380px;
-  max-height: 80vh;
+  max-width: 320px;
+  max-height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--theme-primary-color, #{$gray-300});
+  transform-origin: top right;
 }
 
 .offers-popup-header {

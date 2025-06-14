@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { hexToRgbArray } from '../../../utils/utils';
 import { CartIconSVG } from '../../../assets/cart_icon';
 import { RingBellIconSVG } from '../../../assets/RingBellIcon';
+import { OffersPopup } from '../../OffersPopup/OffersPopup';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
 
@@ -13,7 +14,11 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   primaryColor,
   showCartIcon,
   onToggleOffers,
-  showOffersIcon
+  showOffersIcon,
+  isOffersPopupOpen,
+  onCloseOffers,
+  offerTags,
+  onOfferClick
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -42,7 +47,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
       <div className="chat-header-right-section">
         {showOffersIcon && onToggleOffers && (
           <motion.div 
-            className="chat-header-icon-wrapper chat-header-offers-icon-wrapper"
+            className={`chat-header-icon-wrapper chat-header-offers-icon-wrapper ${isOffersPopupOpen ? 'active' : ''}`}
             onClick={onToggleOffers}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -74,6 +79,13 @@ export const ChatHeader = memo<ChatHeaderProps>(({
           </motion.div>
         )}
       </div>
+      <OffersPopup
+        isOpen={isOffersPopupOpen}
+        onClose={onCloseOffers}
+        offerTags={offerTags}
+        primaryColor={primaryColor}
+        onOfferClick={onOfferClick}
+      />
     </div>
   );
 }); 

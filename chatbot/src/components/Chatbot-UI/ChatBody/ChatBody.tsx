@@ -1,28 +1,22 @@
 import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
-import { OffersPopup } from '../../OffersPopup/OffersPopup';
 import { DEFAULT_QUICK_REPLIES } from '../../../constants/default_quick_replies';
 import { Cart } from '../../Cart-UI/Cart/Cart';
 import type { ChatBodyProps, ProductType, StyleWithCustomProps } from '../../../types';
-import { syncCartWithShopify } from '../../../services/shopify';
 import { trackEvent } from '../../../services/chat';
-import { useCart } from '../../../hooks/useCart';
+import { useCart } from '../../../context/CartContext';
 
 const ChatBody = ({
     messages,
     isTyping,
     config,
     handleSendMessage,
-    isOffersPopupOpen,
-    offerTagsList,
-    handleCloseOffers,
-    handleOfferClick,
     jwtToken,
     isEmailGateVisible = false,
     handleError,
     isChatLimitReached
 }: ChatBodyProps) => {
-    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart} = useCart();
+    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
     const chatbotContainerStyles: StyleWithCustomProps = {
         '--theme-primary-color': config.primaryColor,
@@ -37,20 +31,7 @@ const ChatBody = ({
             handleError('Failed to add product to cart. Please try again.');
         }
     };
-    
-    const handleCheckout = async () => {
-        try {
-            const success = await syncCartWithShopify(cartItems);
-            if (success) {
-            window.location.href = '/cart';
-            } else {
-            throw new Error('Failed to sync cart');
-            }
-        } catch (err) {
-            handleError('An error occurred during checkout. Please try again.');
-        }
-    };
-    
+        
     return (
         <>
             <MessageList
@@ -72,7 +53,7 @@ const ChatBody = ({
             </div>
             <ChatInput
                 onSendMessage={handleSendMessage}
-                disabled={isTyping || (!jwtToken && !config.allowGuestMode && !config.showEmailGate) || (isEmailGateVisible && config.showEmailGate) || isChatLimitReached}
+                disabled={isTyping || (config.showEmailGate && isEmailGateVisible && !jwtToken) || isChatLimitReached}
                 primaryColor={config.primaryColor}
             />
             <Cart
@@ -80,16 +61,8 @@ const ChatBody = ({
                 items={cartItems}
                 onClose={toggleCart}
                 onUpdateQuantity={updateQuantity}
-                onCheckout={handleCheckout}
+                onCheckout={checkout}
                 primaryColor={config.primaryColor}
-            />
-            <OffersPopup
-                isOpen={isOffersPopupOpen}
-                onClose={handleCloseOffers}
-                offerTags={offerTagsList}
-                primaryColor={config.primaryColor}
-                onOfferClick={handleOfferClick}
-                shopDomain={config.shopId}
             />
         </>
     );

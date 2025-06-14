@@ -1,5 +1,4 @@
 from pydantic_ai import RunContext
-from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
 from .base_tool import BaseTool
@@ -15,19 +14,30 @@ class OrderTool(BaseTool):
     def __init__(self):
         self.shop_admin_handler = ShopAdminHandler()
     
-    async def run(self, ctx: RunContext[None], **kwargs) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None]) -> Dict[str, Any]:
         try:
-            shopId = kwargs.get("shopId", "")
+            shopId = ctx.deps.get("shopId")
+            if not shopId:
+                return {
+                    "email": "",
+                    "phone": ""
+                }
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
-            
-            if not support_info or not isinstance(support_info, dict):
-                raise ModelRetry("Invalid support info, retrying...")
+
+            if not support_info or (not support_info.get("support_email") and not support_info.get("support_phone")):
+                return {
+                    "email": "",
+                    "phone": ""
+                }
             
             return {
-                "email": support_info.get("support_email"),
-                "phone": support_info.get("support_phone")
+                "email": support_info.get("support_email", ""),
+                "phone": support_info.get("support_phone", "")
             }
         except Exception as e:
             logger.error(f"Error in order tool: {e}")
-            raise ModelRetry(f"Failed to fetch support info: {str(e)}, retrying...")
+            return {
+                "email": "",
+                "phone": ""
+            }

@@ -6,8 +6,10 @@ import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/Chatbot
 import { EmailGate } from '../EmailGate/EmailGate';
 import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { useChat } from '../../hooks/useChat';
-import { useCart } from '../../hooks/useCart';
-import { trackEvent, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags } from '../../services/chat';
+import { useCart } from '../../context/CartContext';
+import { getAuthToken, setAuthToken } from '../../utils/auth';
+import { getStoredUtmParameters } from '../../utils/utm';
+import { initiateUserSession, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags, trackEvent } from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
 import { chatAnimation } from '../../styles/animations';
@@ -23,18 +25,20 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const [isEmailGateVisible, setIsEmailGateVisible] = useState(false);
   const [chatLimitReached, setChatLimitReached] = useState(false);
 
-  const { cartItems, isCartOpen, updateQuantity, toggleCart } = useCart();
+  const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const { messages, isTyping, addMessage, handleBotResponse } = useChat();
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
-    const tokenFromStorage = localStorage.getItem('user_jwt_token');
+    const tokenFromStorage = getAuthToken();
     setJwtToken(tokenFromStorage);
 
-    if (config?.showEmailGate) {
-      setIsEmailGateVisible(!tokenFromStorage);
+    const hasViewedEmailGate = sessionStorage.getItem('sessionViewedEmailGate');
+
+    if (config?.showEmailGate && !tokenFromStorage && !hasViewedEmailGate) {
+      setIsEmailGateVisible(true);
     } else {
       setIsEmailGateVisible(false);
     }
@@ -67,39 +71,50 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
   const handleToggle = () => {
     setIsOpen(prev => !prev);
-    if (!isOpen) {
-      trackEvent('chatbot_opened');
-    }
   };
 
   const handleEmailGateSubmit = async (email: string) => {
-    const tokenFromStorage = localStorage.getItem('user_jwt_token');
-    if (tokenFromStorage) {
-      setJwtToken(tokenFromStorage);
-      setIsEmailGateVisible(false); 
-      trackEvent('email_gate_submitted', { email });
-    } else {
-      setError("Failed to retrieve session token after email submission. Please try again.");
+    try {
+      setError(null);
+      const utmParams = getStoredUtmParameters();
+      const response = await initiateUserSession({
+        email,
+        shopId: config.shopId,
+        utm_params: utmParams,
+      });
+
+      if (response.token) {
+        setAuthToken(response.token);
+        setJwtToken(response.token);
+        setIsEmailGateVisible(false);
+        trackEvent('email_gate_submitted', { email });
+      } else {
+        setError("Failed to initiate session. Please try again.");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during session initiation.';
+      setError(errorMessage);
     }
   };
 
   const handleEmailGateSkip = async () => {
     setIsEmailGateVisible(false);
     setJwtToken(null); 
+    sessionStorage.setItem('sessionViewedEmailGate', 'true');
     trackEvent('email_gate_skipped');
   };
 
   const handleSendMessage = async (content: string) => {
-    if (config.showEmailGate && isEmailGateVisible) {
+    const isChatAllowed = jwtToken || !config.showEmailGate;
+
+    if (!isChatAllowed && isEmailGateVisible) {
       setError('Please provide your email to start chatting.');
       return;
     }
-
-    if (!jwtToken && !config.allowGuestMode) { 
+    
+    if (!isChatAllowed && !config.allowGuestMode) { 
       setError('Authentication is required to send messages.');
-      if (config.showEmailGate) {
-          setIsEmailGateVisible(true);
-      }
+      setIsEmailGateVisible(true);
       return;
     }
 
@@ -200,6 +215,10 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               showCartIcon={!isEmailGateVisible}
               onToggleOffers={handleOpenOffers}
               showOffersIcon={!isEmailGateVisible}
+              isOffersPopupOpen={isOffersPopupOpen}
+              onCloseOffers={handleCloseOffers}
+              offerTags={offerTagsList}
+              onOfferClick={handleOfferClick}
             />
             <div className="chatbot-content">
               {isEmailGateVisible ? (
@@ -214,14 +233,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
                   isTyping={isTyping}
                   config={config}
                   handleSendMessage={handleSendMessage}
-                  isCartOpen={isCartOpen}
-                  cartItems={cartItems}
-                  toggleCart={toggleCart}
-                  updateQuantity={updateQuantity}
-                  isOffersPopupOpen={isOffersPopupOpen}
-                  offerTagsList={offerTagsList}
-                  handleCloseOffers={handleCloseOffers}
-                  handleOfferClick={handleOfferClick}
                   jwtToken={jwtToken}
                   isEmailGateVisible={isEmailGateVisible}
                   handleError={handleError}

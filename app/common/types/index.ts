@@ -22,7 +22,12 @@ export interface ActionResponse {
 export interface AnalyticsSummaryData {
   total_users: number;
   total_chat_interactions: number;
-  error?: string | null;
+  total_opened_chatbot: number;
+  total_added_to_cart: number;
+  total_purchased: number;
+  total_purchase_amount: number;
+  daily_opened_chatbot: { date: string; count: number }[];
+  error?: string;
 };
 
 export interface SaveEmailGatePreferencePayload {

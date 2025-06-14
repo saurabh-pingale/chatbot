@@ -3,6 +3,7 @@ import { trackEvent } from '../services/chat';
 import { getCart, syncCartWithShopify } from '../services/shopify';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
+import { getStoredUtmParameters } from '../utils/utm';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -94,8 +95,7 @@ export const useCart = () => {
     });
 
     setIsCartOpen(true);
-    trackEvent('products_added_to_cart', { cart_items: newItem });
-
+    trackEvent('added_to_cart');
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
@@ -104,6 +104,7 @@ export const useCart = () => {
         syncCartWithShopify(updatedItems).catch(err => console.error('Failed to sync after remove:', err));
         return updatedItems;
     });
+    setIsCartOpen(prev => !prev);
   }, []);
 
   const updateQuantity = useCallback(async (productId: string, quantity: number) => {
@@ -136,6 +137,33 @@ export const useCart = () => {
     setIsCartOpen(prev => !prev);
   }, []);
 
+  const checkout = async () => {
+    try {
+      const success = await syncCartWithShopify(cartItems);
+      if (success) {
+        const utmParams = getStoredUtmParameters();
+        const checkoutUrl = new URL('/checkout', window.location.origin);
+        checkoutUrl.searchParams.set('utm_source', 'chatbot');
+
+        if (utmParams) {
+          for (const [key, value] of Object.entries(utmParams)) {
+            if (value) {
+              checkoutUrl.searchParams.set(key, value);
+            }
+          }
+        }
+        
+        window.location.href = checkoutUrl.toString();
+      } else {
+        alert("There was an error syncing your cart. Please try again.");
+        console.error("Failed to sync cart with Shopify before checkout.");
+      }
+    } catch (err) {
+      alert("An unexpected error occurred during checkout. Please try again.");
+      console.error("Error during checkout:", err);
+    }
+  };
+
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cartItems.reduce((sum, item) => {
     const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
@@ -151,5 +179,6 @@ export const useCart = () => {
     removeFromCart,
     updateQuantity,
     toggleCart,
+    checkout,
   };
 }; 

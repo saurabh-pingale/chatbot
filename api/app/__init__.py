@@ -1,7 +1,8 @@
-from app.custom_fastapi import CustmFastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
-from app.utils.logger import logger
 from app.custom_fastapi import CustmFastAPI
+from app.utils.rate_limiter import limiter
 
 def create_app() -> 'CustmFastAPI':
     from app.custom_fastapi import CustmFastAPI
@@ -10,6 +11,9 @@ def create_app() -> 'CustmFastAPI':
     from app.dbhandlers import init_handlers
     
     app = CustmFastAPI()
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     init_handlers(app)
     init_services(app)

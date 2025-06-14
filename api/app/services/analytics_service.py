@@ -1,5 +1,8 @@
 from typing import Optional, Dict, Any
+from datetime import datetime
+
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.models.api.shop_admin import UTMParameters
 from app.utils.jwt_utils import create_access_token
 from app.utils.logger import logger
 
@@ -7,39 +10,15 @@ class AnalyticsService:
     def __init__(self):
         self.db_handler = AnalyticsHandler()
 
-    async def process_user_initiation(self, email: str, shop_identifier: str) -> Optional[str]:
-        """
-        Processes user initiation:
-        1. Calls DB handler to get user_id and shop_id_pk.
-        2. Generates JWT token.
-        Returns the JWT token or None if an error occurs.
-        """
-        user_id, shop_id_pk = await self.db_handler.process_user_initiation_db(
-            email,
-            shop_identifier
-        )
-
-        if not user_id or not shop_id_pk:
-            logger.error(f"Failed to process user initiation in DB for email: {email}, shop: {shop_identifier}. Token not created.")
-            return None
-        
-        token_data = {
-            "user_id": user_id,
-            "shop_id": shop_id_pk, 
-            "email": email
-        }
-        access_token = create_access_token(data=token_data)
-        
-        if not access_token:
-            logger.error(f"Failed to create access token in service for user_id: {user_id}")
-            return None
-            
-        return access_token
+    async def process_user_initiation(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[str]:
+        """Processes user initiation and returns a JWT token."""
+        return await self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params)
 
     async def record_chat_interaction(
         self, 
-        user_id: int, 
         shop_id: int, 
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None,
         country: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
@@ -50,28 +29,47 @@ class AnalyticsService:
         The handler manages its own session and transaction for this specific operation.
         """
         return await self.db_handler.update_user_chat_analytics(
-            user_id=user_id,
             shop_id=shop_id,
+            user_id=user_id,
+            guest_id=guest_id,
             country=country,
             region=region,
             city=city,
             ip_address=ip_address
         )
 
-    async def fetch_shop_analytics_summary(self, shop_identifier: str) -> Optional[Dict[str, Any]]:
-        """
-        Fetches the analytics summary (total users, total chat interactions) for a shop.
-        """
-        shop_id_pk = await self.db_handler.get_shop_pk_by_identifier(shop_identifier)
+    async def track_opened_chatbot(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:
+        """Tracks when a user opens the chatbot. Handles both guest and authenticated users."""
+        return await self.db_handler.increment_opened_chatbot_count(user_identifier, shop_domain, utm_params, is_guest)
 
-        if not shop_id_pk:
-            logger.warning(f"Could not retrieve shop_id_pk for identifier: {shop_identifier} in service.")
-            return None
-        
-        summary_data = await self.db_handler.get_shop_analytics_summary_db(shop_id_pk)
+    async def track_added_to_cart(self, user_id: Optional[int], shop_id: int, guest_id: Optional[str] = None) -> bool:
+        """Tracks when a user adds a product to the cart."""
+        return await self.db_handler.increment_added_to_cart_count(user_id=user_id, shop_id=shop_id, guest_id=guest_id)
 
-        if "error" in summary_data:
-            logger.warning(f"Error fetching analytics summary for shop_id_pk {shop_id_pk}: {summary_data['error']}")
-            return summary_data 
+    async def track_purchase(self, user_id: Optional[int], shop_id: int, amount: float, guest_id: Optional[str] = None) -> bool:
+        """Tracks a purchase event."""
+        return await self.db_handler.increment_purchased_count(user_id=user_id, shop_id=shop_id, amount=amount, guest_id=guest_id)
+
+    async def track_purchase_from_webhook(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:
+        """Tracks a purchase event coming from a webhook, using email to identify the user."""
+        return await self.db_handler.increment_purchased_count_by_email(email, shop_identifier, amount, order_id)
+
+    async def get_shop_pk(self, shop_domain: str) -> Optional[int]:
+        """Convenience method to get shop PK from domain."""
+        return await self.db_handler.get_shop_pk_by_identifier(shop_domain)
+
+    async def fetch_shop_analytics_summary(self, shop_identifier: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
+        """
+        Fetches the analytics summary for a shop, optionally filtered by a date range.
+        Converts datetime to date before passing to the handler.
+        """
+        start_date_only = start_date.date() if start_date else None
+        end_date_only = end_date.date() if end_date else None
+
+        summary_data = await self.db_handler.get_shop_analytics_summary(shop_identifier, start_date_only, end_date_only)
+
+        if summary_data and "error" in summary_data:
+            logger.warning(f"Error fetching analytics summary for shop {shop_identifier}: {summary_data['error']}")
+            return summary_data
             
         return summary_data
