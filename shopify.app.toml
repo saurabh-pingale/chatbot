@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "0b0088138bf915307e7b51a6a9973f68"
+client_id = "cf18231712db608526c917dad536a85a"
 name = "chatbot"
-handle = "chatbot-234"
-application_url = "https://experiment-flashers-donated-primary.trycloudflare.com"
+handle = "chatbot-23456"
+application_url = "https://believe-fioricet-thailand-harbour.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,14 +19,14 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://experiment-flashers-donated-primary.trycloudflare.com/auth/callback",
-  "https://experiment-flashers-donated-primary.trycloudflare.com/auth/shopify/callback",
-  "https://experiment-flashers-donated-primary.trycloudflare.com/api/auth/callback"
+  "https://believe-fioricet-thailand-harbour.trycloudflare.com/auth/callback",
+  "https://believe-fioricet-thailand-harbour.trycloudflare.com/auth/shopify/callback",
+  "https://believe-fioricet-thailand-harbour.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://experiment-flashers-donated-primary.trycloudflare.com"
-subpath = "chatbot-api"
+url = "https://believe-fioricet-thailand-harbour.trycloudflare.com"
+subpath = "chatbot-api-1"
 prefix = "apps"
 
 [pos]

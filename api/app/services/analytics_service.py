@@ -12,7 +12,8 @@ class AnalyticsService:
 
     async def process_user_initiation(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[str]:
         """Processes user initiation and returns a JWT token."""
-        return await self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params)
+        token_data = await (self.db_handler.process_user_and_get_token_data(email, shop_identifier, utm_params))
+        return create_access_token(token_data)
 
     async def record_chat_interaction(
         self, 

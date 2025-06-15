@@ -52,3 +52,10 @@ export default tseslint.config({
   },
 })
 ```
+
+### After this build, move the chatbot/dist/assets files to these path by renaming it
+
+```
+extensions/chatbot-extension/assets/chatbot-main.css
+extensions/chatbot-extension/assets/chatbot-main.js
+```
