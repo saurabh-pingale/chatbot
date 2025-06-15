@@ -2,6 +2,8 @@ import os
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from app import create_app
+from app.dbhandlers.db import engine
+from app.models.db.base import Base
 
 app = create_app()
 
@@ -20,6 +22,14 @@ def run_dev_server():
 def run_prod_server():
     """Production server"""
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.on_event("startup")
+async def startup():
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+    except Exception as e:
+        print(f"Warning: Error during table creation: {e}")
 
 if __name__ == "__main__":
     if os.getenv("DEV_MODE", "true").lower() == "true":

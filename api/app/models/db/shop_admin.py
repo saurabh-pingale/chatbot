@@ -88,9 +88,6 @@ class UserShopAnalyticsModel(Base):
             '(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)', 
             name='check_user_or_guest'
         ),
-        
-        Index('ix_user_shop_analytics_date', 'date'),
-        Index('ix_user_shop_analytics_shop_id', 'shop_id'),
     )
     
     id = Column(Integer, primary_key=True, autoincrement=True)
