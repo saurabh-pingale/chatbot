@@ -36,19 +36,19 @@
   transition: border-color 0.2s;
 
   &.has-error {
-    border-color: $red-500;
+    border-color: var(--theme-primary-color, #{$red-500});
   }
 
   &:focus {
-    border-color: $orange-450;
+    border-color: var(--theme-primary-color, #{$orange-450});
   }
   &:focus.has-error {
-    border-color: $red-500;
+    border-color: var(--theme-primary-color, #{$red-500});
   }
 }
 
 .email-gate-error-message {
-  color: $red-500;
+  color: var(--theme-primary-color, #{$red-500});
   font-size: 12px;
   margin-bottom: 16px;
   opacity: 0;
@@ -65,7 +65,7 @@
   padding: 12px;
   border: none;
   border-radius: 8px;
-  background-color: $orange-450;
+  background-color: var(--theme-primary-color, #{$orange-450});
   color: $white-100;
   font-size: 14px;
   font-weight: 500;
@@ -74,7 +74,7 @@
   margin-bottom: 12px;
 
   &:hover:not(:disabled) {
-    background-color: $orange-450;
+    background-color: var(--theme-primary-color, #{$orange-450});
   }
 
   &:disabled {

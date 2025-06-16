@@ -3,7 +3,7 @@
 client_id = "cf18231712db608526c917dad536a85a"
 name = "chatbot"
 handle = "chatbot-23456"
-application_url = "https://believe-fioricet-thailand-harbour.trycloudflare.com"
+application_url = "https://contemporary-diane-virus-anger.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://believe-fioricet-thailand-harbour.trycloudflare.com/auth/callback",
-  "https://believe-fioricet-thailand-harbour.trycloudflare.com/auth/shopify/callback",
-  "https://believe-fioricet-thailand-harbour.trycloudflare.com/api/auth/callback"
+  "https://contemporary-diane-virus-anger.trycloudflare.com/auth/callback",
+  "https://contemporary-diane-virus-anger.trycloudflare.com/auth/shopify/callback",
+  "https://contemporary-diane-virus-anger.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://believe-fioricet-thailand-harbour.trycloudflare.com"
+url = "https://contemporary-diane-virus-anger.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 
