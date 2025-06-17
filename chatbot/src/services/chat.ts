@@ -11,6 +11,7 @@ import type {
   InitiateSessionResponse,
   AgentConversationRequestPayload
 } from '../types';
+import { fetchWithTokenRefresh } from '../utils/api';
 
 export const getIpAddress = async (): Promise<string> => {
   try {
@@ -68,10 +69,6 @@ export const getLocationInfo = async (ip: string): Promise<LocationInfo> => {
   }
 };
 
-export const trackEvent = (eventName: string, eventData: Record<string, any> = {}): void => {
-  console.log(`Track Event: ${eventName}`, eventData);
-};
-
 export const sendChatMessage = async (
   messages: Message[],
   userId: string | null
@@ -94,10 +91,8 @@ export const sendChatMessage = async (
     params.set('guest_id', getOrCreateGuestId());
   }
 
-  trackEvent('chatMessageSent');
-
   try {
-    const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -121,7 +116,6 @@ export const sendChatMessage = async (
     }
     
     const responseData: ChatResponse = await response.json();
-    trackEvent('chatMessageReceived');
     return responseData;
 
   } catch (error: unknown) {
@@ -147,10 +141,12 @@ export const getShopConfiguration = async () => {
         show_email_gate: false
       };
     }
-    shopId = shopId.split('?')[0];
-    
-    const response = await fetch(`${API_ENDPOINTS.SHOP_CONFIG}?shop_id=${encodeURIComponent(shopId)}`);
-    
+    shopId = shopId.split("?")[0];
+
+    const response = await fetch(
+      `${API_ENDPOINTS.SHOP_CONFIG}?shop_id=${encodeURIComponent(shopId)}`
+    );
+
     if (!response.ok) {
       console.error('Failed to fetch shop config:', response.status, await response.text());
       return { 
@@ -182,7 +178,7 @@ export const getShopConfiguration = async () => {
 export const initiateUserSession = async (
   payload: InitiateSessionRequest
 ): Promise<InitiateSessionResponse> => {
-  const response = await fetch(`${API_ENDPOINTS.INITIATE_SESSION}`, {
+  const response = await fetchWithTokenRefresh(API_ENDPOINTS.INITIATE_SESSION, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -217,7 +213,7 @@ export const sendAgentMessage = async (
     params.set('guest_id', getOrCreateGuestId());
   }
   
-  const response = await fetch(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`,
+  const response = await fetchWithTokenRefresh(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`,
   {
     method: "POST",
     headers: headers,

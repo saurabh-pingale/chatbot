@@ -128,6 +128,9 @@ export default function Index() {
               <Button onClick={() => handleNavigation("/app/billings")}>
                 View Billing
               </Button>
+              <Button onClick={() => handleNavigation("/app/integrations")}>
+                Go to Integrations
+              </Button>
             </InlineStack>
           </BlockStack>
         </Card>

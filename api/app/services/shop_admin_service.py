@@ -12,9 +12,9 @@ class ShopAdminService:
         """Save the color preference to the DB via handler."""
         await self.db_handler.save_color_preference(shop_id, color)
 
-    async def save_support_info(self, shop_id: str, email: str, phone: str):
+    async def save_support_info(self, shop_id: str, email: str, phone: str, country_code: str):
         """Save support info to the DB via handler."""
-        await self.db_handler.save_support_info(shop_id, email, phone)
+        await self.db_handler.save_support_info(shop_id, email, phone, country_code)
 
     async def save_shop_image(self, shop_id: str, image_url: str):
         """Save image URL to the DB via handler."""
@@ -50,3 +50,7 @@ class ShopAdminService:
     async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
         """Save the email gate preference to the DB via handler."""
         await self.db_handler.save_email_gate_preference(shop_id, show_email_gate)
+
+    async def save_integration(self, shop_id: str, title: str, description: str) -> None:
+        """Save integration details to the DB via handler."""
+        await self.db_handler.save_integration(shop_id, title, description)

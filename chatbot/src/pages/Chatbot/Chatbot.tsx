@@ -9,7 +9,14 @@ import { useChat } from '../../hooks/useChat';
 import { useCart } from '../../context/CartContext';
 import { getAuthToken, setAuthToken } from '../../utils/auth';
 import { getStoredUtmParameters } from '../../utils/utm';
-import { initiateUserSession, sendAgentMessage, getLocationInfo, getIpAddress, getShopOfferTags, trackEvent } from '../../services/chat';
+import {
+  initiateUserSession,
+  sendAgentMessage,
+  getLocationInfo,
+  getIpAddress,
+  getShopOfferTags,
+  trackEvent,
+} from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
 import { chatAnimation } from '../../styles/animations';
@@ -77,6 +84,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     try {
       setError(null);
       const utmParams = getStoredUtmParameters();
+
       const response = await initiateUserSession({
         email,
         shopId: config.shopId,
@@ -87,12 +95,15 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
         setAuthToken(response.token);
         setJwtToken(response.token);
         setIsEmailGateVisible(false);
-        trackEvent('email_gate_submitted', { email });
+        trackEvent("email_gate_submitted", { email });
       } else {
         setError("Failed to initiate session. Please try again.");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during session initiation.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "An unknown error occurred during session initiation.";
       setError(errorMessage);
     }
   };

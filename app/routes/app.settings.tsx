@@ -8,6 +8,7 @@ import { uploadToCloudinary } from "./cloudinary.api";
 import { saveImageURLs } from "./save_image_urls";
 import { saveEmailGatePreference } from "./save_email_gate_preference";
 import { getShopStatus } from "./get_shop_status";
+import { getShopSettings } from "./get_shop_settings";
 import { ActionResponse } from "../common/types/index";
 import {
   Page,
@@ -23,6 +24,7 @@ import {
   TextField,
   RadioButton,
   Spinner,
+  Select
 } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
 
@@ -31,12 +33,36 @@ const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 interface SettingsData {
   session: { shop: string };
   setupCompleted: boolean;
+  settings?: {
+    preferred_color?: string;
+    support_email?: string;
+    support_phone?: string;
+    support_country_code?: string;
+    image?: string;
+    show_email_gate?: boolean;
+  };
 }
+
+const countryCodes = [
+  { label: "United States (+1)", value: "+1_us" },
+  { label: "United Kingdom (+44)", value: "+44_gb" },
+  { label: "Canada (+1)", value: "+1_ca" },
+  { label: "Australia (+61)", value: "+61_au" },
+  { label: "India (+91)", value: "+91_in" }
+];
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const { setup_completed } = await getShopStatus(session.shop);
-  return json({ session, setupCompleted: setup_completed });
+  let settings = {};
+  if (setup_completed) {
+    try {
+      settings = await getShopSettings(session.shop);
+    } catch (error) {
+      console.error("Failed to load shop settings:", error);
+    }
+  }
+  return json({ session, setupCompleted: setup_completed, settings });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -55,15 +81,17 @@ export const action: ActionFunction = async ({ request }) => {
         const color = formData.get("color") as string;
         const supportEmail = formData.get("supportEmail") as string;
         const supportPhone = formData.get("supportPhone") as string;
+        const countryCodeValue = formData.get("countryCode") as string;
         const emailGatePrefString = formData.get("emailGatePreference") as string;
         const imageUrl = formData.get("imageUrl") as string;
 
-        if (!color || !supportEmail || !supportPhone || !emailGatePrefString || !imageUrl) {
+        if (!color || !supportEmail || !supportPhone || !countryCodeValue || !emailGatePrefString || !imageUrl) {
           return json({ error: "All fields are required and must be filled out." }, { status: 400 });
         }
         
+        const countryCode = countryCodeValue.split('_')[0];
         await saveColorPreference(shopId, color);
-        await saveSupportInfo(shopId, supportEmail, supportPhone);
+        await saveSupportInfo(shopId, supportEmail, supportPhone, countryCode);
         const showEmailGate = emailGatePrefString === "true";
         await saveEmailGatePreference(shopId, { show_email_gate: showEmailGate });
         await saveImageURLs(shopId, imageUrl);
@@ -78,8 +106,11 @@ export const action: ActionFunction = async ({ request }) => {
       case "saveSupport":
         const supportEmailOnly = formData.get("supportEmail") as string;
         const supportPhoneOnly = formData.get("supportPhone") as string;
+        const countryCodeOnlyValue = formData.get("countryCode") as string;
+
         if (!supportEmailOnly || !supportPhoneOnly) return json({ error: "Support email and phone are required." }, { status: 400 });
-        await saveSupportInfo(shopId, supportEmailOnly, supportPhoneOnly);
+        const countryCodeOnly = countryCodeOnlyValue.split('_')[0];
+        await saveSupportInfo(shopId, supportEmailOnly, supportPhoneOnly, countryCodeOnly);
         return json({ success: true, intent: 'saveSupport' });
       
       case "saveEmailGatePref":
@@ -105,21 +136,27 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { session, setupCompleted } = useLoaderData<SettingsData>();
+  const { session, setupCompleted, settings } = useLoaderData<SettingsData>();
   const fetcher = useFetcher<ActionResponse>();
   const navigate = useNavigate();
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [supportEmail, setSupportEmail] = useState("");
-  const [supportPhone, setSupportPhone] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [settingDetails, setSettingDetails] = useState({
+    selectedColor: settings?.preferred_color || null,
+    supportEmail: settings?.support_email || "",
+    supportPhone: settings?.support_phone || "",
+    countryCode:
+      countryCodes.find(c => c.value.startsWith(settings?.support_country_code || '+1'))?.value || "+1_us",
+    uploadedImage: settings?.image || null,
+    emailGatePreference:
+      settings?.show_email_gate !== undefined ? String(settings.show_email_gate) : "false",
+  });
+
   const [uploading, setUploading] = useState(false);
-  const [emailGatePreference, setEmailGatePreference] = useState("false");
-  
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showErrorBanner, setShowErrorBanner] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     if(session?.shop) {
@@ -130,13 +167,14 @@ export default function Settings() {
   useEffect(() => {
     if (setupCompleted) return;
 
+    const { selectedColor, supportEmail, supportPhone, uploadedImage } = settingDetails;
     const allFieldsFilled = 
       !!selectedColor && 
       !!supportEmail && 
       !!supportPhone && 
       !!uploadedImage;
     setIsFormValid(allFieldsFilled);
-  }, [selectedColor, supportEmail, supportPhone, uploadedImage, setupCompleted]);
+  }, [settingDetails, setupCompleted]);
 
   useEffect(() => {
     if (fetcher.data?.success) {
@@ -158,12 +196,16 @@ export default function Settings() {
     }
   }, [fetcher.data, navigate, setupCompleted]);
 
+  const handleStateChange = (field: string, value: any) => {
+    setSettingDetails(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleColorSelect = (color: string) => {
-    setSelectedColor(color);
+    handleStateChange('selectedColor', color);
   };
 
   const handleEmailGatePrefChange = useCallback((value: string) => {
-    setEmailGatePreference(value);
+    handleStateChange('emailGatePreference', value);
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,47 +215,69 @@ export default function Settings() {
     setUploading(true);
     const imageUrl = await uploadToCloudinary(file);
     if (imageUrl) {
-      setUploadedImage(imageUrl);
+      handleStateChange('uploadedImage', imageUrl);
     }
     setUploading(false);
   };
   
   const handleSaveSettings = () => {
+    const { selectedColor, uploadedImage } = settingDetails;
     if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage)) return;
 
     fetcher.submit(
       {
         intent: "saveAllSettings",
-        color: selectedColor,
-        supportEmail,
-        supportPhone,
-        emailGatePreference,
-        imageUrl: uploadedImage,
+        ...settingDetails
       },
       { method: "post" }
     );
   };
 
   const handleSaveColor = () => {
-    if (selectedColor) {
-      fetcher.submit({ color: selectedColor, intent: "saveColor" }, { method: "post" });
+    if (settingDetails.selectedColor) {
+      fetcher.submit({ color: settingDetails.selectedColor, intent: "saveColor" }, { method: "post" });
     }
   };
 
   const handleSaveSupportInfo = () => {
+    const { supportEmail, supportPhone, countryCode } = settingDetails;
+    if (!validatePhone(supportPhone)) return;
     if (supportEmail && supportPhone) {
-      fetcher.submit({ supportEmail, supportPhone, intent: "saveSupport" }, { method: "post" });
+      fetcher.submit({ supportEmail, supportPhone, countryCode, intent: "saveSupport" }, { method: "post" });
     }
   };
 
   const handleSaveEmailGatePreference = () => {
-    fetcher.submit({ emailGatePreference, intent: "saveEmailGatePref" }, { method: "post" });
+    fetcher.submit({ emailGatePreference: settingDetails.emailGatePreference, intent: "saveEmailGatePref" }, { method: "post" });
   };
 
   const handleSaveImage = () => {
-    if (uploadedImage) {
-      fetcher.submit({ imageUrl: uploadedImage, intent: "saveImage" }, { method: "post" });
+    if (settingDetails.uploadedImage) {
+      fetcher.submit({ imageUrl: settingDetails.uploadedImage, intent: "saveImage" }, { method: "post" });
     }
+  };
+
+  const validatePhone = (phone: string) => {
+    const cleaned = phone.replace(/[\s-]/g, '');
+    if (!/^[\d\s-]+$/.test(phone)) {
+      setPhoneError("Phone number should contain only digits, spaces, or hyphens");
+      return false;
+    }
+    setPhoneError("");
+    return true;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    handleStateChange('supportPhone', value);
+    validatePhone(value);
+  };
+
+  const handleSupportEmailChange = (value: string) => {
+    handleStateChange('supportEmail', value);
+  };
+
+  const handleCountryCodeChange = (value: string) => {
+      handleStateChange('countryCode', value);
   };
 
   const isLoading = fetcher.state !== "idle" || isRedirecting || uploading;
@@ -289,11 +353,11 @@ export default function Settings() {
                               height: "40px",
                               borderRadius: "50%",
                               backgroundColor: color,
-                              border: selectedColor === color ? "3px solid #000" : "1px solid #DDD",
+                              border: settingDetails.selectedColor === color ? "3px solid #000" : "1px solid #DDD",
                               cursor: "pointer",
                               padding: 0,
                               transition: "transform 0.2s ease",
-                              transform: selectedColor === color ? "scale(1.1)" : "scale(1)",
+                              transform: settingDetails.selectedColor === color ? "scale(1.1)" : "scale(1)",
                             }}
                             onClick={() => handleColorSelect(color)}
                             aria-label={`Select color ${color}`}
@@ -308,7 +372,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveColor}
-                      disabled={!selectedColor || isLoading}
+                      disabled={!settingDetails.selectedColor || isLoading}
                       loading={isLoading && fetcher.formData?.get('intent') === 'saveColor'}
                     >
                       Save Color
@@ -356,14 +420,14 @@ export default function Settings() {
                 <BlockStack gap="200">
                   <RadioButton
                     label="Show Email Gate to users"
-                    checked={emailGatePreference === "true"}
+                    checked={settingDetails.emailGatePreference === "true"}
                     id="showEmailGateTrue"
                     name="emailGateDisplayPreference"
                     onChange={() => handleEmailGatePrefChange("true")}
                   />
                   <RadioButton
                     label="Do not show Email Gate (allow direct access to chat)"
-                    checked={emailGatePreference === "false"}
+                    checked={settingDetails.emailGatePreference === "false"}
                     id="showEmailGateFalse"
                     name="emailGateDisplayPreference"
                     onChange={() => handleEmailGatePrefChange("false")}
@@ -419,26 +483,38 @@ export default function Settings() {
                   <TextField
                     label="Support Email"
                     type="email"
-                    value={supportEmail}
-                    onChange={(value) => setSupportEmail(value)}
+                    value={settingDetails.supportEmail}
+                    onChange={handleSupportEmailChange}
                     autoComplete="email"
                     requiredIndicator={!setupCompleted}
                   />
+          
                   <TextField
                     label="Support Phone Number"
                     type="tel"
-                    value={supportPhone}
-                    onChange={(value) => setSupportPhone(value)}
+                    value={settingDetails.supportPhone}
+                    onChange={handlePhoneChange}
                     autoComplete="tel"
                     requiredIndicator={!setupCompleted}
+                    error={phoneError}
+                    connectedLeft={
+                      <Select
+                        label="Country Code"
+                        labelHidden
+                        options={countryCodes}
+                        onChange={handleCountryCodeChange}
+                        value={settingDetails.countryCode}
+                      />
+                    }
                   />
+                  
                 </BlockStack>
                 {setupCompleted && (
                   <InlineStack gap="200">
                     <Button
                       variant="primary"
                       onClick={handleSaveSupportInfo}
-                      disabled={!supportEmail || !supportPhone || isLoading}
+                      disabled={!settingDetails.supportEmail || !settingDetails.supportPhone || isLoading}
                       loading={isLoading && fetcher.formData?.get('intent') === 'saveSupport'}
                     >
                       Save Support Info
@@ -484,10 +560,10 @@ export default function Settings() {
                       }}
                     />
                     {uploading && <p>Uploading...</p>}
-                    {uploadedImage && (
+                    {settingDetails.uploadedImage && (
                       <Box paddingBlockStart="300">
                         <img
-                          src={uploadedImage}
+                          src={settingDetails.uploadedImage}
                           alt="Uploaded preview"
                           style={{
                             maxWidth: "150px",
@@ -506,7 +582,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveImage}
-                      disabled={!uploadedImage || uploading || isLoading}
+                      disabled={!settingDetails.uploadedImage || uploading || isLoading}
                       loading={uploading || (isLoading && fetcher.formData?.get('intent') === 'saveImage')}
                     >
                       {uploading ? "Uploading..." : "Save Image"}

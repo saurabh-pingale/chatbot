@@ -20,21 +20,18 @@ export async function forwardRequestToBackend(path: string, request: Request) {
       // agent: httpsAgent,
     });
 
-    if (response.headers.get('content-type')?.includes('application/json')) {
-      const data = await response.json();
-      return new Response(JSON.stringify(data), {
-        status: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-API-Version': response.headers.get('X-Shopify-API-Version') || '',
-        },
-      });
-    }
+    const contentType = response.headers.get('content-type') || 'text/plain';
+    const body = contentType.includes('application/json')
+      ? JSON.stringify(await response.json())
+      : await response.text();
 
-    return new Response(await response.text(), {
+    const rawHeaders = Object.fromEntries(response.headers.entries());
+
+    return new Response(body, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'text/plain',
+        ...rawHeaders,
+        'Content-Type': contentType,
       },
     });
   } catch (error) {

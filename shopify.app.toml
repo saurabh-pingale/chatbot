@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "cf18231712db608526c917dad536a85a"
+client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
-handle = "chatbot-23456"
-application_url = "https://contemporary-diane-virus-anger.trycloudflare.com"
+handle = "chatbot-234"
+application_url = "https://camel-baskets-standard-lighting.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,14 +19,14 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://contemporary-diane-virus-anger.trycloudflare.com/auth/callback",
-  "https://contemporary-diane-virus-anger.trycloudflare.com/auth/shopify/callback",
-  "https://contemporary-diane-virus-anger.trycloudflare.com/api/auth/callback"
+  "https://camel-baskets-standard-lighting.trycloudflare.com/auth/callback",
+  "https://camel-baskets-standard-lighting.trycloudflare.com/auth/shopify/callback",
+  "https://camel-baskets-standard-lighting.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://contemporary-diane-virus-anger.trycloudflare.com"
-subpath = "chatbot-api-1"
+url = "https://camel-baskets-standard-lighting.trycloudflare.com"
+subpath = "chatbot-api"
 prefix = "apps"
 
 [pos]
