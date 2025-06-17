@@ -12,6 +12,11 @@ These instructions will help you set up and run the project on your local machin
 
 Reference - https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f
 
+### Create alembic table manually 
+
+-  Version_num as a column 
+    - Add number as type
+
 ### Installation
 
 1. Clone the repository:

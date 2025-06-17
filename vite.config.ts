@@ -1,6 +1,6 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { installGlobals } from "@remix-run/node";
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 installGlobals({ nativeFetch: true });
@@ -19,20 +19,20 @@ if (
 
 const host = new URL(process.env.SHOPIFY_APP_URL || "http://localhost")
   .hostname;
-
 let hmrConfig;
+
 if (host === "localhost") {
   hmrConfig = {
     protocol: "ws",
     host: "localhost",
-    port: 3000,
-    clientPort: 3000,
+    port: 64999,
+    clientPort: 64999,
   };
 } else {
   hmrConfig = {
     protocol: "wss",
     host: host,
-    port: 443,
+    port: parseInt(process.env.FRONTEND_PORT) || 8002,
     clientPort: 443,
   };
 }
@@ -43,9 +43,8 @@ export default defineConfig({
     cors: {
       preflightContinue: true,
     },
-    port: 3000,
-    strictPort: true,
-    hmr: false,
+    port: Number(process.env.PORT || 3000),
+    hmr: hmrConfig,
     fs: {
       // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
       allow: ["app", "node_modules"],
@@ -71,4 +70,4 @@ export default defineConfig({
   optimizeDeps: {
     include: ["@shopify/app-bridge-react", "@shopify/polaris"],
   },
-}) satisfies UserConfig;
+});
