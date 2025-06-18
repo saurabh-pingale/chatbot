@@ -30,7 +30,6 @@
 }
 
 .product-slider-see-more-button {
-  background: $orange-450;
   color: $white-100;
   border: none;
   border-radius: 20px;
@@ -40,7 +39,6 @@
   transition: background-color 0.2s, transform 0.2s;
 
   &:hover {
-    background: $orange-450;
     transform: translateY(-1px);
   }
 

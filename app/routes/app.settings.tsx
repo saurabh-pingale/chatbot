@@ -27,6 +27,7 @@ import {
   Select
 } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
+import { API } from "../constants/api.constants";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 
@@ -41,20 +42,24 @@ interface SettingsData {
     image?: string;
     show_email_gate?: boolean;
   };
+  countryCodes: Array<{label: string, value: string}>;
 }
-
-const countryCodes = [
-  { label: "United States (+1)", value: "+1_us" },
-  { label: "United Kingdom (+44)", value: "+44_gb" },
-  { label: "Canada (+1)", value: "+1_ca" },
-  { label: "Australia (+61)", value: "+61_au" },
-  { label: "India (+91)", value: "+91_in" }
-];
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const { setup_completed } = await getShopStatus(session.shop);
   let settings = {};
+  let countryCodes: Array<{label: string, value: string}> = [];
+
+  try {
+    const response = await fetch(`${API.COUNTRY_CODES}`);
+    if (response.ok) {
+      countryCodes = await response.json();
+    }
+  } catch (error) {
+    console.error("Failed to load country codes:", error);
+  }
+
   if (setup_completed) {
     try {
       settings = await getShopSettings(session.shop);
@@ -62,7 +67,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       console.error("Failed to load shop settings:", error);
     }
   }
-  return json({ session, setupCompleted: setup_completed, settings });
+  return json({ session, setupCompleted: setup_completed, settings, countryCodes });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -136,19 +141,25 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { session, setupCompleted, settings } = useLoaderData<SettingsData>();
+  const { session, setupCompleted, settings, countryCodes = [] } = useLoaderData<SettingsData>();
   const fetcher = useFetcher<ActionResponse>();
   const navigate = useNavigate();
 
-  const [settingDetails, setSettingDetails] = useState({
-    selectedColor: settings?.preferred_color || null,
-    supportEmail: settings?.support_email || "",
-    supportPhone: settings?.support_phone || "",
-    countryCode:
-      countryCodes.find(c => c.value.startsWith(settings?.support_country_code || '+1'))?.value || "+1_us",
-    uploadedImage: settings?.image || null,
-    emailGatePreference:
-      settings?.show_email_gate !== undefined ? String(settings.show_email_gate) : "false",
+  const [settingDetails, setSettingDetails] = useState(() => {
+    const initialCountryCode =
+      countryCodes.find(c => c.value.startsWith(settings?.support_country_code || ''))?.value ||
+      countryCodes.find(c => c.value.startsWith('+1'))?.value ||
+      (countryCodes.length > 0 ? countryCodes[0].value : '');
+    
+    return {
+      selectedColor: settings?.preferred_color || null,
+      supportEmail: settings?.support_email || "",
+      supportPhone: settings?.support_phone || "",
+      countryCode: initialCountryCode,
+      uploadedImage: settings?.image || null,
+      emailGatePreference:
+        settings?.show_email_gate !== undefined ? String(settings.show_email_gate) : "false",
+    };
   });
 
   const [uploading, setUploading] = useState(false);
@@ -157,6 +168,7 @@ export default function Settings() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     if(session?.shop) {
@@ -221,8 +233,9 @@ export default function Settings() {
   };
   
   const handleSaveSettings = () => {
-    const { selectedColor, uploadedImage } = settingDetails;
+    const { selectedColor, uploadedImage, supportEmail, supportPhone } = settingDetails;
     if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage)) return;
+    if (!validateEmail(supportEmail) || !validatePhone(supportPhone)) return;
 
     fetcher.submit(
       {
@@ -241,7 +254,7 @@ export default function Settings() {
 
   const handleSaveSupportInfo = () => {
     const { supportEmail, supportPhone, countryCode } = settingDetails;
-    if (!validatePhone(supportPhone)) return;
+    if (!validatePhone(supportPhone) || !validateEmail(supportEmail)) return;
     if (supportEmail && supportPhone) {
       fetcher.submit({ supportEmail, supportPhone, countryCode, intent: "saveSupport" }, { method: "post" });
     }
@@ -259,13 +272,31 @@ export default function Settings() {
 
   const validatePhone = (phone: string) => {
     const cleaned = phone.replace(/[\s-]/g, '');
+
     if (!/^[\d\s-]+$/.test(phone)) {
       setPhoneError("Phone number should contain only digits, spaces, or hyphens");
       return false;
     }
+
+    if (cleaned.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits");
+      return false;
+    }
+
     setPhoneError("");
     return true;
   };
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
+
 
   const handlePhoneChange = (value: string) => {
     handleStateChange('supportPhone', value);
@@ -274,6 +305,7 @@ export default function Settings() {
 
   const handleSupportEmailChange = (value: string) => {
     handleStateChange('supportEmail', value);
+    validateEmail(value);
   };
 
   const handleCountryCodeChange = (value: string) => {
@@ -487,6 +519,7 @@ export default function Settings() {
                     onChange={handleSupportEmailChange}
                     autoComplete="email"
                     requiredIndicator={!setupCompleted}
+                    error={emailError}
                   />
           
                   <TextField
@@ -504,6 +537,7 @@ export default function Settings() {
                         options={countryCodes}
                         onChange={handleCountryCodeChange}
                         value={settingDetails.countryCode}
+                        disabled={countryCodes.length === 0}
                       />
                     }
                   />

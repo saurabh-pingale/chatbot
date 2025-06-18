@@ -14,6 +14,7 @@ export const API = {
     TRACK_OPENED_CHATBOT: `${BACKEND_URL}/analytics_router/track_opened_chatbot`,
     TRACK_ADDED_TO_CART: `${BACKEND_URL}/analytics_router/track_added_to_cart`,
     TRACK_PURCHASE: `${BACKEND_URL}/analytics_router/track_purchase`,
+    COUNTRY_CODES: `${BACKEND_URL}/country_code`,
 } 
 
 export const CLOUDINARY = {

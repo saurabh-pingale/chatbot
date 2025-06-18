@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from datetime import datetime, timedelta, UTC
+import re
 
 from app.utils.app_utils import get_app
 from app.models.api.shop_admin import (
@@ -69,7 +70,7 @@ async def save_support_info(request: Request, body: SupportInfoRequest):
     if not email or not phone:
         raise HTTPException(status_code=400, detail="Missing email or phone")
     
-    if not phone.replace(' ', '').replace('-', '').replace('+', '').isdigit():
+    if not re.fullmatch(r"[\d\s+-]+", phone) or not re.fullmatch(r"[\d]+", re.sub(r"[^\d]", "", phone)):
         raise HTTPException(status_code=400, detail="Phone number should contain only digits, spaces, or hyphens")
 
     try:
@@ -183,7 +184,7 @@ async def save_email_gate_preference(request: Request, body: EmailGatePreference
     
 
 @shop_admin_router.post(
-    "/save-integration",
+    "/integration",
     summary="Save integration details",
     response_model=IntegrationResponse,
     responses={
@@ -191,7 +192,7 @@ async def save_email_gate_preference(request: Request, body: EmailGatePreference
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def save_integration(request: Request, body: IntegrationRequest):
+async def integration(request: Request, body: IntegrationRequest):
     shop_id = _get_cleaned_shop_id(request)
     
     if not body.title or not body.description:
@@ -199,7 +200,7 @@ async def save_integration(request: Request, body: IntegrationRequest):
     
     try:
         app = get_app()
-        await app.shop_admin_service.save_integration(shop_id, body.title, body.description)
+        await app.shop_admin_service.integration(shop_id, body.title, body.description)
         return {"success": True, "message": "Integration saved successfully"}
     except Exception as error:
         logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)

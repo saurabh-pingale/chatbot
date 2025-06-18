@@ -20,10 +20,10 @@ async def send_otp(payload: SendOTPRequest):
             raise HTTPException(status_code=404, detail="Shop not found")
 
         otp = str(random.randint(100000, 999999))
-        expires_at = datetime.now(UTC) + timedelta(minutes=10)
+        expired_at = datetime.now(UTC) + timedelta(minutes=5)
 
-        await app.otp_handler.store_otp(email=payload.email, otp=otp, expires_at=expires_at)
-        await send_otp_email(to_email=payload.email, otp=otp)
+        await app.otp_handler.store_otp(email=payload.email, otp=otp, expired_at=expired_at)
+        await send_otp_email(to_email=payload.email, otp=otp, shop_domain=payload.shop_id)
 
         return {"message": "OTP sent successfully"}
     except Exception as e:
@@ -43,7 +43,7 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
         if not stored_otp or stored_otp.otp != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
 
-        if datetime.now(UTC) > stored_otp.expires_at:
+        if datetime.now(UTC) > stored_otp.expired_at:
             await app.otp_handler.delete_otp(email=payload.email)
             raise HTTPException(status_code=400, detail="OTP has expired")
         

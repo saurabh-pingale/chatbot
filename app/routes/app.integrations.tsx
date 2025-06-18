@@ -42,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     const response = await fetch(
-      `${process.env.BACKEND_URL}/shop-admin/save-integration?shopId=${shopId}`,
+      `${process.env.BACKEND_URL}/shop-admin/integration?shopId=${shopId}`,
       {
         method: "POST",
         headers: {

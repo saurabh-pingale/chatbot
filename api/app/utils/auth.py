@@ -35,14 +35,14 @@ def validate_token(token: str, shop_domain: str):
         return {
             "shop_domain": shop_domain,
             "access_token": token_payload.get('access_token') or token,
-            "expires_at": datetime.fromtimestamp(token_payload['exp'])
+            "expired_at": datetime.fromtimestamp(token_payload['exp'])
         }
 
     except JWTError:
         return {
             "shop_domain": shop_domain,
             "access_token": token,
-            "expires_at": datetime.now(UTC) + timedelta(hours=1)
+            "expired_at": datetime.now(UTC) + timedelta(hours=1)
         }
 
 async def get_shopify_auth(request: Request):

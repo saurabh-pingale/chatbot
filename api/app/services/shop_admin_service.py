@@ -51,6 +51,6 @@ class ShopAdminService:
         """Save the email gate preference to the DB via handler."""
         await self.db_handler.save_email_gate_preference(shop_id, show_email_gate)
 
-    async def save_integration(self, shop_id: str, title: str, description: str) -> None:
+    async def integration(self, shop_id: str, title: str, description: str) -> None:
         """Save integration details to the DB via handler."""
-        await self.db_handler.save_integration(shop_id, title, description)
+        await self.db_handler.integration_handler(shop_id, title, description)

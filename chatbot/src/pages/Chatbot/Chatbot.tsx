@@ -14,8 +14,7 @@ import {
   sendAgentMessage,
   getLocationInfo,
   getIpAddress,
-  getShopOfferTags,
-  trackEvent,
+  getShopOfferTags
 } from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
@@ -95,7 +94,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
         setAuthToken(response.token);
         setJwtToken(response.token);
         setIsEmailGateVisible(false);
-        trackEvent("email_gate_submitted", { email });
       } else {
         setError("Failed to initiate session. Please try again.");
       }
@@ -112,7 +110,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     setIsEmailGateVisible(false);
     setJwtToken(null); 
     sessionStorage.setItem('sessionViewedEmailGate', 'true');
-    trackEvent('email_gate_skipped');
   };
 
   const handleSendMessage = async (content: string) => {
@@ -130,7 +127,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     }
 
     addMessage(content, 'user');
-    trackEvent('message_sent');
 
     const currentMessages: Message[] = [...messages, { id: Date.now().toString(), content, type: 'user', timestamp: new Date() }];
 
@@ -151,10 +147,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       }
       
       await handleBotResponse(response);
-      
-      if (response.products?.length) {
-        trackEvent('products_suggested', { products: response.products });
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Sorry, something went wrong! Please try again later.';
       setError(errorMessage);

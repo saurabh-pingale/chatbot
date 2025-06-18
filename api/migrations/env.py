@@ -11,6 +11,7 @@ from app.models.db.shop_admin import ShopModel, UserModel, CollectionModel, Prod
 from app.models.db.checkout_product import CheckoutProductModel
 from app.models.db.conversation import ConversationModel
 from app.models.db.otp import OTPModel
+from app.models.db.country_code import CountryCodeModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { validateEmail, getShopId } from '../../utils/utils';
 import { sendOTP, verifyOTP } from '../../services/auth';
@@ -10,11 +10,16 @@ export const EmailGate = memo<EmailGateProps>(({
   onSubmit
 }) => {
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [currentShopId, setCurrentShopId] = useState<string | null>(null);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
+
+  if (otpInputRefs.current.length !== 6) {
+    otpInputRefs.current = Array(6).fill(null);
+  }
 
   useEffect(() => {
     const shopId = getShopId();
@@ -55,8 +60,27 @@ export const EmailGate = memo<EmailGateProps>(({
     }
   };
 
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+
+    if (!value && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+
+    if (error) setError('');
+  };
+
   const handleOtpSubmit = async () => {
-    if (otp.length !== 6) {
+    const otpString = otp.join('');
+    if (otpString.length !== 6) {
         setError('Please enter a valid 6-digit OTP');
         return;
     }
@@ -68,7 +92,7 @@ export const EmailGate = memo<EmailGateProps>(({
     setIsLoading(true);
     setError('');
     try {
-        await verifyOTP(email, otp, currentShopId);
+        await verifyOTP(email, otpString, currentShopId);
         if (onSubmit) {
             await onSubmit(email);
         }
@@ -114,20 +138,29 @@ export const EmailGate = memo<EmailGateProps>(({
               style={dynamicStyles}
             />
         ) : (
-            <input
-                type="text"
-                className={`email-gate-input ${error ? 'has-error' : ''}`}
-                placeholder='Enter your 6-digit OTP'
-                value={otp}
-                onChange={(e) => {
-                    setOtp(e.target.value);
-                    if (error) setError('');
-                }}
-                disabled={isLoading}
-                aria-label="OTP"
-                aria-describedby="otp-error"
-                style={dynamicStyles}
-            />
+             <div className="otp-input-container">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <input
+                  key={index}
+                  ref={el => {
+                    otpInputRefs.current[index] = el
+                  }}
+                  type="text"
+                  maxLength={1}
+                  className={`otp-input ${error ? 'has-error' : ''}`}
+                  value={otp[index]}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+                      otpInputRefs.current[index - 1]?.focus();
+                    }
+                  }}
+                  disabled={isLoading}
+                  aria-label={`OTP digit ${index + 1}`}
+                  style={dynamicStyles}
+                />
+              ))}
+            </div>
         )}
         <div
           id="email-error"
@@ -143,6 +176,16 @@ export const EmailGate = memo<EmailGateProps>(({
         >
           {isLoading ? 'Loading...' : (otpSent ? 'Verify OTP' : 'Continue')}
         </button>
+        {otpSent && (
+          <button
+            className="email-gate-request-again"
+            onClick={handleEmailSubmit}
+            disabled={isLoading}
+            style={{ color: primaryColorFromConfig }}
+          >
+            Didn't receive code? Request again
+          </button>
+        )}
       </div>
     </motion.div>
   );

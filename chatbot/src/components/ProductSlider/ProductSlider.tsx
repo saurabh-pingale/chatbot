@@ -31,6 +31,7 @@ export const ProductSlider = memo<ProductSliderProps>(({
           <div className="product-slider-see-more-container"> 
             <button 
               className="product-slider-see-more-button"
+              style={{ backgroundColor: primaryColor }}
               onClick={() => window.location.href = '/'}
             >
               See More
