@@ -29,7 +29,7 @@ class VectorMetadata(BaseModel):
     type: str
     url: str
     image: str
-    price: str
+    price: int
     variant_id: str
 
 class Vector(BaseModel):

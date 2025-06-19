@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://representation-pie-gay-clicking.trycloudflare.com"
+application_url = "https://trainers-wa-yacht-chicken.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://representation-pie-gay-clicking.trycloudflare.com/auth/callback",
-  "https://representation-pie-gay-clicking.trycloudflare.com/auth/shopify/callback",
-  "https://representation-pie-gay-clicking.trycloudflare.com/api/auth/callback"
+  "https://trainers-wa-yacht-chicken.trycloudflare.com/auth/callback",
+  "https://trainers-wa-yacht-chicken.trycloudflare.com/auth/shopify/callback",
+  "https://trainers-wa-yacht-chicken.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://representation-pie-gay-clicking.trycloudflare.com"
+url = "https://trainers-wa-yacht-chicken.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

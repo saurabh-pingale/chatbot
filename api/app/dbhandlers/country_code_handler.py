@@ -24,13 +24,12 @@ class CountryCodeHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    await session.execute(delete(CountryCodeModel))
-                    
-                    for code in country_codes:
-                        session.add(CountryCodeModel(
-                            label=code['label'],
-                            value=code['value']
-                        ))
+                    country_code_objs = [
+                        CountryCodeModel(label=code['label'], value=code['value'])
+                        for code in country_codes
+                    ]
+
+                    session.add_all(country_code_objs)
                     
                     await session.commit()
                     return True

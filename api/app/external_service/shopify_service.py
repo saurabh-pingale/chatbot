@@ -184,7 +184,11 @@ class ShopifyService:
 
                         products.append(ShopifyProduct(
                             id=node["id"],
-                            title=f"{node['title']} - {variant['title']}" if node['title'] != variant['title'] else node['title'],
+                            title=(
+                                node['title']
+                                if variant['title'].strip().lower() == "default title"
+                                else f"{node['title']} - {variant['title']}"
+                            ),
                             description=node.get("description") or "No description available",
                             category=node.get("category", {}).get("name", ""),
                             handle=node["handle"],

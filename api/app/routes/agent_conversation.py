@@ -25,7 +25,6 @@ async def agent_conversation(
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
     try:
-        logger.info(f"Payload: {payload}")
         shop_id = request.query_params.get("shopId")
         if not shop_id:
             raise HTTPException(status_code=400, detail="shopId is required.")
@@ -63,7 +62,7 @@ async def agent_conversation(
         country, region, city, ip = (None, None, None, None)
         if payload.location_info:
             country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
-
+      
         analytics_success = await app.analytics_service.record_chat_interaction(
             user_id=jwt_user_id_pk, 
             shop_id=shop.id,
