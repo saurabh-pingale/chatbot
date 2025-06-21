@@ -153,9 +153,19 @@ async def get_shop_status(request: Request):
     
     try:
         app = get_app()
+
+        shop_model = await app.shop_admin_service.get_shop_status(shop_id)
         
-        status = await app.shop_admin_service.get_shop_status(shop_id)
-        return status
+        if shop_model:
+            return {
+                "setup_completed": shop_model.setup_completed,
+                "plan": shop_model.plan or "Not Selected"
+            }
+        else:
+            return {
+                "setup_completed": False,
+                "plan": "Not Selected"
+            }
     except HTTPException as http_exc:
         raise http_exc
     except Exception as error:

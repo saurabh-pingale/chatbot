@@ -5,11 +5,10 @@ These instructions will help you set up and run the project on your local machin
 
 ### Prerequisites
 
-- Python 3.13 or higher
+- Python 3.11.3
 - Docker
 
 ### Project setup
-
 Reference - https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f
 
 ### Create alembic table manually 

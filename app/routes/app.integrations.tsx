@@ -15,6 +15,7 @@ import {
   InlineStack,
   Box,
 } from "@shopify/polaris";
+import { API } from "../constants/api.constants";
 
 interface IntegrationData {
   session: { shop: string };
@@ -41,8 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   try {
-    const response = await fetch(
-      `${process.env.BACKEND_URL}/shop-admin/integration?shopId=${shopId}`,
+    const response = await fetch(`${API.SAVE_INTEGRATIONS}?shopId=${shopId}`,
       {
         method: "POST",
         headers: {
