@@ -29,6 +29,7 @@ class VectorMetadata(BaseModel):
     type: str
     url: str
     image: str
+    #todo: PRICE can be have decimal, make it float
     price: int
     variant_id: str
 

@@ -28,6 +28,7 @@ class MetadataExtractor:
         combined_metadata = defaultdict(list)
         
         for i, current_match in enumerate(category_matches):
+            #TODO: Move these things to seperate module 
             start_pos = category_matches[i-1].end() if i > 0 else 0
             end_pos = category_matches[i+1].start() if i < len(category_matches) - 1 else len(query)
 

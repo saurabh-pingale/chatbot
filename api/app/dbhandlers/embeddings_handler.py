@@ -11,7 +11,8 @@ from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
 from app.utils.lru_cache import LRUCache
 from app.utils.logger import logger
 
-query_cache = LRUCache(capacity=100) 
+#TODO: If this LRU cache is important then we need to use redis, to create LRU cache for each store,
+query_cache = LRUCache(capacity=100)
 
 class EmbeddingsHandler:
     """Handles embedding storage and querying."""
@@ -31,6 +32,7 @@ class EmbeddingsHandler:
                 )
             )
 
+    #TODO: Follow the naming convention like create_embeddings instead of store_embeddings
     async def store_embeddings(
         self, embeddings: List[ProductEmbedding], namespace: Optional[str]
     ) -> None:
@@ -52,6 +54,7 @@ class EmbeddingsHandler:
             points=points
         )
     
+    #function should not be more than 50 lines, please create neccesaary reusable code by splitting properly, if you don't split properly error might come
     async def query_embeddings(
         self,
         vector: List[float],
@@ -63,6 +66,7 @@ class EmbeddingsHandler:
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
 
+        #TODO: Seperate it, create a get cache module
         query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
 
         cached_result = self.get_cache_results(query_key)
@@ -76,6 +80,7 @@ class EmbeddingsHandler:
             query_filters = []
 
             if metadata_filters:
+                #TODO: Seperate it, create a function for this
                 keys = list(metadata_filters.keys())
                 values_lists = [
                     metadata_filters[k] if isinstance(metadata_filters[k], list) else [metadata_filters[k]]
@@ -84,6 +89,7 @@ class EmbeddingsHandler:
                 max_len = max(len(lst) for lst in values_lists)
 
                 for i in range(max_len):
+                    #TODO: What is happening here, very confusing, seperate different module properly, do these speration properly, efficently and scalablity
                     must_conditions = []
 
                     for key, values in zip(keys, values_lists):

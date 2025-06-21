@@ -24,6 +24,11 @@ async def agent_conversation(
     payload: AgentConversationPayload,
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
+    #TODO: Here lot of things happening, seperate 
+    # - auth as auth module
+    # - analytics as analytics module
+    # - agent response & conversation_log_data as seperate module
+
     try:
         shop_id = request.query_params.get("shopId")
         if not shop_id:
