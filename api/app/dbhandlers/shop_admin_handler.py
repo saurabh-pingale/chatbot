@@ -234,18 +234,7 @@ class ShopAdminHandler:
                     result = await session.execute(
                         select(ShopModel).filter(ShopModel.shop_id == shop_id)
                     )
-                    shop = result.scalars().first()
-
-                    if shop:
-                        return {
-                            "setup_completed": shop.setup_completed,
-                            "plan": shop.plan or "Not Selected"
-                        }
-                    else:
-                        return {
-                            "setup_completed": False,
-                            "plan": "Not Selected"
-                        }
+                    return result.scalars().first()
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
                     raise error

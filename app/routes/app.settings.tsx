@@ -233,14 +233,22 @@ export default function Settings() {
   };
   
   const handleSaveSettings = () => {
-    const { selectedColor, uploadedImage, supportEmail, supportPhone } = settingDetails;
-    if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage)) return;
+    const { selectedColor, uploadedImage, supportEmail, supportPhone, countryCode, 
+      emailGatePreference 
+    } = settingDetails;
+    if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage || !countryCode || !emailGatePreference
+    )) return;
     if (!validateEmail(supportEmail) || !validatePhone(supportPhone)) return;
 
     fetcher.submit(
       {
         intent: "saveAllSettings",
-        ...settingDetails
+        color: selectedColor,
+        supportEmail,
+        supportPhone,
+        countryCode,
+        emailGatePreference,
+        imageUrl: uploadedImage,
       },
       { method: "post" }
     );
