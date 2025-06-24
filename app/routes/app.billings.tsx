@@ -27,12 +27,13 @@ interface ActionResponse {
 interface BillingLoaderData {
     shop: string;
     setupCompleted: boolean;
+    plan: string | null;
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-  const { setup_completed } = await getShopStatus(session.shop);
-  return json({ shop: session.shop, setupCompleted: setup_completed });
+  const { setup_completed, plan } = await getShopStatus(session.shop);
+  return json({ shop: session.shop, setupCompleted: setup_completed, plan });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -72,7 +73,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 
 export default function BillingPage() {
-  const { shop, setupCompleted } = useLoaderData<BillingLoaderData>();
+  const { shop, setupCompleted, plan } = useLoaderData<BillingLoaderData>();
   const fetcher = useFetcher<ActionResponse>();
   const navigate = useNavigate();
 
@@ -84,13 +85,16 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (fetcher.state === 'idle' && fetcher.data?.success) {
-        setActiveModal(null);
-        setShowSuccessBanner(true);
-        setIsRedirecting(true);
-        setTimeout(() => {
-            setShowSuccessBanner(false);
-            navigate('/app');
-        }, 3000);
+      if (selectedPlan === "Medium" || selectedPlan === "Pro") {
+        window.top!.location.href = STRIPE_CHECKOUT_URLS[selectedPlan as "Medium" | "Pro"];
+      }
+      setActiveModal(null);
+      setShowSuccessBanner(true);
+      setIsRedirecting(true);
+      setTimeout(() => {
+          setShowSuccessBanner(false);
+          navigate('/app');
+      }, 3000);
     }
   }, [fetcher.state, fetcher.data, navigate]);
 
@@ -109,16 +113,16 @@ export default function BillingPage() {
 
   const handleSavePlan = () => {
     if (selectedPlan && ownerDetails.name && ownerDetails.email && ownerDetails.location) {
-        fetcher.submit(
-            { 
-                plan: selectedPlan,
-                ownerName: ownerDetails.name,
-                ownerEmail: ownerDetails.email,
-                ownerLocation: ownerDetails.location,
-                intent: "savePlan"
-            },
-            { method: "post" }
-        );
+      fetcher.submit(
+          { 
+              plan: selectedPlan,
+              ownerName: ownerDetails.name,
+              ownerEmail: ownerDetails.email,
+              ownerLocation: ownerDetails.location,
+              intent: "savePlan"
+          },
+          { method: "post" }
+      );
     }
   };
   
@@ -127,10 +131,15 @@ export default function BillingPage() {
   }
 
   const plans = [
-    { name: "Free Trial", price: "$0/month", features: ["30-day trial", "Basic support", "100 conversations"], action: () => handlePlanSelection("Free") },
-    { name: "Medium Trial", price: "$29/month", features: ["Priority support", "1000 conversations", "Advanced analytics"], action: () => handlePlanSelection("Medium") },
-    { name: "Pro Trial", price: "$99/month", features: ["24/7 support", "Unlimited conversations", "Custom branding"], action: () => handlePlanSelection("Pro") },
+    { name: "Free Trial", price: "$0/month", features: ["30-day trial", "Basic support", "100 conversations"], action: () => handlePlanSelection("Free"), value: "Free" },
+    { name: "Medium Trial", price: "$29/month", features: ["Priority support", "1000 conversations", "Advanced analytics"], action: () => handlePlanSelection("Medium"), value: "Medium" },
+    { name: "Pro Trial", price: "$99/month", features: ["24/7 support", "Unlimited conversations", "Custom branding"], action: () => handlePlanSelection("Pro"), value: "Pro" },
   ];
+
+  const STRIPE_CHECKOUT_URLS = {
+    Medium: "https://buy.stripe.com/test_7sY28t23tfVdcNV9yH9fW00",
+    Pro: "https://buy.stripe.com/test_cNicN74bBfVd9BJcKT9fW01"
+  };
 
   const isOwnerDetailsValid = ownerDetails.name && ownerDetails.email && ownerDetails.location;
   const isLoading = fetcher.state !== "idle" || isRedirecting;
@@ -175,17 +184,25 @@ export default function BillingPage() {
           </Layout.Section>
         </Layout>
         <Layout>
-          {plans.map((plan) => (
-            <Layout.Section key={plan.name} variant="oneThird">
+          {plans.map((planItem) => (
+            <Layout.Section key={planItem.name} variant="oneThird">
               <Card>
                 <BlockStack gap="400" inlineAlign="stretch">
-                  <Text as="h3" variant="headingMd">{plan.name}</Text>
-                  <Text as="p" variant="bodyLg">{plan.price}</Text>
+                  <Text as="h3" variant="headingMd">{planItem.name}</Text>
+                  <Text as="p" variant="bodyLg">{planItem.price}</Text>
                   <BlockStack gap="200">
-                    {plan.features.map((feature, i) => <Text key={i} as="p">{feature}</Text>)}
+                    {planItem.features.map((feature, i) => <Text key={i} as="p">{feature}</Text>)}
                   </BlockStack>
                   <div style={{ marginTop: 'auto' }}>
-                    <Button variant="primary" onClick={plan.action}>Start {plan.name}</Button>
+                    {setupCompleted && plan === planItem.value ? (
+                      <Button variant="primary" tone="success" disabled>
+                      Plan Activated
+                    </Button>
+                  ) : (
+                      <Button variant="primary" onClick={planItem.action}>
+                        Start {planItem.name}
+                      </Button>
+                  )}
                   </div>
                 </BlockStack>
               </Card>
