@@ -3,7 +3,6 @@ import { ChatInput } from '../ChatInput/ChatInput';
 import { DEFAULT_QUICK_REPLIES } from '../../../constants/default_quick_replies';
 import { Cart } from '../../Cart-UI/Cart/Cart';
 import type { ChatBodyProps, ProductType, StyleWithCustomProps } from '../../../types';
-import { trackEvent } from '../../../services/chat';
 import { useCart } from '../../../context/CartContext';
 
 const ChatBody = ({
@@ -25,7 +24,6 @@ const ChatBody = ({
     const handleProductAddToCart = async (product: ProductType) => {
         try {
             await addToCart(product);
-            trackEvent('product_added_to_cart_via_slider', { productId: product.id, productName: product.name });
         } catch (err) {
             console.error("Error adding product to cart from Chatbot component:", err);
             handleError('Failed to add product to cart. Please try again.');

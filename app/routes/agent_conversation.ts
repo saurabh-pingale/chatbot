@@ -19,5 +19,20 @@ export async function action({ request }: ActionFunctionArgs) {
     forwardUrl += `?${params.toString()}`;
   }
   
-  return forwardRequestToBackend(forwardUrl, request);
+  const response = await forwardRequestToBackend(forwardUrl, request);
+
+  const refreshedToken = response.headers.get("x-token-refreshed")
+
+  const responseBody = await response.json();
+
+  const headers = new Headers(response.headers);
+  if (refreshedToken) {
+    headers.set("x-token-refreshed", refreshedToken);
+  }
+  
+  return new Response(JSON.stringify(responseBody), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }

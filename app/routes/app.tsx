@@ -26,7 +26,8 @@ export default function App() {
         <Link to="/app/settings">Settings</Link>
         <Link to="/app/training">Training</Link>
         <Link to="/app/analytics">Analytics</Link>
-        <Link to="/app/billings">Billing</Link>        
+        <Link to="/app/billings">Billing</Link> 
+        <Link to="/app/integrations">Integrations</Link>       
       </NavMenu>
       <Outlet />
     </AppProvider>

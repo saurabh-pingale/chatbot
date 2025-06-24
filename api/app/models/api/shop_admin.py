@@ -62,6 +62,7 @@ class ColorPreferenceRequest(BaseModel):
 class SupportInfoRequest(BaseModel):
     supportEmail: str
     supportPhone: str
+    countryCode: str = Field(default="+1", min_length=2, max_length=5)
 
 class ShopImageRequest(BaseModel):
     imageUrl: str
@@ -112,3 +113,11 @@ class EmailGatePreferenceResponse(BaseModel):
 
 class EmailGatePreferenceRequest(BaseModel):
     show_email_gate: bool
+
+class IntegrationRequest(BaseModel):
+    title: str
+    description: str
+
+class IntegrationResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None

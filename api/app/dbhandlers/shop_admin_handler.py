@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime
 
-from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel
+from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel
 from app.models.api.shop_admin import (ProductRequest)
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
@@ -121,7 +121,7 @@ class ShopAdminHandler:
 
                     return {
                         "support_email": shop.support_email,
-                        "support_phone": shop.support_phone
+                        "support_phone": f"{shop.support_country_code or '+1'}{shop.support_phone}"
                     }
                 except SQLAlchemyError as error:
                     logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
@@ -147,7 +147,7 @@ class ShopAdminHandler:
                     logger.error("Database error in save_color_preference: %s", str(error), exc_info=True)
                     raise error
             
-    async def save_support_info(self, shop_id: str, email: str, phone: str) -> dict:
+    async def save_support_info(self, shop_id: str, email: str, phone: str, country_code: str) -> dict:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
@@ -161,6 +161,7 @@ class ShopAdminHandler:
 
                     shop.support_email = email
                     shop.support_phone = phone
+                    shop.support_country_code = country_code
 
                     return {"success": True}
                 except SQLAlchemyError as error:
@@ -233,18 +234,7 @@ class ShopAdminHandler:
                     result = await session.execute(
                         select(ShopModel).filter(ShopModel.shop_id == shop_id)
                     )
-                    shop = result.scalars().first()
-
-                    if shop:
-                        return {
-                            "setup_completed": shop.setup_completed,
-                            "plan": shop.plan or "Not Selected"
-                        }
-                    else:
-                        return {
-                            "setup_completed": False,
-                            "plan": "Not Selected"
-                        }
+                    return result.scalars().first()
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
                     raise error
@@ -269,4 +259,19 @@ class ShopAdminHandler:
          
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
+                    raise error
+                
+    async def integration_handler(self, shop_id: str, title: str, description: str) -> None:
+        """Saves integration details for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    integration = IntegrationModel(
+                        shop_id=shop_id,
+                        title=title,
+                        description=description
+                    )
+                    session.add(integration)
+                except SQLAlchemyError as error:
+                    logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
                     raise error

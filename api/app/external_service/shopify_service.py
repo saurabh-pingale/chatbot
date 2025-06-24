@@ -51,6 +51,8 @@ class ShopifyService:
 
     async def fetch_products_and_collections(self) -> Dict[str, Any]:
         """Fetch products and collections from Shopify store using GraphQL API"""
+        #TODO: How we are defining first 250 ?, we need to discuss on it, 
+        #TODO: create a seperate doc and list these hardcoded things also LRU cache one also add into that doc
         query = """
         query {
             products(first: 250) {
@@ -126,7 +128,7 @@ class ShopifyService:
         try:
             async with httpx.AsyncClient(verify=False) as client:
                 url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
-
+                #TODO: move all these graphql code and Call all these client.post or client.get in seperate graphql service
                 response = await client.post(
                     url,
                     headers={
@@ -149,6 +151,7 @@ class ShopifyService:
                             return []
                     return []
 
+                #TODO: Move all cleaning things into seperate fuctions
                 for edge in data["data"]["products"]["edges"]:
                     node = edge["node"]
                     for mf_edge in node["metafields"]["edges"]:
@@ -184,7 +187,11 @@ class ShopifyService:
 
                         products.append(ShopifyProduct(
                             id=node["id"],
-                            title=f"{node['title']} - {variant['title']}" if node['title'] != variant['title'] else node['title'],
+                            title=(
+                                node['title']
+                                if variant['title'].strip().lower() == "default title"
+                                else f"{node['title']} - {variant['title']}"
+                            ),
                             description=node.get("description") or "No description available",
                             category=node.get("category", {}).get("name", ""),
                             handle=node["handle"],

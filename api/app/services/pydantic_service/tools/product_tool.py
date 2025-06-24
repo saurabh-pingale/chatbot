@@ -9,6 +9,7 @@ from app.utils.rag_pipeline_utils import (
     extract_products_from_response,
     extract_categories
 )
+from app.utils.metadata_extractor import metadata_extractor
 from app.utils.logger import logger
 
 class ProductTool(BaseTool):
@@ -20,25 +21,23 @@ class ProductTool(BaseTool):
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
     
-    async def run(self, ctx: RunContext, query: str) -> Dict[str, Any]:
-        """
-        Performs a semantic search for products based on the user's query.
-
-        Args:
-            query: The user's search query as a string.
-        """
+    async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
+        """Performs a semantic search for products based on the user's query."""
         shopId = ctx.deps.get("shopId")
         logger.info(f"Performing product search for query: '{query}'")
 
         try:
             embedding = EmbeddingService.create_embeddings(query)
+            metadata_filters = metadata_extractor.extract_all_metadata(query)
+            logger.info(f"Metadta Filters Before passing: {metadata_filters}")
+
             results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
                 namespace=shopId, 
-                agent_type="ProductAgent"
+                agent_type="ProductAgent",
+                metadata_filters=metadata_filters
             )
-
-            logger.info(f"Raw Result: {results}")
+            logger.info(f"Raw Result from Query Embeddings: {results}")
 
             unique_results = []
             seen_variant_ids = set()
@@ -53,15 +52,13 @@ class ProductTool(BaseTool):
                              unique_results.append(result)
                              seen_variant_ids.add(result.id)
 
-            logger.info(f"--------------------------------------------------------------------")
-
             products = extract_products_from_response(unique_results) or []
-            logger.info(f"Products: {products}")
+
+            product_cache = ctx.deps.get("product_cache")
+            if isinstance(product_cache, list):
+                product_cache.extend(products)
 
             categories = extract_categories(products) or []
-            logger.info(f"Categories: {categories}")
-
-            ctx.deps["original_products"] = products
 
             if not isinstance(products, list):
                 raise ModelRetry("Invalid product data format, retrying...")

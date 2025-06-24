@@ -6,13 +6,13 @@ from app.models.db.otp import OTPModel
 from app.utils.logger import logger
 
 class OTPHandler:
-    async def store_otp(self, email: str, otp: str, expires_at: datetime):
+    async def store_otp(self, email: str, otp: str, expired_at: datetime):
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
                     await session.execute(delete(OTPModel).where(OTPModel.email == email))
 
-                    new_otp = OTPModel(email=email, otp=otp, expires_at=expires_at)
+                    new_otp = OTPModel(email=email, otp=otp, expired_at=expired_at)
                     session.add(new_otp)
                     await session.commit()
                 except Exception as e:

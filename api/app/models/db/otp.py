@@ -8,4 +8,4 @@ class OTPModel(Base):
     email = Column(String, nullable=False, index=True)
     otp = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now())
-    expires_at = Column(DateTime(timezone=True), nullable=False) 
+    expired_at = Column(DateTime(timezone=True), nullable=False) 

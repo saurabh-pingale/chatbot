@@ -18,6 +18,7 @@ class ShopModel(Base):
     country = Column(String, nullable=True)
     support_email = Column(Text, nullable=True)
     support_phone = Column(Text, nullable=True)
+    support_country_code = Column(String(5), nullable=True)
     image = Column(String, nullable=True)
     show_email_gate = Column(Boolean, default=False, nullable=False)
     owner_name = Column(String, nullable=True)
@@ -31,6 +32,7 @@ class ShopModel(Base):
     conversations = relationship("ConversationModel", back_populates="shop")
     users = relationship("UserModel", back_populates="shop")
     checkout_products = relationship("CheckoutProductModel", back_populates="shop")
+    integrations = relationship("IntegrationModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -108,3 +110,15 @@ class UserShopAnalyticsModel(Base):
 
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")
+
+class IntegrationModel(Base):
+    __tablename__ = 'integrations'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(100), nullable=False)
+    description = Column(String(500), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    shop_id = Column(String, ForeignKey('shops.shop_id'), nullable=False, index=True)
+
+    shop = relationship("ShopModel", back_populates="integrations")

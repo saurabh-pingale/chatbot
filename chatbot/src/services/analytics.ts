@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from '../constants/api';
 import { getAuthToken } from '../utils/auth';
 import { getOrCreateGuestId } from '../utils/guest';
 import { getShopId } from '../utils/utils';
+import { fetchWithTokenRefresh } from '../utils/api';
 
 const makeRequest = async (endpoint: string, body: object = {}) => {
   const headers: HeadersInit = {
@@ -16,7 +17,7 @@ const makeRequest = async (endpoint: string, body: object = {}) => {
   }
 
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetchWithTokenRefresh(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

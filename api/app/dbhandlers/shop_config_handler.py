@@ -23,7 +23,10 @@ class ShopConfigHandler:
                             "image": shop.image,
                             "setup_completed": shop.setup_completed,
                             "plan": shop.plan or "Not Selected",
-                            "show_email_gate": shop.show_email_gate
+                            "show_email_gate": shop.show_email_gate,
+                            "support_email": shop.support_email,
+                            "support_phone": shop.support_phone,
+                            "support_country_code": shop.support_country_code,
                         }
                     else:
                         logger.warning(f"No shop found with id: {shop_id}, returning defaults.")
@@ -32,7 +35,10 @@ class ShopConfigHandler:
                             "image": None,
                             "setup_completed": False,
                             "plan": "Not Selected",
-                            "show_email_gate": None
+                            "show_email_gate": None,
+                            "support_email": None,
+                            "support_phone": None,
+                            "support_country_code": None,
                         }
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_config for shop {shop_id}: {error}", exc_info=True)

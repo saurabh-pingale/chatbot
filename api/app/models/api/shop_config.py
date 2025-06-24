@@ -7,3 +7,6 @@ class ShopConfigResponse(BaseModel):
     setup_completed: bool
     plan: str
     show_email_gate: Optional[bool]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_country_code: Optional[str]

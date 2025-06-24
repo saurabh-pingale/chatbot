@@ -8,6 +8,7 @@ from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
 from app.dbhandlers.shop_config_handler import ShopConfigHandler
 from app.dbhandlers.otp_handler import OTPHandler
 from app.dbhandlers.user_handler import UserHandler
+from app.dbhandlers.country_code_handler import CountryCodeHandler
 
 def init_handlers(app: 'CustmFastAPI'):
     """Initialize handlers in the app state."""
@@ -19,3 +20,4 @@ def init_handlers(app: 'CustmFastAPI'):
     app.shop_config_handler = ShopConfigHandler()
     app.otp_handler = OTPHandler()
     app.user_handler = UserHandler()
+    app.country_code_handler = CountryCodeHandler()

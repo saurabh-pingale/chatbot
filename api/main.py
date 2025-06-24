@@ -1,9 +1,11 @@
 import os
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+
 from app import create_app
 from app.dbhandlers.db import engine
 from app.models.db.base import Base
+from app.middleware.refresh_token import add_refreshed_token_header
 
 app = create_app()
 
@@ -13,15 +15,20 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Token-Refreshed"],
 )
+
+app.middleware("http")(add_refreshed_token_header)
+
+port = int(os.getenv("PORT", 8000))
 
 def run_dev_server():
     """Reloadable dev server using import string"""
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
 
 def run_prod_server():
     """Production server"""
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 @app.on_event("startup")
 async def startup():

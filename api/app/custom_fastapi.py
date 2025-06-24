@@ -10,6 +10,7 @@ class CustmFastAPI(FastAPI):
         from app.services.pydantic_service.llm_service import LLMService
         from app.services.checkout_product_service import CheckoutProductService
         from app.services.shop_config_service import ShopConfigService
+        from app.services.country_code_service import CountryCodeService
         from app.dbhandlers.shop_admin_handler import ShopAdminHandler
         from app.dbhandlers.embeddings_handler import EmbeddingsHandler
         from app.dbhandlers.analytics_handler import AnalyticsHandler
@@ -18,6 +19,7 @@ class CustmFastAPI(FastAPI):
         from app.dbhandlers.shop_config_handler import ShopConfigHandler
         from app.dbhandlers.otp_handler import OTPHandler
         from app.dbhandlers.user_handler import UserHandler
+        from app.dbhandlers.country_code_handler import CountryCodeHandler
 
         self.shop_admin_service = ShopAdminService()
         self.analytics_service = AnalyticsService()
@@ -25,6 +27,7 @@ class CustmFastAPI(FastAPI):
         self.llm_service = LLMService()
         self.checkout_product_service = CheckoutProductService()
         self.shop_config_service = ShopConfigService()
+        self.country_code_service = CountryCodeService()
         self.shop_admin_handler = ShopAdminHandler()
         self.rag_pipeline_handler = EmbeddingsHandler()
         self.analytics_handler = AnalyticsHandler()
@@ -33,3 +36,4 @@ class CustmFastAPI(FastAPI):
         self.shop_config_handler = ShopConfigHandler()
         self.otp_handler = OTPHandler()
         self.user_handler = UserHandler()
+        self.country_code_handler = CountryCodeHandler()

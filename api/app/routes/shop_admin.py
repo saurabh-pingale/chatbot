@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from datetime import datetime, timedelta, UTC
+import re
 
 from app.utils.app_utils import get_app
 from app.models.api.shop_admin import (
@@ -11,7 +12,9 @@ from app.models.api.shop_admin import (
     PlanDetailsRequest,
     ShopStatusResponse,
     EmailGatePreferenceRequest,
-    EmailGatePreferenceResponse
+    EmailGatePreferenceResponse,
+    IntegrationRequest,
+    IntegrationResponse
 )
 from app.utils.logger import logger
 
@@ -62,13 +65,17 @@ async def save_support_info(request: Request, body: SupportInfoRequest):
     shop_id = _get_cleaned_shop_id(request)
     email = body.supportEmail
     phone = body.supportPhone
+    country_code = body.countryCode
 
     if not email or not phone:
         raise HTTPException(status_code=400, detail="Missing email or phone")
+    
+    if not re.fullmatch(r"[\d\s+-]+", phone) or not re.fullmatch(r"[\d]+", re.sub(r"[^\d]", "", phone)):
+        raise HTTPException(status_code=400, detail="Phone number should contain only digits, spaces, or hyphens")
 
     try:
         app = get_app()
-        await app.shop_admin_service.save_support_info(shop_id, email, phone)
+        await app.shop_admin_service.save_support_info(shop_id, email, phone, country_code)
         return {"success": True}
     except Exception as error:
         logger.error("Error in save_support_info: %s", str(error), exc_info=True)
@@ -146,9 +153,19 @@ async def get_shop_status(request: Request):
     
     try:
         app = get_app()
+
+        shop_model = await app.shop_admin_service.get_shop_status(shop_id)
         
-        status = await app.shop_admin_service.get_shop_status(shop_id)
-        return status
+        if shop_model:
+            return {
+                "setup_completed": shop_model.setup_completed,
+                "plan": shop_model.plan or "Not Selected"
+            }
+        else:
+            return {
+                "setup_completed": False,
+                "plan": "Not Selected"
+            }
     except HTTPException as http_exc:
         raise http_exc
     except Exception as error:
@@ -174,3 +191,27 @@ async def save_email_gate_preference(request: Request, body: EmailGatePreference
     except Exception as error:
         logger.error(f"Error in save_email_gate_preference_route for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save Email Gate preference.")
+    
+
+@shop_admin_router.post(
+    "/integration",
+    summary="Save integration details",
+    response_model=IntegrationResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def integration(request: Request, body: IntegrationRequest):
+    shop_id = _get_cleaned_shop_id(request)
+    
+    if not body.title or not body.description:
+        raise HTTPException(status_code=400, detail="Title and description are required")
+    
+    try:
+        app = get_app()
+        await app.shop_admin_service.integration(shop_id, body.title, body.description)
+        return {"success": True, "message": "Integration saved successfully"}
+    except Exception as error:
+        logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save integration")

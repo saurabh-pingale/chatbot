@@ -8,7 +8,7 @@ from app.config import JWT_SECRET_KEY
 from app.utils.logger import logger
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 7
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/analytics_router/initiate_session")
 
@@ -58,11 +58,8 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return None
         
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
         return payload
-    except jwt.ExpiredSignatureError:
-        logger.warning("Token has expired.")
-        return None
     except jwt.InvalidTokenError as e:
         logger.warning(f"Invalid token: {e}")
         return None

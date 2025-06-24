@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { trackEvent } from '../services/chat';
 import { getCart, syncCartWithShopify } from '../services/shopify';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
@@ -95,7 +94,6 @@ export const useCart = () => {
     });
 
     setIsCartOpen(true);
-    trackEvent('added_to_cart');
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {

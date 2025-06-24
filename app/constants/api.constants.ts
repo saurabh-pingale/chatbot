@@ -1,7 +1,8 @@
-const BACKEND_URL = "http://127.0.0.1:8000";
+const BACKEND_URL = "https://chatbot-fastapi-578494102556.us-central1.run.app";
 
 export const API = {
     BACKEND_URL,
+    SHOP_CONFIG: `${BACKEND_URL}/shop_config_router/config`,
     SAVE_STORE_IMAGE: `${BACKEND_URL}/shop-admin/save-shop-image`,
     SAVE_COLOR_PREFERENCE: `${BACKEND_URL}/shop-admin/save-color-preference`,
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,
@@ -14,6 +15,8 @@ export const API = {
     TRACK_OPENED_CHATBOT: `${BACKEND_URL}/analytics_router/track_opened_chatbot`,
     TRACK_ADDED_TO_CART: `${BACKEND_URL}/analytics_router/track_added_to_cart`,
     TRACK_PURCHASE: `${BACKEND_URL}/analytics_router/track_purchase`,
+    COUNTRY_CODES: `${BACKEND_URL}/country_code`,
+    SAVE_INTEGRATIONS: `${BACKEND_URL}/shop-admin/integration`
 } 
 
 export const CLOUDINARY = {

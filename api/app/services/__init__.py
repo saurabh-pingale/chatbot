@@ -8,6 +8,7 @@ def init_services(app: CustmFastAPI):
     from app.services.analytics_service import AnalyticsService
     from app.services.checkout_product_service import CheckoutProductService
     from app.services.shop_config_service import ShopConfigService
+    from app.services.country_code_service import CountryCodeService
  
     app.shop_admin_service = ShopAdminService()
     app.llm_service = LLMService()
@@ -15,3 +16,4 @@ def init_services(app: CustmFastAPI):
     app.analytics_service = AnalyticsService()
     app.checkout_product_service = CheckoutProductService()
     app.shop_config_service = ShopConfigService()
+    app.country_code_service = CountryCodeService()
