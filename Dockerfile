@@ -1,6 +1,8 @@
 # Use a Debian-based Node.js image
 FROM node:18
 
+EXPOSE 3000
+
 # Install required system libraries
 RUN apt-get update && apt-get install -y \
     openssl \
@@ -19,7 +21,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm install && npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev --no-optional && npm cache clean --force
 
 # Remove CLI packages if not needed
 RUN npm remove @shopify/cli

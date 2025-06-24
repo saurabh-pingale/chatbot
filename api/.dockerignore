@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+Dockerfile
+.dockerignore
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+README.MD
+
+test_webhook.py 

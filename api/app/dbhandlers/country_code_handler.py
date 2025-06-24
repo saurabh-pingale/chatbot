@@ -19,18 +19,29 @@ class CountryCodeHandler:
                     logger.error(f"Database error in get_country_codes: {error}", exc_info=True)
                     raise
 
+    #TODO: Follow the naming convention in this way
+    #TODO: we should have only follow only these - create, get, update, delete
+    #TODO: for naming db all handler, you should follow 
+    #TODO: create_db_handler 
+    # i.e create_contry_code OR create_country_codes (don't include handler in name)
+    #TODO: get_db_handler
+    # i.e get_contry_code OR get_country_codes or get_country_code_by_id
+    #TODO: update_db_handler
+    # i.e update_contry_code OR update_country_codes
+    #TODO: delete_db_handler
+    # i.e delete_contry_code OR delete_country_codes
+    
     async def store_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
         """Store country codes in bulk"""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    await session.execute(delete(CountryCodeModel))
-                    
-                    for code in country_codes:
-                        session.add(CountryCodeModel(
-                            label=code['label'],
-                            value=code['value']
-                        ))
+                    country_code_objs = [
+                        CountryCodeModel(label=code['label'], value=code['value'])
+                        for code in country_codes
+                    ]
+
+                    session.add_all(country_code_objs)
                     
                     await session.commit()
                     return True
