@@ -1,3 +1,4 @@
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -14,6 +15,8 @@ def create_app() -> 'CustmFastAPI':
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    app.add_middleware(SlowAPIMiddleware)
 
     init_handlers(app)
     init_services(app)

@@ -4,7 +4,8 @@ from typing import Optional, Dict, Any
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.constants import MESSAGE_LIMIT
+from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT
+from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
@@ -16,9 +17,11 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
         400: {"model": ErrorResponse, "description": "Invalid request"},
         401: {"model": ErrorResponse, "description": "Unauthorized access or invalid token"},
         403: {"model": ErrorResponse, "description": "Forbidden, token valid but user/shop mismatch potentially"},
+        429: {"model": ErrorResponse, "description": "Too Many Requests"},
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
+@limiter.limit(AGENT_CONVERSATION_RATE_LIMIT)
 async def agent_conversation(
     request: Request, 
     payload: AgentConversationPayload,

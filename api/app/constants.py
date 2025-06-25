@@ -11,3 +11,5 @@ SHOPIFY_GRAPHQL_URL = "https://{shop}/admin/api/2023-10/graphql.json"
 
 MESSAGE_LIMIT = 10
 LOCK_TIME = 1
+
+AGENT_CONVERSATION_RATE_LIMIT = "30/minute" # Equivalent to: 5 requests every 10 seconds

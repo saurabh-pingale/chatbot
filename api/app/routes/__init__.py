@@ -9,6 +9,7 @@ from app.routes.user_auth import user_auth_router
 from app.routes.shop_config import shop_config_router
 from app.routes.webhooks import webhook_router
 from app.routes.country_code import country_code_router
+from app.routes.subscriptions import subscriptions_router
 
 def init_routes(app: CustmFastAPI):
     app.include_router(shop_admin_router)
@@ -21,3 +22,4 @@ def init_routes(app: CustmFastAPI):
     app.include_router(shop_config_router)
     app.include_router(webhook_router)
     app.include_router(country_code_router)
+    app.include_router(subscriptions_router)

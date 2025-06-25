@@ -76,3 +76,33 @@ async def send_otp_email(to_email: str, otp: str, shop_domain):
     except Exception as e:
         logger.error(f"Failed to send OTP email to {to_email}: {e}", exc_info=True)
         raise 
+
+async def send_generic_email(to_email: str, subject: str, html_content: str):
+    sender_email = config.SMTP_SENDER_EMAIL
+    password = config.SMTP_PASSWORD
+    smtp_server = config.SMTP_SERVER
+    smtp_port = int(config.SMTP_PORT) if config.SMTP_PORT else None
+
+    if not all([sender_email, password, smtp_server, smtp_port]):
+        logger.error("SMTP settings are not configured. Cannot send email.")
+        return
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = to_email
+
+    part = MIMEText(html_content, "html")
+    message.attach(part)
+
+    context = ssl.create_default_context()
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls(context=context)
+            server.login(sender_email, password)
+            server.sendmail(sender_email, to_email, message.as_string())
+        logger.info(f"Generic email sent successfully to {to_email}")
+    except Exception as e:
+        logger.error(f"Failed to send generic email to {to_email}: {e}", exc_info=True)
+        raise
