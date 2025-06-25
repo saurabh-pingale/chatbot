@@ -189,43 +189,6 @@ class ShopAdminHandler:
                     logger.error("Error saving shop image: %s", str(error), exc_info=True)
                     return {"success": False}
 
-    async def save_plan_details(
-        self,
-        shop_id: str,
-        owner_name: str,
-        owner_email: str,
-        owner_location: str,
-        plan: str,
-        plan_start_date: datetime,
-        plan_end_date: Optional[datetime],
-        setup_completed: bool,
-    ) -> None:
-        """Saves plan details for a given shop ID."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    shop = await session.execute(
-                        select(ShopModel).where(ShopModel.shop_id == shop_id)
-                    )
-                    shop = shop.scalars().first()
-
-                    if not shop:
-                        shop = ShopModel(shop_id=shop_id)
-                        session.add(shop)
-
-                    shop.owner_name = owner_name
-                    shop.owner_email = owner_email
-                    shop.owner_location = owner_location
-                    shop.plan = plan
-                    shop.plan_start_date = plan_start_date
-                    shop.plan_end_date = plan_end_date
-                    shop.setup_completed = setup_completed
-
-                except SQLAlchemyError as error:
-                    await session.rollback()
-                    logger.error("Database error in save_plan_details: %s", str(error), exc_info=True)
-                    raise
-
     async def get_shop_status(self, shop_id: str) -> Optional[ShopModel]:
         """Fetches a shop by its ID to check its status."""
         async with AsyncSessionLocal() as session:
@@ -275,3 +238,16 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
                     raise error
+
+    async def update_setup_completed_status(self, shop_id: int, status: bool) -> None:
+        """Updates the setup_completed status for a given shop."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    shop = await session.get(ShopModel, shop_id)
+                    if shop:
+                        shop.setup_completed = status
+                        logger.info(f"Updated setup_completed status for shop_id {shop_id} to {status}")
+                except SQLAlchemyError as e:
+                    logger.error(f"Database error in update_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
+                    raise

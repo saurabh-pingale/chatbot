@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { hexToRgbArray } from '../../utils/utils';
+import { hexToRgbArray, getContrastingTextColor  } from '../../utils/utils';
 import type { OffersPopupProps, StyleWithCustomProps } from '../../types';
 import './OffersPopup.scss';
 
@@ -18,6 +18,7 @@ export const OffersPopup = memo<OffersPopupProps>(({
     setContainer(document.querySelector('.chatbot-container'));
   }, []);
 
+  const headerTextColor = getContrastingTextColor(primaryColor);
   const primaryColorRgb = hexToRgbArray(primaryColor);
   const headerStyles: StyleWithCustomProps = {
     '--theme-primary-color': primaryColor,
@@ -51,7 +52,7 @@ export const OffersPopup = memo<OffersPopupProps>(({
             style={headerStyles}
           >
             <div className="offers-popup-header" style={headerStyles}>
-              <h3 className="offers-popup-title">Latest Offers</h3>
+              <h3 className="offers-popup-title" style={{ color: headerTextColor }}>Latest Offers</h3>
             </div>
             <div className="offers-popup-content">
               {offerTags.length === 0 ? (

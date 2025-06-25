@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://blowing-washing-photography-sku.trycloudflare.com"
+application_url = "https://smooth-heated-gentle-url.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://blowing-washing-photography-sku.trycloudflare.com/auth/callback",
-  "https://blowing-washing-photography-sku.trycloudflare.com/auth/shopify/callback",
-  "https://blowing-washing-photography-sku.trycloudflare.com/api/auth/callback"
+  "https://smooth-heated-gentle-url.trycloudflare.com/auth/callback",
+  "https://smooth-heated-gentle-url.trycloudflare.com/auth/shopify/callback",
+  "https://smooth-heated-gentle-url.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://blowing-washing-photography-sku.trycloudflare.com"
+url = "https://smooth-heated-gentle-url.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

@@ -4,6 +4,7 @@ from sqlalchemy import UniqueConstraint
 from datetime import datetime
 
 from app.models.db.base import Base
+from app.models.db.subscription import SubscriptionModel
 
 class ShopModel(Base):
     __tablename__ = 'shops'
@@ -33,6 +34,7 @@ class ShopModel(Base):
     users = relationship("UserModel", back_populates="shop")
     checkout_products = relationship("CheckoutProductModel", back_populates="shop")
     integrations = relationship("IntegrationModel", back_populates="shop")
+    subscriptions = relationship("SubscriptionModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'

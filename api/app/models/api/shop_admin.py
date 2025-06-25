@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, EmailStr
+from datetime import datetime
 
 class UTMParameters(BaseModel):
     """Defines the structure for UTM parameters."""
@@ -104,8 +105,10 @@ class PlanDetailsRequest(BaseModel):
     plan: str
 
 class ShopStatusResponse(BaseModel):
-    plan: Optional[str]
     setup_completed: bool
+    plan: Optional[str] = None
+    subscription_status: Optional[str] = None
+    end_date: Optional[str] = None
 
 class EmailGatePreferenceResponse(BaseModel):
     show_email_gate: bool

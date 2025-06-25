@@ -96,3 +96,25 @@ export const getShopConfig = async () => {
     allowGuestMode: !config.show_email_gate,
   }
 }
+
+export const getContrastingTextColor = (hexcolor: string) => {
+  if (!hexcolor) {
+    return '#000000';
+  }
+
+  if (hexcolor.slice(0, 1) === '#') {
+    hexcolor = hexcolor.slice(1);
+  }
+
+  if (hexcolor.length === 3) {
+    hexcolor = hexcolor.split('').map(char => char + char).join('');
+  }
+
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
+  return (yiq >= 128) ? '#000000' : '#FFFFFF';
+};

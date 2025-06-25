@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://127.0.0.1:8000";
+const BACKEND_URL = "https://chatbot-fastapi-578494102556.us-central1.run.app";
 
 export const API = {
     BACKEND_URL,

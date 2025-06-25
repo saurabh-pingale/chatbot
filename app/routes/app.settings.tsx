@@ -404,6 +404,47 @@ export default function Settings() {
                           />
                         </Tooltip>
                       ))}
+                      <Tooltip content="Choose a custom color" preferredPosition="above">
+                        <div style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          border: "1px solid #DDD",
+                          position: 'relative',
+                          backgroundColor: settingDetails.selectedColor && !colors.includes(settingDetails.selectedColor) 
+                            ? settingDetails.selectedColor 
+                            : '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '4px',
+                            background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                            position: 'relative'
+                          }}>
+                          <input
+                            type="color"
+                            value={settingDetails.selectedColor || '#ffffff'}
+                            onChange={(e) => handleColorSelect(e.target.value)}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
+                            aria-label="Select custom color"
+                          />
+                          </div>
+                        </div>
+                      </Tooltip>
                     </InlineStack>
                   </BlockStack>
                 </Box>

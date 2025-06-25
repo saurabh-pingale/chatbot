@@ -21,6 +21,8 @@ interface LoaderData {
   shop: string;
   plan: string | null;
   setupCompleted: boolean;
+  subscriptionStatus: string | null;
+  endDate: string | null;
 }
 
 const features = [
@@ -44,16 +46,22 @@ export const loader: LoaderFunction = async ({ request }) => {
   const shopId = session.shop;
 
   try {
-    const { plan, setup_completed } = await getShopStatus(shopId);
-    return json({ shop: shopId, plan, setupCompleted: setup_completed });
+    const { plan, setup_completed, subscription_status, end_date } = await getShopStatus(shopId);
+    return json({ 
+      shop: shopId, 
+      plan, 
+      setupCompleted: setup_completed,
+      subscriptionStatus: subscription_status,
+      endDate: end_date 
+    });
   } catch (error) {
     console.error("Failed to fetch shop status:", error);
-    return json({ shop: shopId, plan: null, setupCompleted: false });
+    return json({ shop: shopId, plan: null, setupCompleted: false, subscriptionStatus: null, endDate: null });
   }
 };
 
 export default function Index() {
-  const { plan, setupCompleted } = useLoaderData<LoaderData>();
+  const { plan, setupCompleted, subscriptionStatus, endDate } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const navigation = useNavigation();
 
@@ -62,6 +70,16 @@ export default function Index() {
   };
 
   const isLoading = navigation.state !== "idle";
+
+  const showSubscriptionWarning = () => {
+    if (!endDate || (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing')) {
+      return false;
+    }
+    const now = new Date();
+    const expiry = new Date(endDate);
+    const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    return daysUntilExpiry <= 7;
+  }
 
   return (
     <Page>
@@ -84,6 +102,20 @@ export default function Index() {
         </div>
       )}
       <BlockStack gap="500">
+        {showSubscriptionWarning() && (
+            <Banner
+                title="Your subscription is ending soon!"
+                tone="warning"
+                action={{
+                    content: "Renew Now",
+                    onAction: () => handleNavigation("/app/billings"),
+                }}
+            >
+                <p>
+                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}. Please renew to avoid service interruption.
+                </p>
+            </Banner>
+        )}
         <Card>
           <BlockStack gap="200">
             <Text as="h2" variant="headingLg">

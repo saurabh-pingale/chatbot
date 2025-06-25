@@ -9,7 +9,6 @@ from app.models.api.shop_admin import (
     SupportInfoRequest,
     ShopImageResponse,
     ShopImageRequest,
-    PlanDetailsRequest,
     ShopStatusResponse,
     EmailGatePreferenceRequest,
     EmailGatePreferenceResponse,
@@ -105,39 +104,6 @@ async def save_shop_image(request: Request, body: ShopImageRequest):
         logger.error("Error in save_shop_image: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save shop image")
 
-@shop_admin_router.post(
-    "/save-plan-details",
-    summary="Save plan details and owner information for the shop",
-    response_model=dict,
-    responses={
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
-    },
-)
-async def save_plan_details(request: Request, body: PlanDetailsRequest):
-    shop_id = _get_cleaned_shop_id(request)
-
-    try:
-        app = get_app()
-        
-        plan_start_date = datetime.utcnow()
-        plan_end_date = plan_start_date + timedelta(days=30) if body.plan == "free" else None
-
-        await app.shop_admin_service.save_plan_details(
-            shop_id=shop_id,
-            owner_name=body.owner_name,
-            owner_email=body.owner_email,
-            owner_location=body.owner_location,
-            plan=body.plan,
-            plan_start_date=plan_start_date,
-            plan_end_date=plan_end_date,
-            setup_completed=True 
-        )
-        return {"success": True, "message": "Plan details saved successfully."}
-    except Exception as error:
-        logger.error(f"Error in save_plan_details for shop {shop_id}: {error}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to save plan details.")
-
 @shop_admin_router.get(
     "/shop-status",
     summary="Get the setup status and plan for the shop",
@@ -149,27 +115,36 @@ async def save_plan_details(request: Request, body: PlanDetailsRequest):
     },
 )
 async def get_shop_status(request: Request):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_domain = _get_cleaned_shop_id(request)
     
     try:
         app = get_app()
-
-        shop_model = await app.shop_admin_service.get_shop_status(shop_id)
+        shop, subscription = await app.shop_admin_service.get_shop_status_with_subscription(shop_domain)
         
-        if shop_model:
+        if not shop:
             return {
-                "setup_completed": shop_model.setup_completed,
-                "plan": shop_model.plan or "Not Selected"
+                "setup_completed": False,
+                "plan": "Not Selected",
+                "subscription_status": None,
+                "end_date": None,
+            }
+        
+        if subscription:
+            return {
+                "plan": subscription.plan,
+                "setup_completed": shop.setup_completed,
+                "subscription_status": subscription.status.value if subscription.status else None,
+                "end_date": subscription.end_date.isoformat() if subscription.end_date else None,
             }
         else:
             return {
-                "setup_completed": False,
-                "plan": "Not Selected"
+                "plan": shop.plan or "Not Selected",
+                "setup_completed": shop.setup_completed,
+                "subscription_status": "trial",
+                "end_date": shop.plan_end_date.isoformat() if shop.plan_end_date else None,
             }
-    except HTTPException as http_exc:
-        raise http_exc
     except Exception as error:
-        logger.error(f"Error in get_shop_status for shop {shop_id}: {error}", exc_info=True)
+        logger.error(f"Error in get_shop_status for shop {shop_domain}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch shop status.")
 
 @shop_admin_router.post(
