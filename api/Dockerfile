@@ -36,4 +36,4 @@ USER app
 EXPOSE  $PORT
 
 # Command to run the application in production
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD ["/bin/sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
