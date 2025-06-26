@@ -33,7 +33,7 @@ COPY --chown=app:app . .
 USER app
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE  $PORT
 
 # Command to run the application in production
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
