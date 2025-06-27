@@ -50,6 +50,7 @@ class LLMService:
     **Step 4: Generate the Final Response (`ProductResponse`)**
     - `product_ids`: Collect the IDs of ALL returned products from ALL requests.
     - `answer`: This is the conversational part. You MUST be honest about what you found and what you didn’t.
+        - Keep the response short and focused. Avoid more content and repeating product details or over-explaining.
         - **If all requests were successful:** "Certainly! Here are the products you asked for."
         - **If only some requests were successful:** Be specific. "I found the black shirt you were looking for, but unfortunately, we don't have any white t-shirts in stock right now."
         - **If no requests were successful:** "I'm sorry, but I couldn't find any products that match your request."

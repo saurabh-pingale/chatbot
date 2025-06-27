@@ -7,7 +7,7 @@ from app.config import STRIPE_WEBHOOK_SECRET, STRIPE_API_KEY, ENTERPRISE_CONTACT
 from app.dbhandlers.subscription_handler import SubscriptionHandler
 from app.models.db.subscription import SubscriptionStatus
 from app.services.shop_admin_service import ShopAdminService
-from app.models.api.subscription import CheckoutRequest, ContactRequest
+from app.models.api.subscription import CheckoutRequest, ContactRequest, EarlyPlusRequest
 from app.utils.email_utils import send_generic_email
 from app.utils.logger import logger
 
@@ -53,6 +53,44 @@ async def create_checkout_session(checkout_request: CheckoutRequest):
         return {"checkout_url": checkout_session.url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@subscriptions_router.post("/request-early-plus")
+# async def request_early_plus(request: CheckoutRequest):
+async def request_early_plus(request: EarlyPlusRequest):
+    handler = SubscriptionHandler()
+    shop = await handler.get_shop_by_shop_id(request.shop_domain)
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+
+    shop_domain = request.shop_domain
+    contact_email = request.email
+
+    subject = f"New Early Plus Plan Inquiry from {shop_domain}"
+    html_content = f"""
+        <html>
+        <body>
+            <p>Hi Sales Team,</p>
+            <p>The following store has requested to subscribe to the Early Plus plan:</p>
+            <ul>
+                <li><b>Store Name:</b> {shop_domain}</li>
+                <li><b>Contact Email:</b> {contact_email}</li>
+                <li><b>Plan Requested:</b> {request.plan}</li>
+            </ul>
+            <p>Please send them the payment link to start their subscription.</p>
+            <br>
+            <p>Thank you,</p>
+            <p>Your Automated Assistant</p>
+        </body>
+        </html>
+    """
+    
+    try:
+        await send_generic_email(ENTERPRISE_CONTACT_EMAIL, subject, html_content)
+        return {"message": "We have received your request for the Early Plus plan. We will share the payment link through your email to start your subscription after the payment."}
+    except Exception as e:
+        logger.error(f"Failed to send Early Plus plan request email for {shop_domain}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send your request. Please try again later.")
+
 
 @subscriptions_router.post("/contact-enterprise")
 async def contact_enterprise(contact_request: ContactRequest):

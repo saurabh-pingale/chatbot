@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { json, LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {
@@ -18,6 +18,7 @@ import {
   Icon,
   Box,
   Divider,
+  TextField
 } from "@shopify/polaris";
 import { CheckIcon, CreditCardIcon, StarIcon } from "@shopify/polaris-icons";
 import { authenticate } from "../shopify.server";
@@ -63,31 +64,72 @@ export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCancelModalOpen, setCancelModalOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
+  const [isEarlyPlusModalOpen, setEarlyPlusModalOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
-  const handlePlanSelection = async (selectedPlan: string) => {
+   const handlePlanSelection = async (plan: string) => {
+    setSelectedPlan(plan);
+    setEarlyPlusModalOpen(true);
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (newValue: string) => {
+    setUserEmail(newValue);
+    setEmailTouched(true);
+
+    if (!validateEmail(newValue)) {
+      setEmailError("Please enter a valid email address.");
+    } else {
+      setEmailError("");
+    }
+  };
+
+  const handleRequestSubscription = useCallback(async () => {
+     if (!userEmail || !validateEmail(userEmail) || !selectedPlan) {
+        setError("Email is required to make a request.");
+        return;
+    }
+    setEarlyPlusModalOpen(false);
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await fetch(`${API.BACKEND_URL}/subscriptions/create-checkout-session`, {
+      const response = await fetch(`${API.BACKEND_URL}/subscriptions/request-early-plus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPlan, shop_domain: shop }),
+        body: JSON.stringify({ plan: selectedPlan, shop_domain: shop, email: userEmail }),
       });
+      // TODO: Uncomment when Stripe is enabled
+      // const response = await fetch(`${API.BACKEND_URL}/subscriptions/create-checkout-session`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ plan: selectedPlan, shop_domain: shop }),
+      // });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.detail || "Failed to create checkout session");
       }
-      if (data.checkout_url) {
-        window.top!.location.href = data.checkout_url;
-      }
+      setSuccessMessage(data.message);
+      // if (data.checkout_url) {
+      //   window.top!.location.href = data.checkout_url;
+      // }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
+      setUserEmail('');
+      setSelectedPlan(null);
     }
-  };
+  }, [[userEmail, selectedPlan, shop]]);
 
   const handleEnterpriseContact = async () => {
     setIsLoading(true);
@@ -112,26 +154,28 @@ export default function BillingPage() {
   };
 
   const handleCancelSubscription = async () => {
+    // setCancelModalOpen(false);
+    // setIsLoading(true);
+    // setError(null);
+    // try {
+    //   const response = await fetch(`${API.BACKEND_URL}/subscriptions/cancel-subscription`, {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ shop_domain: shop }),
+    //   });
+    //   const data = await response.json();
+    //   if (!response.ok) {
+    //       throw new Error(data.detail || "Failed to cancel subscription");
+    //   }
+    //   setSuccessMessage(data.message);
+    //   window.location.reload(); 
+    // } catch (err: any) {
+    //     setError(err.message);
+    // } finally {
+    //     setIsLoading(false);
+    // }
+    alert("Subscription cancellation is temporarily disabled.");
     setCancelModalOpen(false);
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API.BACKEND_URL}/subscriptions/cancel-subscription`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shop_domain: shop }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-          throw new Error(data.detail || "Failed to cancel subscription");
-      }
-      setSuccessMessage(data.message);
-      window.location.reload(); 
-    } catch (err: any) {
-        setError(err.message);
-    } finally {
-        setIsLoading(false);
-    }
   };
 
   const plans = [
@@ -381,6 +425,39 @@ export default function BillingPage() {
             </Layout.Section>
         </Layout>
       </BlockStack>
+
+       <Modal
+        open={isEarlyPlusModalOpen}
+        onClose={() => setEarlyPlusModalOpen(false)}
+        title="Request Early Plus Subscription"
+        primaryAction={{
+          content: 'Request Subscription',
+          onAction: handleRequestSubscription,
+          disabled: !userEmail.includes('@') || !userEmail.includes('.'),
+        }}
+        secondaryActions={[{
+          content: 'Cancel',
+          onAction: () => setEarlyPlusModalOpen(false),
+        }]}
+      >
+        <Modal.Section>
+          <BlockStack gap="300">
+            <Text as="p" variant="bodyMd">
+              To proceed with the "Plus" plan, please provide your contact email. We will send the payment link and subscription details to this address.
+            </Text>
+            <TextField
+                label="Contact Email"
+                type="email"
+                value={userEmail}
+                onChange={handleEmailChange}
+                onBlur={() => setEmailTouched(true)}
+                autoComplete="email"
+                placeholder="your.email@example.com"
+                error={emailTouched && !!emailError ? emailError : undefined}
+            />
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
 
       <Modal
         open={isSuccessModalOpen}

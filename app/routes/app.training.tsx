@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import styles from '../styles/training.module.css';
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
@@ -9,6 +8,7 @@ import { textTrain } from "./text_train";
 import SetupStepper from "../components/SetupStepper";
 import { Page, Spinner } from "@shopify/polaris";
 import { getShopStatus } from "./get_shop_status";
+import styles from '../styles/training.module.css';
 
 interface TrainingLoaderData extends LoaderData {
   setupCompleted: boolean;
@@ -30,21 +30,48 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function TrainingPage() {
+  const navigate = useNavigate();
+  const fetcher = useFetcher<FetcherResponse>();
+  const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
+  const processingRef = useRef(false);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
-  const fetcher = useFetcher<FetcherResponse>();
-  const processingRef = useRef(false);
-  const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
-  const navigate = useNavigate();
-  const MAX_CHAR_LIMIT = 1000;
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const MAX_CHAR_LIMIT = 1000;
+
   useEffect(() => {
-    setMessages([{ 
+    setMessages([
+      { 
       sender: "bot", 
       text: "Fetch the products by clicking on the 'Fetch Products' button or provide text input to train the LLM with your own data." 
-    }]);
+      },
+      {
+        sender: "bot",
+        text: `Here are some examples of text data you can provide (up to ${MAX_CHAR_LIMIT} characters):`,
+      },
+      {
+        sender: "bot",
+        text: "Example 1 (About Us): 'Our company was founded in 2024 with the goal of providing high-quality, sustainable products. We believe in ethical sourcing and giving back to the community.'",
+      },
+      {
+        sender: "bot",
+        text: "Example 2 (Shipping Information): 'We ship worldwide! Standard shipping takes 5-7 business days, and express shipping takes 2-3 business days. All orders are processed within 24 hours.'",
+      },
+      {
+        sender: "bot",
+        text: "Example 3 (Return Policy): 'We have a 30-day return policy. If you're not satisfied with your purchase, you can return it for a full refund. Please contact our support team to initiate a return.'",
+      },
+    ]);
   }, []);
+
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || processingRef.current) return;
@@ -162,7 +189,7 @@ export default function TrainingPage() {
             <div className={styles.chatHeader}>
               <h3>Training Chat</h3>
             </div>
-            <div className={styles.chatWindow}>
+            <div className={styles.chatWindow} ref={chatWindowRef}>
               {messages.map((msg, index) => (
                 <div key={index} className={msg.sender === "user" ? styles.userMessage : styles.botMessage}>
                   {msg.text}
