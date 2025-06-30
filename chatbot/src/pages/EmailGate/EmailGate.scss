@@ -37,13 +37,17 @@
 
   &.has-error {
     border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
   }
 
   &:focus {
     border-color: var(--theme-primary-color, #{$orange-450});
+    box-shadow: none;
   }
+
   &:focus.has-error {
     border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
   }
 }
 

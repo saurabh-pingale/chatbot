@@ -10,15 +10,15 @@ export const EmailGate = memo<EmailGateProps>(({
   onSubmit
 }) => {
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
+  const [otp, setOtp] = useState<string[]>(Array(4).fill(''));
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [currentShopId, setCurrentShopId] = useState<string | null>(null);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>(Array(4).fill(null));
 
-  if (otpInputRefs.current.length !== 6) {
-    otpInputRefs.current = Array(6).fill(null);
+  if (otpInputRefs.current.length !== 4) {
+    otpInputRefs.current = Array(4).fill(null);
   }
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export const EmailGate = memo<EmailGateProps>(({
     newOtp[index] = value;
     setOtp(newOtp);
 
-    if (value && index < 5) {
+    if (value && index < 3) {
       otpInputRefs.current[index + 1]?.focus();
     }
 
@@ -80,8 +80,8 @@ export const EmailGate = memo<EmailGateProps>(({
 
   const handleOtpSubmit = async () => {
     const otpString = otp.join('');
-    if (otpString.length !== 6) {
-        setError('Please enter a valid 6-digit OTP');
+    if (otpString.length !== 4) {
+        setError('Please enter a valid 4-digit OTP');
         return;
     }
     if (!currentShopId) {
@@ -102,6 +102,27 @@ export const EmailGate = memo<EmailGateProps>(({
         console.error("Error during handleOtpSubmit in EmailGate:", err);
     } finally {
         setIsLoading(false);
+    }
+  };
+
+  const handleOtpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedData = e.clipboardData.getData('Text').trim();
+    if (/^\d{4}$/.test(pastedData)) {
+      e.preventDefault();
+      const otpArray = pastedData.split('');
+      setOtp(otpArray);
+      otpArray.forEach((digit, i) => {
+        if (otpInputRefs.current[i]) {
+          otpInputRefs.current[i]!.value = digit;
+        }
+      });
+      otpInputRefs.current[3]?.focus();
     }
   };
 
@@ -139,7 +160,7 @@ export const EmailGate = memo<EmailGateProps>(({
             />
         ) : (
              <div className="otp-input-container">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 4 }).map((_, index) => (
                 <input
                   key={index}
                   ref={el => {
@@ -150,11 +171,8 @@ export const EmailGate = memo<EmailGateProps>(({
                   className={`otp-input ${error ? 'has-error' : ''}`}
                   value={otp[index]}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-                      otpInputRefs.current[index - 1]?.focus();
-                    }
-                  }}
+                  onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                  onPaste={index === 0 ? handleOtpPaste : undefined}
                   disabled={isLoading}
                   aria-label={`OTP digit ${index + 1}`}
                   style={dynamicStyles}

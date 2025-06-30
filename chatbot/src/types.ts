@@ -155,6 +155,7 @@ export interface ChatHeaderProps {
   onCloseOffers: () => void;
   offerTags: string[];
   onOfferClick: (tag: string) => void;
+  onClearConversation?: () => void;  
 }
 
 export interface ChatInputProps {
@@ -292,4 +293,9 @@ export interface UtmParams {
   utm_campaign?: string;
   utm_term?: string;
   utm_content?: string;
+}
+
+export interface NotificationPopupProps {
+  isVisible: boolean;
+  onClose: () => void;
 }

@@ -6,6 +6,7 @@ import { RingBellIconSVG } from '../../../assets/RingBellIcon';
 import { OffersPopup } from '../../OffersPopup/OffersPopup';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
+import { TrashIconSVG } from '../../../assets/TrashIcon';
 
 export const ChatHeader = memo<ChatHeaderProps>(({ 
   storeImage,
@@ -18,7 +19,8 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   isOffersPopupOpen,
   onCloseOffers,
   offerTags,
-  onOfferClick
+  onOfferClick,
+  onClearConversation 
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -76,6 +78,17 @@ export const ChatHeader = memo<ChatHeaderProps>(({
                 {cartItemCount}
               </motion.span>
             )}
+          </motion.div>
+        )}
+        {onClearConversation && (
+          <motion.div 
+            className="chat-header-icon-wrapper chat-header-trash-icon-wrapper"
+            onClick={onClearConversation}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            title="Clear conversation"
+          >
+            <TrashIconSVG />
           </motion.div>
         )}
       </div>
