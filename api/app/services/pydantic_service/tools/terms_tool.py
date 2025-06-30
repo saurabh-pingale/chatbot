@@ -43,11 +43,8 @@ class TermsTool(BaseTool):
                 logger.warning(f"Warning: No terms found for query: '{user_message}' in shop: {shopId}")
                 return {
                     "terms": [
-                        "I apologize, but I couldn't find any specific information about this policy in the store's documentation. "
-                        "For the most accurate and up-to-date information about store policies, I recommend:\n"
-                        "1. Checking the store's policy pages directly\n"
-                        "2. Contacting the store's customer service\n"
-                        "3. Looking for policy information during checkout"
+                        "I apologize, but I couldn't find any specific information, I recommend:\n"
+                        "Checking the store's policy pages or contacting customer support \n"
                     ]
                 }
             
