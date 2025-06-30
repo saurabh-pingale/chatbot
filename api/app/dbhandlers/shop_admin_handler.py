@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, join
 from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime
 
@@ -64,8 +64,22 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error("Database error in store_collections: %s", str(error), exc_info=True)
                     raise error
+                
+    async def get_collections(self, shop_id: str) -> List[str]:
+        async with AsyncSessionLocal() as session:
+            stmt = (
+                select(CollectionModel.title)
+                .select_from(
+                    join(CollectionModel, ProductModel, CollectionModel.id == ProductModel.collection_id)
+                )
+                .join(ShopModel, ProductModel.shop_id == ShopModel.id)
+                .where(ShopModel.shop_id == shop_id)
+                .distinct()
+            )
+            result = await session.execute(stmt)
+            return [row[0] for row in result.all() if row[0]]
 
-    async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int]) -> None:
+    async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
         """Stores products in the database and links them to collections using bulk insert."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
@@ -81,7 +95,8 @@ class ShopAdminHandler:
                             'url': product.url,
                             'price': float(product.price) if product.price else None,
                             'image': product.image,
-                            'collection_id': col_id if col_id else None
+                            'collection_id': col_id if col_id else None,
+                            'shop_id': shop_id
                         })
 
                     stmt = insert(ProductModel).values(insert_data)

@@ -5,6 +5,8 @@ from typing import Dict, Any
 from .base_tool import BaseTool
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
+from app.dbhandlers.shop_admin_handler import ShopAdminHandler
+from app.external_service.redis_client import get_redis_client
 from app.utils.rag_pipeline_utils import (
     extract_products_from_response,
     extract_categories
@@ -20,6 +22,7 @@ class ProductTool(BaseTool):
     
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
+        self.shop_admin_handler = ShopAdminHandler()
     
     async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
         """Performs a semantic search for products based on the user's query."""
@@ -29,7 +32,6 @@ class ProductTool(BaseTool):
         try:
             embedding = EmbeddingService.create_embeddings(query)
             metadata_filters = metadata_extractor.extract_all_metadata(query)
-            logger.info(f"Metadta Filters Before passing: {metadata_filters}")
 
             results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
@@ -37,7 +39,6 @@ class ProductTool(BaseTool):
                 agent_type="ProductAgent",
                 metadata_filters=metadata_filters
             )
-            logger.info(f"Raw Result from Query Embeddings: {results}")
 
             unique_results = []
             seen_variant_ids = set()
@@ -60,9 +61,21 @@ class ProductTool(BaseTool):
 
             categories = extract_categories(products) or []
 
-            if not isinstance(products, list):
-                raise ModelRetry("Invalid product data format, retrying...")
-            
+            if not products:
+                redis_client = await get_redis_client()
+                redis_key = f"{shopId}:categories"
+                categories = list(await redis_client.smembers(redis_key))
+
+                if not categories:
+                    categories = await self.shop_admin_handler.get_collections(shopId)
+
+                return {
+                    "products": [],
+                    "categories": categories,
+                    "refined_query": query,
+                    "original_query": query
+                }
+
             return {
                 "products": products,
                 "categories": categories,

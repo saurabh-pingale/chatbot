@@ -47,5 +47,6 @@ export const useChat = () => {
     isTyping,
     addMessage,
     handleBotResponse,
+    setMessages
   };
 }; 

@@ -9,7 +9,6 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
             product = {
                 "id": str(product_id) if product_id is not None else None,
                 "name": getattr(result.metadata, 'title', None),
-                "description": getattr(result.metadata, 'description', None), 
                 "price": getattr(result.metadata, 'price', None),
                 "url": getattr(result.metadata, 'url', None),
                 "image_url": getattr(result.metadata, 'image', None),

@@ -10,15 +10,15 @@ export const messageListVariants = {
 
 export const dotVariants = {
   animate: (i: number) => ({
-    y: [0, -8, 0, 0, 0],
-    scale: [1, 1.3, 1, 1, 1],
-    opacity: [0.5, 1, 0.5, 0.5, 0.5],
+    y: [0, -3, 0],
+    scale: [1, 1.1, 1],
+    opacity: [0.6, 0.9, 0.6],
     transition: {
       duration: 1.2,
       repeat: Infinity,
       repeatType: 'loop' as const,
-      delay: i * 0.25,
-      times: [0, 0.2, 0.4, 0.8, 1],
+      delay: i * 0.2,
+      times: [0, 0.5, 1],
       ease: 'easeInOut',
     },
   }),

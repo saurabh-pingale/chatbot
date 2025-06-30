@@ -19,7 +19,7 @@ async def send_otp(payload: SendOTPRequest):
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found")
 
-        otp = str(random.randint(100000, 999999))
+        otp = str(random.randint(1000, 9999))
         expired_at = datetime.now(UTC) + timedelta(minutes=5)
 
         await app.otp_handler.store_otp(email=payload.email, otp=otp, expired_at=expired_at)

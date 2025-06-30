@@ -13,7 +13,7 @@ const ChatBody = ({
     jwtToken,
     isEmailGateVisible = false,
     handleError,
-    isChatLimitReached
+    isChatLimitReached,
 }: ChatBodyProps) => {
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
