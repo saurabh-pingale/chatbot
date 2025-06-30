@@ -19,7 +19,7 @@ ATTRIBUTE_PATTERNS = {
 
 CATEGORY_ALIASES = {
     "shirts": "shirts", "shirt": "shirts", "formal shirt": "shirts", "casual shirt": "shirts",
-    "t-shirts": "t-shirts", "t-shirt": "t-shirts", "tee": "t-shirts", "tees": "t-shirts", "polo shirt": "t-shirts",
+    "t-shirts": "t-shirts", "t-shirt": "t-shirts", "tee": "t-shirts", "tees": "t-shirts", "polo shirt": "t-shirts", "tshirt": "t-shirts", "tshirts": "t-shirts", "tee shirt": "t-shirts",
     "jeans": "jeans", "denims": "jeans",
     "trousers": "trousers", "pants": "trousers", "chinos": "trousers", "khakis": "trousers",
     "dress": "dresses", "dresses": "dresses", "gown": "dresses",

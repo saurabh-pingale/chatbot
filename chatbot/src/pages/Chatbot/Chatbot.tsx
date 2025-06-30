@@ -20,8 +20,10 @@ import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
+import { NotificationPopup } from '../../components/NotificationPopup/NotificationPopup';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
+  const STATIC_BOT_GREETING = "I'm an AI assistant — learning every day. How can I help?";
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jwtToken, setJwtToken] = useState<string | null>(null);
@@ -30,11 +32,14 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const [offerTagsList, setOfferTagsList] = useState<string[]>([]); 
   const [isEmailGateVisible, setIsEmailGateVisible] = useState(false);
   const [chatLimitReached, setChatLimitReached] = useState(false);
+  const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const { messages, isTyping, addMessage, handleBotResponse } = useChat();
+  const { messages, isTyping, addMessage, handleBotResponse, setMessages } = useChat();
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
@@ -74,6 +79,47 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       captureLocation();
     }
   }, [jwtToken]);
+
+  useEffect(() => {
+    if (
+      isOpen &&
+      !isEmailGateVisible && 
+      !hasShownStaticMessage
+    ) {
+      const timeoutId = setTimeout(() => {
+        addMessage(STATIC_BOT_GREETING, 'bot');
+        setHasShownStaticMessage(true);
+      }, 1000);
+    
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, isEmailGateVisible, hasShownStaticMessage, addMessage]);
+
+  useEffect(() => {
+  if (!isOpen) {
+    const notificationShown = sessionStorage.getItem('notificationShown');
+    
+    if (!notificationShown) {
+      const timeout = setTimeout(() => {
+        setShowNotification(true);
+        sessionStorage.setItem('notificationShown', 'true');
+      }, 2000); 
+      
+      setNotificationTimeout(timeout);
+    }
+  } else {
+    setShowNotification(false);
+    if (notificationTimeout) {
+      clearTimeout(notificationTimeout);
+    }
+  }
+
+  return () => {
+    if (notificationTimeout) {
+      clearTimeout(notificationTimeout);
+    }
+  };
+}, [isOpen]);
 
   const handleToggle = () => {
     setIsOpen(prev => !prev);
@@ -195,6 +241,12 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     window.open(offerUrl, '_blank');
   }, [config.shopId]);
 
+  const handleClearConversation = useCallback(() => {
+    setMessages([]);
+    setHasShownStaticMessage(false);
+    setChatLimitReached(false);
+  }, [isOpen, isEmailGateVisible, addMessage]);
+
   return (
     <>
       <ChatbotToggle
@@ -222,6 +274,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               onCloseOffers={handleCloseOffers}
               offerTags={offerTagsList}
               onOfferClick={handleOfferClick}
+              onClearConversation={handleClearConversation}
             />
             <div className="chatbot-content">
               {isEmailGateVisible ? (
@@ -252,6 +305,10 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
           </motion.div>
         )}
       </AnimatePresence>
+      <NotificationPopup 
+        isVisible={showNotification} 
+        onClose={() => setShowNotification(false)}
+      />
     </>
   );
 }); 

@@ -1,0 +1,60 @@
+.notification-popup {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  z-index: 9998;
+  max-width: 280px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  border: 1px solid #e1e3e5;
+
+  .notification-content {
+    position: relative;
+  }
+
+  .close-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      svg path {
+        stroke: #000000;
+      }
+    }
+  }
+
+  .message {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #202223;
+    font-weight: 500;
+    padding-right: 16px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 24px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    transform: rotate(45deg);
+    box-shadow: -1px -1px 5px rgba(0, 0, 0, 0.05);
+    border-left: 1px solid #e1e3e5;
+    border-bottom: 1px solid #e1e3e5;
+  }
+}

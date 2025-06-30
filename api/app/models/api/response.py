@@ -60,6 +60,7 @@ class ProductResponse(BaseResponse):
         None,
         description="Product category suggestions if no direct matches found"
     )
+    available_categories: Optional[List[str]] = Field(None, description="Available categories from the store inventory, useful when user's request had unknown or missing categories.")
     
     @field_validator('products', mode='before')
     def validate_products(cls, v):
@@ -72,10 +73,10 @@ class ProductResponse(BaseResponse):
 
 class OrderResponse(BaseResponse):
     """Response model for order-related queries"""
-    response_text: str = Field(..., description="The detailed response to the user's order query")
+    response_text: Optional[str] = Field(..., description="The detailed response to the user's order query")
     email: Optional[str] = Field(None, description="Support email if relevant")
     phone: Optional[str] = Field(None, description="Support phone if relevant")
-    requires_support: bool = Field(
+    requires_support: Optional[bool] = Field(
         default=True, 
         description="Whether the user needs to contact support for further assistance"
     )

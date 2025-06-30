@@ -13,3 +13,5 @@ MESSAGE_LIMIT = 10
 LOCK_TIME = 1
 
 AGENT_CONVERSATION_RATE_LIMIT = "30/minute" # Equivalent to: 5 requests every 10 seconds
+
+CATEGORY_CACHE_TTL_SECONDS = 86400  # 1 day

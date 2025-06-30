@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Union
 from pydantic_ai import Agent
 from pydantic_ai.exceptions import UsageLimitExceeded
 from pydantic_ai.models.anthropic import AnthropicModel
+import time
 
 from app.services.pydantic_service.register import Register
 from app.services.pydantic_service.tool_handler import ToolHandler
@@ -49,6 +50,11 @@ class LLMService:
         - **If no results:** "Sorry, couldn't find that. How else can I help?😊"
         - Never mention product details, descriptions, or specifications and avoid mentioning product titles as well because users already know what they want to search.
 
+    **Step 4: No Products Found? Suggest Available Categories**
+    - If no products match the user's query, but `categories` is returned in the tool output:
+        - Respond like: "Sorry, we don't have that right now. But you might like: [category1], [category2], ..."
+    - You must NEVER invent categories — only use what the tool returns.
+
     ---
     **CRITICAL: All responses must be under 50 words. Use friendly adjectives (awesome, perfect, great) to sound warm and engaging. No exceptions.**
     """
@@ -90,15 +96,19 @@ class LLMService:
                 "product_cache": all_found_products
             }
             
-            logger.info(f"Before Calling Agent")
+            start = time.time()
+            logger.info("Starting agent call")
             agent_response = await self.agent.run(
                 user_message,
                 deps=deps,
                 temperature=0.7
             )
+            logger.info(f"Agent call completed in {time.time() - start:.2f}s")
             logger.info(f"Agent Response: {agent_response}")
 
             response_outputs = agent_response.output
+            logger.info(f"Type of Response Outputs: {type(response_outputs)}")
+            logger.info(f"Response Outputs: {response_outputs}")
             
             if not isinstance(response_outputs, list):
                 response_outputs = [response_outputs]
@@ -115,21 +125,25 @@ class LLMService:
                         final_answer_parts.append(response_data.answer)
 
                     valid_ids = response_data.product_ids or []
+
+                    matched_products = []
                     if all_found_products:
-                        matched_products = [
+                        matched_products.extend([
                             p for p in all_found_products if str(p.get("id")) in valid_ids
-                        ]
-                        final_products.extend(matched_products)
-                        product_categories = extract_categories(matched_products)
-                        final_categories.update(product_categories)
-                    else:
-                        logger.warning("product_cache (formerly original_products) was not populated.")
-                
-                    matched_products = [p.dict() for p in (response_data.products or []) if str(p.id) in valid_ids]
+                        ])
+
+                    if response_data.products:
+                        matched_products.extend([
+                            p.dict() for p in response_data.products if str(p.id) in valid_ids
+                        ])
 
                     final_products.extend(matched_products)
                     product_categories = extract_categories(matched_products)
                     final_categories.update(product_categories)
+                    
+                    if not product_categories and response_data.available_categories:
+                        logger.info(f"Using available_categories as fallback: {response_data.available_categories}")
+                        final_categories.update(response_data.available_categories)
 
                 elif isinstance(response_data, (GreetingResponse, OrderResponse, TermsResponse)):
                     processed = self.processing.process_response(response_data)
@@ -149,8 +163,14 @@ class LLMService:
             logger.info(f"Final aggregated response: {final_response}")
             return final_response            
         except UsageLimitExceeded as exc:
-            logger.info(f"Hit the limit, here’s a summary:")
-            logger.info(f"{exc.final_response}")  
+            logger.error(f"Usage Limit Exceeded: {exc}", exc_info=True)
+            return {
+                "answer": "As of now we couldn't able to process your query, give us some time our support person will contact you.",
+                "products": [],
+                "categories": [],
+                "success": False,
+                "error": str(exc)
+            } 
 
         except Exception as e:
             logger.error(f"Critical error in handle_user_message: {e}", exc_info=True)
