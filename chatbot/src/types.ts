@@ -156,6 +156,7 @@ export interface ChatHeaderProps {
   offerTags: string[];
   onOfferClick: (tag: string) => void;
   onClearConversation?: () => void;  
+  showClearConversationIcon:boolean; 
 }
 
 export interface ChatInputProps {

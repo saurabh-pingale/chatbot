@@ -30,7 +30,9 @@ export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) =>
       <img src={product.image_url} alt={product.name} className="product-image" />
       <div className="product-info">
         <h4 className="product-title">{product.name}</h4>
-        <div className="product-price">{product.price}</div>
+        {product.price && (
+          <div className="product-price">${product.price}</div>
+        )}
         <a href={product.url} target="_blank" className="product-view-button">
           View
         </a>

@@ -247,6 +247,9 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     setChatLimitReached(false);
   }, [isOpen, isEmailGateVisible, addMessage]);
 
+  const conversationMessagesCount = messages.length;
+  const showClearConversationIcon = (conversationMessagesCount >= 4) && !isEmailGateVisible;
+
   return (
     <>
       <ChatbotToggle
@@ -275,6 +278,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               offerTags={offerTagsList}
               onOfferClick={handleOfferClick}
               onClearConversation={handleClearConversation}
+              showClearConversationIcon={showClearConversationIcon}
             />
             <div className="chatbot-content">
               {isEmailGateVisible ? (

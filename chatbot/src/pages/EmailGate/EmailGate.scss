@@ -81,6 +81,7 @@
   font-size: 16px;
   outline: none;
   transition: border-color 0.2s;
+  box-shadow: none;
 
   &.has-error {
     border-color: var(--theme-primary-color, #{$red-500});
@@ -88,9 +89,12 @@
 
   &:focus {
     border-color: var(--theme-primary-color, #{$orange-450});
+    box-shadow: none;
   }
+  
   &:focus.has-error {
     border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
   }
 }
 

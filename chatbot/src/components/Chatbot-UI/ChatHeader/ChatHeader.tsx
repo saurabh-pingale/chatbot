@@ -20,7 +20,8 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   onCloseOffers,
   offerTags,
   onOfferClick,
-  onClearConversation 
+  onClearConversation,
+  showClearConversationIcon  
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -80,7 +81,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
             )}
           </motion.div>
         )}
-        {onClearConversation && (
+        {showClearConversationIcon  && onClearConversation && (
           <motion.div 
             className="chat-header-icon-wrapper chat-header-trash-icon-wrapper"
             onClick={onClearConversation}
