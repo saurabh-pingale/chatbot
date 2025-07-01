@@ -31,7 +31,7 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Mode
         msg_type = msg.get('type', 'user')
         content = msg.get('content', '')
 
-        if not content or content == "I'm an AI assistant — learning every day. How can I help?":
+        if not content or content == "I'm an AI assistant. How can I help you 😊?":
             continue
         
         if msg_type == 'user':
