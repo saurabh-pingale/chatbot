@@ -8,6 +8,10 @@ class UnifiedResponse(BaseModel):
     categories: List[str] = Field(default_factory=list)
     additional_data: Optional[dict] = None
 
+class GeneralResponse(BaseModel):
+    answer: str
+    success: bool = True
+
 class Product(BaseModel):
     """Model representing a product in the store"""
     id: Union[str, int]
@@ -22,21 +26,6 @@ class BaseResponse(BaseModel):
     """Base response model with common fields"""
     success: bool = Field(default=True, description="Whether the operation was successful")
     error: Optional[str] = Field(None, description="Error message if success is False")
-
-class GreetingResponse(BaseResponse):
-    """Schema for generating greeting responses"""
-    welcome_message: str = Field(
-        ...,
-        description="A brief, warm, welcoming message to the user"
-    )
-    product_prompt: str = Field(
-        ...,
-        description="A suggestion for the user to ask about products"
-    )
-    category_mention: Optional[str] = Field(
-        None,
-        description="Optional mention of product categories if available"
-    )
 
 class ProductResponse(BaseResponse):
     """Schema for product query responses"""
@@ -60,7 +49,10 @@ class ProductResponse(BaseResponse):
         None,
         description="Product category suggestions if no direct matches found"
     )
-    available_categories: Optional[List[str]] = Field(None, description="Available categories from the store inventory, useful when user's request had unknown or missing categories.")
+    available_categories: Optional[List[str]] = Field(
+        None, 
+        description="Available categories from the store inventory, useful when user's request had unknown or missing categories."
+    )
     
     @field_validator('products', mode='before')
     def validate_products(cls, v):

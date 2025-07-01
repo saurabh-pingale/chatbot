@@ -3,12 +3,11 @@ from pydantic import BaseModel
 import functools
 
 from app.services.pydantic_service.tools.base_tool import BaseTool
-from app.services.pydantic_service.tools.greeting_tool import GreetingTool
 from app.services.pydantic_service.tools.product_tool import ProductTool
 from app.services.pydantic_service.tools.order_tool import OrderTool
 from app.services.pydantic_service.tools.terms_tool import TermsTool
 from app.models.api.response import (
-    GreetingResponse,
+    GeneralResponse,
     ProductResponse,
     OrderResponse,
     TermsResponse
@@ -23,7 +22,6 @@ class Register:
     def register_all_tools(self) -> Tuple[List[Callable], List[Type[BaseModel]]]:
         """Register all available tools and return them as a list of tools and response models."""
         tool_registrations = [
-            self._register_greeting_tool(),
             self._register_product_tool(),
             self._register_order_tool(),
             self._register_terms_tool(),
@@ -31,22 +29,10 @@ class Register:
         
         tools = [reg[0] for reg in tool_registrations]
         response_models = [reg[1] for reg in tool_registrations]
+
+        response_models.append(GeneralResponse)
         
         return tools, response_models
-
-    def _register_greeting_tool(self) -> Tuple[Callable, Type[BaseModel]]:
-        """Register greeting tool"""
-        greeting_tool = GreetingTool()
-        tool, response_model = self._register_tool_instance(
-            greeting_tool,
-            response_model=GreetingResponse,
-            processor=lambda response, output: setattr(
-                response, 
-                'category_mention', 
-                f"Some popular categories: {', '.join(output['categories'])}"
-            ) if output.get("categories") else None
-        )
-        return tool, response_model
 
     def _register_product_tool(self) -> Tuple[Callable, Type[BaseModel]]:
         """Register product tool"""
@@ -72,8 +58,7 @@ class Register:
         return self._register_tool_instance(
             terms_tool,
             response_model=TermsResponse,
-            processor=lambda response, output: setattr(response, 'sources', output['terms'])
-            if output.get('terms') else None
+            processor=None
         )
 
     def _register_tool_instance(self, tool_instance: BaseTool, response_model: Type[BaseModel],

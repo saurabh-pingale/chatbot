@@ -3,7 +3,7 @@
 client_id = "0b0088138bf915307e7b51a6a9973f68"
 name = "chatbot"
 handle = "chatbot-234"
-application_url = "https://affordable-rounds-courts-common.trycloudflare.com"
+application_url = "https://territories-specifies-ghost-fascinating.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://affordable-rounds-courts-common.trycloudflare.com/auth/callback",
-  "https://affordable-rounds-courts-common.trycloudflare.com/auth/shopify/callback",
-  "https://affordable-rounds-courts-common.trycloudflare.com/api/auth/callback"
+  "https://territories-specifies-ghost-fascinating.trycloudflare.com/auth/callback",
+  "https://territories-specifies-ghost-fascinating.trycloudflare.com/auth/shopify/callback",
+  "https://territories-specifies-ghost-fascinating.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://affordable-rounds-courts-common.trycloudflare.com"
+url = "https://territories-specifies-ghost-fascinating.trycloudflare.com"
 subpath = "chatbot-api"
 prefix = "apps"
 

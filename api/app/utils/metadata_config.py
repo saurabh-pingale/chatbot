@@ -20,28 +20,19 @@ ATTRIBUTE_PATTERNS = {
 CATEGORY_ALIASES = {
     "shirts": "shirts", "shirt": "shirts", "formal shirt": "shirts", "casual shirt": "shirts",
     "t-shirts": "t-shirts", "t-shirt": "t-shirts", "tee": "t-shirts", "tees": "t-shirts", "polo shirt": "t-shirts", "tshirt": "t-shirts", "tshirts": "t-shirts", "tee shirt": "t-shirts",
-    "jeans": "jeans", "denims": "jeans",
-    "trousers": "trousers", "pants": "trousers", "chinos": "trousers", "khakis": "trousers",
-    "dress": "dresses", "dresses": "dresses", "gown": "dresses",
+    "pants": "pants", "trousers": "pants", "chinos": "pants", "khakis": "pants",
     "jacket": "jackets", "jackets": "jackets", "blazer": "jackets", "coat": "jackets",
-    "kurta": "kurtas", "kurtas": "kurtas", "kurti": "kurtas",
-    "hoodie": "hoodies", "hoodies": "hoodies",
     "shorts": "shorts",
-    "cap": "caps", "caps": "caps", "hat": "caps",
-    "footwear": "footwear", "shoes": "footwear", "shoe": "footwear", "sneakers": "footwear",
-    "sandals": "footwear", "boots": "footwear", "heels": "footwear",
+    "hats": "hats", "hat": "hats", "caps": "hats", "cap": "hats",
+    "shoes": "shoes", "shoe": "shoes", "footwear": "shoes", "sneakers": "shoes",
 }
 
 CATEGORY_ATTRIBUTES = {
     "shirts": ["price", "color", "size", "material", "sleeve_length", "fit", "pattern", "title"],
     "t-shirts": ["price", "color", "size", "material", "sleeve_length", "neckline", "pattern", "title"],
-    "jeans": ["price", "color", "size", "material", "fit", "title"],
-    "trousers": ["price", "color", "size", "material", "fit", "title"],
-    "dresses": ["price", "color", "size", "material", "sleeve_length", "pattern", "title"],
+    "pants": ["price", "color", "size", "material", "fit", "title"],
     "jackets": ["price", "color", "size", "material", "title"],
-    "kurtas": ["price", "color", "size", "material", "sleeve_length", "pattern", "title"],
-    "hoodies": ["price", "color", "size", "material", "title"],
     "shorts": ["price", "color", "size", "material", "title"],
     "caps": ["price", "color", "material", "title"],
-    "footwear": ["price", "color", "size", "material", "title"],
+    "shoes": ["price", "color", "size", "material", "title"],
 }

@@ -1,4 +1,4 @@
-from app.models.api.response import ProductResponse, OrderResponse, Product, GreetingResponse, TermsResponse
+from app.models.api.response import ProductResponse, OrderResponse, Product, TermsResponse, GeneralResponse
 from typing import Union
 from app.utils.rag_pipeline_utils import extract_categories
 from app.utils.logger import logger
@@ -61,7 +61,7 @@ class Processing:
         if output.get("phone"):
             response.phone = output["phone"]
 
-    def process_response(self, response: Union[OrderResponse, GreetingResponse, TermsResponse]) -> dict:
+    def process_response(self, response: Union[OrderResponse, TermsResponse, GeneralResponse]) -> dict:
         """General processor for supported non-product responses"""
         if isinstance(response, OrderResponse):
             return {
@@ -71,17 +71,16 @@ class Processing:
                 "requires_support": response.requires_support,
                 "success": True
             }
-        elif isinstance(response, GreetingResponse):
-            return {
-                "answer": response.welcome_message,
-                "categories": [],
-                "success": True
-            }
         elif isinstance(response, TermsResponse):
             return {
                 "answer": response.response,
                 "sources": response.sources,
                 "success": True
+            }
+        elif isinstance(response, GeneralResponse):
+            return {
+                "answer": response.answer,
+                "success": response.success
             }
         else:
             logger.warning("Unhandled response type in process_response")

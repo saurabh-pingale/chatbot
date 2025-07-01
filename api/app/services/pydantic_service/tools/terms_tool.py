@@ -1,5 +1,4 @@
 from pydantic_ai import RunContext
-from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
 from .base_tool import BaseTool
@@ -16,11 +15,11 @@ class TermsTool(BaseTool):
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
 
-    async def run(self, ctx: RunContext[None], user_message: str) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None], policy_query: str) -> Dict[str, Any]:
         try:
             shopId = ctx.deps.get("shopId")
 
-            user_message_embedding = EmbeddingService.create_embeddings(user_message)
+            user_message_embedding = EmbeddingService.create_embeddings(policy_query)
             terms_results = await self.embeddings_handler.query_embeddings(
                 vector=user_message_embedding, 
                 namespace=shopId
@@ -40,20 +39,27 @@ class TermsTool(BaseTool):
                     extracted_term_texts.append(text_content)
 
             if not extracted_term_texts:
-                logger.warning(f"Warning: No terms found for query: '{user_message}' in shop: {shopId}")
+                logger.warning(f"Warning: No terms found for query: '{policy_query}' in shop: {shopId}")
+                no_info_message = [
+                    "I apologize, but I couldn't find any specific information, I recommend:\n",
+                    "Checking the store's policy pages or contacting customer support \n"
+                ]
                 return {
-                    "terms": [
-                        "I apologize, but I couldn't find any specific information, I recommend:\n"
-                        "Checking the store's policy pages or contacting customer support \n"
-                    ]
+                    "response": "".join(no_info_message),
+                    "sources": []
                 }
             
-            return {"terms": extracted_term_texts}
+            return {
+                "response": "\n\n".join(extracted_term_texts), 
+                "sources": extracted_term_texts
+            }
         except Exception as e:
             logger.error(f"Error in terms tool processing message for shopId '{shopId}': {e}")
+            error_message = [
+                "I'm having trouble accessing the store's policy information right now. ",
+                "Please try again later or contact the store directly for immediate assistance."
+            ]
             return {
-                "terms": [
-                    "I'm having trouble accessing the store's policy information right now. "
-                    "Please try again later or contact the store directly for immediate assistance."
-                ]
+                "response": "".join(error_message),
+                "sources": error_message
             }

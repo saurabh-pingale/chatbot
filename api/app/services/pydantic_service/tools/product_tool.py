@@ -32,6 +32,7 @@ class ProductTool(BaseTool):
         try:
             embedding = EmbeddingService.create_embeddings(query)
             metadata_filters = metadata_extractor.extract_all_metadata(query)
+            logger.info(f"Extracted Metadata Filters: {metadata_filters}")
 
             results = await self.embeddings_handler.query_embeddings(
                 vector=embedding, 
@@ -39,6 +40,7 @@ class ProductTool(BaseTool):
                 agent_type="ProductAgent",
                 metadata_filters=metadata_filters
             )
+            logger.info(f"Query Embeddings Result: {results}")
 
             unique_results = []
             seen_variant_ids = set()
@@ -54,20 +56,24 @@ class ProductTool(BaseTool):
                              seen_variant_ids.add(result.id)
 
             products = extract_products_from_response(unique_results) or []
+            logger.info(f"Extracted Products: {products}")
 
             product_cache = ctx.deps.get("product_cache")
             if isinstance(product_cache, list):
                 product_cache.extend(products)
 
             categories = extract_categories(products) or []
+            logger.info(f"Extracted Categories: {categories}")
 
             if not products:
                 redis_client = await get_redis_client()
                 redis_key = f"{shopId}:categories"
                 categories = list(await redis_client.smembers(redis_key))
+                logger.info(f"Categories from Redis: {categories}")
 
                 if not categories:
                     categories = await self.shop_admin_handler.get_collections(shopId)
+                    logger.info(f"Categories from DB: {categories}")
 
                 return {
                     "products": [],

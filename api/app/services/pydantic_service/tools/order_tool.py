@@ -20,8 +20,10 @@ class OrderTool(BaseTool):
             logger.info(f"Shop ID in Order Tool: {shopId}")
             if not shopId:
                 return {
+                    "response_text": "Support contact is currently unavailable.",
                     "email": "",
-                    "phone": ""
+                    "phone": "",
+                    "requires_support": False
                 }
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
@@ -29,17 +31,24 @@ class OrderTool(BaseTool):
 
             if not support_info or (not support_info.get("support_email") and not support_info.get("support_phone")):
                 return {
+                    "response_text": "We couldn't find any support contact at the moment.",
                     "email": "",
-                    "phone": ""
+                    "phone": "",
+                    "requires_support": False
                 }
             
             return {
+                "response_text": f"You can contact our support team at {support_info.get('support_email', '') or 'N/A'} or {support_info.get('support_phone', '') or 'N/A'}.",
                 "email": support_info.get("support_email", ""),
-                "phone": support_info.get("support_phone", "")
+                "phone": support_info.get("support_phone", ""),
+                "requires_support": True
             }
+
         except Exception as e:
             logger.error(f"Error in order tool: {e}")
             return {
+                "response_text": "An error occurred while fetching support details.",
                 "email": "",
-                "phone": ""
+                "phone": "",
+                "requires_support": False
             }

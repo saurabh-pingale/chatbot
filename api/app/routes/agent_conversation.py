@@ -66,6 +66,11 @@ async def agent_conversation(
             raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
+
+        previous_messages = []
+        if len(contents) > 1:
+            all_previous = contents[:-1]
+            previous_messages = all_previous[-3:] if len(all_previous) >= 3 else all_previous
         
         country, region, city, ip = (None, None, None, None)
         if payload.location_info:
@@ -83,7 +88,7 @@ async def agent_conversation(
         if not analytics_success:
             logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, guest_id: {guest_id}, shop_id: {shop.id}")
         
-        agent_response = await app.llm_service.handle_user_message(user_message, contents, shop_id)
+        agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
         
         conversation_log_data = {
             "user_query": user_message,

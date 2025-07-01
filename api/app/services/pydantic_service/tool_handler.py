@@ -2,7 +2,8 @@ import json
 from typing import Dict, Type, Callable, Any
 from pydantic import BaseModel
 
-from app.models.api.response import GreetingResponse
+from app.models.api.response import GeneralResponse
+from app.utils.logger import logger
 
 class ToolHandler:
     """Registry for dynamic tool handling"""
@@ -19,7 +20,7 @@ class ToolHandler:
 
     def get_response_model(self, tool_name: str) -> Type[BaseModel]:
         """Get the response model for a tool"""
-        return self._response_models.get(tool_name, GreetingResponse)
+        return self._response_models.get(tool_name, GeneralResponse)
 
     def tool_config(self, response_model: Type[BaseModel], processor: Callable[[Any, dict], None] = None, tool_name: str = None):
         """Decorator to register a tool's response model and processor."""
@@ -38,6 +39,7 @@ class ToolHandler:
         if isinstance(tool_output, str):
             try:
                 tool_output = json.loads(tool_output)
+                logger.info(f"Tool Output: {tool_output}")
             except json.JSONDecodeError:
                 tool_output = {}
         if tool_name in self._tool_processors:

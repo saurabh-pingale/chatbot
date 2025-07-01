@@ -23,7 +23,7 @@ import './Chatbot.scss';
 import { NotificationPopup } from '../../components/NotificationPopup/NotificationPopup';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
-  const STATIC_BOT_GREETING = "I'm an AI assistant — learning every day. How can I help?";
+  const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jwtToken, setJwtToken] = useState<string | null>(null);
