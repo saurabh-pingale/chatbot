@@ -27,7 +27,6 @@ class ShopConfigHandler:
                             "support_email": shop.support_email,
                             "support_phone": shop.support_phone,
                             "support_country_code": shop.support_country_code,
-                            "quick_replies": shop.quick_replies,
                         }
                     else:
                         logger.warning(f"No shop found with id: {shop_id}, returning defaults.")
@@ -40,7 +39,6 @@ class ShopConfigHandler:
                             "support_email": None,
                             "support_phone": None,
                             "support_country_code": None,
-                            "quick_replies": [],
                         }
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_config for shop {shop_id}: {error}", exc_info=True)
