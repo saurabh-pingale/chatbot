@@ -16,8 +16,7 @@ export const API = {
     TRACK_ADDED_TO_CART: `${BACKEND_URL}/analytics_router/track_added_to_cart`,
     TRACK_PURCHASE: `${BACKEND_URL}/analytics_router/track_purchase`,
     COUNTRY_CODES: `${BACKEND_URL}/country_code`,
-    SAVE_INTEGRATIONS: `${BACKEND_URL}/shop-admin/integration`,
-    SAVE_QUICK_REPLIES: `${BACKEND_URL}/shop-admin/save-quick-replies`
+    SAVE_INTEGRATIONS: `${BACKEND_URL}/shop-admin/integration`
 } 
 
 export const CLOUDINARY = {

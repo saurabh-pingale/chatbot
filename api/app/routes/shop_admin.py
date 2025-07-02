@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
-from typing import List
+from datetime import datetime, timedelta, UTC
 import re
 
 from app.utils.app_utils import get_app
@@ -13,8 +13,7 @@ from app.models.api.shop_admin import (
     EmailGatePreferenceRequest,
     EmailGatePreferenceResponse,
     IntegrationRequest,
-    IntegrationResponse,
-    QuickRepliesRequest
+    IntegrationResponse
 )
 from app.utils.logger import logger
 
@@ -191,43 +190,3 @@ async def integration(request: Request, body: IntegrationRequest):
     except Exception as error:
         logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save integration")
-    
-@shop_admin_router.post(
-    "/save-quick-replies",
-    summary="Save quick replies for shop",
-    response_model=dict,
-    responses={
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
-    },
-)
-async def save_quick_replies(request: Request, body: QuickRepliesRequest):
-    shop_id = _get_cleaned_shop_id(request)
-    
-    try:
-        app = get_app()
-        await app.shop_admin_service.save_quick_replies(shop_id, body.quick_replies)
-        return {"success": True}
-    except Exception as error:
-        logger.error(f"Error in save_quick_replies for shop {shop_id}: {error}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to save quick replies")
-
-@shop_admin_router.get(
-    "/get-quick-replies",
-    summary="Get quick replies for shop",
-    response_model=List[str],
-    responses={
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
-    },
-)
-async def get_quick_replies(request: Request):
-    shop_id = _get_cleaned_shop_id(request)
-    
-    try:
-        app = get_app()
-        quick_replies = await app.shop_admin_service.get_quick_replies(shop_id)
-        return quick_replies or []
-    except Exception as error:
-        logger.error(f"Error in get_quick_replies for shop {shop_id}: {error}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get quick replies")
