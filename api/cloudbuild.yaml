@@ -24,7 +24,7 @@ steps:
       - '--platform'
       - $_PLATFORM
     entrypoint: gcloud
-timeout: 1200s
+timeout: 2400s
 
 options:
   logging: CLOUD_LOGGING_ONLY
