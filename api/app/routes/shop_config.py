@@ -18,8 +18,8 @@ async def get_shop_config(
     return config 
 
 @shop_config_router.get("/config/status")
-async def config_status():
+def config_status():
     """
     Returns a static status response to confirm the service is up.
     """
-    return JSONResponse(content={"status": "success"}, status_code=200)
+    return {"status": "success"}
