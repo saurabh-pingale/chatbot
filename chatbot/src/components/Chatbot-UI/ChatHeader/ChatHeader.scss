@@ -106,12 +106,6 @@
     stroke: currentColor;
     fill: none;
   }
-
-  @media (min-width: 769px) {
-    &.mobile-only {
-      display: none;
-    }
-  }
 }
 
 .chat-header-cart-count-badge {
