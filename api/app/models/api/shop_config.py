@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 class ShopConfigResponse(BaseModel):
@@ -10,3 +10,4 @@ class ShopConfigResponse(BaseModel):
     support_email: Optional[str]
     support_phone: Optional[str]
     support_country_code: Optional[str]
+    quick_replies: Optional[List[str]] = []
