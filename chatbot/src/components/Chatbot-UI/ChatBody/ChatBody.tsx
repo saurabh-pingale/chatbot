@@ -1,9 +1,8 @@
 import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
-import { DEFAULT_QUICK_REPLIES } from '../../../constants/default_quick_replies';
 import { Cart } from '../../Cart-UI/Cart/Cart';
-import type { ChatBodyProps, ProductType, StyleWithCustomProps } from '../../../types';
 import { useCart } from '../../../context/CartContext';
+import type { ChatBodyProps, ProductType, StyleWithCustomProps } from '../../../types';
 
 const ChatBody = ({
     messages,
@@ -14,6 +13,7 @@ const ChatBody = ({
     isEmailGateVisible = false,
     handleError,
     isChatLimitReached,
+    quickReplies
 }: ChatBodyProps) => {
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
@@ -39,7 +39,7 @@ const ChatBody = ({
                 onProductAddToCart={handleProductAddToCart}
             />
             <div className="chatbot-quick-replies" style={chatbotContainerStyles}>
-                {DEFAULT_QUICK_REPLIES.map((reply) => (
+                {quickReplies.map((reply) => (
                     <button
                         key={reply}
                         className="chatbot-quick-reply-button"

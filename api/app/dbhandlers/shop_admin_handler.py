@@ -266,3 +266,35 @@ class ShopAdminHandler:
                 except SQLAlchemyError as e:
                     logger.error(f"Database error in update_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
                     raise
+
+    async def save_quick_replies(self, shop_id: str, quick_replies: List[str]) -> None:
+        """Saves the quick replies for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    result = await session.execute(
+                        select(ShopModel).where(ShopModel.shop_id == shop_id)
+                    )
+                    shop = result.scalars().first()
+                    if not shop:
+                        shop = ShopModel(shop_id=shop_id)
+                        session.add(shop)
+
+                    shop.quick_replies = quick_replies
+                except SQLAlchemyError as error:
+                    logger.error(f"Database error in save_quick_replies for shop {shop_id}: {error}", exc_info=True)
+                    raise error
+
+    async def get_quick_replies(self, shop_id: str) -> Optional[List[str]]:
+        """Fetches quick replies for a given shop ID."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    result = await session.execute(
+                        select(ShopModel.quick_replies).where(ShopModel.shop_id == shop_id)
+                    )
+                    quick_replies = result.scalars().first()
+                    return quick_replies
+                except SQLAlchemyError as error:
+                    logger.error(f"Database error in get_quick_replies for shop {shop_id}: {error}", exc_info=True)
+                    raise error
