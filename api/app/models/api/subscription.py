@@ -11,3 +11,6 @@ class EarlyPlusRequest(BaseModel):
     plan: str
     shop_domain: str
     email: EmailStr
+
+class TrialRequest(BaseModel):
+    shop_domain: str

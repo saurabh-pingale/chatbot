@@ -1,19 +1,64 @@
 import stripe
 from fastapi import APIRouter, Request, Header, HTTPException
 from fastapi.responses import JSONResponse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.config import STRIPE_WEBHOOK_SECRET, STRIPE_API_KEY, ENTERPRISE_CONTACT_EMAIL
 from app.dbhandlers.subscription_handler import SubscriptionHandler
 from app.models.db.subscription import SubscriptionStatus
 from app.services.shop_admin_service import ShopAdminService
-from app.models.api.subscription import CheckoutRequest, ContactRequest, EarlyPlusRequest
+from app.models.api.subscription import CheckoutRequest, ContactRequest, EarlyPlusRequest, TrialRequest
 from app.utils.email_utils import send_generic_email
 from app.utils.logger import logger
 
 stripe.api_key = STRIPE_API_KEY
 
 subscriptions_router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
+
+@subscriptions_router.post("/start-free-trial")
+async def start_free_trial(request: TrialRequest):
+    """Starts a 30-day free trial for a shop."""
+    handler = SubscriptionHandler()
+    shop = await handler.get_shop_by_shop_id(request.shop_domain)
+    
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+
+    existing_subscription = await handler.get_active_or_trialing_subscription(shop.id)
+    if existing_subscription:
+        raise HTTPException(
+            status_code=400, 
+            detail="Shop already has an active or trialing subscription."
+        )
+
+    start_date = datetime.utcnow()
+    end_date = start_date + timedelta(days=30)
+    
+    pseudo_stripe_sub_id = f"free-trial-{shop.id}-{int(start_date.timestamp())}"
+    pseudo_stripe_customer_id = f"free-customer-{shop.id}"
+
+    try:
+        await handler.create_subscription(
+            shop_id=shop.id,
+            plan="Free",
+            stripe_subscription_id=pseudo_stripe_sub_id,
+            stripe_customer_id=pseudo_stripe_customer_id,
+            status=SubscriptionStatus.TRIALING,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        await handler.update_shop_plan(shop.id, "Free")
+        
+        shop_admin_service = ShopAdminService()
+        await shop_admin_service.mark_setup_as_completed(shop.id)
+
+        logger.info(f"Free trial started for shop_id: {shop.id}")
+        return {"message": "Your 30-day free trial has started successfully!"}
+
+    except Exception as e:
+        logger.error(f"Failed to start free trial for {request.shop_domain}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @subscriptions_router.post("/create-checkout-session")
 async def create_checkout_session(checkout_request: CheckoutRequest):
@@ -179,6 +224,8 @@ async def webhook_received(
             end_date_ts = subscription.get('items', {}).get('data', [{}])[0].get('current_period_end')
             if end_date_ts:
                 end_date = datetime.fromtimestamp(end_date_ts)
+
+        await handler.update_shop_plan(shop_id, plan_name)
 
         await handler.update_subscription_status(
             stripe_subscription_id=stripe_subscription_id,

@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Session
-from app.models.db.subscription import SubscriptionModel, SubscriptionStatus
-from app.models.db.shop_admin import ShopModel
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, update
+
 from app.dbhandlers.db import AsyncSessionLocal
+from app.models.db.shop_admin import ShopModel
+from app.models.db.subscription import SubscriptionModel, SubscriptionStatus
 from app.utils.logger import logger
 
 class SubscriptionHandler:
@@ -69,3 +69,47 @@ class SubscriptionHandler:
             except SQLAlchemyError as e:
                 logger.error(f"Error getting shop by shop id: {e}", exc_info=True)
                 raise 
+
+    async def get_active_or_trialing_subscription(self, shop_id: int):
+        """Checks for an existing subscription that is either active or trialing."""
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await session.execute(
+                    select(SubscriptionModel).where(
+                        SubscriptionModel.shop_id == shop_id,
+                        SubscriptionModel.status.in_([
+                            SubscriptionStatus.ACTIVE,
+                            SubscriptionStatus.TRIALING
+                        ])
+                    )
+                )
+                return result.scalars().first()
+            except SQLAlchemyError as e:
+                logger.error(f"Error getting active/trialing subscription for shop_id {shop_id}: {e}", exc_info=True)
+                raise
+        
+    async def get_expired_trials(self):
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await session.execute(
+                    select(SubscriptionModel).where(
+                        SubscriptionModel.status == SubscriptionStatus.TRIALING,
+                        SubscriptionModel.end_date < datetime.utcnow()
+                    )
+                )
+                return result.scalars().all()
+            except SQLAlchemyError as e:
+                logger.error(f"Error getting expired trials: {e}", exc_info=True)
+                raise
+        
+    async def update_shop_plan(self, shop_id: int, plan: str):
+        """Updates the plan field directly on the ShopModel."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                stmt = (
+                    update(ShopModel)
+                    .where(ShopModel.id == shop_id)
+                    .values(plan=plan)
+                )
+                await session.execute(stmt)
+                await session.commit()

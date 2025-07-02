@@ -1,17 +1,17 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "0b0088138bf915307e7b51a6a9973f68"
-name = "chatbot"
-handle = "chatbot-234"
-application_url = "https://territories-specifies-ghost-fascinating.trycloudflare.com"
+client_id = "5c6356e63895028f5c0c531b2f8c9846"
+name = "Reezo AI"
+handle = "reezo-ai-1"
+application_url = "https://obtain-cams-present-collapse.trycloudflare.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2025-04"
+api_version = "2025-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -19,14 +19,14 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://territories-specifies-ghost-fascinating.trycloudflare.com/auth/callback",
-  "https://territories-specifies-ghost-fascinating.trycloudflare.com/auth/shopify/callback",
-  "https://territories-specifies-ghost-fascinating.trycloudflare.com/api/auth/callback"
+  "https://obtain-cams-present-collapse.trycloudflare.com/auth/callback",
+  "https://obtain-cams-present-collapse.trycloudflare.com/auth/shopify/callback",
+  "https://obtain-cams-present-collapse.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://territories-specifies-ghost-fascinating.trycloudflare.com"
-subpath = "chatbot-api"
+url = "https://obtain-cams-present-collapse.trycloudflare.com"
+subpath = "chatbot-api-1"
 prefix = "apps"
 
 [pos]
