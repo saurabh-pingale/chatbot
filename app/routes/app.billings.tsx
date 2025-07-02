@@ -153,6 +153,28 @@ export default function BillingPage() {
     }
   };
 
+  const handleFreeTrialSelection = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API.BACKEND_URL}/subscriptions/start-free-trial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shop_domain: shop }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to start free trial");
+      }
+      setSuccessMessage(data.message || "Free trial started successfully!");
+      window.location.reload(); 
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCancelSubscription = async () => {
     // setCancelModalOpen(false);
     // setIsLoading(true);
@@ -185,7 +207,7 @@ export default function BillingPage() {
       period: "30 days",
       description: "Perfect for getting started",
       features: ["30-day trial", "Basic support", "100 conversations"], 
-      action: () => alert("Free trial not implemented yet"), 
+      action: handleFreeTrialSelection,
       value: "Free",
       highlight: false,
       badge: null
@@ -214,9 +236,9 @@ export default function BillingPage() {
     }
   ];
 
-  const displayedPlans = (plan && plan !== 'Free')
-    ? plans.filter(p => p.value !== 'Free')
-    : plans;
+  const displayedPlans = (plan && plan !== 'Free' && (subscriptionStatus === 'active' || subscriptionStatus === 'trialing'))
+    ? plans.filter(p => p.value !== 'Free')
+    : plans;
 
   const renderCurrentPlanBanner = () => {
     if (plan && subscriptionStatus) {
@@ -231,8 +253,10 @@ export default function BillingPage() {
                 <BlockStack gap="100">
                   <Text as="h3" variant="headingMd">Current Subscription</Text>
                   <InlineStack gap="200" blockAlign="center">
-                    <Text as="span" variant="bodyLg" fontWeight="semibold">{plan} Plan</Text>
-                    <Badge tone={getBadgeTone(subscriptionStatus)} size="small">{subscriptionStatus}</Badge>
+                    <Text as="span" variant="bodyLg" fontWeight="semibold">{plan === 'Not Selected' ? plan : `${plan} Plan`}</Text>
+                    {plan !== 'Not Selected' && (
+                        <Badge tone={getBadgeTone(subscriptionStatus)} size="small">{subscriptionStatus}</Badge>
+                    )}
                   </InlineStack>
                 </BlockStack>
               </InlineStack>
@@ -256,6 +280,8 @@ export default function BillingPage() {
     }
     return null;
   };
+
+  const currentPlanBanner = renderCurrentPlanBanner();
 
   const renderPlanSelection = () => (
     <BlockStack gap="600">
@@ -414,9 +440,9 @@ export default function BillingPage() {
               </Layout.Section>
             )}
             
-            {renderCurrentPlanBanner() && (
+            {currentPlanBanner && (
           <Layout.Section>
-                {renderCurrentPlanBanner()}
+                {currentPlanBanner}
           </Layout.Section>
             )}
             
