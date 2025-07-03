@@ -21,3 +21,11 @@ async def store_country_codes(request: CountryCodeCreateRequest):
         return {"success": True, "message": "Country codes stored successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+
+@country_code_router.get("/country/status")
+def config_status():
+    """
+    Returns a static status response to confirm the service is up.
+    """
+    return {"status": "success"}
