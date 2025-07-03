@@ -20,8 +20,8 @@ class LLMService:
 
     ---
     ### Core Tools
-    You are a helpful assistant with access to specific tools. **Only use tools when the user query specifically matches these categories:**
-    If a query has multiple parts, you should use multiple tools in parallel.
+    You are a helpful assistant with access to specific tools. **Only use tools when the user query STRICTLY matches these categories:**
+    If a query has multiple parts, you should use multiple tools in parallel. If there is no need then use one tool only.
     | Tool      | Use for...                                     |
     |-----------|------------------------------------------------|
     | Product   | **Specific product searches** - when users ask to find, search, or filter products by attributes (color, size, brand, fabric, etc.). |
@@ -41,7 +41,8 @@ class LLMService:
 
     ## CRITICAL RULES FOR THE 'PRODUCT' TOOL
 
-    **IMPORTANT: You can only call the product tool ONCE per user query. If the tool returns no products (not_found: true), do NOT call it again with the same or similar query. NEVER retry product searches.**
+    **IMPORTANT: You can only call the product tool ONCE per user query. If the tool returns no products (not_found: true), do NOT call it again with the same or similar query. NEVER retry product searches.
+    Retrive the correct information from the tool output to built the response.**
     **SINGLE TOOL CALL RULE: For product searches, make ONE comprehensive call that includes all the user's requirements. Do not make multiple separate calls for the same query.**
 
     When a user asks for products, you MUST follow this process EXACTLY. This is not a guideline; it is a mandatory procedure.
@@ -70,6 +71,11 @@ class LLMService:
     - If the product tool returns no results, accept it and suggest alternatives from available categories.
     - Do not attempt to rephrase the query or make additional tool calls.
     - One product search per user message - no exceptions.
+
+    **Step 5: FINAL RESPONSE DIRECTIVE**
+    - After the `ProductTool` is successfully called and returns products, you MUST generate a `ProductResponse`.
+    - Do NOT call any other tools (like `Order` or `Terms`). Your task is complete.
+    - Stop and wait for the user's next message.
 
     ---  
     **CRITICAL: Response text must under 50 words STRICTLY. DON'T consider attributes or metadata data (IDs, URLs, variants etc) under WORD LIMIT. Don't use negative words (I am afraid, sorry, etc) instead use positive adjective words (awesome, perfect, great). No exceptions.**
@@ -117,6 +123,7 @@ class LLMService:
                 "terms_called": False,
                 "total_non_product_calls": 0,
                 "max_non_product_calls": 10,
+                "product_call_count": 0,
                 "order_call_count": 0,
                 "terms_call_count": 0
             }
@@ -182,10 +189,18 @@ class LLMService:
                             p.dict() for p in response_data.products if str(p.id) in valid_ids
                         ])
 
-                    final_products.extend(matched_products)
+                    seen_ids = set()
+                    unique_products = []
+                    for p in matched_products:
+                        pid = p.get("id")
+                        if pid and pid not in seen_ids:
+                            seen_ids.add(pid)
+                            unique_products.append(p)
+
+                    final_products.extend(unique_products)
                     logger.info(f"Final Products: {final_products}")
                     
-                    product_categories = extract_categories(matched_products)
+                    product_categories = extract_categories(unique_products)
                     final_categories.update(product_categories)
                     logger.info(f"Final Categories: {final_categories}")
                     
