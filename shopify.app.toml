@@ -3,7 +3,7 @@
 client_id = "5c6356e63895028f5c0c531b2f8c9846"
 name = "Reezo AI"
 handle = "reezo-ai-1"
-application_url = "https://obtain-cams-present-collapse.trycloudflare.com"
+application_url = "https://strategies-significance-generators-figures.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://obtain-cams-present-collapse.trycloudflare.com/auth/callback",
-  "https://obtain-cams-present-collapse.trycloudflare.com/auth/shopify/callback",
-  "https://obtain-cams-present-collapse.trycloudflare.com/api/auth/callback"
+  "https://strategies-significance-generators-figures.trycloudflare.com/auth/callback",
+  "https://strategies-significance-generators-figures.trycloudflare.com/auth/shopify/callback",
+  "https://strategies-significance-generators-figures.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://obtain-cams-present-collapse.trycloudflare.com"
+url = "https://strategies-significance-generators-figures.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 

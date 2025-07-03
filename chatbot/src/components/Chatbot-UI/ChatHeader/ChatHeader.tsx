@@ -4,9 +4,10 @@ import { hexToRgbArray } from '../../../utils/utils';
 import { CartIconSVG } from '../../../assets/cart_icon';
 import { RingBellIconSVG } from '../../../assets/RingBellIcon';
 import { OffersPopup } from '../../OffersPopup/OffersPopup';
+import { TrashIconSVG } from '../../../assets/TrashIcon';
+import { ChevronDownIconSVG } from '../../../assets/ChevronDownIcon';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
-import { TrashIconSVG } from '../../../assets/TrashIcon';
 
 export const ChatHeader = memo<ChatHeaderProps>(({ 
   storeImage,
@@ -21,7 +22,8 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   offerTags,
   onOfferClick,
   onClearConversation,
-  showClearConversationIcon  
+  showClearConversationIcon,
+  onMinimize   
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -92,6 +94,15 @@ export const ChatHeader = memo<ChatHeaderProps>(({
             <TrashIconSVG />
           </motion.div>
         )}
+        <motion.div 
+          className="chat-header-icon-wrapper chat-header-minimize-icon-wrapper mobile-only"
+          onClick={onMinimize}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          title="Minimize"
+        >
+          <ChevronDownIconSVG />
+        </motion.div>
       </div>
       <OffersPopup
         isOpen={isOffersPopupOpen}

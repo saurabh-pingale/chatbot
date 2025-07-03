@@ -1,5 +1,4 @@
 from pydantic_ai import RunContext
-from pydantic_ai.exceptions import ModelRetry
 from typing import Dict, Any
 
 from .base_tool import BaseTool
@@ -27,8 +26,22 @@ class ProductTool(BaseTool):
     async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
         """Performs a semantic search for products based on the user's query."""
         shopId = ctx.deps.get("shopId")
-        logger.info(f"Performing product search for query: '{query}'")
 
+        tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+        if tool_usage_tracker.get("product_called", False):
+            logger.warning("Product tool already called once, skipping additional call")
+            return {
+                "products": [],
+                "categories": [],
+                "refined_query": query,
+                "original_query": query,
+                "not_found": True,
+                "message": "Product search already performed"
+            }
+        
+        tool_usage_tracker["product_called"] = True 
+
+        logger.info(f"Performing product search for query: '{query}'")
         try:
             embedding = EmbeddingService.create_embeddings(query)
             metadata_filters = metadata_extractor.extract_all_metadata(query)
@@ -40,7 +53,6 @@ class ProductTool(BaseTool):
                 agent_type="ProductAgent",
                 metadata_filters=metadata_filters
             )
-            logger.info(f"Query Embeddings Result: {results}")
 
             unique_results = []
             seen_variant_ids = set()
@@ -75,19 +87,42 @@ class ProductTool(BaseTool):
                     categories = await self.shop_admin_handler.get_collections(shopId)
                     logger.info(f"Categories from DB: {categories}")
 
+                logger.info(f"Query in Product Tool: {query}")   
+
                 return {
                     "products": [],
                     "categories": categories,
                     "refined_query": query,
-                    "original_query": query
+                    "original_query": query,
+                    "not_found": True 
                 }
+            
+            logger.info(f"Qury in Product Tool: {query}")
+            logger.info(f"Total products returned: {len(products)}")
 
             return {
                 "products": products,
                 "categories": categories,
                 "refined_query": query,
-                "original_query": query
+                "original_query": query,
+                "not_found": False
             }
         except Exception as e:
-            logger.error(f"Error in product tool: {e}")
-            raise ModelRetry(f"Failed to fetch products: {str(e)}, retrying...")
+            logger.error(f"Product tool failed with error: {e}", exc_info=True)
+            try:
+                redis_client = await get_redis_client()
+                redis_key = f"{shopId}:categories"
+                categories = list(await redis_client.smembers(redis_key))
+                if not categories:
+                    categories = await self.shop_admin_handler.get_collections(shopId)
+            except:
+                categories = []
+                
+            return {
+                "products": [],
+                "categories": categories,
+                "refined_query": query,
+                "original_query": query,
+                "not_found": True,
+                "error": str(e)
+            }

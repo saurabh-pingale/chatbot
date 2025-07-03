@@ -34,3 +34,10 @@ async def train_with_text(
     except Exception as e:
         logger.error(f"Training error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to train with text")
+    
+@text_training_router.get("/train/status")
+def config_status():
+    """
+    Returns a static status response to confirm the service is up.
+    """
+    return {"status": "success"}

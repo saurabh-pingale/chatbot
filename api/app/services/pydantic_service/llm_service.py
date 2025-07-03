@@ -7,7 +7,7 @@ import time
 from app.services.pydantic_service.register import Register
 from app.services.pydantic_service.tool_handler import ToolHandler
 from app.services.pydantic_service.processing import Processing
-from app.models.api.response import ProductResponse, OrderResponse, TermsResponse, GeneralResponse
+from app.models.api.response import ProductResponse, GeneralResponse, OrderResponse
 from app.utils.rag_pipeline_utils import extract_categories, format_message_history
 from app.constants import CLAUDE_MODEL_NAME
 from app.utils.logger import logger
@@ -25,7 +25,7 @@ class LLMService:
     | Tool      | Use for...                                     |
     |-----------|------------------------------------------------|
     | Product   | **Specific product searches** - when users ask to find, search, or filter products by attributes (color, size, brand, fabric, etc.). |
-    | Order     | **Order-related queries** - status, tracking, history, or order problems. |
+    | Order     | **Order-related queries** - Use this only when user asks how to contact support or needs help with an order. This tool returns only support email/phone. It does not give tracking or order-specific information. |
     | Terms     | **Policy questions** - returns, shipping policies, terms of service, etc. |
     ---
     **If the query is general conversation, greetings, or doesn't fit these categories, respond conversationally, no need to use any tools.**
@@ -37,13 +37,19 @@ class LLMService:
 
     **Rule**: Only use tools when the user is clearly asking for products, order information, or policy details. For everything else, chat naturally.
 
+    ## For the 'Order' tool, if support email and phone are available, use them directly and DO NOT call the tool again. Do not try to regenerate or expand on its answer.
+
     ## CRITICAL RULES FOR THE 'PRODUCT' TOOL
+
+    **IMPORTANT: You can only call the product tool ONCE per user query. If the tool returns no products (not_found: true), do NOT call it again with the same or similar query. NEVER retry product searches.**
+    **SINGLE TOOL CALL RULE: For product searches, make ONE comprehensive call that includes all the user's requirements. Do not make multiple separate calls for the same query.**
 
     When a user asks for products, you MUST follow this process EXACTLY. This is not a guideline; it is a mandatory procedure.
     **Step 1: Extract ALL Attributes for EACH Request**
-    - For each individual request, identify all specified attributes.
+    - Identify all specified attributes in the user's query.
     - The attributes can be: `category`, `color`, `size`, `brand`, `material` (fabric), `price`, and any other specific product feature mentioned.
     - **IMPORTANT**: You must perform an **EXACT, case-insensitive match** on the `category`. "Shirts" and "T-Shirts" are two COMPLETELY DIFFERENT categories.
+    - **Combine all requirements into a single search query** - do not split into multiple tool calls.
 
     **Step 2: Generate the Final Response (`ProductResponse`)**
     - `product_ids`: Collect the IDs of ALL returned products from ALL requests.
@@ -55,9 +61,15 @@ class LLMService:
         - Never mention product details, descriptions, or specifications and avoid mentioning product titles as well because users already know what they want to search.
 
     **Step 3: No Products or Categories Found? Suggest Available Categories**
-    - If no products or categories match the user's query, but `categories` is returned in the tool output:
-        - Respond like: "As of now, we don't have that right now. But you might like these other popular options like: [category1], [category2], ..."
+    - If the tool response contains `"not_found": true` and no products found:
+        - Respond positively like: "Couldn't find that exact item, but here are some popular options like: [category1], [category2]..."
+        - You MUST NOT retry the same query or call the tool again. Stop after one failed attempt.
     - You must NEVER invent categories — only use what the tool returns.
+
+    **Step 4: NEVER RETRY - One Call Rule**
+    - If the product tool returns no results, accept it and suggest alternatives from available categories.
+    - Do not attempt to rephrase the query or make additional tool calls.
+    - One product search per user message - no exceptions.
 
     ---  
     **CRITICAL: Response text must under 50 words STRICTLY. DON'T consider attributes or metadata data (IDs, URLs, variants etc) under WORD LIMIT. Don't use negative words (I am afraid, sorry, etc) instead use positive adjective words (awesome, perfect, great). No exceptions.**
@@ -83,7 +95,7 @@ class LLMService:
             tools=registered_tools,
             deps_type=dict,
             output_type=ResponseType,
-            retries=3,
+            retries=2,
             config={"final_llm_call_on_limit": True},
             parallel_tool_calls=True
         )
@@ -99,9 +111,20 @@ class LLMService:
         try:
             all_found_products = [] 
 
+            tool_usage_tracker = {
+                "product_called": False,
+                "order_called": False,
+                "terms_called": False,
+                "total_non_product_calls": 0,
+                "max_non_product_calls": 10,
+                "order_call_count": 0,
+                "terms_call_count": 0
+            }
+
             deps = {
                 "shopId": shop_id,
-                "product_cache": all_found_products
+                "product_cache": all_found_products,
+                "tool_usage_tracker": tool_usage_tracker
             }
             
             start = time.time()
@@ -137,11 +160,15 @@ class LLMService:
                 logger.info(f"Processing response of type: {type(response_data)}")
                 logger.info(f"Raw tool output: {response_data}")
 
+                if hasattr(response_data, 'limit_exceeded') and response_data.limit_exceeded:
+                    logger.info("Tool call was limited, skipping response processing")
+                    continue
+
                 if isinstance(response_data, ProductResponse):
                     logger.debug(f"ProductResponse: {response_data.model_dump()}")
                     if response_data.answer:
                         final_answer_parts.append(response_data.answer)
-
+                    
                     valid_ids = response_data.product_ids or []
 
                     matched_products = []
@@ -166,7 +193,7 @@ class LLMService:
                         logger.info(f"Using available_categories as fallback: {response_data.available_categories}")
                         final_categories.update(response_data.available_categories)
 
-                elif isinstance(response_data, (OrderResponse, TermsResponse, GeneralResponse)):
+                elif isinstance(response_data, (GeneralResponse, OrderResponse)):
                     logger.debug(f"ToolResponse: {response_data.model_dump()}")
                     processed = self.processing.process_response(response_data)
                     logger.info(f"Processed response: {processed}")

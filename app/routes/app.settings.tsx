@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { DeleteIcon, PlusIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import { saveColorPreference } from "./save_color_preference";
 import { saveSupportInfo } from "./save_support_info";
@@ -9,6 +10,7 @@ import { saveImageURLs } from "./save_image_urls";
 import { saveEmailGatePreference } from "./save_email_gate_preference";
 import { getShopStatus } from "./get_shop_status";
 import { getShopSettings } from "./get_shop_settings";
+import { saveQuickReplies } from "./save_quick_replies";
 import { ActionResponse } from "../common/types/index";
 import {
   Page,
@@ -41,6 +43,7 @@ interface SettingsData {
     support_country_code?: string;
     image?: string;
     show_email_gate?: boolean;
+    quick_replies?: string[];
   };
   countryCodes: Array<{label: string, value: string}>;
 }
@@ -89,9 +92,15 @@ export const action: ActionFunction = async ({ request }) => {
         const countryCodeValue = formData.get("countryCode") as string;
         const emailGatePrefString = formData.get("emailGatePreference") as string;
         const imageUrl = formData.get("imageUrl") as string;
+        const quickRepliesValue = formData.get("quickReplies") as string;
 
-        if (!color || !supportEmail || !supportPhone || !countryCodeValue || !emailGatePrefString || !imageUrl) {
+        if (!color || !supportEmail || !supportPhone || !countryCodeValue || !emailGatePrefString || !imageUrl || !quickRepliesValue) {
           return json({ error: "All fields are required and must be filled out." }, { status: 400 });
+        }
+
+        const quickRepliesParsed  = JSON.parse(quickRepliesValue);
+        if (quickRepliesParsed.length > 5) {
+          return json({ error: "Maximum 5 quick replies allowed." }, { status: 400 });
         }
         
         const countryCode = countryCodeValue.split('_')[0];
@@ -100,6 +109,7 @@ export const action: ActionFunction = async ({ request }) => {
         const showEmailGate = emailGatePrefString === "true";
         await saveEmailGatePreference(shopId, { show_email_gate: showEmailGate });
         await saveImageURLs(shopId, imageUrl);
+        await saveQuickReplies(shopId, quickRepliesParsed);
         return json({ success: true });
 
       case "saveColor":
@@ -130,6 +140,16 @@ export const action: ActionFunction = async ({ request }) => {
         if (!imageUrlOnly) return json({ error: "Image URL is required." }, { status: 400 });
         await saveImageURLs(shopId, imageUrlOnly);
         return json({ success: true, intent: 'saveImage' });
+
+      case "saveQuickReplies":
+        const quickReplies = formData.get("quickReplies") as string;
+        if (!quickReplies) return json({ error: "Quick replies are required." }, { status: 400 });
+        const parsedQuickReplies = JSON.parse(quickReplies);
+        if (parsedQuickReplies.length > 5) {
+          return json({ error: "Maximum 5 quick replies allowed." }, { status: 400 });
+        }
+        await saveQuickReplies(shopId, parsedQuickReplies);
+        return json({ success: true });
         
       default:
         return json({ error: "Invalid intent" }, { status: 400 });
@@ -169,6 +189,9 @@ export default function Settings() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [quickReplies, setQuickReplies] = useState<string[]>(
+    settings?.quick_replies || []
+  );
 
   useEffect(() => {
     if(session?.shop) {
@@ -180,13 +203,17 @@ export default function Settings() {
     if (setupCompleted) return;
 
     const { selectedColor, supportEmail, supportPhone, uploadedImage } = settingDetails;
+    const nonEmptyReplies = quickReplies.filter(reply => reply.trim() !== "");
+
     const allFieldsFilled = 
       !!selectedColor && 
       !!supportEmail && 
       !!supportPhone && 
-      !!uploadedImage;
+      !!uploadedImage &&
+      nonEmptyReplies.length > 0;
+
     setIsFormValid(allFieldsFilled);
-  }, [settingDetails, setupCompleted]);
+  }, [settingDetails, setupCompleted, quickReplies]);
 
   useEffect(() => {
     if (fetcher.data?.success) {
@@ -236,8 +263,11 @@ export default function Settings() {
     const { selectedColor, uploadedImage, supportEmail, supportPhone, countryCode, 
       emailGatePreference 
     } = settingDetails;
-    if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage || !countryCode || !emailGatePreference
-    )) return;
+    const nonEmptyReplies = quickReplies.filter(reply => reply.trim() !== "");
+
+    if (!setupCompleted && (!isFormValid || !selectedColor || !uploadedImage || !countryCode || 
+      !emailGatePreference || nonEmptyReplies.length === 0)) return;
+
     if (!validateEmail(supportEmail) || !validatePhone(supportPhone)) return;
 
     fetcher.submit(
@@ -249,6 +279,7 @@ export default function Settings() {
         countryCode,
         emailGatePreference,
         imageUrl: uploadedImage,
+        quickReplies: JSON.stringify(nonEmptyReplies),
       },
       { method: "post" }
     );
@@ -305,7 +336,6 @@ export default function Settings() {
     return true;
   };
 
-
   const handlePhoneChange = (value: string) => {
     handleStateChange('supportPhone', value);
     validatePhone(value);
@@ -318,6 +348,39 @@ export default function Settings() {
 
   const handleCountryCodeChange = (value: string) => {
       handleStateChange('countryCode', value);
+  };
+
+  const handleQuickReplyChange = (index: number, value: string) => {
+    const newQuickReplies = [...quickReplies];
+    newQuickReplies[index] = value;
+    setQuickReplies(newQuickReplies);
+  };
+
+  const handleAddQuickReply = () => {
+    if (quickReplies.length < 5) {
+      setQuickReplies([...quickReplies, ""]);
+    }
+  };
+
+  const handleRemoveQuickReply = (index: number) => {
+    const newQuickReplies = [...quickReplies];
+    newQuickReplies.splice(index, 1);
+    setQuickReplies(newQuickReplies);
+  };
+
+  const handleSaveQuickReplies = () => {
+    const nonEmptyReplies = quickReplies.filter(reply => reply.trim() !== "");
+    if (nonEmptyReplies.length === 0) {
+      setShowErrorBanner(true);
+      return;
+    }
+    fetcher.submit(
+      {
+        intent: "saveQuickReplies",
+        quickReplies: JSON.stringify(nonEmptyReplies),
+      },
+      { method: "post" }
+    );
   };
 
   const isLoading = fetcher.state !== "idle" || isRedirecting || uploading;
@@ -482,6 +545,105 @@ export default function Settings() {
                   <li>UI elements</li>
                   <li>Chatbot interface</li>
                 </ul>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="500">
+                <BlockStack gap="200">
+                  <Text as="h2" variant="headingLg">
+                    Quick Replies Settings{!setupCompleted && " (Required)"}
+                  </Text>
+                  <Text variant="bodyMd" as="p">
+                    Set up to 5 quick reply suggestions that will be displayed in a scrollable slider at the 
+                    bottom of the chat interface. These help users quickly ask common questions.
+                  </Text>
+                  <Text variant="bodyMd" as="p" tone="subdued">
+                    Example: "What's your return policy?", "When will my order ship?"
+                  </Text>
+                </BlockStack>
+                        
+                <Box 
+                  padding="400" 
+                  background="bg-surface-secondary" 
+                  borderRadius="200"
+                  borderWidth="025"
+                  borderColor="border"
+                >
+                  <BlockStack gap="400">
+                    {quickReplies.length === 0 ? (
+                      <Box
+                        padding="400"
+                        background="bg-surface"
+                        borderRadius="200"
+                        borderWidth="025"
+                        borderColor="border"
+                      >
+                        <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
+                          No quick replies added yet
+                        </Text>
+                      </Box>
+                    ) : (
+                      quickReplies.map((reply, index) => (
+                        <Box 
+                          key={index}
+                          padding="400"
+                          background="bg-surface"
+                          borderRadius="200"
+                          borderWidth="025"
+                          borderColor="border"
+                        >
+                          <InlineStack gap="200" align="center" blockAlign="center">
+                            <Box width="100%">
+                              <TextField
+                                label={`Quick Reply ${index + 1}`}
+                                value={reply}
+                                onChange={(value) => handleQuickReplyChange(index, value)}
+                                autoComplete="off"
+                                multiline={2}
+                                placeholder="Enter a suggested question for users..."
+                                requiredIndicator={!setupCompleted}
+                              />
+                            </Box>
+                            <Button
+                              tone="critical"
+                              onClick={() => handleRemoveQuickReply(index)}
+                              disabled={quickReplies.length <= 1}
+                              icon={DeleteIcon}
+                              variant="plain"
+                            />
+                          </InlineStack>
+                        </Box>
+                      ))
+                    )}
+          
+                    {quickReplies.length < 5 && (
+                      <Button 
+                        onClick={handleAddQuickReply}
+                        variant="primary"
+                        tone="success"
+                        disabled={quickReplies.some(reply => reply.trim() === "")}
+                        icon={PlusIcon}
+                        fullWidth
+                      >
+                        Add Quick Reply
+                      </Button>
+                    )}
+                  </BlockStack>
+                </Box>
+                  
+                <InlineStack gap="200">
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveQuickReplies}
+                    disabled={quickReplies.length === 0 || quickReplies.some(reply => reply.trim() === "") || isLoading}
+                    loading={isLoading && fetcher.formData?.get('intent') === 'saveQuickReplies'}
+                  >
+                    Save Quick Replies
+                  </Button>
+                </InlineStack>
               </BlockStack>
             </Card>
           </Layout.Section>

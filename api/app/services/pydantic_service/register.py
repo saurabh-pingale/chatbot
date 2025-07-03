@@ -10,7 +10,6 @@ from app.models.api.response import (
     GeneralResponse,
     ProductResponse,
     OrderResponse,
-    TermsResponse
 )
 
 class Register:
@@ -57,7 +56,7 @@ class Register:
         terms_tool = TermsTool()
         return self._register_tool_instance(
             terms_tool,
-            response_model=TermsResponse,
+            response_model=GeneralResponse,
             processor=None
         )
 
