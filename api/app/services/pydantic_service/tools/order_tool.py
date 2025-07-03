@@ -22,6 +22,7 @@ class OrderTool(BaseTool):
             
             if total_calls >= max_calls:
                 logger.warning(f"Order tool call limit exceeded: {total_calls}/{max_calls}")
+                tool_usage_tracker["order_tool_blocked"] = True 
                 return {
                     "answer": "",
                     "email": "",

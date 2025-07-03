@@ -1,5 +1,5 @@
-from app.models.api.response import ProductResponse, Product, GeneralResponse, OrderResponse
 from typing import Union
+from app.models.api.response import ProductResponse, Product, GeneralResponse, OrderResponse
 from app.utils.rag_pipeline_utils import extract_categories
 from app.utils.logger import logger
 
@@ -8,11 +8,7 @@ class Processing:
     
     def process_product_output(self, response: ProductResponse, output: dict):
         """Special processing for product tool output"""
-        logger.info(f"Product Response: {response}")
-        logger.info(f"Product Output: {output}")
-
         if output.get("not_found", False):
-            logger.info("No products found, setting empty products list")
             response.products = []
             response.product_ids = []
             response.not_found = True
@@ -83,29 +79,17 @@ class Processing:
         if output.get("categories") and not processed_products:
             response.available_categories = output["categories"]
 
-    # def process_order_output(self, response: OrderResponse, output: dict):
-    #     """Special processing for order tool output"""
-    #     logger.info(f"Order Response: {response}")
-    #     if output.get("email"):
-    #         response.email = output["email"]
-    #     if output.get("phone"):
-    #         response.phone = output["phone"]
-
     def process_response(self, response: Union[GeneralResponse]) -> dict:
         """General processor for supported non-product responses"""
         if isinstance(response, OrderResponse):
-            logger.info(f"General Order Response: {response}")
             return {
                 "answer": response.answer,
                 "email": response.email,
-                "phone": response.phone,
-                "success": response.success
+                "phone": response.phone
             }
         elif isinstance(response, GeneralResponse):
-            logger.info(f"General Response: {response}")
             return {
-                "answer": response.answer,
-                "success": response.success
+                "answer": response.answer
             }
         else:
             logger.warning("Unhandled response type in process_response")

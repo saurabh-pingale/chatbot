@@ -4,7 +4,6 @@ import json
 
 class GeneralResponse(BaseModel):
     answer: str
-    success: bool = True
 
 class Product(BaseModel):
     """Model representing a product in the store"""
@@ -44,4 +43,3 @@ class OrderResponse(BaseResponse):
     answer: Optional[str] = Field(..., description="The detailed response to the user's order query")
     email: Optional[str] = Field(None, description="Support email if relevant")
     phone: Optional[str] = Field(None, description="Support phone if relevant")
-    success: bool = True
