@@ -2,12 +2,6 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Union
 import json
 
-class UnifiedResponse(BaseModel):
-    answer: str
-    products: List[dict] = Field(default_factory=list)
-    categories: List[str] = Field(default_factory=list)
-    additional_data: Optional[dict] = None
-
 class GeneralResponse(BaseModel):
     answer: str
     success: bool = True
@@ -29,30 +23,12 @@ class BaseResponse(BaseModel):
 
 class ProductResponse(BaseResponse):
     """Schema for product query responses"""
-    answer: str = Field(
-        ...,
-        description="The final, complete, and conversational answer to be shown to the user. This should incorporate an introduction, product details, suggestions, and a closing into one cohesive and natural-sounding text. If no products are found, it should still provide a helpful and complete response."
-    )
-    product_ids: Optional[List[str]] = Field(
-        default=[],
-        description="A list of product IDs that have been identified as relevant from the tool's results, which will be used for final filtering. This is a hidden field and should not be mentioned in the answer. You MUST populate this with the IDs of the products you discuss in the 'answer' field."
-    )
-    products: Optional[List[Product]] = Field(
-        None,
-        description="List of relevant products matching the query. This is populated by the system after filtering and should not be set by the AI."
-    )
-    categories: Optional[List[str]] = Field(
-        None,
-        description="List of relevant categories matching the query. This is populated by the system after filtering and should not be set by the AI."
-    )
-    suggestions: Optional[str] = Field(
-        None,
-        description="Product category suggestions if no direct matches found"
-    )
-    available_categories: Optional[List[str]] = Field(
-        None, 
-        description="Available categories from the store inventory, useful when user's request had unknown or missing categories."
-    )
+    answer: str 
+    product_ids: Optional[List[str]] = []
+    products: Optional[List[Product]] = None
+    categories: Optional[List[str]] = None
+    available_categories: Optional[List[str]] = None
+    not_found: Optional[bool] = False
     
     @field_validator('products', mode='before')
     def validate_products(cls, v):
@@ -65,18 +41,7 @@ class ProductResponse(BaseResponse):
 
 class OrderResponse(BaseResponse):
     """Response model for order-related queries"""
-    response_text: Optional[str] = Field(..., description="The detailed response to the user's order query")
+    answer: Optional[str] = Field(..., description="The detailed response to the user's order query")
     email: Optional[str] = Field(None, description="Support email if relevant")
     phone: Optional[str] = Field(None, description="Support phone if relevant")
-    requires_support: Optional[bool] = Field(
-        default=True, 
-        description="Whether the user needs to contact support for further assistance"
-    )
-
-class TermsResponse(BaseResponse):
-    """Response model for terms/policy queries"""
-    response: str = Field(..., description="The detailed terms/policy response")
-    sources: Optional[List[str]] = Field(
-        None,
-        description="List of source texts used to generate the response"
-    )
+    success: bool = True

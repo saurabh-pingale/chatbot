@@ -36,10 +36,11 @@ class ToolHandler:
 
     def process_tool_output(self, tool_name: str, response: BaseModel, tool_output: Any):
         """Process tool output using the registered processor"""
+        logger.info(f"Tool Name: {tool_name}")
+        logger.info(f"Tool Output: {tool_output}")
         if isinstance(tool_output, str):
             try:
                 tool_output = json.loads(tool_output)
-                logger.info(f"Tool Output: {tool_output}")
             except json.JSONDecodeError:
                 tool_output = {}
         if tool_name in self._tool_processors:

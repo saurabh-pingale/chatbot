@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index, CheckConstraint
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index, CheckConstraint, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 from datetime import datetime
@@ -28,6 +28,7 @@ class ShopModel(Base):
     plan_start_date = Column(DateTime, nullable=True)
     plan_end_date = Column(DateTime, nullable=True)
     setup_completed = Column(Boolean, default=False, nullable=False)
+    quick_replies = Column(JSON, nullable=True)
 
     conversations = relationship("ConversationModel", back_populates="shop")
     users = relationship("UserModel", back_populates="shop")

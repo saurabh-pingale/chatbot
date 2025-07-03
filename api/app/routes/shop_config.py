@@ -16,10 +16,3 @@ async def get_shop_config(
     app = get_app()
     config = await app.shop_config_service.get_shop_config(cleaned_shop_id)
     return config 
-
-@shop_config_router.get("/config/status")
-def config_status():
-    """
-    Returns a static status response to confirm the service is up.
-    """
-    return {"status": "success"}

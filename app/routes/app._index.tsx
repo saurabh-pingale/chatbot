@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Page,
   Layout,
@@ -15,7 +16,6 @@ import { json, LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { getShopStatus } from "./get_shop_status";
-import React from "react";
 
 interface LoaderData {
   shop: string;

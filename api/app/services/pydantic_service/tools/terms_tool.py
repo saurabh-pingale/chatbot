@@ -15,15 +15,31 @@ class TermsTool(BaseTool):
     def __init__(self):
         self.embeddings_handler = EmbeddingsHandler()
 
-    async def run(self, ctx: RunContext[None], policy_query: str) -> Dict[str, Any]:
+    async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
         try:
+            tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+            total_calls = tool_usage_tracker.get("total_non_product_calls", 0)
+            max_calls = tool_usage_tracker.get("max_non_product_calls", 10)
+            
+            if total_calls >= max_calls:
+                logger.warning(f"Terms tool call limit exceeded: {total_calls}/{max_calls}")
+                return {
+                    "answer": "",
+                    "limit_exceeded": True
+                }
+            
+            tool_usage_tracker["total_non_product_calls"] = total_calls + 1
+            tool_usage_tracker["terms_call_count"] = tool_usage_tracker.get("terms_call_count", 0) + 1
+            logger.info(f"Terms tool called. Total non-product calls: {tool_usage_tracker['total_non_product_calls']}")
+            
             shopId = ctx.deps.get("shopId")
 
-            user_message_embedding = EmbeddingService.create_embeddings(policy_query)
+            user_message_embedding = EmbeddingService.create_embeddings(query)
             terms_results = await self.embeddings_handler.query_embeddings(
                 vector=user_message_embedding, 
                 namespace=shopId
             )
+            logger.info(f"Terms Result: {terms_results}")
             
             extracted_term_texts = []
             for query_match in terms_results:
@@ -38,20 +54,20 @@ class TermsTool(BaseTool):
                 if text_content:
                     extracted_term_texts.append(text_content)
 
+            logger.info(f"Extracted Terms Text: {extracted_term_texts}")
+
             if not extracted_term_texts:
-                logger.warning(f"Warning: No terms found for query: '{policy_query}' in shop: {shopId}")
+                logger.warning(f"Warning: No terms found for query: '{query}' in shop: {shopId}")
                 no_info_message = [
                     "I apologize, but I couldn't find any specific information, I recommend:\n",
                     "Checking the store's policy pages or contacting customer support \n"
                 ]
                 return {
-                    "response": "".join(no_info_message),
-                    "sources": []
+                    "answer": "".join(no_info_message)
                 }
             
             return {
-                "response": "\n\n".join(extracted_term_texts), 
-                "sources": extracted_term_texts
+                "answer": "\n\n".join(extracted_term_texts)
             }
         except Exception as e:
             logger.error(f"Error in terms tool processing message for shopId '{shopId}': {e}")
@@ -60,6 +76,5 @@ class TermsTool(BaseTool):
                 "Please try again later or contact the store directly for immediate assistance."
             ]
             return {
-                "response": "".join(error_message),
-                "sources": error_message
+                "answer": "".join(error_message)
             }

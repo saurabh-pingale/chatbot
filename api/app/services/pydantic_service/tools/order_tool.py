@@ -16,14 +16,30 @@ class OrderTool(BaseTool):
     
     async def run(self, ctx: RunContext[None]) -> Dict[str, Any]:
         try:
+            tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+            total_calls = tool_usage_tracker.get("total_non_product_calls", 0)
+            max_calls = tool_usage_tracker.get("max_non_product_calls", 10)
+            
+            if total_calls >= max_calls:
+                logger.warning(f"Order tool call limit exceeded: {total_calls}/{max_calls}")
+                return {
+                    "answer": "",
+                    "email": "",
+                    "phone": "",
+                    "limit_exceeded": True 
+                }
+            
+            tool_usage_tracker["total_non_product_calls"] = total_calls + 1
+            tool_usage_tracker["order_call_count"] = tool_usage_tracker.get("order_call_count", 0) + 1
+            logger.info(f"Order tool called. Total non-product calls: {tool_usage_tracker['total_non_product_calls']}")
+            
             shopId = ctx.deps.get("shopId")
             logger.info(f"Shop ID in Order Tool: {shopId}")
             if not shopId:
                 return {
-                    "response_text": "Support contact is currently unavailable.",
+                    "answer": "Support contact is currently unavailable.",
                     "email": "",
-                    "phone": "",
-                    "requires_support": False
+                    "phone": ""
                 }
 
             support_info = await self.shop_admin_handler.get_support_contact(shopId)
@@ -31,24 +47,22 @@ class OrderTool(BaseTool):
 
             if not support_info or (not support_info.get("support_email") and not support_info.get("support_phone")):
                 return {
-                    "response_text": "We couldn't find any support contact at the moment.",
+                    "answer": "We couldn't find any support contact at the moment.",
                     "email": "",
-                    "phone": "",
-                    "requires_support": False
-                }
-            
+                    "phone": ""
+                } 
+        
             return {
-                "response_text": f"You can contact our support team at {support_info.get('support_email', '') or 'N/A'} or {support_info.get('support_phone', '') or 'N/A'}.",
-                "email": support_info.get("support_email", ""),
-                "phone": support_info.get("support_phone", ""),
-                "requires_support": True
+                "answer": "",
+                "email": support_info.get('support_email', ''),
+                "phone": support_info.get('support_phone', ''),
+                "success": True
             }
 
         except Exception as e:
             logger.error(f"Error in order tool: {e}")
             return {
-                "response_text": "An error occurred while fetching support details.",
+                "answer": "An error occurred while fetching support details.",
                 "email": "",
-                "phone": "",
-                "requires_support": False
+                "phone": ""
             }

@@ -22,7 +22,7 @@ import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 import { NotificationPopup } from '../../components/NotificationPopup/NotificationPopup';
 
-export const Chatbot = memo<ChatbotProps>(({ config }) => {
+export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +35,8 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const isMobile = window.innerWidth <= 768;
 
   const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -252,12 +254,14 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
   return (
     <>
-      <ChatbotToggle
-        isOpen={isOpen}
-        storeImage={config.storeImage}
-        primaryColor={config.primaryColor}
-        onClick={handleToggle}
-      />
+      {(!isOpen || !isMobile) && (
+        <ChatbotToggle
+          isOpen={isOpen}
+          storeImage={config.storeImage}
+          primaryColor={config.primaryColor}
+          onClick={handleToggle}
+        />
+      )}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -279,6 +283,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               onOfferClick={handleOfferClick}
               onClearConversation={handleClearConversation}
               showClearConversationIcon={showClearConversationIcon}
+              onMinimize={handleToggle}
             />
             <div className="chatbot-content">
               {isEmailGateVisible ? (
@@ -297,6 +302,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
                   isEmailGateVisible={isEmailGateVisible}
                   handleError={handleError}
                   isChatLimitReached={chatLimitReached}
+                  quickReplies={quickReplies}
                 />
               )}
               {error && (
