@@ -26,11 +26,25 @@ class ProductTool(BaseTool):
     async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
         """Performs a semantic search for products based on the user's query."""
         shopId = ctx.deps.get("shopId")
-
         tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+
+        total_calls = tool_usage_tracker.get("total_non_product_calls", 0)
+        max_calls = tool_usage_tracker.get("max_non_product_calls", 10)
+
+        if total_calls >= max_calls:
+            logger.warning(f"Product tool call limit exceeded: {total_calls}/{max_calls}")
+            tool_usage_tracker["product_tool_blocked"] = True
+            return {
+                "answer": "",
+                "products": [],
+                "categories": [],
+                "limit_exceeded": True
+            }
+        
         if tool_usage_tracker.get("product_called", False):
             logger.warning("Product tool already called once, skipping additional call")
             return {
+                "answer": "Product search was already performed for this query.",
                 "products": [],
                 "categories": [],
                 "refined_query": query,
@@ -40,6 +54,7 @@ class ProductTool(BaseTool):
             }
         
         tool_usage_tracker["product_called"] = True 
+        tool_usage_tracker["product_call_count"] = tool_usage_tracker.get("product_call_count", 0) + 1
 
         logger.info(f"Performing product search for query: '{query}'")
         try:
@@ -53,6 +68,7 @@ class ProductTool(BaseTool):
                 agent_type="ProductAgent",
                 metadata_filters=metadata_filters
             )
+            logger.info(f"[ProductTool] Results from vector DB: {results}")
 
             unique_results = []
             seen_variant_ids = set()
@@ -85,11 +101,10 @@ class ProductTool(BaseTool):
 
                 if not categories:
                     categories = await self.shop_admin_handler.get_collections(shopId)
-                    logger.info(f"Categories from DB: {categories}")
-
-                logger.info(f"Query in Product Tool: {query}")   
+                    logger.info(f"Categories from DB: {categories}") 
 
                 return {
+                    "answer": f"No products found for '{query}', but other categories are available.",
                     "products": [],
                     "categories": categories,
                     "refined_query": query,
@@ -101,6 +116,7 @@ class ProductTool(BaseTool):
             logger.info(f"Total products returned: {len(products)}")
 
             return {
+                "answer": f"Successfully found {len(products)} products for '{query}'.",
                 "products": products,
                 "categories": categories,
                 "refined_query": query,
@@ -119,6 +135,7 @@ class ProductTool(BaseTool):
                 categories = []
                 
             return {
+                "answer": "An error occurred while searching for products.",
                 "products": [],
                 "categories": categories,
                 "refined_query": query,

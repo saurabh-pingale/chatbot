@@ -97,9 +97,9 @@ class MetadataExtractor:
         match = ATTRIBUTE_PATTERNS["color"].search(query)
         return {"color": match.group(1).lower()} if match else {}
 
-    def _extract_material(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["material"].search(query)
-        return {"material": match.group(1).lower()} if match else {}
+    def _extract_fabric(self, query: str) -> Dict[str, str]:
+        match = ATTRIBUTE_PATTERNS["fabric"].search(query)
+        return {"fabric": match.group(1).lower()} if match else {}
 
     def _extract_size(self, query: str) -> Dict[str, str]:
         match = ATTRIBUTE_PATTERNS["size"].search(query)
@@ -133,5 +133,21 @@ class MetadataExtractor:
     def _extract_neckline(self, query: str) -> Dict[str, str]:
         match = ATTRIBUTE_PATTERNS["neckline"].search(query)
         return {"neckline": match.group(1).lower()} if match else {}
+    
+    def _extract_gender(self, query: str) -> Dict[str, str]:
+        match = ATTRIBUTE_PATTERNS["gender"].search(query)
+        if not match:
+            return {}
+
+        val = match.group(1).lower()
+        if val in ["men", "man", "male", "boys"]:
+            return {"gender": "male"}
+        elif val in ["women", "woman", "female", "ladies", "girls"]:
+            return {"gender": "female"}
+        elif val in ["unisex", "all genders", "both genders", "male and female", "for everyone"]:
+            return {"gender": "unisex"}
+
+        return {}
+
 
 metadata_extractor = MetadataExtractor()

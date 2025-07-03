@@ -18,6 +18,11 @@ class TermsTool(BaseTool):
     async def run(self, ctx: RunContext[None], query: str) -> Dict[str, Any]:
         try:
             tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+
+            if tool_usage_tracker.get("product_called", False):
+                logger.warning("Skipping TermsTool call because ProductTool was already used in this turn.")
+                return {"answer": "", "policy_details": "Policy details are not relevant right now."}
+            
             total_calls = tool_usage_tracker.get("total_non_product_calls", 0)
             max_calls = tool_usage_tracker.get("max_non_product_calls", 10)
             

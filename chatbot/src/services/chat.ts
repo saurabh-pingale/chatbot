@@ -118,15 +118,17 @@ export const sendChatMessage = async (
     const responseData: ChatResponse = await response.json();
     return responseData;
 
-  } catch (error: unknown) {
+   } catch (error: unknown) {
     clearTimeout(timeoutId);
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
+    if (error instanceof Error && error.name === 'AbortError') {
+      return {
+        answer: "Sorry, I'm taking longer than usual to respond. Please try again in a few moments."
+      };
     }
-    throw new Error('An unknown error occurred during chat.');
+
+    return {
+      answer: "Oops! Something went wrong on our end. Please try again later."
+    };
   }
 };
 

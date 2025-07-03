@@ -17,6 +17,11 @@ class OrderTool(BaseTool):
     async def run(self, ctx: RunContext[None]) -> Dict[str, Any]:
         try:
             tool_usage_tracker = ctx.deps.get("tool_usage_tracker", {})
+
+            if tool_usage_tracker.get("product_called", False):
+                logger.warning("Skipping OrderTool call because ProductTool was already used in this turn.")
+                return {"answer": "", "support_email": None, "support_phone": None}
+            
             total_calls = tool_usage_tracker.get("total_non_product_calls", 0)
             max_calls = tool_usage_tracker.get("max_non_product_calls", 10)
             
