@@ -23,6 +23,7 @@ class TermsTool(BaseTool):
             
             if total_calls >= max_calls:
                 logger.warning(f"Terms tool call limit exceeded: {total_calls}/{max_calls}")
+                tool_usage_tracker["terms_tool_blocked"] = True
                 return {
                     "answer": "",
                     "limit_exceeded": True

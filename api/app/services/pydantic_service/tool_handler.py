@@ -3,7 +3,6 @@ from typing import Dict, Type, Callable, Any
 from pydantic import BaseModel
 
 from app.models.api.response import GeneralResponse
-from app.utils.logger import logger
 
 class ToolHandler:
     """Registry for dynamic tool handling"""
@@ -36,8 +35,6 @@ class ToolHandler:
 
     def process_tool_output(self, tool_name: str, response: BaseModel, tool_output: Any):
         """Process tool output using the registered processor"""
-        logger.info(f"Tool Name: {tool_name}")
-        logger.info(f"Tool Output: {tool_output}")
         if isinstance(tool_output, str):
             try:
                 tool_output = json.loads(tool_output)
