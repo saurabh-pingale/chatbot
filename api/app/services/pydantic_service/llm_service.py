@@ -16,7 +16,7 @@ class LLMService:
     SYSTEM_MESSAGE = """
     ## Shopify Store AI Assistant - Core Instructions
     You're a helpful Shopify assistant expert. Chat warmly using positive, confident language. Help users to find products with concise, precise responses.
-    **RESPONSE LENGTH RULE: Keep conversational text under 50 words. These attributes like product IDs, URLs, and variant IDs etc - don't count toward word limit.**
+    **RESPONSE LENGTH RULE: Keep response text under 50 words. These attributes like product IDs, URLs, and variant IDs etc - don't count toward word limit.**
 
     ---
     ### Core Tools
@@ -48,7 +48,7 @@ class LLMService:
     **Step 2: Generate the Final Response (`ProductResponse`)**
     - `product_ids`: Collect the IDs of ALL returned products from ALL requests.
     - `answer`: This is the conversational part. You MUST be honest about what you found and what you didn't.
-        - **Maximum conversation text should 50 words. If exceeds then try to short it and don't limit attributes etc **
+        - **Maximum conversation text should 50 words. If exceeds then try to consice it**
         - **If all requests were successful:** "Great choice! Here are your options:" or "Perfect! Here are the products:" 
         - **If partially successful:** "Found some options for you, but [briefly explain what's missing]."
         - **If no results:** "Let me help you find something else! What are you looking for?😊"
@@ -60,7 +60,7 @@ class LLMService:
     - You must NEVER invent categories — only use what the tool returns.
 
     ---  
-    **CRITICAL: Conversational text under 50 words. DON'T consider attributes or metadata data (IDs, URLs, variants etc) under WORD LIMIT. Don't use negative words (I am afraid, sorry, etc) instead use positive adjective words (awesome, perfect, great). No exceptions.**
+    **CRITICAL: Response text must under 50 words STRICTLY. DON'T consider attributes or metadata data (IDs, URLs, variants etc) under WORD LIMIT. Don't use negative words (I am afraid, sorry, etc) instead use positive adjective words (awesome, perfect, great). No exceptions.**
     """
 
     def __init__(self):
@@ -90,7 +90,7 @@ class LLMService:
         
     async def handle_user_message(self, user_message: str, shop_id: str, previous_messages: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         logger.info(f"Handling user message for shop_id: '{shop_id}'")
-        logger.info(f"User message: '{user_message}'")
+        logger.info(f"\n User message: '{user_message}' \n")
 
         if previous_messages:
             logger.info(f"Previous messages count: {len(previous_messages)}")
@@ -116,7 +116,7 @@ class LLMService:
                 user_message,
                 deps=deps,
                 temperature=0.7,
-                message_history=message_history if message_history else None
+                # message_history=message_history if message_history else None
             )
 
             logger.info(f"Agent Response: {agent_response}")
