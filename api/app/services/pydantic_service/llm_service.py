@@ -1,258 +1,190 @@
-from typing import Any, Dict, List, Union
-from pydantic_ai import Agent
-from pydantic_ai.exceptions import UsageLimitExceeded, ModelHTTPError
-from pydantic_ai.models.anthropic import AnthropicModel
-import time
+import json
+import httpx
+from typing import Dict, Any, List
 
-from app.services.pydantic_service.register import Register
-from app.services.pydantic_service.tool_handler import ToolHandler
-from app.services.pydantic_service.processing import Processing
-from app.models.api.response import ProductResponse, GeneralResponse, OrderResponse
-from app.utils.rag_pipeline_utils import extract_categories, format_message_history
-from app.constants import CLAUDE_MODEL_NAME
+from app.services.pydantic_service.tool_registry import ToolRegistry
+from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
+from app.config import ANTHROPIC_API_KEY
 from app.utils.logger import logger
 
 class LLMService:
-    SYSTEM_MESSAGE = """
-    ## Shopify Store AI Assistant - Core Instructions
-    You're a helpful Shopify assistant expert. Chat warmly using positive, confident language. Help users to find products with concise, precise responses.
-    **RESPONSE LENGTH RULE: Keep response text under 50 words. These attributes like product IDs, URLs, and variant IDs etc - don't count toward word limit.**
-
-    ---
-    ### Core Tools
-    You are a helpful assistant with access to specific tools. **Only use tools when the user query STRICTLY matches these categories:**
-    If a query has multiple parts, you should use multiple tools in parallel. If there is no need then use one tool only.
-    | Tool      | Use for...                                     |
-    |-----------|------------------------------------------------|
-    | Product   | **Specific product searches** - when users ask to find, search, or filter products by attributes (color, size, brand, fabric, etc.). |
-    | Order     | **Order-related queries** - Use this only when user asks how to contact support or needs help with an order. This tool returns only support email/phone. It does not give tracking or order-specific information. |
-    | Terms     | **Policy questions** - returns, shipping policies, terms of service, etc. |
-    ---
-    **If the query is general conversation, greetings, or doesn't fit these categories, respond conversationally, no need to use any tools.**
-
-    ### When NOT to Use Tools
-    - **Greetings/General chat**: "Hey", "Hello", "How are you?" - respond conversationally without tools
-    - **General questions**: Questions not specifically about products, orders, or policies
-    - **General conversation**: Social chat, thanks, compliments, etc.
-
-    **Rule**: Only use tools when the user is clearly asking for products, order information, or policy details. For everything else, chat naturally.
-
-    ## For the 'Order' tool, if support email and phone are available, use them directly and DO NOT call the tool again. Do not try to regenerate or expand on its answer.
-
-    ## CRITICAL RULES FOR THE 'PRODUCT' TOOL
-
-    **IMPORTANT: You can only call the product tool ONCE per user query. If the tool returns no products (not_found: true), do NOT call it again with the same or similar query. NEVER retry product searches.
-    Retrive the correct information from the tool output to built the response.**
-    **SINGLE TOOL CALL RULE: For product searches, make ONE comprehensive call that includes all the user's requirements. Do not make multiple separate calls for the same query.**
-
-    When a user asks for products, you MUST follow this process EXACTLY. This is not a guideline; it is a mandatory procedure.
-    **Step 1: Extract ALL Attributes for EACH Request**
-    - Identify all specified attributes in the user's query.
-    - The attributes can be: `category`, `color`, `size`, `brand`, `material` (fabric), `price`, and any other specific product feature mentioned.
-    - **IMPORTANT**: You must perform an **EXACT, case-insensitive match** on the `category`. "Shirts" and "T-Shirts" are two COMPLETELY DIFFERENT categories.
-    - **Combine all requirements into a single search query** - do not split into multiple tool calls.
-
-    **Step 2: Generate the Final Response (`ProductResponse`)**
-    - `product_ids`: Collect the IDs of ALL returned products from ALL requests.
-    - `answer`: This is the conversational part. You MUST be honest about what you found and what you didn't.
-        - **Maximum conversation text should 50 words. If exceeds then try to consice it**
-        - **If all requests were successful:** "Great choice! Here are your options:" or "Perfect! Here are the products:" 
-        - **If partially successful:** "Found some options for you, but [briefly explain what's missing]."
-        - **If no results:** "Let me help you find something else! What are you looking for?😊"
-        - Never mention product details, descriptions, or specifications and avoid mentioning product titles as well because users already know what they want to search.
-
-    **Step 3: No Products or Categories Found? Suggest Available Categories**
-    - If the tool response contains `"not_found": true` and no products found:
-        - Respond positively like: "Couldn't find that exact item, but here are some popular options like: [category1], [category2]..."
-        - You MUST NOT retry the same query or call the tool again. Stop after one failed attempt.
-    - You must NEVER invent categories — only use what the tool returns.
-
-    **Step 4: NEVER RETRY - One Call Rule**
-    - If the product tool returns no results, accept it and suggest alternatives from available categories.
-    - Do not attempt to rephrase the query or make additional tool calls.
-    - One product search per user message - no exceptions.
-
-    **Step 5: FINAL RESPONSE DIRECTIVE**
-    - After the `ProductTool` is successfully called and returns products, you MUST generate a `ProductResponse`.
-    - Do NOT call any other tools (like `Order` or `Terms`). Your task is complete.
-    - Stop and wait for the user's next message.
-
-    ---  
-    **CRITICAL: Response text must under 50 words STRICTLY. DON'T consider attributes or metadata data (IDs, URLs, variants etc) under WORD LIMIT. Don't use negative words (I am afraid, sorry, etc) instead use positive adjective words (awesome, perfect, great). No exceptions.**
-    """
-
+    """Claude-based LLM Service using Function Tools"""
+    
     def __init__(self):
-        self.tool_handler = ToolHandler()
-        self.register = Register(self.tool_handler)
-        self.processing = Processing()
-
-        registered_tools, response_models = self.register.register_all_tools()
+        self.api_key = ANTHROPIC_API_KEY
+        self.api_url = CLAUDE_API_URL
+        self.model = CLAUDE_MODEL_NAME
+        self.headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
         
-        if len(response_models) > 1:
-            ResponseType = Union[tuple(response_models)]
-        elif response_models:
-            ResponseType = response_models[0]
-        else:
-            ResponseType = str
-
-        self.agent = Agent(
-            model=AnthropicModel(model_name=CLAUDE_MODEL_NAME),
-            system_prompt=self.SYSTEM_MESSAGE,
-            tools=registered_tools,
-            deps_type=dict,
-            output_type=ResponseType,
-            retries=2,
-            config={"final_llm_call_on_limit": True},
-            parallel_tool_calls=True
-        )
+        self.tool_registry = ToolRegistry()
         
+        self.system_message = """
+        You are a smart and helpful Shopify assistant.
+
+        Always follow these rules strictly:
+
+        1. Answer only store-related questions.
+        2. Respond in a warm, polite, and helpful tone.
+        3. Use the tool result to decide what to say. You will receive:
+           - A list of products (may or may not match the query)
+           - A list of categories (suggestions)
+           - A 'not_found' flag if no matching products were found
+        4. If 'not_found' is True or the products do not match the user's query intent 
+           - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
+           - Politely say that you couldn’t find exact matches, and suggest the categories
+        5. If the user’s query is **generic** (like "show me some products" or "I want to browse"), it’s okay to show the returned products.
+        6. NEVER pretend that unrelated products match the query.
+        7. NEVER explain tool usage or say “I couldn’t find anything in the database.”
+        8. ALWAYS keep the RESPONSE TEXT under 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
+        """
+    
+    async def call_claude_with_tools(self, user_message: str, shop_id: str) -> Dict[str, Any]:
+        """Call Claude API with tool support"""
+        tool_results = [] 
+        tools_json = self.tool_registry.get_all_tools_for_claude()
+        logger.info(f"Tool JSON: {tools_json}")
+        messages = [{"role": "user", "content": user_message}]
+        
+        async with httpx.AsyncClient(timeout=60) as client:
+            iteration_count = 0
+            max_iterations = 10
+            
+            while iteration_count < max_iterations:
+                iteration_count += 1
+                logger.info(f"Claude API call iteration {iteration_count}")
+                
+                body = {
+                    "model": self.model,
+                    "max_tokens": 1024,
+                    "system": self.system_message,
+                    "tools": tools_json,
+                    "messages": messages,
+                    "tool_choice": {"type": "auto"}
+                }
+                
+                try:
+                    response = await client.post(self.api_url, headers=self.headers, json=body)
+                    response.raise_for_status()
+                    data = response.json()
+                    logger.info(f"Response Body: {json.dumps(data, indent=2)}")
+                    
+                    stop_reason = data.get("stop_reason")
+                    logger.info(f"Claude response stop_reason: {stop_reason}")
+                    
+                    if stop_reason == "tool_use":
+                        tool_use_blocks = [c for c in data["content"] if c["type"] == "tool_use"]
+                        if not tool_use_blocks:
+                            logger.error("Tool use block missing!")
+                            break
+                        
+                        tool_results = []
+                        for tool_block in tool_use_blocks:
+                            tool_name = tool_block["name"]
+                            tool_input = tool_block["input"]
+                            
+                            logger.info(f"Executing tool: {tool_name} with input: {tool_input}")
+                            
+                            tool_input["shop_id"] = shop_id
+                            
+                            result = await self.tool_registry.run_tool(tool_name, **tool_input)
+                            tool_results.append((tool_block, result))
+                            logger.info(f"Tool {tool_name} result: {result}")
+                        
+                        messages.append({"role": "assistant", "content": data["content"]})
+                        
+                        tool_result_content = []
+                        for tool_block, result in tool_results:
+                            tool_name = tool_block["name"]
+
+                            structured_result = {
+                                "tool": tool_name,
+                                "tool_use_id": tool_block["id"],
+                                "result": result
+                            }
+
+                            tool_result_content.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_block["id"],
+                                "content": json.dumps(structured_result)
+                            })
+                        
+                        messages.append({
+                            "role": "user",
+                            "content": tool_result_content
+                        })
+                        
+                        continue
+                    
+                    elif stop_reason == "end_turn":
+                        final_text = ""
+                        for block in data["content"]:
+                            if block["type"] == "text":
+                                final_text += block["text"]
+                        
+                        logger.info(f"Final Claude response: {final_text}")
+                        return {
+                            "answer": final_text, 
+                            "success": True,
+                            "tool_results": tool_results
+                        }
+                    
+                    else:
+                        logger.warning(f"Unknown stop_reason: {stop_reason}")
+                        break
+                        
+                except httpx.HTTPStatusError as e:
+                    logger.error(f"HTTP error calling Claude API: {e}")
+                    return {
+                        "answer": "I'm having trouble connecting right now. Please try again in a moment.",
+                        "success": False,
+                        "error": str(e)
+                    }
+                except Exception as e:
+                    logger.error(f"Error calling Claude API: {e}", exc_info=True)
+                    return {
+                        "answer": "Something went wrong. Please try again.",
+                        "success": False,
+                        "error": str(e)
+                    }
+            
+            logger.warning(f"Maximum iterations ({max_iterations}) reached")
+            return {
+                "answer": "I'm having trouble processing your request. Please try again.",
+                "success": False,
+                "error": "Maximum iterations reached"
+            }
+    
     async def handle_user_message(self, user_message: str, shop_id: str, previous_messages: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle user message and return structured response"""
         logger.info(f"Handling user message for shop_id: '{shop_id}'")
-        logger.info(f"\n User message: '{user_message}' \n")
-
-        if previous_messages:
-            logger.info(f"Previous messages count: {len(previous_messages)}")
-            logger.debug(f"Previous messages: {previous_messages}")
+        logger.info(f"User message: '{user_message}'")
         
         try:
-            all_found_products = [] 
-
-            tool_usage_tracker = {
-                "product_called": False,
-                "order_called": False,
-                "terms_called": False,
-                "total_non_product_calls": 0,
-                "max_non_product_calls": 10,
-                "product_call_count": 0,
-                "order_call_count": 0,
-                "terms_call_count": 0
-            }
-
-            deps = {
-                "shopId": shop_id,
-                "product_cache": all_found_products,
-                "tool_usage_tracker": tool_usage_tracker
-            }
+            claude_response = await self.call_claude_with_tools(user_message, shop_id)
+            logger.info(f"Claude Response: {claude_response}")
             
-            start = time.time()
-            logger.info("Starting agent call")
-
-            message_history = []
-            if previous_messages:
-                message_history = format_message_history(previous_messages)
-                logger.info(f"Formatted message history: {message_history}")
+            if not claude_response.get("success", False):
+                return claude_response
             
-            agent_response = await self.agent.run(
-                user_message,
-                deps=deps,
-                temperature=0.7,
-                # message_history=message_history if message_history else None
-            )
-
-            logger.info(f"Agent Response: {agent_response}")
-            logger.info(f"Agent call completed in {time.time() - start:.2f}s")
-
-            response_outputs = agent_response.output
-            logger.info(f"Type of Response Outputs: {type(response_outputs)}")
-            logger.info(f"Response Outputs: {response_outputs}")
+            products = []
+            categories = []
             
-            if not isinstance(response_outputs, list):
-                response_outputs = [response_outputs]
-
-            final_answer_parts = []
-            final_products = []
-            final_categories = set()
-
-            for response_data in response_outputs:
-                logger.info(f"Processing response of type: {type(response_data)}")
-                logger.info(f"Raw tool output: {response_data}")
-
-                if hasattr(response_data, 'limit_exceeded') and response_data.limit_exceeded:
-                    logger.info("Tool call was limited, skipping response processing")
-                    continue
-
-                if isinstance(response_data, ProductResponse):
-                    logger.debug(f"ProductResponse: {response_data.model_dump()}")
-                    if response_data.answer:
-                        final_answer_parts.append(response_data.answer)
-                    
-                    valid_ids = response_data.product_ids or []
-
-                    matched_products = []
-                    if all_found_products:
-                        matched_products.extend([
-                            p for p in all_found_products if str(p.get("id")) in valid_ids
-                        ])
-
-                    if response_data.products:
-                        matched_products.extend([
-                            p.dict() for p in response_data.products if str(p.id) in valid_ids
-                        ])
-
-                    seen_ids = set()
-                    unique_products = []
-                    for p in matched_products:
-                        pid = p.get("id")
-                        if pid and pid not in seen_ids:
-                            seen_ids.add(pid)
-                            unique_products.append(p)
-
-                    final_products.extend(unique_products)
-                    logger.info(f"Final Products: {final_products}")
-                    
-                    product_categories = extract_categories(unique_products)
-                    final_categories.update(product_categories)
-                    logger.info(f"Final Categories: {final_categories}")
-                    
-                    if not product_categories and response_data.available_categories:
-                        logger.info(f"Using available_categories as fallback: {response_data.available_categories}")
-                        final_categories.update(response_data.available_categories)
-
-                elif isinstance(response_data, (GeneralResponse, OrderResponse)):
-                    logger.debug(f"ToolResponse: {response_data.model_dump()}")
-                    processed = self.processing.process_response(response_data)
-                    logger.info(f"Processed response: {processed}")
-                    if processed.get("answer"):
-                        final_answer_parts.append(processed["answer"])
-
-                elif isinstance(response_data, str):
-                     logger.info(f"String response: {response_data}")
-                     final_answer_parts.append(response_data)
-
-            final_response = {
-                "answer": "\n\n".join(final_answer_parts),
-                "products": final_products,
-                "categories": list(final_categories),
+            for tool_block, result in claude_response.get("tool_results", []):
+                if tool_block["name"] == "product":
+                    products = result.get("products", [])
+                    categories = result.get("categories", [])
+            
+            return {
+                "answer": claude_response.get("answer", ""),
+                "products": products,
+                "categories": categories,
                 "success": True
             }
-
-            logger.info(f"Final aggregated response: {final_response}")
-            return final_response     
-               
-        except UsageLimitExceeded as exc:
-            logger.error(f"Usage Limit Exceeded: {exc}", exc_info=True)
-            return {
-                "answer": "As of now we couldn't able to process your query, give us some time our support agent will contact you.",
-                "products": [],
-                "categories": [],
-                "success": False,
-                "error": str(exc)
-            } 
-        
-        except ModelHTTPError as e:
-            logger.error(f"Model HTTP Error: {e}", exc_info=True)
-            if 'overloaded' in str(e).lower():
-                answer = "I'm overloaded at the moment. Please try again in a few seconds."
-            else:
-                answer = "Something went wrong while fetching a response. Please try again shortly."
-            return {
-                "answer": answer,
-                "products": [],
-                "categories": [],
-                "success": False,
-                "error": str(e)
-            }
-        
+            
         except Exception as e:
             logger.error(f"Critical error in handle_user_message: {e}", exc_info=True)
             return {

@@ -58,7 +58,7 @@ class EmbeddingsHandler:
     async def query_embeddings(
         self,
         vector: List[float],
-        top_k: int = 10,
+        top_k: int = 5,
         namespace: Optional[str] = None,
         includes_values: bool = False,
         metadata_filters: Optional[Dict[str, Any]] = None,

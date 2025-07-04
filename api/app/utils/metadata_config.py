@@ -34,6 +34,6 @@ CATEGORY_ATTRIBUTES = {
     "pants": ["price", "color", "size", "fabric", "fit", "gender", "title"],
     "jackets": ["price", "color", "size", "fabric", "gender", "title"],
     "shorts": ["price", "color", "size", "fabric", "gender", "title"],
-    "caps": ["price", "color", "fabric", "gender", "title"],
+    "hats": ["price", "color", "fabric", "gender", "title"],
     "shoes": ["price", "color", "size", "fabric", "gender", "title"],
 }
