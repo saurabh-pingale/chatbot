@@ -26,6 +26,8 @@ CATEGORY_ALIASES = {
     "shorts": "shorts",
     "hats": "hats", "hat": "hats", "caps": "hats", "cap": "hats",
     "shoes": "shoes", "shoe": "shoes", "footwear": "shoes", "sneakers": "shoes",
+    "makeup": "makeup", "make-up": "makeup", "cosmetics": "makeup", "beauty products": "makeup",
+    "dresses": "dresses", "dress": "dresses", "gown": "dresses", "frock": "dresses",
 }
 
 CATEGORY_ATTRIBUTES = {
@@ -36,4 +38,6 @@ CATEGORY_ATTRIBUTES = {
     "shorts": ["price", "color", "size", "fabric", "gender", "title"],
     "hats": ["price", "color", "fabric", "gender", "title"],
     "shoes": ["price", "color", "size", "fabric", "gender", "title"],
+    "makeup": ["price", "title"],
+    "dresses": ["price", "color", "size", "fabric", "gender", "title"],
 }
