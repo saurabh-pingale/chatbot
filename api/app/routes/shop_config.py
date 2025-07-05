@@ -16,3 +16,8 @@ async def get_shop_config(
     app = get_app()
     config = await app.shop_config_service.get_shop_config(cleaned_shop_id)
     return config 
+
+#TODO - Remove it, just to test and verify deployment added it 
+@shop_config_router.get("/config/status")
+def get_shop_config_status():
+    return {"success": True}
