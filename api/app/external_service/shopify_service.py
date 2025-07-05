@@ -155,10 +155,10 @@ class ShopifyService:
                     )
 
                     response.raise_for_status()
-                    data = response.json()
+                    data = response.json().get("data", {})
 
-                    prod = data["products"]
-                    coll = data["collections"]
+                    prod = data.get("products", {})
+                    coll = data.get("collections", {})
 
                     all_product_edges.extend(prod["edges"])
                     all_collection_edges.extend(coll["edges"])
