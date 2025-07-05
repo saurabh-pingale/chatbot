@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from app.services.pydantic_service.tool_registry import ToolRegistry
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
 from app.config import ANTHROPIC_API_KEY
+from app.utils.rag_pipeline_utils import format_message_history
 from app.utils.logger import logger
 
 class LLMService:
@@ -29,7 +30,8 @@ class LLMService:
 
         1. Answer only store-related questions.
         2. Respond in a warm, polite, and helpful tone.
-        3. Use the tool result to decide what to say. You will receive:
+        3. You will receive the last few messages exchanged between the user and the assistant. Use them to maintain context and continue the conversation naturally.
+        4. Use the tool result to decide what to say. You will receive:
            - A list of products (may or may not match the query)
            - A list of categories (suggestions)
            - A 'not_found' flag if no matching products were found
@@ -42,12 +44,11 @@ class LLMService:
         8. ALWAYS keep the RESPONSE TEXT under 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
         """
     
-    async def call_claude_with_tools(self, user_message: str, shop_id: str) -> Dict[str, Any]:
+    async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
         """Call Claude API with tool support"""
         tool_results = [] 
         tools_json = self.tool_registry.get_all_tools_for_claude()
         logger.info(f"Tool JSON: {tools_json}")
-        messages = [{"role": "user", "content": user_message}]
         
         async with httpx.AsyncClient(timeout=60) as client:
             iteration_count = 0
@@ -164,7 +165,13 @@ class LLMService:
         logger.info(f"User message: '{user_message}'")
         
         try:
-            claude_response = await self.call_claude_with_tools(user_message, shop_id)
+            history_messages = format_message_history(previous_messages or [])
+            logger.info(f"History Message before appending the latest message: {history_messages}")
+
+            history_messages.append({"role": "user", "content": user_message})
+            logger.info(f"History Message after appending the latest message: {history_messages}")
+            
+            claude_response = await self.call_claude_with_tools(history_messages, shop_id)
             logger.info(f"Claude Response: {claude_response}")
             
             if not claude_response.get("success", False):

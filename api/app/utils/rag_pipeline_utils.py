@@ -1,4 +1,3 @@
-from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, UserPromptPart, TextPart
 from typing import List, Dict, Any
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
@@ -23,7 +22,7 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
 def extract_categories(transformed_products):
     return list({str(p.get("category", "")) for p in transformed_products if p.get("category")})
 
-def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[ModelMessage]:
+def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Format previous messages for the agent's message history."""
     formatted_messages = []
     
@@ -35,12 +34,14 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Mode
             continue
         
         if msg_type == 'user':
-            formatted_messages.append(
-                ModelRequest(parts=[UserPromptPart(content=content)])
-            )
+            formatted_messages.append({
+                "role": "user",
+                "content": content
+            })
         elif msg_type == 'bot':
-            formatted_messages.append(
-                ModelResponse(parts=[TextPart(content=content)])
-            )
+            formatted_messages.append({
+                "role": "assistant",
+                "content": content
+            })
     
     return formatted_messages
