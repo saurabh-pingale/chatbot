@@ -44,6 +44,7 @@ const ChatBody = ({
                         key={reply}
                         className="chatbot-quick-reply-button"
                         onClick={() => handleSendMessage(reply)}
+                        disabled={isTyping}
                     >
                         {reply}
                     </button>

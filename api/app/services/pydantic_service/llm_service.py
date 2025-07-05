@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from app.services.pydantic_service.tool_registry import ToolRegistry
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
 from app.config import ANTHROPIC_API_KEY
+from app.utils.rag_pipeline_utils import format_message_history
 from app.utils.logger import logger
 
 class LLMService:
@@ -28,26 +29,26 @@ class LLMService:
         Always follow these rules strictly:
 
         1. Answer only store-related questions.
-        2. Respond in a warm, polite, and helpful tone.
-        3. Use the tool result to decide what to say. You will receive:
+        2. Respond with a warm, polite, and helpful tone by incorporating positive adjectives like "great", "perfect", or "excellent" to maintain an encoraging and supportive manner.
+        3. You will receive the last few conversation messages between the user & the assistant. Use them to maintain context and continue the conversation naturally.
+        4. For product tool - Use the tool result to decide what to say. You will receive:
            - A list of products (may or may not match the query)
            - A list of categories (suggestions)
            - A 'not_found' flag if no matching products were found
-        4. If 'not_found' is True or the products do not match the user's query intent 
+        5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn’t find exact matches, and suggest the categories
-        5. If the user’s query is **generic** (like "show me some products" or "I want to browse"), it’s okay to show the returned products.
-        6. NEVER pretend that unrelated products match the query.
-        7. NEVER explain tool usage or say “I couldn’t find anything in the database.”
-        8. ALWAYS keep the RESPONSE TEXT under 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
+        6. If the user’s query is **generic** (like "show me some products" or "I want to browse"), it’s okay to show the returned products.
+        7. NEVER pretend that unrelated products match the query.
+        8. NEVER explain tool usage or say “I couldn’t find anything in the database.”
+        9. ALWAYS keep the RESPONSE TEXT under 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
         """
     
-    async def call_claude_with_tools(self, user_message: str, shop_id: str) -> Dict[str, Any]:
+    async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
         """Call Claude API with tool support"""
         tool_results = [] 
         tools_json = self.tool_registry.get_all_tools_for_claude()
         logger.info(f"Tool JSON: {tools_json}")
-        messages = [{"role": "user", "content": user_message}]
         
         async with httpx.AsyncClient(timeout=60) as client:
             iteration_count = 0
@@ -164,7 +165,13 @@ class LLMService:
         logger.info(f"User message: '{user_message}'")
         
         try:
-            claude_response = await self.call_claude_with_tools(user_message, shop_id)
+            history_messages = format_message_history(previous_messages or [])
+            logger.info(f"History Message before appending the latest message: {history_messages}")
+
+            history_messages.append({"role": "user", "content": user_message})
+            logger.info(f"History Message after appending the latest message: {history_messages}")
+            
+            claude_response = await self.call_claude_with_tools(history_messages, shop_id)
             logger.info(f"Claude Response: {claude_response}")
             
             if not claude_response.get("success", False):

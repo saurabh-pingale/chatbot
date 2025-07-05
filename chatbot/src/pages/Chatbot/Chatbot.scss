@@ -103,4 +103,13 @@
     padding: 6px 12px;
     font-size: 13px;
   }
-} 
+}
+
+.chatbot-quick-reply-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+  background: transparent;
+  color: var(--theme-primary-color);
+}
