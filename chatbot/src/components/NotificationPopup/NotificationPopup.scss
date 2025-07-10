@@ -1,14 +1,15 @@
 .notification-popup {
   position: fixed;
-  bottom: 100px;
-  right: 20px;
+  bottom: 10px;
+  right: 90px;
   z-index: 9998;
-  max-width: 280px;
+  width: 180px;
   background-color: white;
-  border-radius: 12px;
+  border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 16px;
-  border: 1px solid #e1e3e5;
+  padding: 18px 20px;
+  border: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   .notification-content {
     position: relative;
@@ -16,11 +17,12 @@
 
   .close-button {
     position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 20px;
-    height: 20px;
-    background: none;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: #000000;
+    border-radius: 50%;
     border: none;
     padding: 0;
     margin: 0;
@@ -28,33 +30,38 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    z-index: 1;
 
     &:hover {
-      svg path {
-        stroke: #000000;
-      }
+      background: #333333;
     }
   }
 
   .message {
-    font-size: 16px;
-    line-height: 1.4;
     color: #202223;
-    font-weight: 500;
-    padding-right: 16px;
-  }
+    text-align: left;
+    padding-right: 8px;
+    line-height: 1.3;
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    right: 24px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    transform: rotate(45deg);
-    box-shadow: -1px -1px 5px rgba(0, 0, 0, 0.05);
-    border-left: 1px solid #e1e3e5;
-    border-bottom: 1px solid #e1e3e5;
+    .message-line {
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      
+      &.first-line {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      
+      &:not(.first-line) {
+        font-size: 15px;
+      }
+
+      &.last-line {
+        margin-top: 2px;
+      }
+    }
   }
 }
