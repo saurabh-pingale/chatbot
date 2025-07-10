@@ -265,6 +265,7 @@ class AnalyticsHandler:
                 try:
                     is_guest = guest_id is not None
                     
+                    #TODO - After if not below code, should be altogether seperate function
                     if not is_guest and user_id:
                         user_stmt = (
                             select(UserModel)
@@ -281,10 +282,10 @@ class AnalyticsHandler:
                         if user.shop_id != shop_id:
                             logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
                         else:
+                            #TODO: Are we using this updated_location anywhere ?
                             updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
-                            if updated_location:
-                                logger.info(f"Updating location on UserModel for user_id: {user_id}")
                     
+                    #TODO: I feel, can we more simplify it, by removig unncessary code, think about it
                     analytics_record = await self._get_or_create_today_analytics_record(
                         session, 
                         shop_id=shop_id, 
