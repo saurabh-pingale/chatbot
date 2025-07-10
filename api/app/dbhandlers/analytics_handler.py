@@ -15,6 +15,10 @@ class AnalyticsHandler:
     def __init__(self):
         pass
 
+    #TODO - Seperate the guest functinality as a seperate function
+    #TODO - Remove guest functionality in it, if possible create seperate handler for guest analytics handler and call those guest directly there
+    #TODO - Also seperate the create analytics & get analytics and link those functin references to this main function
+    #TODO - For guest don't link to this main function, call them directly from their respective handler
     async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, guest_id: Optional[str] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
         """
         Atomically retrieves or creates an analytics record for the current day.
@@ -74,6 +78,8 @@ class AnalyticsHandler:
         result = await session.execute(select_stmt)
         return result.scalar_one_or_none()
 
+    #TODO - What is this new term called "shop_identifier" ? make it shop_id if its ID of shop
+    #TODO - We are not getting any token data, rather we are getting user data, then don't use this handler, use user handler to get it
     async def process_user_and_get_token_data(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
         """
         Processes user initiation, creates/retrieves user with analytics record, and returns data for JWT token.
@@ -102,6 +108,11 @@ class AnalyticsHandler:
                     await session.rollback()
                     return None
     
+    #TODO - As you studied in clean code book, if something function is doing extra then function name also changing it
+    #TODO - Calling this function from top and calling another function inside, its not scalable
+    #TODO - mainly _get_or_create_user you need to get from user handler, so get from there and link inside the _get_or_create_today_analytics_record it, 
+    #TODO - Please remove below _get_or_create_user function
+    #TODO - Don't unncessary create seperate function handlers
     async def _get_or_create_user(self, session, email: str, shop_id: int, utm_params: Optional[UTMParameters] = None) -> Optional[UserModel]:
         """
         Helper to retrieve or create a user record. Also ensures an analytics record is created.
@@ -119,7 +130,10 @@ class AnalyticsHandler:
         await self._get_or_create_today_analytics_record(session, shop_id=shop_id, user_id=user.id, utm_params=utm_params)
 
         return user
-
+    
+    #TODO: What do you mean by process ?, Are we doing ML or AI process ?
+    #TODO: Handlers should be CREATE, GET, UPDATE, DELETE 
+    #TODO: I see _get_or_create_user and process_user_initiation_db looks same, why ?
     async def process_user_initiation_db(
         self, 
         email: str, 
@@ -154,6 +168,8 @@ class AnalyticsHandler:
                     logger.error(f"General error during user initiation for email {email}, shop {shop_identifier}: {e}", exc_info=True)
                     return None, None
 
+    #TODO: Don't introduce new terms like shop_identifier etc
+    #TODO: Does all these 3 function handlers get_shop_by_shop_id & get_shop_by_domain & get_shop_pk_by_identifier does same thing ?
     async def get_shop_pk_by_identifier(self, shop_identifier: str) -> Optional[int]:
         """Fetches the integer primary key of a shop by its string identifier."""
         async with AsyncSessionLocal() as session:
@@ -169,6 +185,9 @@ class AnalyticsHandler:
                     logger.error(f"DB error fetching shop PK for {shop_identifier}: {e}", exc_info=True)
                     return None
 
+    #TODO: What is the difference between _get_or_create_today_analytics_record & get_or_create_user_and_analytics
+    #TODO: Don't CREATE seperate function for create user & analytics, we already creating user in "create_user" in USER_HANDLER.PY, so please create a small function to increment new user and link to their
+    #TODO: Why are we doing so many db calls ?
     async def get_or_create_user_and_analytics(
         self, 
         email: str, 
@@ -181,6 +200,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: You are getting the user details, please get from user handler, don't create new, use existing one
                     user_query = select(UserModel).where(
                         UserModel.email == email,
                         UserModel.shop_id == shop_id_pk
