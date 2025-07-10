@@ -35,3 +35,45 @@
   display: flex;
   flex-direction: column;
 }
+
+.chatbot-tags-container.agent-side {
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 12px;
+}
+
+.chatbot-tags.vertical-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chatbot-tags.horizontal-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chatbot-tag-button.premium-tag {
+  padding: 8px 16px;
+  border: 2px solid var(--theme-primary-color);
+  background-color: transparent;
+  color: var(--theme-primary-color);
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  outline: none;
+  box-shadow: none;
+
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &:hover {
+    background-color: var(--theme-primary-color);
+    color: white;
+  }
+}

@@ -17,13 +17,24 @@ import {
   getShopOfferTags
 } from '../../services/chat';
 import { hexToRgbArray } from '../../utils/utils';
-import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message } from '../../types';
+import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message, TagItem } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 import { NotificationPopup } from '../../components/NotificationPopup/NotificationPopup';
 
 export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
+  const TAG_DICTIONARY: Record<string, string> = {
+    SayHi: "Say hello to the assistant",
+    ReturnPolicy: "Show return policy of store",
+    Recommendations: "Get suggestions tailored to you",
+    Browsing: "Explore our collections"
+  };
+  const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
+    name,
+    description
+  }));
+
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jwtToken, setJwtToken] = useState<string | null>(null);
@@ -35,13 +46,15 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [tags, setTags] = useState<TagItem[]>([]);
+  const [showInitialTags, setShowInitialTags] = useState(false);
 
   const isMobile = window.innerWidth <= 768;
 
   const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const { messages, isTyping, addMessage, handleBotResponse, setMessages } = useChat();
+  const { messages, isTyping, addMessage, handleBotResponse, setMessages, categories, setCategories } = useChat();
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
@@ -83,16 +96,14 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   }, [jwtToken]);
 
   useEffect(() => {
-    if (
-      isOpen &&
-      !isEmailGateVisible && 
-      !hasShownStaticMessage
-    ) {
+    if (isOpen && !isEmailGateVisible && !hasShownStaticMessage) {
       const timeoutId = setTimeout(() => {
         addMessage(STATIC_BOT_GREETING, 'bot');
         setHasShownStaticMessage(true);
+        setTags(DEFAULT_TAGS);
+        setShowInitialTags(true);
       }, 1000);
-    
+
       return () => clearTimeout(timeoutId);
     }
   }, [isOpen, isEmailGateVisible, hasShownStaticMessage, addMessage]);
@@ -174,9 +185,26 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
       return;
     }
 
+    if (typeof content !== 'string') {
+      console.error('Invalid content type sent to handleSendMessage:', content);
+      return;
+    }
+
+    // const messageToSend = TAG_DICTIONARY[content] || content;
+    const matchedTag = tags.find(tag => tag.name === content);
+    const messageToSend = matchedTag?.description || content;
+
     addMessage(content, 'user');
 
-    const currentMessages: Message[] = [...messages, { id: Date.now().toString(), content, type: 'user', timestamp: new Date() }];
+    const currentMessages: Message[] = [
+      ...messages, 
+      { 
+        id: Date.now().toString(), 
+        content: messageToSend, 
+        type: 'user',
+        timestamp: new Date() 
+      }
+    ];
 
     try {
       let payloadBase: any = {
@@ -193,6 +221,32 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
       if (response.limit_reached) {
         setChatLimitReached(true);
       }
+
+      setTimeout(() => {
+        if (response.tags && Array.isArray(response.tags) && response.tags.length > 0) {
+          const mappedTags: TagItem[] = response.tags.map((tag: any) => {
+            if (typeof tag === 'string') {
+              return {
+                name: tag,
+                description: TAG_DICTIONARY[tag] || tag,
+              };
+            } else if (typeof tag === 'object' && tag.name && tag.description) {
+              return {
+                name: tag.name,
+                description: tag.description,
+              };
+            } else {
+              console.warn('Unknown tag format:', tag);
+              return { name: '', description: '' };
+            }
+          });
+
+          setTags(mappedTags);
+          setShowInitialTags(true);
+        } else {
+          setShowInitialTags(false);
+        }
+      }, 200);
       
       await handleBotResponse(response);
     } catch (err) {
@@ -247,6 +301,9 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
     setMessages([]);
     setHasShownStaticMessage(false);
     setChatLimitReached(false);
+    setTags(DEFAULT_TAGS);              
+    setShowInitialTags(true); 
+    setCategories([]);
   }, [isOpen, isEmailGateVisible, addMessage]);
 
   const conversationMessagesCount = messages.length;
@@ -303,6 +360,8 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
                   handleError={handleError}
                   isChatLimitReached={chatLimitReached}
                   quickReplies={quickReplies}
+                  tags={showInitialTags ? tags : []}
+                  categories={categories}
                 />
               )}
               {error && (

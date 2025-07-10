@@ -13,7 +13,9 @@ const ChatBody = ({
     isEmailGateVisible = false,
     handleError,
     isChatLimitReached,
-    quickReplies
+    quickReplies,
+    tags,
+    categories
 }: ChatBodyProps) => {
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
@@ -37,7 +39,11 @@ const ChatBody = ({
                 isTyping={isTyping}
                 primaryColor={config.primaryColor}
                 onProductAddToCart={handleProductAddToCart}
+                tags={tags}
+                handleSendMessage={handleSendMessage}
+                categories={categories}
             />
+
             <div className="chatbot-quick-replies" style={chatbotContainerStyles}>
                 {quickReplies.map((reply) => (
                     <button

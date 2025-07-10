@@ -1,3 +1,5 @@
+import json
+import re
 from typing import List, Dict, Any
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
@@ -45,3 +47,15 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
             })
     
     return formatted_messages
+
+def safe_parse_json(text: str) -> Dict[str, Any]:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except Exception:
+                pass
+    return {}

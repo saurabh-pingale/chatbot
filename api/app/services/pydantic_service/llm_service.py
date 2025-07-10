@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from app.services.pydantic_service.tool_registry import ToolRegistry
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
 from app.config import ANTHROPIC_API_KEY
-from app.utils.rag_pipeline_utils import format_message_history
+from app.utils.rag_pipeline_utils import format_message_history, safe_parse_json
 from app.utils.logger import logger
 
 class LLMService:
@@ -44,6 +44,26 @@ class LLMService:
         7. NEVER pretend that unrelated products match the query.
         8. NEVER explain tool usage or say “I couldn't find anything in the database.”
         9. ALWAYS keep the RESPONSES concise under 30 - 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
+        10. When a user greets you or sends an exploratory or general shopping intent like "Hi", "Show me products", or "I want to browse":
+            - Respond warmly with a short, encouraging message.
+            - Include a list of relevant tag names (keys) from the tag dictionary.
+            - Tags should be returned as an array under a field named "tags", and each tag should include a short description explaining what the tag is about.
+            - Example tag keys: ["SayHi", "PartyWear", "Workwear", "GymFits"].
+        11. When the user’s message is specific to a product or collection:
+            - Do not return any tags.
+            - Tags array should be empty.
+        12. For greeting messages ("Hi", "Hello", "Hey") or generic shopping intents ("show me products", "I want to browse"):
+            - Always respond with a short, warm greeting under 50 words.
+            - The response must be formatted as a **JSON object** with:
+              {
+                "answer": "<your message text>",
+                "tags": [
+                  { "name": "Browse Collections", "description": "Explore all our product collections including latest arrivals and bestsellers" },
+                  { "name": "Return Policy", "description": "Learn how returns and exchanges work in our store" }
+                ]
+              }
+            - You must **never** mention tags inside the answer text. Tags should only be included in the "tags" array.
+            - Do not wrap the JSON in markdown or explain it. Just return plain JSON.
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
@@ -127,10 +147,14 @@ class LLMService:
                         for block in data["content"]:
                             if block["type"] == "text":
                                 final_text += block["text"]
-                        
+
                         logger.info(f"Final Claude response: {final_text}")
+
+                        parsed_response = safe_parse_json(final_text) 
+
                         return {
-                            "answer": final_text, 
+                            "answer": parsed_response.get("answer", final_text),
+                            "tags": parsed_response.get("tags", []),
                             "success": True,
                             "tool_results": tool_results
                         }
@@ -175,22 +199,20 @@ class LLMService:
             
             claude_response = await self.call_claude_with_tools(history_messages, shop_id)
             logger.info(f"Claude Response: {claude_response}")
-            
-            if not claude_response.get("success", False):
-                return claude_response
-            
-            products = []
-            categories = []
-            
+
+            products, categories = [], []
+            tags = claude_response.get("tags", []) 
+
             for tool_block, result in claude_response.get("tool_results", []):
                 if tool_block["name"] == "product":
                     products = result.get("products", [])
                     categories = result.get("categories", [])
-            
+
             return {
                 "answer": claude_response.get("answer", ""),
                 "products": products,
                 "categories": categories,
+                "tags": tags,
                 "success": True
             }
             
