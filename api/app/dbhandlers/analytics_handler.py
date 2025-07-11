@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Tuple, Dict
 
 from app.dbhandlers.db import AsyncSessionLocal
+from app.dbhandlers.user_handler import UserHandler
 from app.models.db.shop_admin import UserModel, ShopModel, UserShopAnalyticsModel
 from app.models.api.shop_admin import UTMParameters
 from app.utils.analytics_utils import update_user_location_if_missing
@@ -13,219 +14,128 @@ from app.utils.logger import logger
 
 class AnalyticsHandler:
     def __init__(self):
-        pass
+        self.user_handler = UserHandler()
 
-    async def _get_or_create_today_analytics_record(self, session, shop_id: int, user_id: Optional[int] = None, guest_id: Optional[str] = None, utm_params: Optional[UTMParameters] = None) -> Optional[UserShopAnalyticsModel]:
-        """
-        Atomically retrieves or creates an analytics record for the current day.
-        It first attempts to insert a new record. If a record for the user/guest and date
-        already exists (violating a unique constraint), it does nothing.
-        It then reliably fetches and returns the record for the current day.
-        """
-        today = datetime.now().date()
-    
-        insert_values = {"shop_id": shop_id, "date": today}
-        if user_id:
-            insert_values["user_id"] = user_id
-        elif guest_id:
-            insert_values["guest_id"] = guest_id
-        else:
-            logger.error("Both user_id and guest_id are None. Cannot create analytics record.")
-            return None
-
-        # Add UTM parameters for new records
-        if utm_params:
-            insert_values.update({
-                "utm_source": utm_params.utm_source or 'direct',
-                "utm_medium": utm_params.utm_medium,
-                "utm_campaign": utm_params.utm_campaign,
-                "utm_term": utm_params.utm_term,
-                "utm_content": utm_params.utm_content
-            })
-        else:
-            insert_values["utm_source"] = 'direct'
-        
-        # Prepare the insert statement with ON CONFLICT DO NOTHING
-        stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
-        
-        if user_id:
-            conflict_target = ['user_id', 'shop_id', 'date']
-            index_where = UserShopAnalyticsModel.user_id.isnot(None)
-        else: # guest_id
-            conflict_target = ['guest_id', 'shop_id', 'date']
-            index_where = UserShopAnalyticsModel.guest_id.isnot(None)
-
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=conflict_target,
-            index_where=index_where
-        )
-        await session.execute(stmt)
-
-        # Now, reliably select the record
-        select_stmt = select(UserShopAnalyticsModel).where(
-            UserShopAnalyticsModel.shop_id == shop_id,
-            UserShopAnalyticsModel.date == today
-        )
-        if user_id:
-            select_stmt = select_stmt.where(UserShopAnalyticsModel.user_id == user_id)
-        else: # guest_id must exist if user_id does not, based on check above
-            select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
-            
-        result = await session.execute(select_stmt)
-        return result.scalar_one_or_none()
-
-    async def process_user_and_get_token_data(self, email: str, shop_identifier: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
-        """
-        Processes user initiation, creates/retrieves user with analytics record, and returns data for JWT token.
-        """
+    async def get_shop_pk(self, shop_id: str) -> Optional[int]:
+        """Fetches the integer primary key of a shop by its public string ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk_result = await session.execute(
-                        select(ShopModel.id).where(ShopModel.shop_id == shop_identifier)
-                    )
-                    shop_pk = shop_pk_result.scalar_one_or_none()
-
-                    if not shop_pk:
-                        logger.error(f"Session initiation for non-existent shop: {shop_identifier}")
-                        return None
-                    
-                    user = await self._get_or_create_user(session, email, shop_pk, utm_params)
-                    if not user:
-                        logger.error(f"Failed to get/create user for email {email}, shop {shop_identifier}")
-                        return None
-
-                    return {"user_id": user.id, "shop_id": shop_pk}
-
-                except SQLAlchemyError as e:
-                    logger.error(f"DB error during user processing for {email}, {shop_identifier}: {e}", exc_info=True)
-                    await session.rollback()
-                    return None
-    
-    async def _get_or_create_user(self, session, email: str, shop_id: int, utm_params: Optional[UTMParameters] = None) -> Optional[UserModel]:
-        """
-        Helper to retrieve or create a user record. Also ensures an analytics record is created.
-        """
-        stmt = select(UserModel).where(UserModel.email == email, UserModel.shop_id == shop_id)
-        result = await session.execute(stmt)
-        user = result.scalar_one_or_none()
-
-        if not user:
-            logger.info(f"Creating new user for email {email} in shop {shop_id}.")
-            user = UserModel(email=email, shop_id=shop_id)
-            session.add(user)
-            await session.flush()
-        
-        await self._get_or_create_today_analytics_record(session, shop_id=shop_id, user_id=user.id, utm_params=utm_params)
-
-        return user
-
-    async def process_user_initiation_db(
-        self, 
-        email: str, 
-        shop_identifier: str
-    ) -> Tuple[Optional[int], Optional[int]]:
-        """
-        Handles the DB operations for user initiation within a single transaction.
-        1. Fetches shop PK.
-        2. Gets or creates user and their initial analytics entry.
-        Returns (user_id_pk, shop_id_pk) if successful, otherwise (None, None).
-        """
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    shop_id_pk = await self.get_shop_pk_by_identifier(shop_identifier)
-                    if not shop_id_pk:
-                        logger.warning(f"Shop PK not found for identifier: {shop_identifier} in process_user_initiation_db.")
-                        return None, None
-
-                    user_id, _ = await self.get_or_create_user_and_analytics(email, shop_id_pk)
-
-                    if user_id is None:
-                        logger.error(f"Failed to get or create user in process_user_initiation_db for email: {email}")
-                        return None, None 
-                    
-                    return user_id, shop_id_pk
-                
-                except SQLAlchemyError as db_err:
-                    logger.error(f"Database error during user initiation for email {email}, shop {shop_identifier}: {db_err}", exc_info=True)
-                    return None, None
-                except Exception as e:
-                    logger.error(f"General error during user initiation for email {email}, shop {shop_identifier}: {e}", exc_info=True)
-                    return None, None
-
-    async def get_shop_pk_by_identifier(self, shop_identifier: str) -> Optional[int]:
-        """Fetches the integer primary key of a shop by its string identifier."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_identifier)
+                    stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
                     result = await session.execute(stmt)
                     shop_pk = result.scalar_one_or_none()
                     if not shop_pk:
                         return None
                     return shop_pk
                 except SQLAlchemyError as e:
-                    logger.error(f"DB error fetching shop PK for {shop_identifier}: {e}", exc_info=True)
+                    logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
                     return None
 
-    async def get_or_create_user_and_analytics(
-        self, 
-        email: str, 
-        shop_id_pk: int
-    ) -> Tuple[Optional[int], bool]: 
+    async def _get_or_create_analytics_record(
+        self,
+        shop_id: int,
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None,
+        utm_params: Optional[UTMParameters] = None
+    ) -> Optional[UserShopAnalyticsModel]:
         """
-        Gets an existing user or creates a new one, with initial analytics record.
-        Manages its own session and transaction.
+        Atomically retrieves or creates an analytics record for the current day for a user or guest.
+        This function is safe from race conditions due to the 'ON CONFLICT DO NOTHING' clause
+        targeting the correct partial unique index.
+        """
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                today = datetime.now().date()
+
+                if not user_id and not guest_id:
+                    logger.error("Both user_id and guest_id are None. Cannot create analytics record.")
+                    return None
+
+                insert_values = {"shop_id": shop_id, "date": today}
+                if user_id:
+                    insert_values["user_id"] = user_id
+                else:
+                    insert_values["guest_id"] = guest_id
+
+                if utm_params:
+                    insert_values.update({
+                        "utm_source": utm_params.utm_source or 'direct', "utm_medium": utm_params.utm_medium,
+                        "utm_campaign": utm_params.utm_campaign, "utm_term": utm_params.utm_term,
+                        "utm_content": utm_params.utm_content
+                    })
+                else:
+                    insert_values.setdefault("utm_source", 'direct')
+
+                stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
+
+                if user_id:
+                    conflict_target = ['user_id', 'shop_id', 'date']
+                    index_where = UserShopAnalyticsModel.user_id.isnot(None)
+                else: 
+                    conflict_target = ['guest_id', 'shop_id', 'date']
+                    index_where = UserShopAnalyticsModel.guest_id.isnot(None)
+
+                stmt = stmt.on_conflict_do_nothing(
+                    index_elements=conflict_target,
+                    index_where=index_where
+                )
+                await session.execute(stmt)
+
+                select_stmt = select(UserShopAnalyticsModel).where(
+                    UserShopAnalyticsModel.shop_id == shop_id, UserShopAnalyticsModel.date == today
+                )
+                if user_id:
+                    select_stmt = select_stmt.where(UserShopAnalyticsModel.user_id == user_id)
+                else:
+                    select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
+
+                result = await session.execute(select_stmt)
+                return result.scalar_one_or_none()
+
+    async def _update_user_location(self, user_id: int, shop_id: int, country: Optional[str], region: Optional[str], city: Optional[str], ip_address: Optional[str]):
+        """Fetches a user and updates their location information if it's missing."""
+        try:
+            async with AsyncSessionLocal() as session:
+                async with session.begin():
+                    user = await session.get(UserModel, user_id, options=[selectinload(UserModel.analytics)])
+                    if not user:
+                        logger.error(f"User with id {user_id} not found. Cannot update location.")
+                        return
+
+                    if user.shop_id != shop_id:
+                        logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id}. Aborting location update.")
+                        return
+
+                    return update_user_location_if_missing(user, country, region, city, ip_address)
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while updating user location for user_id {user_id}: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Unexpected error while updating user location for user_id {user_id}: {e}", exc_info=True)
+
+    async def get_or_create_user_for_token(self, email: str, shop_id: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
+        """
+        Handles user initiation: gets/creates a user, ensures an analytics record exists,
+        and returns primary keys required for creating a JWT token.
         """
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    user_query = select(UserModel).where(
-                        UserModel.email == email,
-                        UserModel.shop_id == shop_id_pk
-                    )
-                    user_result = await session.execute(user_query)
-                    user = user_result.scalar_one_or_none()
+                    shop_pk = await self.get_shop_pk(shop_id)
+                    if not shop_pk:
+                        return None
                     
-                    user_id_to_return: Optional[int] = None
-                    is_new_user_flag = False
+                    user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
+                    if not user:
+                        logger.error(f"Failed to get/create user for email {email}, shop {shop_id}")
+                        return None
 
-                    if user:
-                        logger.info(f"DB: Existing user {email}, shop_pk {shop_id_pk}")
-                        user.updated_at = datetime.now()
-                        user_id_to_return = user.id
-                    else:
-                        logger.info(f"DB: New user {email}, shop_pk {shop_id_pk}. Creating.")
-                        new_user = UserModel(
-                            email=email,
-                            shop_id=shop_id_pk, 
-                            created_at=datetime.now(),
-                            updated_at=datetime.now()
-                        )
-                        session.add(new_user)
-                        await session.flush() 
-                        user_id_to_return = new_user.id
-                        is_new_user_flag = True
+                    await self._get_or_create_analytics_record(shop_id=shop_pk, user_id=user.id, utm_params=utm_params)
 
-                        new_analytics_record = UserShopAnalyticsModel(
-                            user_id=user_id_to_return,
-                            shop_id=shop_id_pk,
-                            chat_interactions_count=0,
-                            date=datetime.now().date()
-                        )
-                        session.add(new_analytics_record)
-                        logger.info(f"DB: Created analytics for new user_id: {user_id_to_return}")
-                    
-                    return user_id_to_return, is_new_user_flag
-
-                except SQLAlchemyError as db_err:
-                    logger.error(f"DB error in get_or_create_user for {email}, shop_pk {shop_id_pk}: {db_err}", exc_info=True)
-                    return None, False
-                except Exception as e:
-                    logger.error(f"General error in get_or_create_user for {email}, shop_pk {shop_id_pk}: {e}", exc_info=True)
-                    return None, False
-
+                    return {"user_id": user.id, "shop_id": shop_pk}
+                except (SQLAlchemyError, ValueError) as e:
+                    logger.error(f"Error during user processing for {email}, {shop_id}: {e}", exc_info=True)
+                    return None
+    
     async def update_user_chat_analytics(
         self, 
         shop_id: int, 
@@ -243,79 +153,42 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    is_guest = guest_id is not None
-                    
-                    if not is_guest and user_id:
-                        user_stmt = (
-                            select(UserModel)
-                            .options(selectinload(UserModel.analytics))
-                            .where(UserModel.id == user_id)
-                        )
-                        result = await session.execute(user_stmt)
-                        user = result.scalar_one_or_none()
+                    if user_id:
+                        await self._update_user_location(user_id, shop_id, country, region, city, ip_address)
 
-                        if not user:
-                            logger.error(f"User with id {user_id} not found. Cannot update analytics.")
-                            return False
-                        
-                        if user.shop_id != shop_id:
-                            logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id} from JWT/context. Aborting analytics location update on UserModel.")
-                        else:
-                            updated_location = update_user_location_if_missing(user, country, region, city, ip_address)
-                            if updated_location:
-                                logger.info(f"Updating location on UserModel for user_id: {user_id}")
-                    
-                    analytics_record = await self._get_or_create_today_analytics_record(
-                        session, 
-                        shop_id=shop_id, 
-                        user_id=user_id, 
-                        guest_id=guest_id
-                    )
+                    analytics_record = await self._get_or_create_analytics_record(shop_id=shop_id, user_id=user_id, guest_id=guest_id)
 
                     if analytics_record:
                         analytics_record.chat_interactions_count += 1
-                        logger.info(f"Incremented chat_interactions_count for {'guest_id' if is_guest else 'user_id'}: {guest_id if is_guest else user_id}, shop_id: {shop_id} for date {analytics_record.date}")
+                        logger.info(f"Incremented chat_interactions_count for {'guest' if guest_id else 'user'}:{guest_id or user_id}, shop_id:{shop_id}")
                     else:
-                         logger.info(f"Chat interaction recorded for {'guest_id' if is_guest else 'user_id'}: {guest_id if is_guest else user_id}, shop_id: {shop_id}")
-
+                        logger.error(f"Failed to find/create analytics record for user:{user_id}/guest:{guest_id}, shop:{shop_id}")
+                        return False
                     return True
-
-                except SQLAlchemyError as error:
-                    await session.rollback()
-                    logger.error(f"DB error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {error}", exc_info=True)
+                except SQLAlchemyError as e:
+                    logger.error(f"DB error in update_user_chat_analytics for user:{user_id}/guest:{guest_id}, shop:{shop_id}: {e}", exc_info=True)
                     return False
-                except Exception as e:
-                    await session.rollback()
-                    logger.error(f"General error in update_user_chat_analytics for user_id {user_id}, shop_id {shop_id}: {e}", exc_info=True)
-                    return False
-
-    async def increment_opened_chatbot_count(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:
+                
+    async def increment_opened_chatbot_count(self, identifier: str, shop_id: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:
         """
         Increments the chatbot open count. Handles both anonymous and identified users.
         """
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk_result = await session.execute(select(ShopModel.id).where(ShopModel.shop_id == shop_domain))
-                    shop_pk = shop_pk_result.scalar_one_or_none()
+                    shop_pk = await self.get_shop_pk(shop_id)
+                    if not shop_pk: return False
 
-                    if not shop_pk:
-                        return False
+                    user_pk, guest_id_val = (None, identifier) if is_guest else (None, None)
+                    if not is_guest:
+                        user = await self.user_handler.get_user_by_email_and_shop_id(email=identifier, shop_id=shop_pk)
+                        if user: user_pk = user.id
+                        else: guest_id_val = identifier
 
-                    user_pk = None
-                    guest_id = None
-
-                    if is_guest:
-                        guest_id = user_identifier
-                    else:
-                        user_pk_result = await session.execute(select(UserModel.id).where(UserModel.email == user_identifier, UserModel.shop_id == shop_pk))
-                        user_pk = user_pk_result.scalar_one_or_none()
-
-                    analytics_record = await self._get_or_create_today_analytics_record(
-                        session, 
+                    analytics_record = await self._get_or_create_analytics_record(
                         shop_id=shop_pk, 
-                        user_id=user_pk,
-                        guest_id=guest_id,
+                        user_id=user_pk, 
+                        guest_id=guest_id_val, 
                         utm_params=utm_params
                     )
                     
@@ -333,7 +206,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id, guest_id)
+                    analytics_record = await self._get_or_create_analytics_record(shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.added_to_cart_count += 1
                     return True
@@ -346,7 +219,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id, user_id, guest_id)
+                    analytics_record = await self._get_or_create_analytics_record(shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.purchased_count += 1
                         analytics_record.purchase_amount += amount
@@ -355,7 +228,7 @@ class AnalyticsHandler:
                     logger.error(f"DB error incrementing purchased_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
                     return False
 
-    async def increment_purchased_count_by_email(self, email: str, shop_identifier: str, amount: float, order_id: str) -> bool:
+    async def increment_purchased_count_by_email(self, email: str, shop_id: str, amount: float, order_id: str) -> bool:
         """
         Finds a user by email and shop identifier (or creates them if they don't exist)
         and increments their purchase analytics for today. This is designed to be called 
@@ -364,37 +237,22 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_stmt = select(ShopModel).where(ShopModel.shop_id == shop_identifier)
-                    shop_result = await session.execute(shop_stmt)
-                    shop = shop_result.scalar_one_or_none()
-
-                    if not shop:
-                        logger.error(f"Webhook received for an unknown shop: {shop_identifier}. Cannot track purchase.")
-                        return False
+                    shop_pk = await self.get_shop_pk(shop_id)
+                    if not shop_pk: return False
                     
-                    user_stmt = select(UserModel).where(UserModel.email == email, UserModel.shop_id == shop.id)
-                    user_result = await session.execute(user_stmt)
-                    user = user_result.scalar_one_or_none()
-                    
-                    if not user:
-                        logger.info(f"Purchase by new user via webhook. Creating user for email {email} in shop {shop.shop_id}.")
-                        user = UserModel(email=email, shop_id=shop.id)
-                        session.add(user)
-                        await session.flush()
+                    user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
+                    if not user: return False
 
-                    analytics_record = await self._get_or_create_today_analytics_record(session, shop_id=shop.id, user_id=user.id)
-
-                    if not analytics_record:
-                        logger.error(f"Could not get/create analytics record for user {user.id} on shop {shop.id} for purchase tracking.")
-                        return False
+                    analytics_record = await self._get_or_create_analytics_record(shop_id=shop_pk, user_id=user.id)
+                    if not analytics_record: return False
                     
                     analytics_record.purchased_count += 1
                     analytics_record.purchase_amount = (analytics_record.purchase_amount or 0) + amount
                     
-                    logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop.id}. New total purchases: {analytics_record.purchased_count}, New total amount: {analytics_record.purchase_amount}")
+                    logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop_pk}. New total purchases: {analytics_record.purchased_count}, New total amount: {analytics_record.purchase_amount}")
                     return True
                 except SQLAlchemyError as e:
-                    logger.error(f"DB Error tracking purchase by email for {email}, shop {shop_identifier}: {e}", exc_info=True)
+                    logger.error(f"DB Error tracking purchase by email for {email}, shop {shop_id}: {e}", exc_info=True)
                     return False
 
     async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
@@ -403,12 +261,8 @@ class AnalyticsHandler:
         """
         async with AsyncSessionLocal() as session:
             try:
-                shop_pk_result = await session.execute(select(ShopModel.id).where(ShopModel.shop_id == shop_id))
-                shop_pk = shop_pk_result.scalar_one_or_none()
-
-                if not shop_pk:
-                    logger.warning(f"Analytics summary for non-existent shop: {shop_id}")
-                    return None
+                shop_pk = await self.get_shop_pk(shop_id)
+                if not shop_pk: return None
 
                 summary_query = select(
                     func.count(func.distinct(UserShopAnalyticsModel.user_id)).label('total_users'),

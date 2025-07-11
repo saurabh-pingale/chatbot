@@ -72,6 +72,10 @@ class EmbeddingsHandler:
         cached_result = self.get_cache_results(query_key)
         if cached_result:
             return cached_result
+        
+        if agent_type == "ProductAgent" and not metadata_filters:
+            logger.info("Skipping query: No metadata filters provided for ProductAgent.")
+            return []
 
         norm = (sum(value**2 for value in vector)) ** 0.5
         normalized_vector = [value / norm for value in vector] if norm > 0 else vector

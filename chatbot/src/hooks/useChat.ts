@@ -4,6 +4,7 @@ import type { Message, ChatResponse, ProductType } from '../types';
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
 
   const addMessage = useCallback((content: string, type: 'user' | 'bot', products?: ProductType[]) => {
@@ -33,6 +34,12 @@ export const useChat = () => {
       };
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
+
+      if (response.categories && Array.isArray(response.categories)) {
+        setCategories(response.categories);
+      } else {
+        setCategories([]);
+      }
     };
 
     if (delay > 0) {
@@ -47,6 +54,8 @@ export const useChat = () => {
     isTyping,
     addMessage,
     handleBotResponse,
-    setMessages
+    setMessages,
+    categories,
+    setCategories
   };
 }; 

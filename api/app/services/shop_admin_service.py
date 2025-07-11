@@ -45,11 +45,3 @@ class ShopAdminService:
     async def mark_setup_as_completed(self, shop_id: int):
         """Mark the shop's setup as completed."""
         await self.db_handler.update_setup_completed_status(shop_id, True)
-
-    async def save_quick_replies(self, shop_id: str, quick_replies: List[str]) -> None:
-        """Save quick replies to the DB via handler."""
-        await self.db_handler.save_quick_replies(shop_id, quick_replies)
-
-    async def get_quick_replies(self, shop_id: str) -> Optional[List[str]]:
-        """Get quick replies from the DB via handler."""
-        return await self.db_handler.get_quick_replies(shop_id)

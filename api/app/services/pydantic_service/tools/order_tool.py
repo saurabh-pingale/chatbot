@@ -16,7 +16,15 @@ class OrderTool(BaseTool):
     
     @property
     def description(self) -> str:
-        return "Get support contact information for order-related queries. Use this tool when users ask how to contact support or need help with orders."
+        return """ 
+        Use this tool for ANY order-related questions: tracking, refunds, damaged items, delivery issues, cancellations, order status.\n
+
+        CRITICAL RULES:
+        - Tool returns ONLY store contact information (email/phone).
+        - NEVER generate fake order details, tracking info, delivery estimates or contact information.
+
+        Example triggers: "Where is my order?", "I want to return my product" , "how do i track my product", "My item is damaged", "I want a refund", etc.
+        """;
     
     @property
     def input_schema(self) -> Dict[str, Any]:

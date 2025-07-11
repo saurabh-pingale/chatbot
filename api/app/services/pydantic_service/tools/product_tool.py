@@ -5,10 +5,7 @@ from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.external_service.redis_client import get_redis_client
-from app.utils.rag_pipeline_utils import (
-    extract_products_from_response,
-    extract_categories
-)
+from app.utils.rag_pipeline_utils import extract_products_from_response
 from app.utils.metadata_extractor import metadata_extractor
 from app.utils.logger import logger
 
@@ -26,10 +23,10 @@ class ProductTool(BaseTool):
     @property
     def description(self) -> str:
         return (
-            "Search for products based on user query. "
-            "Use this tool when users ask to find, search, or filter products by attributes like color, size, brand, fabric, category, price, etc. "
-            "If no exact products are found, the tool will return alternative product categories to suggest to the user. "
-            "Always mention these categories if provided."
+            "This is the primary tool for all product-related inquiries." 
+            "You must use this tool if the user's query is about finding, searching for, or filtering products. This includes any mention of product attributes such as color, size, brand, fabric, category, or price." 
+            "Even if the query is a simple product name or category (e.g., 'red t-shirt', 'shoes', etc.), this tool must be invoked. "
+            "The tool will return a list of matching products or a list of available categories if no direct matches are found."
         )
     
     @property
@@ -63,7 +60,9 @@ class ProductTool(BaseTool):
             logger.info(f"[ProductTool] Results from vector DB: {results}")
 
             unique_results = []
+            categories = []
             seen_variant_ids = set()
+
             if results:
                 for result in results:
                     variant_id = getattr(result.metadata, 'variant_id', None)
@@ -77,9 +76,6 @@ class ProductTool(BaseTool):
 
             products = extract_products_from_response(unique_results) or []
             logger.info(f"Extracted Products: {products}")
-
-            categories = extract_categories(products) or []
-            logger.info(f"Extracted Categories: {categories}")
 
             if not products:
                 redis_client = await get_redis_client()

@@ -69,6 +69,7 @@ export interface ChatResponse {
   success?: boolean;
   error?: string | null;
   limit_reached?: boolean;
+  tags?: string[]; 
 }
 
 export interface LocationInfo {
@@ -134,7 +135,6 @@ export interface CartProps {
 
 export interface ChatbotProps {
   config: ChatbotConfig;
-  quickReplies: string[];
 }
 
 export interface ChatbotToggleProps {
@@ -189,6 +189,9 @@ export interface MessageListProps {
   isTyping: boolean;
   primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
+  tags?: TagItem[];
+  handleSendMessage: (tag: string) => void;
+  categories?: string[];
 }
 
 export interface ProductProps {
@@ -250,7 +253,8 @@ export interface ChatBodyProps {
   isEmailGateVisible?: boolean;
   handleError: (error: string) => void;
   isChatLimitReached?: boolean;
-  quickReplies: string[];
+  tags?: TagItem[];
+  categories?: string[];
 }
 
 export interface CartBodyProps {
@@ -303,3 +307,8 @@ export interface NotificationPopupProps {
   isVisible: boolean;
   onClose: () => void;
 }
+
+export type TagItem = {
+  name: string;
+  description: string;
+};

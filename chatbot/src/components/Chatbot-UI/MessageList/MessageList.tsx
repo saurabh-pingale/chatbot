@@ -10,7 +10,10 @@ export const MessageList = memo<MessageListProps>(({
   messages,
   isTyping,
   primaryColor,
-  onProductAddToCart
+  onProductAddToCart,
+  tags,
+  handleSendMessage,
+  categories
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -49,6 +52,52 @@ export const MessageList = memo<MessageListProps>(({
         ))}
           {isTyping && (
             <TypingIndicator primaryColor={primaryColor} />
+          )}
+
+          {!isTyping && tags && tags.length > 0 && (
+            <motion.div
+              className="chatbot-tags-container agent-side"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ '--theme-primary-color': primaryColor } as React.CSSProperties}
+            >
+              <div className="chatbot-tags vertical-tags">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.name}
+                    className="chatbot-tag-button premium-tag"
+                    onClick={() => handleSendMessage(tag.name)}
+                    disabled={isTyping}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+          
+          {!isTyping && categories && categories.length > 0 && (
+            <motion.div
+              className="chatbot-tags-container agent-side"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ '--theme-primary-color': primaryColor } as React.CSSProperties}
+            >
+              <div className="chatbot-tags horizontal-categories">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    className="chatbot-tag-button premium-tag"
+                    onClick={() => handleSendMessage(category)}
+                    disabled={isTyping}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
           )}
       </motion.div>
     </div>
