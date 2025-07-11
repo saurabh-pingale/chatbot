@@ -25,7 +25,7 @@ class ProductTool(BaseTool):
         return (
             "This is the primary tool for all product-related inquiries." 
             "You must use this tool if the user's query is about finding, searching for, or filtering products. This includes any mention of product attributes such as color, size, brand, fabric, category, or price." 
-            "Even if the query is a simple product name or category (e.g., 'red t-shirt', 'shoes'), this tool must be invoked. "
+            "Even if the query is a simple product name or category (e.g., 'red t-shirt', 'shoes', etc.), this tool must be invoked. "
             "The tool will return a list of matching products or a list of available categories if no direct matches are found."
         )
     
