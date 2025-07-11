@@ -94,18 +94,23 @@ class AnalyticsHandler:
 
     async def _update_user_location(self, user_id: int, shop_id: int, country: Optional[str], region: Optional[str], city: Optional[str], ip_address: Optional[str]):
         """Fetches a user and updates their location information if it's missing."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                user = await session.get(UserModel, user_id, options=[selectinload(UserModel.analytics)])
-                if not user:
-                    logger.error(f"User with id {user_id} not found. Cannot update location.")
-                    return
+        try:
+            async with AsyncSessionLocal() as session:
+                async with session.begin():
+                    user = await session.get(UserModel, user_id, options=[selectinload(UserModel.analytics)])
+                    if not user:
+                        logger.error(f"User with id {user_id} not found. Cannot update location.")
+                        return
 
-                if user.shop_id != shop_id:
-                    logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id}. Aborting location update.")
-                    return
+                    if user.shop_id != shop_id:
+                        logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id}. Aborting location update.")
+                        return
 
-                update_user_location_if_missing(user, country, region, city, ip_address)
+                    return update_user_location_if_missing(user, country, region, city, ip_address)
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while updating user location for user_id {user_id}: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Unexpected error while updating user location for user_id {user_id}: {e}", exc_info=True)
 
     async def get_or_create_user_for_token(self, email: str, shop_id: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
         """
