@@ -3,7 +3,7 @@
 client_id = "5c6356e63895028f5c0c531b2f8c9846"
 name = "Reezo AI"
 handle = "reezo-ai-1"
-application_url = "https://rules-plugin-gallery-professor.trycloudflare.com"
+application_url = "https://rising-sit-oasis-allocation.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://rules-plugin-gallery-professor.trycloudflare.com/auth/callback",
-  "https://rules-plugin-gallery-professor.trycloudflare.com/auth/shopify/callback",
-  "https://rules-plugin-gallery-professor.trycloudflare.com/api/auth/callback"
+  "https://rising-sit-oasis-allocation.trycloudflare.com/auth/callback",
+  "https://rising-sit-oasis-allocation.trycloudflare.com/auth/shopify/callback",
+  "https://rising-sit-oasis-allocation.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://rules-plugin-gallery-professor.trycloudflare.com"
+url = "https://rising-sit-oasis-allocation.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 

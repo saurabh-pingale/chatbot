@@ -124,10 +124,3 @@ class IntegrationRequest(BaseModel):
 class IntegrationResponse(BaseModel):
     success: bool
     message: Optional[str] = None
-
-class QuickRepliesRequest(BaseModel):
-    quick_replies: List[str] = Field(
-        ..., 
-        max_items=5, 
-        description="List of quick reply questions (max 5)"
-    )

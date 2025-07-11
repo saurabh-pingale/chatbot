@@ -135,7 +135,6 @@ export interface CartProps {
 
 export interface ChatbotProps {
   config: ChatbotConfig;
-  quickReplies: string[];
 }
 
 export interface ChatbotToggleProps {
@@ -254,7 +253,6 @@ export interface ChatBodyProps {
   isEmailGateVisible?: boolean;
   handleError: (error: string) => void;
   isChatLimitReached?: boolean;
-  quickReplies: string[];
   tags?: TagItem[];
   categories?: string[];
 }

@@ -3,7 +3,7 @@ import httpx
 from typing import Dict, Any, List
 
 from app.services.pydantic_service.tool_registry import ToolRegistry
-from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
+from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME, TAG_LIBRARY 
 from app.config import ANTHROPIC_API_KEY
 from app.utils.rag_pipeline_utils import format_message_history, safe_parse_json
 from app.utils.logger import logger
@@ -29,8 +29,8 @@ class LLMService:
         Always follow these rules strictly:
 
         1. Answer only store-related questions.
-        2. Respond with a warm, polite, and helpful tone by incorporating positive adjectives like "great", "perfect", or "excellent" to maintain an encoraging and supportive manner.
-        3. You will receive the last few conversation messages between the user & the assistant. Use them to maintain context and continue the conversation naturally.
+        2. Respond with a warm, polite, and helpful tone by incorporating positive adjectives like "great", "perfect", or "excellent" to maintain an encouraging and supportive manner.
+        3. You will receive the last few conversation messages between the user & assistant. Use them to maintain context and continue the conversation naturally.
         4. For product tool - Use the tool result to decide what to say. You will receive:
            - A list of products (may or may not match the query)
            - A list of categories (suggestions)
@@ -40,30 +40,25 @@ class LLMService:
         5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn't find exact matches, and suggest the categories
-        6. If the user's query is **generic** (like "show me some products" or "I want to browse"), it’s okay to show the returned products.
-        7. NEVER pretend that unrelated products match the query.
-        8. NEVER explain tool usage or say “I couldn't find anything in the database.”
-        9. ALWAYS keep the RESPONSES concise under 30 - 50 words STRICTLY, Don't consider the attibutes (variant_id, links, ids, etc) under word limit.
-        10. When a user greets you or sends an exploratory or general shopping intent like "Hi", "Show me products", or "I want to browse":
-            - Respond warmly with a short, encouraging message.
-            - Include a list of relevant tag names (keys) from the tag dictionary.
-            - Tags should be returned as an array under a field named "tags", and each tag should include a short description explaining what the tag is about.
-            - Example tag keys: ["SayHi", "PartyWear", "Workwear", "GymFits"].
-        11. When the user’s message is specific to a product or collection:
-            - Do not return any tags.
-            - Tags array should be empty.
-        12. For greeting messages ("Hi", "Hello", "Hey") or generic shopping intents ("show me products", "I want to browse"):
-            - Always respond with a short, warm greeting under 50 words.
-            - The response must be formatted as a **JSON object** with:
-              {
-                "answer": "<your message text>",
-                "tags": [
-                  { "name": "Browse Collections", "description": "Explore all our product collections including latest arrivals and bestsellers" },
-                  { "name": "Return Policy", "description": "Learn how returns and exchanges work in our store" }
-                ]
-              }
-            - You must **never** mention tags inside the answer text. Tags should only be included in the "tags" array.
-            - Do not wrap the JSON in markdown or explain it. Just return plain JSON.
+        6. If the user's query is **generic** (like "show me some products" or "I want to browse collections"), it's okay to show the returned products.
+        7. NEVER pretend that unrelated products or unrelated information to match the query.
+        8. For policy questions (returns, refunds, cancellations, shipping), always use the terms tool first before responding.
+        9.For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), always use the `order` tool first before responding.
+        10. NEVER explain tool usage or say "I couldn't find anything in the database."
+        11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+        
+        Other than non-related store queries and greeting queries, you STRICTLY use available tools.
+
+        **CRITICAL: You MUST use the appropriate tool for product-related, order-related, terms-related queries. Do NOT provide direct answers without using tools.**
+
+        **RESPONSE FORMAT REQUIREMENT:**
+        - You MUST ALWAYS return your response in this exact JSON format:
+        {
+           "answer": "<Message>",
+           "intent": "Greeting" | "Product" |" Order" | "Terms"
+        }
+
+        NEVER respond with plain text or markdown. Return ONLY valid JSON. No explanations outside JSON.
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
@@ -104,23 +99,27 @@ class LLMService:
                             logger.error("Tool use block missing!")
                             break
                         
-                        tool_results = []
+                        current_tool_results = []
                         for tool_block in tool_use_blocks:
                             tool_name = tool_block["name"]
                             tool_input = tool_block["input"]
                             
                             logger.info(f"Executing tool: {tool_name} with input: {tool_input}")
                             
-                            tool_input["shop_id"] = shop_id
+                            tool_input_with_shop = tool_input.copy()
+                            tool_input_with_shop["shop_id"] = shop_id
                             
-                            result = await self.tool_registry.run_tool(tool_name, **tool_input)
-                            tool_results.append((tool_block, result))
+                            result = await self.tool_registry.run_tool(tool_name, **tool_input_with_shop)
+                            current_tool_results.append((tool_block, result))
+                            logger.info(f"Tool {tool_name} executed successfully")
                             logger.info(f"Tool {tool_name} result: {result}")
+                        
+                        tool_results.extend(current_tool_results)
                         
                         messages.append({"role": "assistant", "content": data["content"]})
                         
                         tool_result_content = []
-                        for tool_block, result in tool_results:
+                        for tool_block, result in current_tool_results:
                             tool_name = tool_block["name"]
 
                             structured_result = {
@@ -154,7 +153,7 @@ class LLMService:
 
                         return {
                             "answer": parsed_response.get("answer", final_text),
-                            "tags": parsed_response.get("tags", []),
+                            "intent": parsed_response.get("intent", ""),
                             "success": True,
                             "tool_results": tool_results
                         }
@@ -188,7 +187,7 @@ class LLMService:
     async def handle_user_message(self, user_message: str, shop_id: str, previous_messages: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle user message and return structured response"""
         logger.info(f"Handling user message for shop_id: '{shop_id}'")
-        logger.info(f"User message: '{user_message}'")
+        logger.info(f"\n User message: '{user_message}' \n")
         
         try:
             history_messages = format_message_history(previous_messages or [])
@@ -201,7 +200,9 @@ class LLMService:
             logger.info(f"Claude Response: {claude_response}")
 
             products, categories = [], []
-            tags = claude_response.get("tags", []) 
+            intent = claude_response.get("intent", "")
+
+            tags = TAG_LIBRARY.get(intent, [])
 
             for tool_block, result in claude_response.get("tool_results", []):
                 if tool_block["name"] == "product":
