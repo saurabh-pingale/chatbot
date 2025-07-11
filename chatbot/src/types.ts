@@ -254,7 +254,7 @@ export interface ChatBodyProps {
   isEmailGateVisible?: boolean;
   handleError: (error: string) => void;
   isChatLimitReached?: boolean;
-  quickReplies: string[];
+  quickReplies?: string[];
   tags?: TagItem[];
   categories?: string[];
 }

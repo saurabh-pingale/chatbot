@@ -20,15 +20,14 @@ import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message, TagItem } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
-import { NotificationPopup } from '../../components/NotificationPopup/NotificationPopup';
 
 export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
   const TAG_DICTIONARY: Record<string, string> = {
     SayHi: "Say hello to the assistant",
     ReturnPolicy: "Show return policy of store",
-    Recommendations: "Get suggestions tailored to you",
-    Browsing: "Explore our collections"
+    Recommendations: "Get me products related suggestions",
+    Browsing: "Get me available product collections in store"
   };
   const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
     name,
@@ -44,8 +43,6 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
   const [isEmailGateVisible, setIsEmailGateVisible] = useState(false);
   const [chatLimitReached, setChatLimitReached] = useState(false);
   const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
   const [tags, setTags] = useState<TagItem[]>([]);
   const [showInitialTags, setShowInitialTags] = useState(false);
 
@@ -108,31 +105,7 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
     }
   }, [isOpen, isEmailGateVisible, hasShownStaticMessage, addMessage]);
 
-  useEffect(() => {
-  if (!isOpen) {
-    const notificationShown = sessionStorage.getItem('notificationShown');
-    
-    if (!notificationShown) {
-      const timeout = setTimeout(() => {
-        setShowNotification(true);
-        sessionStorage.setItem('notificationShown', 'true');
-      }, 2000); 
-      
-      setNotificationTimeout(timeout);
-    }
-  } else {
-    setShowNotification(false);
-    if (notificationTimeout) {
-      clearTimeout(notificationTimeout);
-    }
-  }
 
-  return () => {
-    if (notificationTimeout) {
-      clearTimeout(notificationTimeout);
-    }
-  };
-}, [isOpen]);
 
   const handleToggle = () => {
     setIsOpen(prev => !prev);
@@ -374,10 +347,6 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
           </motion.div>
         )}
       </AnimatePresence>
-      <NotificationPopup 
-        isVisible={showNotification} 
-        onClose={() => setShowNotification(false)}
-      />
     </>
   );
 }); 
