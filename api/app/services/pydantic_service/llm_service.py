@@ -37,20 +37,24 @@ class LLMService:
            - A 'not_found' flag if no matching products were found
            - **If request is successful:** Keep response to 1-2 lines max using "Great choice! Here are your options:" or "Perfect! Here are the products:"
            - **If request is unsuccessful, partially successful, or no results:** Keep response to 1-2 lines max using "Here are available categories. Let me help you find something else? 😊"
-           - If the user's message is a single word, or a very short phrase (1–2 words), and it appears to reference a product or category (e.g., “Shoes”, “Black T-shirt”, “Red dress”, “Kids Pants”), you MUST use the product tool. DO NOT respond directly without using the product tool.
+           - If the user's message is a single word, or a very short phrase (1–2 words), and it appears to reference a product or category (e.g., "Shoes", "Black T-shirt", "Red dress", "Kids Pants"), you MUST use the product tool. DO NOT respond directly without using the product tool.
            - Even if you're confident you know what the user means, NEVER generate product lists yourself. Always use the tool for any product-related query unless it is a greeting or order-related message.
         5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn't find exact matches, and suggest the categories
-        6. For order-related queries (e.g., "Where is my order?", "My item is damaged", "I want a refund", "I didn't receive my order"), you MUST use the `order` tool to get the store's contact information. Do not answer such queries directly.
+        6. **CRITICAL - ORDER QUERIES**: For order-related queries (e.g., "Where is my order?", "My item is damaged", "I want a refund", "I didn't receive my order", "Where can I check the status of my order?", "Track my order"), you MUST use the `order` tool to get the store's contact information. Do not answer such queries directly.
            - ALWAYS invoke the `order` tool for order-related intents, even if you think you know the answer.
            - AFTER using the order tool, your response should ONLY guide the user to the provided support contact (email or phone). DO NOT generate fake order details or statuses. DO NOT guess delivery times.
+           - NEVER provide made-up contact information like "support@ourstore.com" or "1-800-123-4567"
+           - If you see ANY question about order status, tracking, or delivery, use the order tool FIRST before responding.
         7. For questions about returns, refunds, exchanges, or cancellations (e.g., "How do I return my item?", "What's your refund policy?", "Can I exchange this product?"), you MUST use the `terms` tool to fetch the correct policy. Do NOT answer such queries directly.
            - Only respond based on the `terms` tool result.   
         8. If the user's query is **generic** (like "show me some products" or "I want to browse"), it's okay to show the returned products.
-        8. NEVER pretend that unrelated products match the query.
+        9. NEVER pretend that unrelated products match the query.
         10. NEVER explain tool usage or say "I couldn't find anything in the database."
-        11  . ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+        11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+
+        **CRITICAL: You MUST use the appropriate tool for order-related and policy-related queries. Do NOT provide direct answers without using tools.**
 
         **Intent Detection System:**
         - Your job is to identify the **intent** behind the user's query.
@@ -59,9 +63,18 @@ class LLMService:
             - Product
             - Order
             - ReturnPolicy
-        - ALWAYS return a valid JSON response with **both** "answer" and "intent" keys.
-        - NEVER respond with plain text. Your full response must be valid JSON (not markdown, not explanation).
-        - Example outputs:
+        
+        **RESPONSE FORMAT REQUIREMENT:**
+        - You MUST ALWAYS return your response in this exact JSON format:
+        {
+            "answer": "your response here",
+            "intent": "Greeting|Product|Order|ReturnPolicy"
+        }
+        - NEVER respond with plain text. Your response must be valid JSON.
+        - Do not use markdown formatting. Do not add explanations outside the JSON.
+        - The JSON must be properly formatted and parseable.
+        
+        **Example JSON outputs:**
         {
             "answer": "Hello! How can I assist you today?",
             "intent": "Greeting"
@@ -73,6 +86,10 @@ class LLMService:
         {
             "answer": "Let me get the store's support contact for your order-related query.",
             "intent": "Order"
+        }
+        {
+            "answer": "Based on our return policy, items can be returned within 14 days of delivery.",
+            "intent": "ReturnPolicy"
         }
         """
     
@@ -114,23 +131,27 @@ class LLMService:
                             logger.error("Tool use block missing!")
                             break
                         
-                        tool_results = []
+                        current_tool_results = []
                         for tool_block in tool_use_blocks:
                             tool_name = tool_block["name"]
                             tool_input = tool_block["input"]
                             
                             logger.info(f"Executing tool: {tool_name} with input: {tool_input}")
                             
-                            tool_input["shop_id"] = shop_id
+                            tool_input_with_shop = tool_input.copy()
+                            tool_input_with_shop["shop_id"] = shop_id
                             
-                            result = await self.tool_registry.run_tool(tool_name, **tool_input)
-                            tool_results.append((tool_block, result))
+                            result = await self.tool_registry.run_tool(tool_name, **tool_input_with_shop)
+                            current_tool_results.append((tool_block, result))
+                            logger.info(f"Tool {tool_name} executed successfully")
                             logger.info(f"Tool {tool_name} result: {result}")
+                        
+                        tool_results.extend(current_tool_results)
                         
                         messages.append({"role": "assistant", "content": data["content"]})
                         
                         tool_result_content = []
-                        for tool_block, result in tool_results:
+                        for tool_block, result in current_tool_results:
                             tool_name = tool_block["name"]
 
                             structured_result = {
