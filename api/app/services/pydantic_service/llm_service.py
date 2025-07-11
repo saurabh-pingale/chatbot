@@ -37,60 +37,28 @@ class LLMService:
            - A 'not_found' flag if no matching products were found
            - **If request is successful:** Keep response to 1-2 lines max using "Great choice! Here are your options:" or "Perfect! Here are the products:"
            - **If request is unsuccessful, partially successful, or no results:** Keep response to 1-2 lines max using "Here are available categories. Let me help you find something else? 😊"
-           - If the user's message is a single word, or a very short phrase (1–2 words), and it appears to reference a product or category (e.g., "Shoes", "Black T-shirt", "Red dress", "Kids Pants"), you MUST use the product tool. DO NOT respond directly without using the product tool.
-           - Even if you're confident you know what the user means, NEVER generate product lists yourself. Always use the tool for any product-related query unless it is a greeting or order-related message.
         5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn't find exact matches, and suggest the categories
-        6. **CRITICAL - ORDER QUERIES**: For order-related queries (e.g., "Where is my order?", "My item is damaged", "I want a refund", "I didn't receive my order", "Where can I check the status of my order?", "Track my order"), you MUST use the `order` tool to get the store's contact information. Do not answer such queries directly.
-           - ALWAYS invoke the `order` tool for order-related intents, even if you think you know the answer.
-           - AFTER using the order tool, your response should ONLY guide the user to the provided support contact (email or phone). DO NOT generate fake order details or statuses. DO NOT guess delivery times.
-           - NEVER provide made-up contact information like "support@ourstore.com" or "1-800-123-4567"
-           - If you see ANY question about order status, tracking, or delivery, use the order tool FIRST before responding.
-        7. For questions about returns, refunds, exchanges, or cancellations (e.g., "How do I return my item?", "What's your refund policy?", "Can I exchange this product?"), you MUST use the `terms` tool to fetch the correct policy. Do NOT answer such queries directly.
-           - Only respond based on the `terms` tool result.   
-        8. If the user's query is **generic** (like "show me some products" or "I want to browse"), it's okay to show the returned products.
-        9. NEVER pretend that unrelated products match the query.
+        6. If the user's query is **generic** (like "show me some products" or "I want to browse collections"), it's okay to show the returned products.
+        7. NEVER pretend that unrelated products or unrelated information to match the query.
+        8. For policy questions (returns, refunds, cancellations, shipping), always use the terms tool first before responding.
+        9.For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), always use the `order` tool first before responding.
         10. NEVER explain tool usage or say "I couldn't find anything in the database."
         11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
-
-        **CRITICAL: You MUST use the appropriate tool for order-related and policy-related queries. Do NOT provide direct answers without using tools.**
-
-        **Intent Detection System:**
-        - Your job is to identify the **intent** behind the user's query.
-        - Based on the message, classify the user's **intent** into one of the following categories:
-            - Greeting
-            - Product
-            - Order
-            - ReturnPolicy
         
+        Other than non-related store queries and greeting queries, you STRICTLY use available tools.
+
+        **CRITICAL: You MUST use the appropriate tool for product-related, order-related, terms-related queries. Do NOT provide direct answers without using tools.**
+
         **RESPONSE FORMAT REQUIREMENT:**
         - You MUST ALWAYS return your response in this exact JSON format:
         {
-            "answer": "your response here",
-            "intent": "Greeting|Product|Order|ReturnPolicy"
+           "answer": "<Message>",
+           "intent": "Greeting" | "Product" |" Order" | "Terms"
         }
-        - NEVER respond with plain text. Your response must be valid JSON.
-        - Do not use markdown formatting. Do not add explanations outside the JSON.
-        - The JSON must be properly formatted and parseable.
-        
-        **Example JSON outputs:**
-        {
-            "answer": "Hello! How can I assist you today?",
-            "intent": "Greeting"
-        }
-        {
-            "answer": "Sure, here are some black t-shirts you may like!",
-            "intent": "Product"
-        }
-        {
-            "answer": "Let me get the store's support contact for your order-related query.",
-            "intent": "Order"
-        }
-        {
-            "answer": "Based on our return policy, items can be returned within 14 days of delivery.",
-            "intent": "ReturnPolicy"
-        }
+
+        NEVER respond with plain text or markdown. Return ONLY valid JSON. No explanations outside JSON.
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:

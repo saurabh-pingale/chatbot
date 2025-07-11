@@ -21,7 +21,7 @@ import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message, TagItem
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
-export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
+export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
   const TAG_DICTIONARY: Record<string, string> = {
     SayHi: "Say hello to the assistant",
@@ -332,7 +332,6 @@ export const Chatbot = memo<ChatbotProps>(({ config, quickReplies }) => {
                   isEmailGateVisible={isEmailGateVisible}
                   handleError={handleError}
                   isChatLimitReached={chatLimitReached}
-                  quickReplies={quickReplies}
                   tags={showInitialTags ? tags : []}
                   categories={categories}
                 />

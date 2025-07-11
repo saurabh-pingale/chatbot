@@ -28,7 +28,6 @@ class ShopModel(Base):
     plan_start_date = Column(DateTime, nullable=True)
     plan_end_date = Column(DateTime, nullable=True)
     setup_completed = Column(Boolean, default=False, nullable=False)
-    quick_replies = Column(JSON, nullable=True)
 
     conversations = relationship("ConversationModel", back_populates="shop")
     users = relationship("UserModel", back_populates="shop")

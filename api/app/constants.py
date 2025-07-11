@@ -21,7 +21,7 @@ TAG_LIBRARY = {
         { "name": "Browse Collections", "description": "Explore all our product collections including latest arrivals and bestsellers" },
         { "name": "Return Policy", "description": "Learn how returns and exchanges work in our store" },
     ],
-    "ReturnPolicy": [
+    "Terms": [
         { "name": "Return Window", "description": "Check how many days you have to return a product" },
         { "name": "Refund Process", "description": "Understand how refunds are processed and timelines" }
     ],
