@@ -3,7 +3,7 @@ import httpx
 from typing import Dict, Any, List
 
 from app.services.pydantic_service.tool_registry import ToolRegistry
-from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME 
+from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME, TAG_LIBRARY 
 from app.config import ANTHROPIC_API_KEY
 from app.utils.rag_pipeline_utils import format_message_history, safe_parse_json
 from app.utils.logger import logger
@@ -37,31 +37,43 @@ class LLMService:
            - A 'not_found' flag if no matching products were found
            - **If request is successful:** Keep response to 1-2 lines max using "Great choice! Here are your options:" or "Perfect! Here are the products:"
            - **If request is unsuccessful, partially successful, or no results:** Keep response to 1-2 lines max using "Here are available categories. Let me help you find something else? 😊"
+           - If the user's message is a single word, or a very short phrase (1–2 words), and it appears to reference a product or category (e.g., “Shoes”, “Black T-shirt”, “Red dress”, “Kids Pants”), you MUST use the product tool. DO NOT respond directly without using the product tool.
+           - Even if you're confident you know what the user means, NEVER generate product lists yourself. Always use the tool for any product-related query unless it is a greeting or order-related message.
         5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn't find exact matches, and suggest the categories
-        6. If the user's query is **generic** (like "show me some products" or "I want to browse"), it's okay to show the returned products.
-        7. NEVER pretend that unrelated products match the query.
-        8. NEVER explain tool usage or say "I couldn't find anything in the database."
-        9. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+        6. For order-related queries (e.g., "Where is my order?", "My item is damaged", "I want a refund", "I didn't receive my order"), you MUST use the `order` tool to get the store's contact information. Do not answer such queries directly.
+           - ALWAYS invoke the `order` tool for order-related intents, even if you think you know the answer.
+           - AFTER using the order tool, your response should ONLY guide the user to the provided support contact (email or phone). DO NOT generate fake order details or statuses. DO NOT guess delivery times.
+        7. For questions about returns, refunds, exchanges, or cancellations (e.g., "How do I return my item?", "What's your refund policy?", "Can I exchange this product?"), you MUST use the `terms` tool to fetch the correct policy. Do NOT answer such queries directly.
+           - Only respond based on the `terms` tool result.   
+        8. If the user's query is **generic** (like "show me some products" or "I want to browse"), it's okay to show the returned products.
+        8. NEVER pretend that unrelated products match the query.
+        10. NEVER explain tool usage or say "I couldn't find anything in the database."
+        11  . ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
 
-        **Tags System:**
-        - Tags are clickable buttons displayed on UI for quick user interaction
-        - **For greetings ONLY** ("Hi", "How are you", etc): Return JSON with product recommendation tags:
+        **Intent Detection System:**
+        - Your job is to identify the **intent** behind the user's query.
+        - Based on the message, classify the user's **intent** into one of the following categories:
+            - Greeting
+            - Product
+            - Order
+            - ReturnPolicy
+        - ALWAYS return a valid JSON response with **both** "answer" and "intent" keys.
+        - NEVER respond with plain text. Your full response must be valid JSON (not markdown, not explanation).
+        - Example outputs:
         {
-            "answer": "<your message text>",
-            "tags": [
-                { "name": "Browse Collections", "description": "Get me available product collections in store },
-                { "name": "Product Recommendations", "description": "Recommend products available in store" },
-                ...
-            ]
+            "answer": "Hello! How can I assist you today?",
+            "intent": "Greeting"
         }
-        For non-greeting messages (product searches, policy questions, collection inquiries, or any specific requests), DON'T return any tags & tags array must be empty: 
         {
-            "answer": "<your message text>",
-            "tags": []
+            "answer": "Sure, here are some black t-shirts you may like!",
+            "intent": "Product"
         }
-        Note -  Do not wrap the JSON in markdown or explain it. Just return plain JSON.
+        {
+            "answer": "Let me get the store's support contact for your order-related query.",
+            "intent": "Order"
+        }
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
@@ -152,7 +164,7 @@ class LLMService:
 
                         return {
                             "answer": parsed_response.get("answer", final_text),
-                            "tags": parsed_response.get("tags", []),
+                            "intent": parsed_response.get("intent", ""),
                             "success": True,
                             "tool_results": tool_results
                         }
@@ -199,7 +211,9 @@ class LLMService:
             logger.info(f"Claude Response: {claude_response}")
 
             products, categories = [], []
-            tags = claude_response.get("tags", []) 
+            intent = claude_response.get("intent", "")
+
+            tags = TAG_LIBRARY.get(intent, [])
 
             for tool_block, result in claude_response.get("tool_results", []):
                 if tool_block["name"] == "product":

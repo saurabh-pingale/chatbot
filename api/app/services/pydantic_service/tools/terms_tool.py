@@ -17,7 +17,7 @@ class TermsTool(BaseTool):
     
     @property
     def description(self) -> str:
-        return "Answer queries related to store policies, terms of service, return policies, shipping policies, etc."
+        return "Use this tool to handle any queries related to returns, refunds, exchanges, cancellations, or store policies like shipping and delivery timelines. DO NOT answer such questions directly. Always use this tool to find accurate store-specific policy information."
     
     @property
     def input_schema(self) -> Dict[str, Any]:

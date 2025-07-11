@@ -20,12 +20,6 @@ class MetadataExtractor:
         Extracts all products and their attributes from a query.
         Handles multiple product descriptions in a single query.
         """
-        # normalized_query = query.lower()
-        # normalized_query = re.sub(r"\btshirt(s)?\b", r"t-shirt\1", normalized_query)
-        # normalized_query = re.sub(r"\btee shirt(s)?\b", r"t-shirt\1", normalized_query)
-        # normalized_query = re.sub(r"\bjean(s)?\b", r"jeans", normalized_query) 
-        # normalized_query = re.sub(r"\bkurti(s)?\b", r"kurta\1", normalized_query)
-    
         category_matches = list(self._category_regex.finditer(query))
 
         if not category_matches:

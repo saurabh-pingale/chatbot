@@ -16,7 +16,14 @@ class OrderTool(BaseTool):
     
     @property
     def description(self) -> str:
-        return "Get support contact information for order-related queries. Use this tool when users ask how to contact support or need help with orders."
+        return (
+            "Use this tool for any order-related questions including tracking orders, refunds, damaged items, delivery delays, or cancellations.\n\n"
+            "Important:\n"
+            "- You MUST NOT generate any assumptions about the order status, delivery time, or tracking updates.\n"
+            "- This tool will return only the store's support contact information.\n"
+            "- Your response MUST politely direct the user to contact support using the email/phone returned by this tool.\n"
+            "- NEVER mention a specific order status or delivery estimate."
+        )
     
     @property
     def input_schema(self) -> Dict[str, Any]:
