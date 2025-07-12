@@ -22,12 +22,10 @@ import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
-  const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊?";
+  const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊";
   const TAG_DICTIONARY: Record<string, string> = {
-    SayHi: "Say hello to the assistant",
-    ReturnPolicy: "Show return policy of store",
-    Recommendations: "Get me products related suggestions",
-    Browsing: "Get me available product collections in store"
+    'Hi 👋': "Say hello to the assistant",
+    'Browse Products': "Get me available product collections in store"
   };
   const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
     name,

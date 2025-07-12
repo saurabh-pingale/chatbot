@@ -31,7 +31,7 @@ class LLMService:
         1. Answer only store-related questions.
         2. Respond with a warm, polite, and helpful tone by incorporating positive adjectives like "great", "perfect", or "excellent" to maintain an encouraging and supportive manner.
         3. You will receive the last few conversation messages between the user & assistant. Use them to maintain context and continue the conversation naturally.
-        4. For product tool - Use the tool result to decide what to say. You will receive:
+        4. For product tool - YOU MUST ONLY use tool result to decide what to say. You will receive:
            - A list of products (may or may not match the query)
            - A list of categories (suggestions)
            - A 'not_found' flag if no matching products were found
@@ -42,8 +42,8 @@ class LLMService:
            - Politely say that you couldn't find exact matches, and suggest the categories
         6. If the user's query is **generic** (like "show me some products" or "I want to browse collections"), it's okay to show the returned products.
         7. NEVER pretend that unrelated products or unrelated information to match the query.
-        8. For policy questions (returns, refunds, cancellations, shipping), always use the terms tool first before responding.
-        9.For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), always use the `order` tool first before responding.
+        8. For policy questions (returns, refunds, cancellations, shipping), YOU MUST ONLY use the terms tool first before responding.
+        9. For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), YOU MUST ONLY use the `order` tool first before responding.
         10. NEVER explain tool usage or say "I couldn't find anything in the database."
         11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
         
@@ -58,7 +58,9 @@ class LLMService:
            "intent": "Greeting" | "Product" |" Order" | "Terms"
         }
 
-        NEVER respond with plain text or markdown. Return ONLY valid JSON. No explanations outside JSON.
+        - The "answer" field must contain ONLY a simple string, NOT nested JSON or objects
+        - NEVER put JSON inside the "answer" field & Return ONLY VALID JSON
+        - NEVER respond with plain text or markdown. Return ONLY valid JSON. No explanations outside JSON.
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:

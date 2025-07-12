@@ -62,7 +62,7 @@ export const MessageList = memo<MessageListProps>(({
               transition={{ duration: 0.3 }}
               style={{ '--theme-primary-color': primaryColor } as React.CSSProperties}
             >
-              <div className="chatbot-tags vertical-tags">
+              <div className="chatbot-tags horizontal-categories">
                 {tags.map((tag) => (
                   <button
                     key={tag.name}

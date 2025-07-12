@@ -55,12 +55,13 @@
 }
 
 .chatbot-tag-button.premium-tag {
-  padding: 8px 16px;
+  padding: 6px 10px;
   border: 2px solid var(--theme-primary-color);
   background-color: transparent;
   color: var(--theme-primary-color);
   border-radius: 20px;
   font-weight: 500;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 
