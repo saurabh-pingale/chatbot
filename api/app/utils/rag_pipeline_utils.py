@@ -1,5 +1,6 @@
 import json
 import re
+import ast
 from typing import List, Dict, Any
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
@@ -54,7 +55,7 @@ def safe_parse_json(text: str) -> Dict[str, Any]:
         
         if isinstance(parsed, str) and parsed.strip().startswith("{"):
             try:
-                return json.loads(parsed)
+                return ast.literal_eval(parsed)
             except Exception:
                 pass
         return parsed if isinstance(parsed, dict) else {}

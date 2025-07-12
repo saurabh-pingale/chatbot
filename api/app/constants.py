@@ -22,7 +22,7 @@ TAG_LIBRARY = {
         { "name": "Return Policy", "description": "Learn how returns and exchanges work in our store" },
     ],
     "Terms": [
-        { "name": "Return Window", "description": "Check how many days you have to return a product" },
+        { "name": "Return Time", "description": "Check how many days you have to return a product" },
         { "name": "Refund Process", "description": "Understand how refunds are processed and timelines" }
     ],
     "Order": [
