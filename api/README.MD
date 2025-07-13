@@ -1,35 +1,29 @@
-# FastAPI Project Template
-
-This project provides a structured template for building FastAPI applications, emphasizing modularity, clean code, and maintainability. It's designed to help you quickly set up a scalable and organized API.
-
----
-
 ## Getting Started
 
-These instructions will guide you through setting up and running the project on your local machine for development and testing.
+These instructions will guide you through setting up and running the project locally for development and testing.
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
+Before you begin, make sure you have the following installed:
 
-* **Python:** Version 3.11.3
-* **Docker:** For containerization
+  * **Python:** Version 3.11.3
+  * **Docker:** For containerization
 
----
+-----
 
 ## Project Setup
 
-This project follows a modular structure inspired by the guide: [How to Structure Your FastAPI Projects](https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f).
+This project adopts a modular structure inspired by the guide: [How to Structure Your FastAPI Projects](https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f).
 
-### Manual Alembic Table Creation
+### Alembic Database Migrations
 
-If you're using Alembic for database migrations, ensure you manually create the `alembic_version` table with a `version_num` column of type `NUMBER`.
+If you're using **Alembic** for database migrations, you'll need to manually create the `alembic_version` table with a `version_num` column of type `NUMBER`.
 
----
+-----
 
 ## Installation
 
-Follow these steps to get the project running locally:
+Follow these steps to get the project running on your local machine:
 
 1.  **Clone the repository:**
 
@@ -38,7 +32,7 @@ Follow these steps to get the project running locally:
     cd [repo]
     ```
 
-    (Replace `[repo]` with your actual repository URL and `[repo]` with your actual repository directory name.)
+    (Replace `[repo]` with your actual repository URL and directory name.)
 
 2.  **Create a virtual environment and install dependencies:**
 
@@ -48,7 +42,7 @@ Follow these steps to get the project running locally:
     pip install -r requirements.txt
     ```
 
----
+-----
 
 ## Running the Application
 
@@ -66,18 +60,18 @@ To run the FastAPI application:
     python main.py
     ```
 
-    The application will typically be accessible at `http://localhost:8000`.
+    The application should then be accessible at `http://localhost:8000`.
 
----
+-----
 
 ## Project Structure
 
-The project is designed with a clear, modular structure to promote clean code and easy maintenance, adhering to the principle of separation of concerns.
+The project is designed with a clear, modular structure to promote **clean code** and **easy maintenance**, adhering to the principle of **separation of concerns**.
 
-### 1. Routes (`/routes`)
+### 1\. Routes (`/routes`)
 
-* **Purpose:** Defines API endpoints and handles request validation.
-* **Rule:** Should *only* contain route definitions and *not* business logic.
+  * **Purpose:** Defines **API endpoints** and handles **request validation**.
+  * **Rule:** Should *only* contain route definitions and *not* business logic.
 
 **Example:**
 
@@ -86,11 +80,11 @@ The project is designed with a clear, modular structure to promote clean code an
 def get_items():
     items = app.services.get_items()
     return {"data": items}
-````
+```
 
 ### 2\. Services (`/services`)
 
-  * **Purpose:** Contains the core business logic, distinct from route definitions. It processes data and interacts with DB handlers as needed.
+  * **Purpose:** Contains the **core business logic**, distinct from route definitions. It processes data and interacts with DB handlers as needed.
   * **Role:** Acts as an intermediary between routes and database handlers.
 
 **Example:**
@@ -107,7 +101,7 @@ class ItemService:
 
 ### 3\. DB Handlers (`/db_handlers`)
 
-  * **Purpose:** Manages direct database queries and interactions.
+  * **Purpose:** Manages **direct database queries** and interactions.
   * **Role:** Abstracts database-specific logic from the services layer.
 
 **Example:**
@@ -120,7 +114,7 @@ class ItemHandler:
 
 ### 4\. Custom FastAPI (`/main.py` or `custom_fastapi.py`)
 
-  * **Purpose:** A wrapper around the standard `FastAPI` application to allow for easy attachment and access to services and handlers, ensuring cleaner initialization and dependency injection.
+  * **Purpose:** A wrapper around the standard `FastAPI` application to allow for easy attachment and access to services and handlers, ensuring cleaner initialization and **dependency injection**.
 
 **Example:**
 
@@ -147,7 +141,7 @@ class CustomFastAPI(FastAPI):
 # app.include_router(...)
 ```
 
-This structured approach ensures proper modularization and clear separation of concerns throughout the application.
+This structured approach ensures proper modularization and a clear **separation of concerns** throughout the application.
 
 -----
 
@@ -155,13 +149,11 @@ This structured approach ensures proper modularization and clear separation of c
 
 ### Run with Docker
 
-To build a Docker image and run the application in a container:
+To build a **Docker image** and run the application in a container:
 
 ```bash
 docker build -t fastapi-app .
 docker run -p 8000:8000 fastapi-app
 ```
 
-This will build a Docker image named `fastapi-app` and run it, mapping port `8000` from the container to port `8000` on your host machine.
-
-```
+This command will build a Docker image named `fastapi-app` and run it, mapping port `8000` from the container to port `8000` on your host machine.

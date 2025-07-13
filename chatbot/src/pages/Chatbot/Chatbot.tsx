@@ -161,7 +161,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       return;
     }
 
-    // const messageToSend = TAG_DICTIONARY[content] || content;
     const matchedTag = tags.find(tag => tag.name === content);
     const messageToSend = matchedTag?.description || content;
 
@@ -178,10 +177,10 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     ];
 
     try {
-      let payloadBase: any = {
+      const payloadBase= {
         messages: currentMessages,
         location_info: (capturedLocationInfo) ? capturedLocationInfo : undefined
-      };
+      } as any;
 
       if (jwtToken) {
         payloadBase.token = jwtToken;
