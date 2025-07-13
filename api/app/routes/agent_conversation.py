@@ -10,6 +10,14 @@ from app.utils.logger import logger
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
 
+
+@agent_conversation_router.get("/check/status")
+def config_status():
+    """
+    Returns a static status response to confirm the service is up.
+    """
+    return {"status": "success"}
+
 @agent_conversation_router.post(
     "/agent_conversation",
     summary="Process conversation through the agent router with feedback support and analytics",

@@ -1,45 +1,42 @@
-````mdx
-# Shopify Remix Chatbot App
+This is a **Shopify Remix Chatbot App** that enables customers to interact with a customizable and trainable chatbot directly on your Shopify storefront. It integrates with **Shopify's Admin API**, **Supabase** for database management, **Qdrant** for vector storage, and **Hugging Face** for natural language processing.
 
-This is a Shopify Remix Chatbot App that lets users interact with a chatbot right on their Shopify store. The chatbot can be customized and trained to give responses based on the products available in the store. This app integrates with **Shopify's Admin API**, **Supabase** for database management, **Qdrant** for vector storage, and **Hugging Face** for natural language processing.
-
----
+-----
 
 ## Features
 
-* **Chatbot Interface:** Your customers will see the chatbot in the bottom-right corner of your storefront, allowing for direct interaction.
-* **Customization:** Easily customize the chatbot's look and feel, including its default color, to match your store's branding.
-* **Training:** Train the chatbot by either importing products directly from your Shopify store or by manually entering product data in JSON format.
-* **Vector Database:** Product data gets converted into embeddings and stored in a **Qdrant** vector database, ensuring efficient and relevant information retrieval.
-* **Response Generation:** The chatbot uses a powerful language model (**DeepSeek-R1-Distill-Qwen-32B**) to generate smart responses based on user queries and the stored product embeddings.
+  * **Chatbot Interface:** Customers will find the chatbot conveniently located in the bottom-right corner of your storefront for easy interaction.
+  * **Customization:** Easily tailor the chatbot's appearance, including its default color, to seamlessly match your store's branding.
+  * **Training:** Train the chatbot by either importing products directly from your Shopify store or by manually entering product data in JSON format.
+  * **Vector Database:** Product data is converted into embeddings and stored in a **Qdrant** vector database, ensuring efficient and relevant information retrieval.
+  * **Response Generation:** The chatbot leverages a powerful language model (**DeepSeek-R1-Distill-Qwen-32B**) to generate intelligent responses based on user queries and the stored product embeddings.
 
----
+-----
 
 ## Prerequisites
 
-Before you start, make sure you have the following installed and set up:
+Before you begin, ensure you have the following installed and configured:
 
 1.  **Shopify Partners Account:**
-    * If you don't have one, **create a Shopify Partners account** to manage and develop Shopify apps.
-    * Once you have an account, create a **Development Store** from your Shopify Partners dashboard. You'll use this store to test your app during development.
+      * If you don't have one, **create a Shopify Partners account** to manage and develop Shopify apps.
+      * Once you have an account, create a **Development Store** from your Shopify Partners dashboard for testing your app during development.
 2.  **Node.js:** Install **Node.js** (v18.20 or higher).
 3.  **Shopify CLI:** Install the **Shopify CLI** to simplify your Shopify app setup and management.
 4.  **Supabase Account:** Set up a **Supabase account** for your database needs.
 5.  **Qdrant Account:** Create a **Qdrant account** for efficient vector storage.
 6.  **Hugging Face Account:** You'll need a **Hugging Face account** to access the language models.
 
----
+-----
 
 ## Setup
 
 Follow these steps to get your Shopify Remix Chatbot App up and running:
 
-### 1. Clone the Repository
+### 1\. Clone the Repository
 
 ```bash
-git clone [https://github.com/saurabh-pingale/chatbot.git](https://github.com/saurabh-pingale/chatbot.git)
+git clone https://github.com/saurabh-pingale/chatbot.git
 cd chatbot
-````
+```
 
 ### 2\. Install Dependencies
 
@@ -49,9 +46,9 @@ npm install
 
 ### 3\. Set Up Environment Variables
 
-Create a `.env` file in your project's root directory and add these environment variables. Be sure to replace the placeholder values with your actual credentials.
+Create a `.env` file in your project's root directory and add these environment variables. Remember to replace the placeholder values with your actual credentials.
 
-```ts
+```typescript
 SHOPIFY_API_KEY='your-shopify-api-key'
 SHOPIFY_API_SECRET='your-shopify-api-secret'
 SHOPIFY_APP_URL='your-shopify-app-url'
@@ -84,7 +81,7 @@ To make the chatbot accessible on your storefront, you'll need to set up an app 
 
 Here's an example function to verify the signature within your app:
 
-```ts
+```typescript
 function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boolean {
   const { signature, ...params } = Object.fromEntries(query.entries());
 
@@ -119,7 +116,7 @@ function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boo
 
 ### Chatbot Interface
 
-Once configured, your customers will see the chatbot in the bottom-right corner of your Shopify store. They can click on it to open the chat interface and start asking questions.
+Once configured, your customers will see the chatbot in the bottom-right corner of your Shopify store. They can click on it to open the chat interface and begin asking questions.
 
 ### Customization
 
@@ -144,7 +141,7 @@ To train the chatbot with your product data:
 When a user sends a message to the chatbot:
 
   * The app queries the **Qdrant** vector database for matching product embeddings.
-  * If a match is found, these relevant embeddings, along with the user's message, are passed to the language model (DeepSeek-R1-Distill-Qwen-32B). This model then generates a detailed and helpful response.
+  * If a match is found, these relevant embeddings, along with the user's message, are passed to the language model (**DeepSeek-R1-Distill-Qwen-32B**). This model then generates a detailed and helpful response.
   * If no relevant product information is found, the chatbot will respond with a default message like: "I don't have much information on this."
 
 -----
@@ -156,9 +153,4 @@ When a user sends a message to the chatbot:
   * **PostgreSQL:** For robust database management (often used with Supabase).
   * **Qdrant:** For storing and efficiently querying vector embeddings.
   * **Xenova/Transformers:** For generating embeddings using the `all-MiniLM-L6-v2` model.
-  * **Hugging Face:** For generating responses using the DeepSeek-R1-Distill-Qwen-32B (as specified in features) or Mistral model (as mentioned here, you might want to standardize which model is the primary one).
-
-<!-- end list -->
-
-```
-```
+  * **Hugging Face:** For generating responses using the **DeepSeek-R1-Distill-Qwen-32B** model.
