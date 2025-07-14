@@ -15,6 +15,12 @@ class MetadataExtractor:
             "xxl": "XXL", "xxxl": "XXXL"
         }
 
+    def _get_segment_from_query(self, query: str, category_matches: list, current_index: int) -> str:
+        """Returns the segment of the query corresponding to a product category match"""
+        start_pos = category_matches[current_index - 1].end() if current_index > 0 else 0
+        end_pos = category_matches[current_index + 1].start() if current_index < len(category_matches) - 1 else len(query)
+        return query[start_pos:end_pos]
+
     def extract_all_metadata(self, query: str) -> Dict[str, Any]:
         """
         Extracts all products and their attributes from a query.
@@ -28,11 +34,7 @@ class MetadataExtractor:
         combined_metadata = defaultdict(list)
         
         for i, current_match in enumerate(category_matches):
-            #TODO: Move these things to seperate module 
-            start_pos = category_matches[i-1].end() if i > 0 else 0
-            end_pos = category_matches[i+1].start() if i < len(category_matches) - 1 else len(query)
-
-            segment = query[start_pos:end_pos]
+            segment = self._get_segment_from_query(query, category_matches, i)
             
             alias = current_match.group(1).lower()
             category = CATEGORY_ALIASES.get(alias)

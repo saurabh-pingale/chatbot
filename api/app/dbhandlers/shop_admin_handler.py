@@ -66,6 +66,7 @@ class ShopAdminHandler:
                     raise error
                 
     async def get_collections(self, shop_id: str) -> List[str]:
+        logger.info(f"Shop ID in Get Collection: {shop_id}")
         async with AsyncSessionLocal() as session:
             stmt = (
                 select(CollectionModel.title)

@@ -20,7 +20,7 @@
   margin-bottom: 8px;
 }
 .message-bubble {
-  max-width: 70%;
+  max-width: 80%;
   padding: 12px 16px;
   color: $white-100;
   font-size: 14px;
@@ -28,9 +28,11 @@
   word-wrap: break-word;
 
   &.is-user {
+    margin-left: auto;
     border-radius: 18px 18px 0 18px;
     background-color: var(--theme-primary-color, #{$orange-450});
     text-align: left;
+    min-width: fit-content;
   }
 
   &:not(.is-user) {

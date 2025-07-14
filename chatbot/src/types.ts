@@ -65,7 +65,6 @@ declare global {
 export interface ChatResponse {
   answer: string;
   products?: ProductType[];
-  categories?: string[];
   success?: boolean;
   error?: string | null;
   limit_reached?: boolean;
@@ -191,7 +190,6 @@ export interface MessageListProps {
   onProductAddToCart?: (product: ProductType) => Promise<void>;
   tags?: TagItem[];
   handleSendMessage: (tag: string) => void;
-  categories?: string[];
 }
 
 export interface ProductProps {
@@ -254,7 +252,6 @@ export interface ChatBodyProps {
   handleError: (error: string) => void;
   isChatLimitReached?: boolean;
   tags?: TagItem[];
-  categories?: string[];
 }
 
 export interface CartBodyProps {

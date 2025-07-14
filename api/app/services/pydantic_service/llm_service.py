@@ -188,6 +188,7 @@ class LLMService:
         """Handle user message and return structured response"""
         logger.info(f"Handling user message for shop_id: '{shop_id}'")
         logger.info(f"\n User message: '{user_message}' \n")
+        logger.info(f"Shop ID in Handle User Message: {shop_id}")
         
         try:
             history_messages = format_message_history(previous_messages or [])
@@ -202,17 +203,22 @@ class LLMService:
             products, categories = [], []
             intent = claude_response.get("intent", "")
 
-            tags = TAG_LIBRARY.get(intent, [])
-
             for tool_block, result in claude_response.get("tool_results", []):
                 if tool_block["name"] == "product":
                     products = result.get("products", [])
                     categories = result.get("categories", [])
+            
+            tags_from_library = TAG_LIBRARY.get(intent, [])
+            tags_from_categories = [
+                {"name": category, "description": f"Explore products from the {category} category"}
+                for category in categories
+            ]
+
+            tags = tags_from_library or tags_from_categories or [] 
 
             return {
                 "answer": claude_response.get("answer", ""),
                 "products": products,
-                "categories": categories,
                 "tags": tags,
                 "success": True
             }

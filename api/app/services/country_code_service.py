@@ -10,6 +10,6 @@ class CountryCodeService:
         """ Get all country codes """
         return await self.db_handler.get_country_codes()
 
-    async def store_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
-        """ Store country codes in bulk """
-        return await self.db_handler.store_country_codes(country_codes)
+    async def create_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
+        """ Create country codes in bulk """
+        return await self.db_handler.create_country_codes(country_codes)

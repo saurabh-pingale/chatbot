@@ -49,7 +49,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const { messages, isTyping, handleTyping, addMessage, handleBotResponse, setMessages, categories, setCategories } = useChat();
+  const { messages, isTyping, handleTyping, addMessage, handleBotResponse, setMessages } = useChat();
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
@@ -142,6 +142,33 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     sessionStorage.setItem('sessionViewedEmailGate', 'true');
   };
 
+  const processBotTags = (tagsFromResponse: any[]) => {
+    if (!tagsFromResponse || !Array.isArray(tagsFromResponse)) {
+      setShowInitialTags(false);
+      return;
+    }
+
+  const mappedTags: TagItem[] = tagsFromResponse.map((tag: any) => {
+      if (typeof tag === 'string') {
+        return {
+          name: tag,
+          description: TAG_DICTIONARY[tag] || tag,
+        };
+      } else if (typeof tag === 'object' && tag.name && tag.description) {
+        return {
+          name: tag.name,
+          description: tag.description,
+        };
+      } else {
+        console.warn('Unknown tag format:', tag);
+        return { name: '', description: '' };
+      }
+    });
+
+    setTags(mappedTags);
+    setShowInitialTags(mappedTags.length > 0);
+  };
+
   const handleSendMessage = async (content: string) => {
     const isChatAllowed = jwtToken || !config.showEmailGate;
 
@@ -166,7 +193,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
     addMessage(content, 'user');
 
-    //TODO: FOR tag why are we following new "currentMessages" ?
     const currentMessages: Message[] = [
       ...messages, 
       { 
@@ -194,30 +220,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       }
 
       setTimeout(() => {
-        //TODO: This should be altogether seperate function
-        if (response.tags && Array.isArray(response.tags) && response.tags.length > 0) {
-          const mappedTags: TagItem[] = response.tags.map((tag: any) => {
-            if (typeof tag === 'string') {
-              return {
-                name: tag,
-                description: TAG_DICTIONARY[tag] || tag,
-              };
-            } else if (typeof tag === 'object' && tag.name && tag.description) {
-              return {
-                name: tag.name,
-                description: tag.description,
-              };
-            } else {
-              console.warn('Unknown tag format:', tag);
-              return { name: '', description: '' };
-            }
-          });
-
-          setTags(mappedTags);
-          setShowInitialTags(true);
-        } else {
-          setShowInitialTags(false);
-        }
+        processBotTags(response.tags ?? [])
       }, 200);
       
       await handleBotResponse(response);
@@ -227,7 +230,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       await handleBotResponse({
         answer: `Sorry, an error occurred: ${errorMessage}`,
         products: [],
-        categories: [],
         success: false,
         error: errorMessage
       });
@@ -277,7 +279,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     setChatLimitReached(false);
     setTags(DEFAULT_TAGS);              
     setShowInitialTags(true); 
-    setCategories([]);
   }, [isOpen, isEmailGateVisible, addMessage]);
 
   const conversationMessagesCount = messages.length;
@@ -334,7 +335,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
                   handleError={handleError}
                   isChatLimitReached={chatLimitReached}
                   tags={showInitialTags ? tags : []}
-                  categories={categories}
                 />
               )}
               {error && (

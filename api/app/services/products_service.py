@@ -46,7 +46,7 @@ class ProductsService:
             await self.shop_admin_handler.record_products_handler(unique_products, collection_id_map, shop_id=shop.id)
         
             products_embeddings = await create_product_embeddings(products)
-            await self.embeddings_handler.store_embeddings(products_embeddings, namespace)
+            await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
             
             return {
                 "status": "success",

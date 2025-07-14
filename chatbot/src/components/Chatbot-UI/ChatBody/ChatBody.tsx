@@ -13,8 +13,7 @@ const ChatBody = ({
     isEmailGateVisible = false,
     handleError,
     isChatLimitReached,
-    tags,
-    categories
+    tags
 }: ChatBodyProps) => {
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
@@ -37,7 +36,6 @@ const ChatBody = ({
                 onProductAddToCart={handleProductAddToCart}
                 tags={tags}
                 handleSendMessage={handleSendMessage}
-                categories={categories}
             />
 
             <ChatInput

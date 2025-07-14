@@ -12,8 +12,7 @@ export const MessageList = memo<MessageListProps>(({
   primaryColor,
   onProductAddToCart,
   tags,
-  handleSendMessage,
-  categories
+  handleSendMessage
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -71,29 +70,6 @@ export const MessageList = memo<MessageListProps>(({
                     disabled={isTyping}
                   >
                     {tag.name}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-          {/* TODO: Remove these categories overrride with tags i.e these contents should be inside tags */}
-          {!isTyping && categories && categories.length > 0 && (
-            <motion.div
-              className="chatbot-tags-container agent-side"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ '--theme-primary-color': primaryColor } as React.CSSProperties}
-            >
-              <div className="chatbot-tags horizontal-categories">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    className="chatbot-tag-button premium-tag"
-                    onClick={() => handleSendMessage(category)}
-                    disabled={isTyping}
-                  >
-                    {category}
                   </button>
                 ))}
               </div>

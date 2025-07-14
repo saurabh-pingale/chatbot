@@ -4,7 +4,6 @@ import type { Message, ChatResponse, ProductType } from '../types';
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState<boolean>(false);
 
   const handleTyping = (isTyping: boolean) => {
@@ -33,12 +32,6 @@ export const useChat = () => {
         products: response.products,
       };
       setMessages(prev => [...prev, botMessage]);
-
-      if (response.categories && Array.isArray(response.categories)) {
-        setCategories(response.categories);
-      } else {
-        setCategories([]);
-      }
     };
 
     processResponse();
@@ -50,8 +43,6 @@ export const useChat = () => {
     handleTyping,
     addMessage,
     handleBotResponse,
-    setMessages,
-    categories,
-    setCategories
+    setMessages
   };
 }; 

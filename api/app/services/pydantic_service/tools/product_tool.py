@@ -45,6 +45,7 @@ class ProductTool(BaseTool):
     async def run(self, query: str, shop_id: str) -> Dict[str, Any]:
         """Performs a semantic search for products based on the user's query."""
         logger.info(f"Performing product search for query: '{query}'")
+        logger.info(f"Shop ID in Product Tool: {shop_id}")
         
         try:
             embedding = EmbeddingService.create_embeddings(query)
