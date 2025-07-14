@@ -180,12 +180,14 @@ export const EmailGate = memo<EmailGateProps>(({
               ))}
             </div>
         )}
-        <div
+        {/*TODO: below spacing little more & less correct it*/}
+        {error && <div
           id="email-error"
           className={`email-gate-error-message ${error ? 'visible' : ''}`}
         >
           {error}
-        </div>
+        </div>}
+        {/*TODO: below spacing little more & less correct it*/}
         <button
           className="email-gate-continue-button"
           onClick={otpSent ? handleOtpSubmit : handleEmailSubmit}

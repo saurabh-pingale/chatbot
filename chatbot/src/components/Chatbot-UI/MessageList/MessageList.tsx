@@ -76,7 +76,7 @@ export const MessageList = memo<MessageListProps>(({
               </div>
             </motion.div>
           )}
-          
+          {/* TODO: Remove these categories overrride with tags i.e these contents should be inside tags */}
           {!isTyping && categories && categories.length > 0 && (
             <motion.div
               className="chatbot-tags-container agent-side"

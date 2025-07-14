@@ -48,7 +48,6 @@ class LLMService:
         11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
         
         Other than non-related store queries and greeting queries, you STRICTLY use available tools.
-
         **CRITICAL: You MUST use the appropriate tool for product-related, order-related, terms-related queries. Do NOT provide direct answers without using tools.**
 
         **RESPONSE FORMAT REQUIREMENT:**
@@ -59,8 +58,7 @@ class LLMService:
         }
 
         - The "answer" field must contain ONLY a simple string, NOT nested JSON or objects
-        - NEVER put JSON inside the "answer" field & Return ONLY VALID JSON
-        - NEVER respond with plain text or markdown. Return ONLY valid JSON. No explanations outside JSON.
+        - For long content ONLY, use bullet points within the string (e.g., "• Point 1 • Point 2")
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
@@ -113,8 +111,8 @@ class LLMService:
                             
                             result = await self.tool_registry.run_tool(tool_name, **tool_input_with_shop)
                             current_tool_results.append((tool_block, result))
-                            logger.info(f"Tool {tool_name} executed successfully")
-                            logger.info(f"Tool {tool_name} result: {result}")
+                            logger.info(f"\n Tool {tool_name} executed successfully \n")
+                            logger.info(f"\n Tool {tool_name} result: {result} \n")
                         
                         tool_results.extend(current_tool_results)
                         

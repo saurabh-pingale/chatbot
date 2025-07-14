@@ -22,7 +22,7 @@ import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
-  const STATIC_BOT_GREETING = "I'm an AI assistant. How can I help you 😊";
+  const STATIC_BOT_GREETING = "I'm store assistant. How can I help you 😊";
   const TAG_DICTIONARY: Record<string, string> = {
     'Hi 👋': "Say hello to the assistant",
     'Browse Products': "Get me available product collections in store"
@@ -49,7 +49,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const { messages, isTyping, addMessage, handleBotResponse, setMessages, categories, setCategories } = useChat();
+  const { messages, isTyping, handleTyping, addMessage, handleBotResponse, setMessages, categories, setCategories } = useChat();
   const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
@@ -161,11 +161,12 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       return;
     }
 
-    const matchedTag = tags.find(tag => tag.name === content);
+    const matchedTag = tags.find(tag => tag.name === content.toLowerCase());
     const messageToSend = matchedTag?.description || content;
 
     addMessage(content, 'user');
 
+    //TODO: FOR tag why are we following new "currentMessages" ?
     const currentMessages: Message[] = [
       ...messages, 
       { 
@@ -175,9 +176,9 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
         timestamp: new Date() 
       }
     ];
-
+    handleTyping(true)
     try {
-      const payloadBase= {
+      const payloadBase = {
         messages: currentMessages,
         location_info: (capturedLocationInfo) ? capturedLocationInfo : undefined
       } as any;
@@ -193,6 +194,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
       }
 
       setTimeout(() => {
+        //TODO: This should be altogether seperate function
         if (response.tags && Array.isArray(response.tags) && response.tags.length > 0) {
           const mappedTags: TagItem[] = response.tags.map((tag: any) => {
             if (typeof tag === 'string') {
@@ -228,7 +230,9 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
         categories: [],
         success: false,
         error: errorMessage
-      }, 1000);
+      });
+    } finally{
+      handleTyping(false)
     }
   };
 
