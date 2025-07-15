@@ -5,7 +5,7 @@ from qdrant_client.http import models
 from qdrant_client.http.models import SearchRequest, SearchParams
 from pydantic import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Set
 
 from app.models.api.rag_pipeline import Vector, VectorMetadata
 from app.utils.lru_cache import LRUCache
@@ -20,6 +20,7 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
             product = {
                 "id": str(product_id) if product_id is not None else None,
                 "name": getattr(result.metadata, 'title', None),
+                "description": getattr(result.metadata, 'description', None),
                 "price": getattr(result.metadata, 'price', None),
                 "url": getattr(result.metadata, 'url', None),
                 "image_url": getattr(result.metadata, 'image', None),
@@ -59,25 +60,37 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
 
 def safe_parse_json(text: str) -> Dict[str, Any]:
     try:
+        if "<result>" in text and "</result>" in text:
+            text = text.split("<result>")[-1].split("</result>")[0].strip()
+
         parsed = json.loads(text)
-        
-        if isinstance(parsed, str) and parsed.strip().startswith("{"):
+
+        while isinstance(parsed, str):
+            parsed = json.loads(parsed)
+
+        if (
+            isinstance(parsed, dict)
+            and "answer" in parsed
+            and isinstance(parsed["answer"], str)
+            and parsed["answer"].strip().startswith("{")
+        ):
             try:
-                return ast.literal_eval(parsed)
-            except Exception:
+                inner = json.loads(parsed["answer"])
+                if isinstance(inner, dict) and "answer" in inner and "intent" in inner:
+                    return inner
+            except json.JSONDecodeError:
                 pass
+
         return parsed if isinstance(parsed, dict) else {}
-    
+
     except json.JSONDecodeError:
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             try:
-                parsed = json.loads(match.group())
-                if isinstance(parsed, str) and parsed.strip().startswith("{"):
-                    return json.loads(parsed)
-                return parsed
+                return json.loads(match.group())
             except Exception:
                 pass
+
     return {}
 
 def build_query_key(
@@ -203,3 +216,42 @@ def parse_search_results(
         except ValidationError as e:
             logger.error(f"Product validation failed: {e}")
     return results
+
+def deduplicate_results_by_variant(results: List[Any]) -> List[Any]:
+    """
+    Deduplicates vector DB results based on `variant_id` or fallback to `id`.
+    Returns a list of unique results.
+    """
+    unique_results = []
+    seen_ids: Set[str] = set()
+
+    for result in results:
+        variant_id = getattr(result.metadata, 'variant_id', None)
+        identifier = variant_id or result.id
+
+        if identifier and identifier not in seen_ids:
+            unique_results.append(result)
+            seen_ids.add(identifier)
+
+    return unique_results
+
+def build_conversation_log_data(
+    user_message: str,
+    agent_response: Dict[str, Any],
+    user_id: Optional[int],
+    shop_id: int,
+    is_guest: bool = False,
+    guest_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """Builds a dictionary for logging conversation data"""
+    data = {
+        "user_query": user_message,
+        "agent_response": agent_response.get("answer"),
+        "user_id": user_id,
+        "shop_id": shop_id,
+    }
+
+    if is_guest:
+        data["guest_id"] = guest_id
+
+    return data

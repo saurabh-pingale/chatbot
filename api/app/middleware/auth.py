@@ -1,8 +1,9 @@
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, Any, Optional
-from app.utils.jwt_utils import decode_access_token, create_access_token
 from datetime import datetime, timezone
+
+from app.utils.jwt_utils import decode_access_token, create_access_token
 
 bearer_scheme = HTTPBearer(auto_error=False)
 

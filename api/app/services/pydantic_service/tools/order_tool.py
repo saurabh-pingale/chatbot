@@ -2,6 +2,7 @@ from typing import Dict, Any
 
 from app.services.pydantic_service.tools.base_tool import BaseTool
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
+from app.models.api.response import OrderResponse
 from app.utils.logger import logger
 
 class OrderTool(BaseTool):
@@ -40,33 +41,36 @@ class OrderTool(BaseTool):
             logger.info(f"Order tool called for shop ID: {shop_id}")
             
             if not shop_id:
-                return {
-                    "answer": "Support contact is currently unavailable.",
-                    "email": "",
-                    "phone": ""
-                }
+                return OrderResponse(
+                    answer= "Support contact is currently unavailable.",
+                    email= "",
+                    phone= "",
+                    succes= False
+                )
             
             support_info = await self.shop_admin_handler.get_support_contact(shop_id)
             logger.info(f"Support Info: {support_info}")
             
             if not support_info or (not support_info.get("support_email") and not support_info.get("support_phone")):
-                return {
-                    "answer": "We couldn't find any support contact at the moment.",
-                    "email": "",
-                    "phone": ""
-                } 
+                return OrderResponse(
+                    answer= "We couldn't find any support contact at the moment.",
+                    email= "",
+                    phone= "",
+                    success= False
+                )
         
-            return {
-                "answer": "",
-                "email": support_info.get('support_email', ''),
-                "phone": support_info.get('support_phone', ''),
-                "success": True
-            }
+            return OrderResponse(
+                answer= "",
+                email= support_info.get('support_email', ''),
+                phone= support_info.get('support_phone', ''),
+                success= True
+            )
             
         except Exception as e:
             logger.error(f"Error in order tool: {e}", exc_info=True)
-            return {
-                "answer": "An error occurred while fetching support details.",
-                "email": "",
-                "phone": ""
-            }
+            return OrderResponse(
+                answer= "An error occurred while fetching support details.",
+                email= "",
+                phone= "",
+                success= False
+            )

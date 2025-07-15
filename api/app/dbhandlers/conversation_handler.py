@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 
 from app.models.db.conversation import ConversationModel
-from app.models.db.shop_admin import ShopModel, UserModel
+from app.models.db.shop_admin import UserModel
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 

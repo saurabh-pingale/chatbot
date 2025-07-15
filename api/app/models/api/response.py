@@ -2,17 +2,14 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Union
 import json
 
-class GeneralResponse(BaseModel):
-    answer: str
-
 class Product(BaseModel):
     """Model representing a product in the store"""
     id: Union[str, int]
-    name: str = Field(..., alias='title')
+    name: str 
     price: float
     category: str
     description: Optional[str] = None
-    image_url: Optional[str] = Field(None, alias='image')
+    image_url: Optional[str] = None
     variant_id: Optional[str] = None
 
 class BaseResponse(BaseModel):
@@ -43,3 +40,6 @@ class OrderResponse(BaseResponse):
     answer: Optional[str] = Field(..., description="The detailed response to the user's order query")
     email: Optional[str] = Field(None, description="Support email if relevant")
     phone: Optional[str] = Field(None, description="Support phone if relevant")
+
+class TermsToolResponse(BaseResponse):
+    answer: str = Field(..., description="Response to the user's policy or terms-related query")

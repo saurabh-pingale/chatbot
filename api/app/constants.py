@@ -32,3 +32,6 @@ TAG_LIBRARY = {
         { "name": "FAQs", "description": "Find answers to common questions" }
     ]
 }
+
+PREVIOUS_MESSAGE_CONTEXT_LIMIT = 3
+EXCLUDE_LAST_MESSAGE = -1

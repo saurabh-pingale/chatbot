@@ -1,5 +1,6 @@
 import json
 import httpx
+from pydantic import BaseModel
 from typing import Dict, Any, List
 
 from app.services.pydantic_service.tool_registry import ToolRegistry
@@ -59,6 +60,8 @@ class LLMService:
 
         - The "answer" field must contain ONLY a simple string, NOT nested JSON or objects
         - For long content ONLY, use bullet points within the string (e.g., "• Point 1 • Point 2")
+
+        **IMPORTANT: NEVER wrap the JSON output in `<result>` or any tags. ONLY return plain JSON.**
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
@@ -122,10 +125,15 @@ class LLMService:
                         for tool_block, result in current_tool_results:
                             tool_name = tool_block["name"]
 
+                            if isinstance(result, BaseModel):
+                                result_data = result.model_dump()
+                            else:
+                                result_data = result 
+
                             structured_result = {
                                 "tool": tool_name,
                                 "tool_use_id": tool_block["id"],
-                                "result": result
+                                "result": result_data
                             }
 
                             tool_result_content.append({
@@ -205,8 +213,12 @@ class LLMService:
 
             for tool_block, result in claude_response.get("tool_results", []):
                 if tool_block["name"] == "product":
-                    products = result.get("products", [])
-                    categories = result.get("categories", [])
+                    if isinstance(result, BaseModel):
+                        result_dict = result.model_dump()
+                    else:
+                        result_dict = result
+                    products = result_dict.get("products", [])
+                    categories = result_dict.get("categories", [])
             
             tags_from_library = TAG_LIBRARY.get(intent, [])
             tags_from_categories = [

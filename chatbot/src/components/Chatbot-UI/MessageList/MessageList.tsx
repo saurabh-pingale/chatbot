@@ -46,6 +46,7 @@ export const MessageList = memo<MessageListProps>(({
             message={message}
             primaryColor={primaryColor}
             onProductAddToCart={onProductAddToCart}
+            onMessageHeightChange={scrollToBottom}
             ref={index === messages.length - 1 ? lastMessageRef : null}
           />
         ))}

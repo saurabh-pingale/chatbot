@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
+from pydantic import ValidationError
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT
-from app.modules.auth_module import validate_auth_payload
+from app.models.api.shop_admin import AuthPayloadModel
+from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
 from app.modules.analytics_module import record_chat_analytics
-from app.modules.agent_module import process_agent_conversation
+from app.utils.rag_pipeline_utils import build_conversation_log_data
 from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
 
@@ -35,17 +36,26 @@ async def agent_conversation(
         if not shop_id:
             raise HTTPException(status_code=400, detail="shopId is required.")
         
-        logger.info(f"Shop ID: {shop_id}")
-        
         app = get_app()
             
         shop = await app.shop_admin_handler.get_shop_by_domain(shop_id)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found.")
-        logger.info(f"Shop: {shop}")
 
         guest_id = request.query_params.get("guest_id")
-        user_id, is_guest = validate_auth_payload(auth_payload, shop.id)
+
+        if not auth_payload:
+            user_id, is_guest = None, True  # Guest
+        else:
+            try:
+                validated_payload = AuthPayloadModel(**auth_payload)
+                validated_payload.validate_shop_access(shop.id)
+                user_id = validated_payload.user_id
+                is_guest = validated_payload.is_guest
+            except ValidationError as ve:
+                raise HTTPException(status_code=401, detail=str(ve))
+            except ValueError as ve:
+                raise HTTPException(status_code=401, detail=str(ve))
 
         if len(payload.messages) > MESSAGE_LIMIT * 2:
             return {
@@ -60,21 +70,16 @@ async def agent_conversation(
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
-        previous_messages = contents[:-1][-3:] if len(contents) > 1 else []
+        previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
         await record_chat_analytics(app, user_id, shop.id, guest_id, payload.location_info)
+
+        agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
+
+        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop.id, is_guest, guest_id )
+
+        await app.conversation_service.record_conversation_into_db(conversation_log_data)
     
-        agent_response = await process_agent_conversation(
-            app=app, 
-            user_message=user_message, 
-            shop_id=shop_id, 
-            shop_id_key=shop.id,
-            previous_messages=previous_messages,
-            user_id=user_id,
-            guest_id=guest_id,
-            is_guest=is_guest
-        )
-        
         return agent_response
 
     except HTTPException as http_exc:

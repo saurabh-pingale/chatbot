@@ -1,4 +1,4 @@
-import { memo, forwardRef, useEffect, useState } from 'react';
+import { memo, forwardRef, useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { messageAnimation } from '../../../styles/animations';
 import { ProductSlider } from '../../ProductSlider/ProductSlider';
@@ -9,28 +9,39 @@ import './Message.scss';
 
 export interface ExtendedMessageProps extends MessageProps {
   onProductAddToCart?: (product: ProductType) => Promise<void>;
+  onMessageHeightChange?: () => void;
 }
 
-//TODO: Mainly i used some sort of AI to do this, because taking time to me to write, so please recheck and see is this code is correctly performing in all edge cases ?
 export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   message,
   primaryColor,
-  onProductAddToCart
+  onProductAddToCart,
+  onMessageHeightChange
 }, ref) => {
   const isUser = message.type === 'user';
   const formattedContent = formatMessage(message.content, message.type);
   const TIMEOUT_DELAY = 1000
-  const hasMultipleSegments = formattedContent.length;
+  const hasMultipleSegments = Array.isArray(formattedContent) ? formattedContent.length : 0;
+  const lastMessageRef = useRef<HTMLDivElement | null>(null);
   
   const bubbleStyles: React.CSSProperties & Record<string, string> = {};
   if (isUser && primaryColor) {
     bubbleStyles['--theme-primary-color'] = primaryColor;
   }
 
-  // State to control how many message parts are shown
   const [visibleCount, setVisibleCount] = useState(1);
   const [showLoader, setShowLoader] = useState(hasMultipleSegments > 1);
   const [showProductSlider, setShowProductSlider] = useState(false);
+
+  useEffect(() => {
+  if (lastMessageRef.current) {
+    lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (typeof onMessageHeightChange === 'function') {
+    onMessageHeightChange();
+  }
+}, [visibleCount]);
 
   useEffect(() => {
     if (hasMultipleSegments <= 1) {
@@ -72,17 +83,17 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
     return () => {
       isMounted = false;
     };
-    // Only run when message changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message.content, message.type]);
 
-  // Interleave loader between each message part, loader only visible if next part is not yet shown
   const interleavedContent: React.ReactNode[] = [];
   for (let i = 0; i < hasMultipleSegments; i++) {
-    // Only show up to visibleCount
     if (i < visibleCount) {
       interleavedContent.push(
-        <article key={`msg-${i}`} className='message-list'>
+        <article 
+          key={`msg-${i}`} 
+          className='message-list' 
+          ref={i === visibleCount - 1 ? lastMessageRef : null}
+        >
           <div
             className={`message-bubble ${isUser ? 'is-user' : ''}`}
             style={bubbleStyles}
@@ -91,18 +102,18 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
         </article>
       );
     }
-    // Show loader if this is not the last message and the next message is not yet visible
+
     if (
       i < hasMultipleSegments - 1 &&
       visibleCount === i + 1 &&
       showLoader
     ) {
       interleavedContent.push(
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
-          <TypingIndicator key={`loader-${i}`} primaryColor={primaryColor} />
+        <div key={`loader-${i}`} style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
+          <TypingIndicator primaryColor={primaryColor} />
         </div>
       );
-      break; // Only one loader at a time
+      break;
     }
   }
 

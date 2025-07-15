@@ -9,17 +9,17 @@ class ShopAdminService:
         self.db_handler = ShopAdminHandler()
         self.subscription_handler = SubscriptionHandler()
 
-    async def save_color_preference(self, shop_id: str, color: str) -> None:
-        """Save the color preference to the DB via handler."""
-        await self.db_handler.save_color_preference(shop_id, color)
+    async def create_color_preference(self, shop_id: str, color: str) -> None:
+        """Create the color preference to the DB via handler."""
+        await self.db_handler.create_color_preference(shop_id, color)
 
-    async def save_support_info(self, shop_id: str, email: str, phone: str, country_code: str):
-        """Save support info to the DB via handler."""
-        await self.db_handler.save_support_info(shop_id, email, phone, country_code)
+    async def create_support_info(self, shop_id: str, email: str, phone: str, country_code: str):
+        """Create support info to the DB via handler."""
+        await self.db_handler.create_support_info(shop_id, email, phone, country_code)
 
-    async def save_shop_image(self, shop_id: str, image_url: str):
-        """Save image URL to the DB via handler."""
-        await self.db_handler.save_shop_image(shop_id, image_url)
+    async def create_shop_image(self, shop_id: str, image_url: str):
+        """Create image URL to the DB via handler."""
+        await self.db_handler.create_shop_image(shop_id, image_url)
 
     async def get_shop_status_with_subscription(self, shop_id: str) -> (Optional[ShopModel], Optional[any]):
         """Fetch shop and its subscription status."""
@@ -34,14 +34,14 @@ class ShopAdminService:
         """Fetch shop by ID from DB via handler to check its status."""
         return await self.db_handler.get_shop_status(shop_id)
 
-    async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
-        """Save the email gate preference to the DB via handler."""
-        await self.db_handler.save_email_gate_preference(shop_id, show_email_gate)
+    async def create_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
+        """Create the email gate preference to the DB via handler."""
+        await self.db_handler.create_email_gate_preference(shop_id, show_email_gate)
 
     async def integration(self, shop_id: str, title: str, description: str) -> None:
         """Save integration details to the DB via handler."""
         await self.db_handler.integration_handler(shop_id, title, description)
 
-    async def mark_setup_as_completed(self, shop_id: int):
+    async def update_shop_setup_completed_status(self, shop_id: int):
         """Mark the shop's setup as completed."""
-        await self.db_handler.update_setup_completed_status(shop_id, True)
+        await self.db_handler.update_shop_setup_completed_status(shop_id, True)

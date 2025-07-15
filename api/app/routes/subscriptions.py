@@ -51,7 +51,7 @@ async def start_free_trial(request: TrialRequest):
         await handler.update_shop_plan(shop.id, "Free")
         
         shop_admin_service = ShopAdminService()
-        await shop_admin_service.mark_setup_as_completed(shop.id)
+        await shop_admin_service.update_shop_setup_completed_status(shop.id)
 
         logger.info(f"Free trial started for shop_id: {shop.id}")
         return {"message": "Your 30-day free trial has started successfully!"}
@@ -205,7 +205,7 @@ async def webhook_received(
         )
         
         shop_admin_service = ShopAdminService()
-        await shop_admin_service.mark_setup_as_completed(shop_id)
+        await shop_admin_service.update_shop_setup_completed_status(shop_id)
         
         logger.info(f"Subscription created for shop_id: {shop_id}")
 

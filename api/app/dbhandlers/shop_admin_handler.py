@@ -2,7 +2,6 @@ from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, join
 from sqlalchemy.dialects.postgresql import insert
-from datetime import datetime
 
 from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel
 from app.models.api.shop_admin import (ProductRequest)
@@ -26,23 +25,21 @@ class ShopAdminHandler:
                     logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
                     raise error
 
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def store_collections(self, collections: List[CollectionModel]) -> List[dict]:
-        """Stores collections in the database using bulk operations."""
+    async def create_collections(self, collections: List[CollectionModel]) -> List[dict]:
+        """Create collections in the database using bulk operations."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: What do you mean `result` ?, keep meaningful names
-                    result = []
-                    #TODO: What do you mean `insert_data` ?, keep meaningful names
-                    insert_data = []
+                    created_collections_info  = []
+                    collection_data_to_insert = []
+                    
                     for collection in collections:
-                        insert_data.append({
+                        collection_data_to_insert.append({
                             'title': collection.title,
                             'products_count': collection.products_count
                         })
 
-                    stmt = insert(CollectionModel).values(insert_data)
+                    stmt = insert(CollectionModel).values(collection_data_to_insert)
                     stmt = stmt.on_conflict_do_update(
                         index_elements=['title'],  
                         set_={'products_count': stmt.excluded.products_count}
@@ -50,26 +47,25 @@ class ShopAdminHandler:
 
                     await session.execute(stmt)
 
-                    titles = [c['title'] for c in insert_data]
+                    titles = [c['title'] for c in collection_data_to_insert]
                     stmt = select(CollectionModel).where(CollectionModel.title.in_(titles))
                     existing_collections = await session.execute(stmt)
                     collections_list = existing_collections.scalars().all()
 
                     for collection in collections_list:
-                        result.append({
+                        created_collections_info.append({
                             "title": collection.title,
                             "products_count": collection.products_count,
                             "id": collection.id
                         })
 
-                    return result
+                    return created_collections_info 
 
                 except SQLAlchemyError as error:
-                    logger.error("Database error in store_collections: %s", str(error), exc_info=True)
+                    logger.error("Database error in create_collections: %s", str(error), exc_info=True)
                     raise error
                 
     async def get_collections(self, shop_id: str) -> List[str]:
-        logger.info(f"Shop ID in Get Collection: {shop_id}")
         async with AsyncSessionLocal() as session:
             stmt = (
                 select(CollectionModel.title)
@@ -83,17 +79,15 @@ class ShopAdminHandler:
             result = await session.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
-        """Stores products in the database and links them to collections using bulk insert."""
+    async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
+        """Create products in the database and links them to collections using bulk insert."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: What do you mean `insert_data` ?, keep meaningful names
-                    insert_data = []
+                    product_data_to_insert = []
                     for product in products:
                         col_id = collection_id_map.get(product.category)
-                        insert_data.append({
+                        product_data_to_insert.append({
                             'id': product.id,
                             'title': product.title,
                             'description': product.description,
@@ -105,7 +99,7 @@ class ShopAdminHandler:
                             'shop_id': shop_id
                         })
 
-                    stmt = insert(ProductModel).values(insert_data)
+                    stmt = insert(ProductModel).values(product_data_to_insert)
 
                     stmt = stmt.on_conflict_do_update(
                         index_elements=['id'], 
@@ -123,7 +117,7 @@ class ShopAdminHandler:
                     await session.execute(stmt)
 
                 except Exception as error:
-                    logger.error("Error in record_products_handler: %s", str(error), exc_info=True)
+                    logger.error("Error in create_products: %s", str(error), exc_info=True)
                     raise error
 
     async def get_support_contact(self, shop_id: str) -> Optional[dict]:
@@ -131,12 +125,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    result = await session.execute(
-                        select(ShopModel).filter(ShopModel.shop_id == shop_id)
-                    )
-                    shop = result.scalars().one_or_none()
-                    
+                    shop = await self.get_shop_by_domain(shop_id)
                     if not shop:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return None
@@ -149,18 +138,12 @@ class ShopAdminHandler:
                     logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
                     return None
     
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def save_color_preference(self, shop_id: str, color: str) -> None:
-        """Saves the color preference for a given shop ID."""
+    async def create_color_preference(self, shop_id: str, color: str) -> None:
+        """Create the color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    shop = await session.execute(
-                        select(ShopModel).where(ShopModel.shop_id == shop_id)
-                    )
-                    shop = shop.scalars().first()
-
+                    shop = await self.get_shop_by_domain(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -168,19 +151,14 @@ class ShopAdminHandler:
                     shop.preferred_color = color
 
                 except SQLAlchemyError as error:
-                    logger.error("Database error in save_color_preference: %s", str(error), exc_info=True)
+                    logger.error("Database error in create_color_preference: %s", str(error), exc_info=True)
                     raise error
             
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def save_support_info(self, shop_id: str, email: str, phone: str, country_code: str) -> dict:
+    async def create_support_info(self, shop_id: str, email: str, phone: str, country_code: str) -> dict:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    result = await session.execute(
-                        select(ShopModel).where(ShopModel.shop_id == shop_id)
-                    )
-                    shop = result.scalars().first()
+                    shop = await self.get_shop_by_domain(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -194,17 +172,13 @@ class ShopAdminHandler:
                     await session.rollback()
                     logger.error("Error saving support info: %s", str(error), exc_info=True)
                     raise
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def save_shop_image(self, shop_id: str, image_url: str) -> dict:
-        """Saves the image URL for a given shop."""
+
+    async def create_shop_image(self, shop_id: str, image_url: str) -> dict:
+        """Create the image URL for a given shop."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    result = await session.execute(
-                        select(ShopModel).where(ShopModel.shop_id == shop_id)
-                    )
-                    shop = result.scalars().first()
+                    shop = await self.get_shop_by_domain(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -221,26 +195,18 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    result = await session.execute(
-                        select(ShopModel).filter(ShopModel.shop_id == shop_id)
-                    )
-                    return result.scalars().first()
+                    shop = await self.get_shop_by_domain(shop_id)
+                    return shop
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
                     raise error
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
-        """Saves the email gate preference for a given shop ID."""
+                
+    async def create_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
+        """Create the email gate preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: use get_shop_by_domain function, don't duplicate the code
-                    shop_result = await session.execute(
-                        select(ShopModel).where(ShopModel.shop_id == shop_id)
-                    )
-                    shop = shop_result.scalars().first()
-
+                    shop = await self.get_shop_by_domain(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
                         session.add(shop)
@@ -250,7 +216,7 @@ class ShopAdminHandler:
                         logger.info(f"Updated email gate preference for shop_id {shop_id} to {show_email_gate}")
          
                 except SQLAlchemyError as error:
-                    logger.error(f"Database error in save_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
+                    logger.error(f"Database error in create_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
                     raise error
                 
     async def integration_handler(self, shop_id: str, title: str, description: str) -> None:
@@ -267,8 +233,8 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
                     raise error
-    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
-    async def update_setup_completed_status(self, shop_id: int, status: bool) -> None:
+                
+    async def update_shop_setup_completed_status(self, shop_id: int, status: bool) -> None:
         """Updates the setup_completed status for a given shop."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
@@ -278,5 +244,5 @@ class ShopAdminHandler:
                         shop.setup_completed = status
                         logger.info(f"Updated setup_completed status for shop_id {shop_id} to {status}")
                 except SQLAlchemyError as e:
-                    logger.error(f"Database error in update_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
+                    logger.error(f"Database error in update_shop_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
                     raise

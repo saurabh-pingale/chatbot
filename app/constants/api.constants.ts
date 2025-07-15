@@ -1,5 +1,4 @@
-// const BACKEND_URL = "https://shopify-chatbot-fastapi-578494102556.us-central1.run.app";
-const BACKEND_URL = "http://127.0.0.1:8000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const API = {
     BACKEND_URL,
