@@ -47,6 +47,7 @@ class LLMService:
         9. For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), YOU MUST ONLY use the `order` tool first before responding.
         10. NEVER explain tool usage or say "I couldn't find anything in the database."
         11. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+        12. NEVER include a full or partial JSON object or dictionary inside the "answer" string.
         
         Other than non-related store queries and greeting queries, you STRICTLY use available tools.
         **CRITICAL: You MUST use the appropriate tool for product-related, order-related, terms-related queries. Do NOT provide direct answers without using tools.**
@@ -61,7 +62,7 @@ class LLMService:
         - The "answer" field must contain ONLY a simple string, NOT nested JSON or objects
         - For long content ONLY, use bullet points within the string (e.g., "• Point 1 • Point 2")
 
-        **IMPORTANT: NEVER wrap the JSON output in `<result>` or any tags. ONLY return plain JSON.**
+        **IMPORTANT: NEVER wrap the JSON output in any tags. ONLY return plain JSON.**
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
