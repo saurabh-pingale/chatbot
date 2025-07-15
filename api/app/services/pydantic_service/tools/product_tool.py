@@ -65,6 +65,7 @@ class ProductTool(BaseTool):
             seen_variant_ids = set()
 
             if results:
+                #TODO: You can move all this below extraction logic to seperate function
                 for result in results:
                     variant_id = getattr(result.metadata, 'variant_id', None)
                     if variant_id and variant_id not in seen_variant_ids:

@@ -11,6 +11,7 @@ export interface ExtendedMessageProps extends MessageProps {
   onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
+//TODO: Mainly i used some sort of AI to do this, because taking time to me to write, so please recheck and see is this code is correctly performing in all edge cases ?
 export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   message,
   primaryColor,

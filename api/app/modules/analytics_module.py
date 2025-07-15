@@ -1,5 +1,9 @@
 from app.utils.logger import logger
-
+#TODO: What is this new category called module ?
+#TODO: If its logic layer code then keep in services
+#TODO: If its query layer code then keep in handlers
+#TODO: If its routes layer code then keep in handlers
+#TODO: how does it different from all these 3 layers ?
 async def record_chat_analytics(app, user_id, shop_id, guest_id, location_info):
     """Records chat analytics using analytics_service."""
     try:

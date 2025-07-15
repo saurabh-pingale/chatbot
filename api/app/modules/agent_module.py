@@ -1,3 +1,8 @@
+#TODO: What is this new category called module ?
+#TODO: If its logic layer code then keep in services
+#TODO: If its query layer code then keep in handlers
+#TODO: If its routes layer code then keep in handlers
+#TODO: how does it different from all these 3 layers ?
 async def process_agent_conversation(app, user_message, shop_id, shop_id_key, previous_messages, user_id, guest_id, is_guest):
     """Handles the full agent response and logs the conversation."""
     print(f"Shop ID in Process Agent Conversation: {shop_id}")

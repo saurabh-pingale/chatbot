@@ -26,12 +26,15 @@ class ShopAdminHandler:
                     logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
                     raise error
 
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def store_collections(self, collections: List[CollectionModel]) -> List[dict]:
         """Stores collections in the database using bulk operations."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: What do you mean `result` ?, keep meaningful names
                     result = []
+                    #TODO: What do you mean `insert_data` ?, keep meaningful names
                     insert_data = []
                     for collection in collections:
                         insert_data.append({
@@ -80,11 +83,13 @@ class ShopAdminHandler:
             result = await session.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def record_products_handler(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
         """Stores products in the database and links them to collections using bulk insert."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: What do you mean `insert_data` ?, keep meaningful names
                     insert_data = []
                     for product in products:
                         col_id = collection_id_map.get(product.category)
@@ -126,6 +131,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     result = await session.execute(
                         select(ShopModel).filter(ShopModel.shop_id == shop_id)
                     )
@@ -142,12 +148,14 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error("Database error in get_support_contact: %s", str(error), exc_info=True)
                     return None
-
+    
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def save_color_preference(self, shop_id: str, color: str) -> None:
         """Saves the color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     shop = await session.execute(
                         select(ShopModel).where(ShopModel.shop_id == shop_id)
                     )
@@ -163,10 +171,12 @@ class ShopAdminHandler:
                     logger.error("Database error in save_color_preference: %s", str(error), exc_info=True)
                     raise error
             
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def save_support_info(self, shop_id: str, email: str, phone: str, country_code: str) -> dict:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     result = await session.execute(
                         select(ShopModel).where(ShopModel.shop_id == shop_id)
                     )
@@ -184,12 +194,13 @@ class ShopAdminHandler:
                     await session.rollback()
                     logger.error("Error saving support info: %s", str(error), exc_info=True)
                     raise
-
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def save_shop_image(self, shop_id: str, image_url: str) -> dict:
         """Saves the image URL for a given shop."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     result = await session.execute(
                         select(ShopModel).where(ShopModel.shop_id == shop_id)
                     )
@@ -210,6 +221,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     result = await session.execute(
                         select(ShopModel).filter(ShopModel.shop_id == shop_id)
                     )
@@ -217,12 +229,13 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
                     raise error
-
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def save_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
         """Saves the email gate preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: use get_shop_by_domain function, don't duplicate the code
                     shop_result = await session.execute(
                         select(ShopModel).where(ShopModel.shop_id == shop_id)
                     )
@@ -254,7 +267,7 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
                     raise error
-
+    #TODO: Please convert into either - create, get, update, delete, don't introduce store etc
     async def update_setup_completed_status(self, shop_id: int, status: bool) -> None:
         """Updates the setup_completed status for a given shop."""
         async with AsyncSessionLocal() as session:
