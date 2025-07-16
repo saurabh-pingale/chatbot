@@ -45,7 +45,7 @@ class OrderTool(BaseTool):
                     answer= "Support contact is currently unavailable.",
                     email= "",
                     phone= "",
-                    succes= False
+                    success= False
                 )
             
             support_info = await self.shop_admin_handler.get_support_contact(shop_id)

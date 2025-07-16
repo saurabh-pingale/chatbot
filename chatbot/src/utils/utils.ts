@@ -12,7 +12,8 @@ export const parseVariantId = (variantId: string | number): number | null => {
     return parseInt(variantId.split('/').pop() || '', 10) || null;
   }
 
-  return parseInt(String(variantId), 10) || null;
+  const result = parseInt(String(variantId), 10) || null;
+  return result
 };
 
 export const formatVariantId = (id: number): string => {

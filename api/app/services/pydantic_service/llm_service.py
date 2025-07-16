@@ -1,12 +1,12 @@
 import json
 import httpx
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 
 from app.services.pydantic_service.tool_registry import ToolRegistry
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME, TAG_LIBRARY 
 from app.config import ANTHROPIC_API_KEY
-from app.utils.rag_pipeline_utils import format_message_history, safe_parse_json
+from app.utils.rag_pipeline_utils import format_message_history, safe_parse_json, flatten_message_history_to_text
 from app.utils.logger import logger
 
 class LLMService:
@@ -50,7 +50,7 @@ class LLMService:
         12. NEVER include a full or partial JSON object or dictionary inside the "answer" string.
         
         Other than non-related store queries and greeting queries, you STRICTLY use available tools.
-        **CRITICAL: You MUST use the appropriate tool for product-related, order-related, terms-related queries. Do NOT provide direct answers without using tools.**
+        ****CRITICAL: For product/order/terms-related questions, you MUST invoke the tool first. If the tool is not used, DO NOT reply at all.**
 
         **RESPONSE FORMAT REQUIREMENT:**
         - You MUST ALWAYS return your response in this exact JSON format:
@@ -65,11 +65,16 @@ class LLMService:
         **CRITICAL: Start your response immediately with { and end with }. No explanatory text, no markdown, no additional words. Raw JSON only.**
         """
     
-    async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
+    async def call_claude_with_tools(self, messages: Union[str, List[Dict[str, Any]]], shop_id: str) -> Dict[str, Any]:
         """Call Claude API with tool support"""
         tool_results = [] 
         tools_json = self.tool_registry.get_all_tools_for_claude()
         logger.info(f"Tool JSON: {tools_json}")
+
+        if isinstance(messages, str):
+            messages = [
+                {"role": "user", "content": messages}
+            ]
         
         async with httpx.AsyncClient(timeout=60) as client:
             iteration_count = 0
@@ -197,7 +202,6 @@ class LLMService:
         """Handle user message and return structured response"""
         logger.info(f"Handling user message for shop_id: '{shop_id}'")
         logger.info(f"\n User message: '{user_message}' \n")
-        logger.info(f"Shop ID in Handle User Message: {shop_id}")
         
         try:
             history_messages = format_message_history(previous_messages or [])
@@ -205,8 +209,11 @@ class LLMService:
 
             history_messages.append({"role": "user", "content": user_message})
             logger.info(f"History Message after appending the latest message: {history_messages}")
-            
-            claude_response = await self.call_claude_with_tools(history_messages, shop_id)
+
+            flattened_history = flatten_message_history_to_text(history_messages)
+            logger.info(f"Flattened History Sent to Claude:\n{flattened_history}")
+
+            claude_response = await self.call_claude_with_tools(flattened_history, shop_id)
             logger.info(f"Claude Response: {claude_response}")
 
             products, categories = [], []

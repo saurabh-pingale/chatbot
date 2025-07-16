@@ -24,10 +24,16 @@ class ProductTool(BaseTool):
     @property
     def description(self) -> str:
         return (
-            "This is the primary tool for all product-related inquiries." 
-            "You must use this tool if the user's query is about finding, searching for, or filtering products. This includes any mention of product attributes such as color, size, brand, fabric, category, or price." 
-            "Even if the query is a simple product name or category (e.g., 'red t-shirt', 'shoes', etc.), this tool must be invoked. "
-            "The tool will return a list of matching products or a list of available categories if no direct matches are found."
+            "MANDATORY: Use this tool for ANY product-related query. "
+            "ALWAYS call this tool when the user mentions: "
+            "- Product names (shirt, shoes, dress, pants, etc.) "
+            "- Product attributes (color, size, brand, material, fabric, price) "
+            "- Shopping actions (find, search, show, looking for, want, need) "
+            "- Categories or collections (men's, women's, kids, accessories) "
+            "- Generic browsing (what do you have, show me products, browse) "
+            "- ANY combination of the above. "
+            "Examples requiring this tool: 'red shirt', 'Nike shoes', 'show me dresses', 'what products do you have', 'looking for jeans', 'size medium', 'under $50'. "
+            "DO NOT answer product questions directly - ALWAYS use this tool first."
         )
     
     @property

@@ -78,19 +78,20 @@ export const useCart = () => {
       let updatedItems;
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
-        const currentItem = updatedItems[existingItemIndex];
         updatedItems[existingItemIndex] = {
-          ...currentItem,
-          quantity: Math.min(currentItem.quantity + 1, 10),
+          ...updatedItems[existingItemIndex],
+          quantity: Math.min(updatedItems[existingItemIndex].quantity + 1, 10),
         };
       } else {
         updatedItems = [...prevItems, newItem];
       }
       
-      syncCartWithShopify(updatedItems).catch(err => {
-        console.error('Failed to sync cart with Shopify after add:', err);
-      });
-      return updatedItems;
+      setTimeout(() => {
+        syncCartWithShopify(updatedItems).catch(err => {
+          console.error('Failed to sync cart with Shopify after add:', err);
+        });
+      }, 0)
+        return updatedItems;
     });
 
     setIsCartOpen(true);

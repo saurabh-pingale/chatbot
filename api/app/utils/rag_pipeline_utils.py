@@ -57,6 +57,20 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
     
     return formatted_messages
 
+def flatten_message_history_to_text(messages: List[Dict[str, str]]) -> str:
+    """Flatten structured messages into plain text format."""
+    text_history = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content", "").strip()
+        if not content:
+            continue
+        if role == "user":
+            text_history.append(f"User: {content}")
+        elif role == "assistant":
+            text_history.append(f"Assistant: {content}")
+    return "\n".join(text_history)
+
 def escape_newlines_inside_json_strings(raw: str) -> str:
     def replacer(match):
         key, value = match.group(1), match.group(2)

@@ -54,13 +54,15 @@ export const clearCart = async (): Promise<boolean> => {
 
 export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   try {
-    const shopifyItems = items
-      .map(item => ({
-        id: parseVariantId(item.variant_id || item.id),
-        quantity: item.quantity,
-        properties: { chatbot_added: true }
-      }))
-      .filter(item => item.id);
+    const shopifyItems = items.map(item => {
+        const parsedId = parseVariantId(item.variant_id || item.id);
+        
+        return {
+            id: parsedId,
+            quantity: item.quantity,
+            properties: { chatbot_added: true }
+          };
+    }).filter(item => item.id);
 
     if (!shopifyItems.length) {
       console.error('No valid items to add after filtering');
