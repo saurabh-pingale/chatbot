@@ -52,7 +52,7 @@ class ProductTool(BaseTool):
             metadata_filters = metadata_extractor.extract_all_metadata(query)
             logger.info(f"Extracted Metadata Filters: {metadata_filters}")
 
-            results = await self.embeddings_handler.query_embeddings(
+            results = await self.embeddings_handler.get_embeddings(
                 vector=embedding, 
                 namespace=shop_id, 
                 agent_type="ProductAgent",

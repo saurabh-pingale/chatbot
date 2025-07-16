@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.subscription_handler import SubscriptionHandler
@@ -38,10 +38,9 @@ class ShopAdminService:
         """Create the email gate preference to the DB via handler."""
         await self.db_handler.create_email_gate_preference(shop_id, show_email_gate)
 
-    #TODO: What is this integration, it should be either create, delete, get etc
-    async def integration(self, shop_id: str, title: str, description: str) -> None:
-        """Save integration details to the DB via handler."""
-        await self.db_handler.integration_handler(shop_id, title, description)
+    async def create_integration(self, shop_id: str, title: str, description: str) -> None:
+        """Create integration details to the DB via handler."""
+        await self.db_handler.create_integration(shop_id, title, description)
 
     async def update_shop_setup_completed_status(self, shop_id: int):
         """Mark the shop's setup as completed."""

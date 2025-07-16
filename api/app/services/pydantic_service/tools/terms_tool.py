@@ -52,7 +52,7 @@ class TermsTool(BaseTool):
             logger.info(f"Terms tool called for query: '{query}' in shop: {shop_id}")
             
             user_message_embedding = EmbeddingService.create_embeddings(query)
-            terms_results = await self.embeddings_handler.query_embeddings(
+            terms_results = await self.embeddings_handler.get_embeddings(
                 vector=user_message_embedding, 
                 namespace=shop_id
             )

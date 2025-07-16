@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Request, HTTPException
-from typing import List
 import re
 
 from app.utils.app_utils import get_app
@@ -176,7 +175,7 @@ async def create_email_gate_preference(request: Request, body: EmailGatePreferen
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def integration(request: Request, body: IntegrationRequest):
+async def create_integration(request: Request, body: IntegrationRequest):
     shop_id = _get_cleaned_shop_id(request)
     
     if not body.title or not body.description:
@@ -184,7 +183,7 @@ async def integration(request: Request, body: IntegrationRequest):
     
     try:
         app = get_app()
-        await app.shop_admin_service.integration(shop_id, body.title, body.description)
+        await app.shop_admin_service.create_integration(shop_id, body.title, body.description)
         return {"success": True, "message": "Integration saved successfully"}
     except Exception as error:
         logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)

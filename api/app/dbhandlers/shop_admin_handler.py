@@ -219,8 +219,8 @@ class ShopAdminHandler:
                     logger.error(f"Database error in create_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
                     raise error
                 
-    async def integration_handler(self, shop_id: str, title: str, description: str) -> None:
-        """Saves integration details for a given shop ID."""
+    async def create_integration(self, shop_id: str, title: str, description: str) -> None:
+        """Create integration details for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:

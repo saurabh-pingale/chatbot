@@ -56,8 +56,8 @@ class EmbeddingsHandler:
             collection_name=QDRANT_COLLECTION_NAME,
             points=points
         )
-    #TODO: Make it get embeddings
-    async def query_embeddings(
+        
+    async def get_embeddings(
         self,
         vector: List[float],
         top_k: int = 5,

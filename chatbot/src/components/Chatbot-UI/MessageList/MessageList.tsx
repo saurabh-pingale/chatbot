@@ -1,9 +1,11 @@
 import { memo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+
 import { Message } from '../Message/Message';
+import { ChatbotTags } from '../ChatbotTags/ChatbotTags';
+import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import type { MessageListProps } from '../../../types';
 import { messageListVariants } from '../../../styles/variants';
-import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import './MessageList.scss';
 
 export const MessageList = memo<MessageListProps>(({ 
@@ -50,33 +52,15 @@ export const MessageList = memo<MessageListProps>(({
             ref={index === messages.length - 1 ? lastMessageRef : null}
           />
         ))}
-          {isTyping && (
-            <TypingIndicator primaryColor={primaryColor} />
-          )}
 
-          {!isTyping && tags && tags.length > 0 && (
-            //TODO: Can you make below seperate component
-            <motion.div
-              className="chatbot-tags-container agent-side"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ '--theme-primary-color': primaryColor } as React.CSSProperties}
-            >
-              <div className="chatbot-tags horizontal-categories">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.name}
-                    className="chatbot-tag-button premium-tag"
-                    onClick={() => handleSendMessage(tag.name)}
-                    disabled={isTyping}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
+        {isTyping && <TypingIndicator primaryColor={primaryColor} />}
+
+        <ChatbotTags
+          tags={tags}
+          isTyping={isTyping}
+          primaryColor={primaryColor}
+          onClick={handleSendMessage}
+        />
       </motion.div>
     </div>
   );

@@ -23,6 +23,7 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   const TIMEOUT_DELAY = 1000
   const hasMultipleSegments = Array.isArray(formattedContent) ? formattedContent.length : 0;
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   
   const bubbleStyles: React.CSSProperties & Record<string, string> = {};
   if (isUser && primaryColor) {
@@ -53,36 +54,45 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
 
     let isMounted = true;
     let current = 1;
+    timeoutIdsRef.current = [];
 
     setVisibleCount(1);
     setShowLoader(hasMultipleSegments > 1);
 
     function showNext() {
       if (!isMounted) return;
+
       if (current < hasMultipleSegments) {
         setShowLoader(true);
-        setTimeout(() => {
+
+        const nextTimeout = setTimeout(() => {
           if (!isMounted) return;
+
           setVisibleCount(current + 1);
           current += 1;
+
           if (current < hasMultipleSegments) {
             setShowLoader(true);
-            setTimeout(showNext, 200);
+            const innerTimeout = setTimeout(showNext, 200);
+            timeoutIdsRef.current.push(innerTimeout);
           } else {
             setShowLoader(false);
             setShowProductSlider(true);
           }
         }, TIMEOUT_DELAY);
+
+        timeoutIdsRef.current.push(nextTimeout);
       } else {
         setShowLoader(false);
       }
     }
 
-    setTimeout(showNext, TIMEOUT_DELAY);
+    const initialTimeout = setTimeout(showNext, TIMEOUT_DELAY);
+    timeoutIdsRef.current.push(initialTimeout);
 
-    //TODO: Are we clearning or mouting out the timeout ?
     return () => {
       isMounted = false;
+      timeoutIdsRef.current.forEach(clearTimeout);
     };
   }, [message.content, message.type]);
 

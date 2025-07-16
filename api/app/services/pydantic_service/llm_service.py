@@ -134,7 +134,7 @@ class LLMService:
                             structured_result = {
                                 "tool": tool_name,
                                 "tool_use_id": tool_block["id"],
-                                "result": result_data
+                                "result": json.dumps(result_data, ensure_ascii=False)
                             }
 
                             tool_result_content.append({

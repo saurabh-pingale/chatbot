@@ -3,7 +3,7 @@
 client_id = "5c6356e63895028f5c0c531b2f8c9846"
 name = "Reezo AI"
 handle = "reezo-ai-1"
-application_url = "https://plastic-gis-jar-flash.trycloudflare.com"
+application_url = "https://disputes-copyright-drop-avi.trycloudflare.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://plastic-gis-jar-flash.trycloudflare.com/auth/callback",
-  "https://plastic-gis-jar-flash.trycloudflare.com/auth/shopify/callback",
-  "https://plastic-gis-jar-flash.trycloudflare.com/api/auth/callback"
+  "https://disputes-copyright-drop-avi.trycloudflare.com/auth/callback",
+  "https://disputes-copyright-drop-avi.trycloudflare.com/auth/shopify/callback",
+  "https://disputes-copyright-drop-avi.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://plastic-gis-jar-flash.trycloudflare.com"
+url = "https://disputes-copyright-drop-avi.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 

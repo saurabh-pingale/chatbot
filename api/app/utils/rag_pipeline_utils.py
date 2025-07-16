@@ -59,80 +59,21 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
     return formatted_messages
 
 def safe_parse_json(text: str) -> Dict[str, Any]:
-    """Safely parse JSON from text with multiple fallback strategies"""
+    """Safely parse a flat JSON response with answer/intent keys"""
     if not text or not text.strip():
         return {}
-    
+
     text = text.strip()
-    
+
     try:
-        # Direct JSON parsing
         parsed = json.loads(text)
         if isinstance(parsed, dict):
+            if "answer" in parsed and isinstance(parsed["answer"], dict):
+                parsed["answer"] = json.dumps(parsed["answer"])
             return parsed
-        elif isinstance(parsed, str):
-            # Handle double-encoded JSON
-            return json.loads(parsed)
     except json.JSONDecodeError:
         pass
-    
-    try:
-        # Extract from <result> tags
-        if "<result>" in text and "</result>" in text:
-            result_content = text.split("<result>")[-1].split("</result>")[0].strip()
-            parsed = json.loads(result_content)
-            if isinstance(parsed, dict):
-                return parsed
-    except json.JSONDecodeError:
-        pass
-    
-    try:
-        # JSON-like structure with regex
-        json_pattern = r'\{(?:[^{}]|{[^{}]*})*\}'
-        matches = re.findall(json_pattern, text, re.DOTALL)
-        
-        for match in matches:
-            try:
-                parsed = json.loads(match)
-                if isinstance(parsed, dict) and ("answer" in parsed or "intent" in parsed):
-                    return parsed
-            except json.JSONDecodeError:
-                continue
-    except Exception:
-        pass
-    
-    try:
-        # Clean up common formatting issues
-        cleaned_text = re.sub(r'\s+', ' ', text)
-        cleaned_text = cleaned_text.replace('\n', '\\n')
-        
-        start_idx = cleaned_text.find('{')
-        end_idx = cleaned_text.rfind('}')
-        
-        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-            json_str = cleaned_text[start_idx:end_idx + 1]
-            parsed = json.loads(json_str)
-            if isinstance(parsed, dict):
-                return parsed
-    except Exception:
-        pass
-    
-    # answer field contains nested JSON
-    try:
-        parsed = json.loads(text)
-        if isinstance(parsed, dict) and "answer" in parsed:
-            answer_content = parsed["answer"]
-            if isinstance(answer_content, str) and answer_content.strip().startswith("{"):
-                try:
-                    inner_json = json.loads(answer_content)
-                    if isinstance(inner_json, dict) and "answer" in inner_json:
-                        return inner_json
-                except json.JSONDecodeError:
-                    pass
-        return parsed
-    except json.JSONDecodeError:
-        pass
-    
+
     return {}
 
 def build_query_key(

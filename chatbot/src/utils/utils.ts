@@ -32,19 +32,48 @@ export const validateEmail = (email: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
-export const formatMessage = (text: string, type: 'bot'|'user'): string[] => {
-  const formattedHtml = [];
-  if(type == 'user'){
-    formattedHtml.push(`<p>${text}</p>`)
-    return formattedHtml
+export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
+  const formattedHtml: string[] = [];
+
+  if (type === 'user') {
+    formattedHtml.push(`<p>${text}</p>`);
+    return formattedHtml;
   }
 
-  const lines = text.replace(/â€¢/g, "•").split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if(line){
-      formattedHtml.push(`<p>${line}</p>`);
+  text = text.replace(/â€¢/g, "•").replace(/\s+/g, " ").trim();
+
+  const segments: string[] = [];
+  const MAX_SEGMENT_LENGTH = 250;
+
+  const sentences = text.match(/•.*?(?=\s*•|$)|[^.]+\.|[^.]+/g) || [text];
+
+  let buffer = '';
+
+  for (let sentence of sentences) {
+    sentence = sentence.trim();
+    if (!sentence) continue;
+
+    if (sentence.startsWith('•')) {
+      if (buffer) {
+        segments.push(buffer);
+        buffer = '';
+      }
+      segments.push(sentence);
+      continue;
     }
+
+    if ((buffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
+      buffer += (buffer ? ' ' : '') + sentence;
+    } else {
+      if (buffer) segments.push(buffer);
+      buffer = sentence;
+    }
+  }
+
+  if (buffer) segments.push(buffer);
+
+  for (const segment of segments) {
+    formattedHtml.push(`<p>${segment.trim()}</p>`);
   }
 
   return formattedHtml;

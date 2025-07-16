@@ -309,3 +309,10 @@ export type TagItem = {
   name: string;
   description: string;
 };
+
+export interface ChatbotTagsProps {
+  tags?: { name: string }[];
+  isTyping: boolean;
+  primaryColor?: string;
+  onClick: (tagName: string) => void;
+}

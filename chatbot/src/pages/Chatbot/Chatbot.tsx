@@ -1,5 +1,6 @@
 import { memo, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import ChatBody from '../../components/Chatbot-UI/ChatBody/ChatBody';
 import { ChatHeader } from '../../components/Chatbot-UI/ChatHeader/ChatHeader';
 import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/ChatbotToggle';
@@ -16,18 +17,13 @@ import {
   getIpAddress,
   getShopOfferTags
 } from '../../services/chat';
+import { TAG_DICTIONARY, STATIC_BOT_GREETING } from '../../constants/botMessages.constants';
 import { hexToRgbArray } from '../../utils/utils';
 import type { ChatbotProps, StyleWithCustomProps, LocationInfo, Message, TagItem } from '../../types';
 import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
-  //TODO: Move all these constants to contants file
-  const STATIC_BOT_GREETING = "I'm store assistant. How can I help you 😊";
-  const TAG_DICTIONARY: Record<string, string> = {
-    'Hi 👋': "Say hello to the assistant",
-    'Browse Products': "Get me available product collections in store"
-  };
   const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
     name,
     description
@@ -104,8 +100,6 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
     }
   }, [isOpen, isEmailGateVisible, hasShownStaticMessage, addMessage]);
 
-
-
   const handleToggle = () => {
     setIsOpen(prev => !prev);
   };
@@ -171,20 +165,24 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   };
 
   const handleSendMessage = async (content: string) => {
-    const isChatAllowed = jwtToken || !config.showEmailGate;
+    const isAuthenticated = Boolean(jwtToken);
+    const isEmailGateRequired = config.showEmailGate;
+    const isGuestModeAllowed = config.allowGuestMode;
 
-    //TODO: I don't think so, below !isChatAllowed blocks are correct way of defining in code
-    if (!isChatAllowed && isEmailGateVisible) {
+    const requiresEmailBeforeChat = !isAuthenticated && isEmailGateRequired && isEmailGateVisible;
+    const requiresAuthToChat = !isAuthenticated && !isGuestModeAllowed;
+
+    if (requiresEmailBeforeChat) {
       setError('Please provide your email to start chatting.');
       return;
     }
-    
-    if (!isChatAllowed && !config.allowGuestMode) { 
+
+    if (requiresAuthToChat) {
       setError('Authentication is required to send messages.');
       setIsEmailGateVisible(true);
       return;
     }
-
+    
     if (typeof content !== 'string') {
       console.error('Invalid content type sent to handleSendMessage:', content);
       return;
@@ -204,6 +202,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
         timestamp: new Date() 
       }
     ];
+    
     handleTyping(true)
     try {
       const payloadBase = {

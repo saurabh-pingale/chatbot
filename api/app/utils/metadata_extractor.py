@@ -2,7 +2,7 @@ import re
 from typing import Dict, Any
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
-from app.utils.metadata_config import CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, ATTRIBUTE_PATTERNS
+from app.utils.metadata_config import CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, ATTRIBUTE_PATTERNS, SIZE_ALIASES
 
 class MetadataExtractor:
     """A centralized class to extract metadata for various apparel categories."""
@@ -10,11 +10,6 @@ class MetadataExtractor:
     def __init__(self):
         sorted_aliases = sorted(CATEGORY_ALIASES.keys(), key=len, reverse=True)
         self._category_regex = re.compile(r"\b(" + "|".join(sorted_aliases) + r")\b", re.IGNORECASE)
-        #Move all these sizes and other product related configuration to seperate file
-        self._size_map = {
-            "extra small": "XS", "small": "S", "medium": "M", "large": "L", "extra large": "XL",
-            "xxl": "XXL", "xxxl": "XXXL"
-        }
 
     def _get_segment_from_query(self, query: str, category_matches: list, current_index: int) -> str:
         """Returns the segment of the query corresponding to a product category match"""
@@ -102,7 +97,7 @@ class MetadataExtractor:
         match = ATTRIBUTE_PATTERNS["size"].search(query)
         if match:
             size_raw = match.group(1).lower()
-            return {"size": self._size_map.get(size_raw, size_raw.upper())}
+            return {"size": SIZE_ALIASES.get(size_raw, size_raw.upper())}
         return {}
     
     def _extract_title(self, query: str) -> Dict[str, str]:
@@ -137,9 +132,9 @@ class MetadataExtractor:
             return {}
 
         val = match.group(1).lower()
-        if val in ["men", "man", "male", "boys"]:
+        if val in ["men", "man", "male", "boys", "boyfriend", "husband"]:
             return {"gender": "male"}
-        elif val in ["women", "woman", "female", "ladies", "girls"]:
+        elif val in ["women", "woman", "female", "ladies", "girls", "girlfriend", "wife"]:
             return {"gender": "female"}
         elif val in ["unisex", "all genders", "both genders", "male and female", "for everyone"]:
             return {"gender": "unisex"}
