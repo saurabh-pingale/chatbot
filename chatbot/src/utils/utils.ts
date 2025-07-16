@@ -40,37 +40,42 @@ export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
     return formattedHtml;
   }
 
-  text = text.replace(/â€¢/g, "•").replace(/\s+/g, " ").trim();
+  text = text.replace(/â€¢/g, "•").replace(/\s+/g, " ").replace(/\n/g, " ").trim();
 
   const segments: string[] = [];
   const MAX_SEGMENT_LENGTH = 250;
 
-  const sentences = text.match(/•.*?(?=\s*•|$)|[^.]+\.|[^.]+/g) || [text];
+  const parts = text.split('•').filter(part => part.trim());
 
-  let buffer = '';
+  if (parts.length <= 1) {
+    const sentences = text.match(/[^.]+\.|[^.]+/g) || [text];
+    
+    let buffer = '';
+    for (let sentence of sentences) {
+      sentence = sentence.trim();
+      if (!sentence) continue;
 
-  for (let sentence of sentences) {
-    sentence = sentence.trim();
-    if (!sentence) continue;
-
-    if (sentence.startsWith('•')) {
-      if (buffer) {
-        segments.push(buffer);
-        buffer = '';
+      if ((buffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
+        buffer += (buffer ? ' ' : '') + sentence;
+      } else {
+        if (buffer) segments.push(buffer);
+        buffer = sentence;
       }
-      segments.push(sentence);
-      continue;
+    }
+    if (buffer) segments.push(buffer);
+  } else {
+    const introText = parts[0].trim();
+    if (introText) {
+      segments.push(introText);
     }
 
-    if ((buffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
-      buffer += (buffer ? ' ' : '') + sentence;
-    } else {
-      if (buffer) segments.push(buffer);
-      buffer = sentence;
+    for (let i = 1; i < parts.length; i++) {
+      const bulletContent = parts[i].trim();
+      if (bulletContent) {
+        segments.push(`• ${bulletContent}`);
+      }
     }
   }
-
-  if (buffer) segments.push(buffer);
 
   for (const segment of segments) {
     formattedHtml.push(`<p>${segment.trim()}</p>`);

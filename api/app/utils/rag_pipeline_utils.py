@@ -1,6 +1,5 @@
 import json
 import re
-import ast
 from qdrant_client.http import models
 from qdrant_client.http.models import SearchRequest, SearchParams
 from pydantic import ValidationError
@@ -58,24 +57,23 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
     
     return formatted_messages
 
+def escape_newlines_inside_json_strings(raw: str) -> str:
+    def replacer(match):
+        key, value = match.group(1), match.group(2)
+        value = value.replace("\n", "\\n")
+        return f'"{key}": "{value}"'
+
+    pattern = r'"(answer|intent)":\s*"([^"]*?)"'
+    return re.sub(pattern, replacer, raw, flags=re.DOTALL)
+
 def safe_parse_json(text: str) -> Dict[str, Any]:
-    """Safely parse a flat JSON response with answer/intent keys"""
-    if not text or not text.strip():
-        return {}
-
-    text = text.strip()
-
     try:
-        parsed = json.loads(text)
-        if isinstance(parsed, dict):
-            if "answer" in parsed and isinstance(parsed["answer"], dict):
-                parsed["answer"] = json.dumps(parsed["answer"])
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    return {}
-
+        cleaned_text = escape_newlines_inside_json_strings(text)
+        return json.loads(cleaned_text)
+    except Exception as e:
+        logger.info(f"Failed to parse: {e}")
+        return {}
+        
 def build_query_key(
     vector: List[float],
     namespace: Optional[str],

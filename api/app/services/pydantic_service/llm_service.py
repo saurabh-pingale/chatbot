@@ -62,7 +62,7 @@ class LLMService:
         - The "answer" field must contain ONLY a simple string, NOT nested JSON or objects
         - For long content ONLY, use bullet points within the string (e.g., "• Point 1 • Point 2")
 
-        **IMPORTANT: NEVER wrap the JSON output in any tags. ONLY return plain JSON.**
+        **CRITICAL: Start your response immediately with { and end with }. No explanatory text, no markdown, no additional words. Raw JSON only.**
         """
     
     async def call_claude_with_tools(self, messages:  List[Dict[str, Any]], shop_id: str) -> Dict[str, Any]:
