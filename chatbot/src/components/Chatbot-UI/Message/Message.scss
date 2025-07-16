@@ -21,6 +21,7 @@
 }
 
 .message-bubble {
+  // TODO: This max-width is wrong, revert it
   max-width: 100%;
   padding: 12px 16px;
   color: $white-100;

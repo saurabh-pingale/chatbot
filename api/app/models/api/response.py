@@ -30,16 +30,19 @@ class ProductResponse(BaseResponse):
     def validate_products(cls, v):
         if isinstance(v, str):
             try:
+                #TODO: I think it will send in the json format to LLM, Can you pass string format to LLM, same for other tools
                 return json.loads(v)
             except json.JSONDecodeError:
                 raise ValueError("Invalid JSON string for products")
         return v
 
+#TODO: It will return the same json, please return as string not json structure, once it done please remove unncessary in safe_parse function
 class OrderResponse(BaseResponse):
     """Response model for order-related queries"""
     answer: Optional[str] = Field(..., description="The detailed response to the user's order query")
     email: Optional[str] = Field(None, description="Support email if relevant")
     phone: Optional[str] = Field(None, description="Support phone if relevant")
 
+#TODO: It will return the same json, please return as string not json structure, once it done please remove unncessary in safe_parse function
 class TermsToolResponse(BaseResponse):
     answer: str = Field(..., description="Response to the user's policy or terms-related query")

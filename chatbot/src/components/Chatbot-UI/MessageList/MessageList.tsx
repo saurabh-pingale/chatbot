@@ -55,6 +55,7 @@ export const MessageList = memo<MessageListProps>(({
           )}
 
           {!isTyping && tags && tags.length > 0 && (
+            //TODO: Can you make below seperate component
             <motion.div
               className="chatbot-tags-container agent-side"
               initial={{ opacity: 0, y: 20 }}

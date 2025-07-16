@@ -80,6 +80,7 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
 
     setTimeout(showNext, TIMEOUT_DELAY);
 
+    //TODO: Are we clearning or mouting out the timeout ?
     return () => {
       isMounted = false;
     };

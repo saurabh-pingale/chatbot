@@ -38,6 +38,7 @@ class ShopAdminService:
         """Create the email gate preference to the DB via handler."""
         await self.db_handler.create_email_gate_preference(shop_id, show_email_gate)
 
+    #TODO: What is this integration, it should be either create, delete, get etc
     async def integration(self, shop_id: str, title: str, description: str) -> None:
         """Save integration details to the DB via handler."""
         await self.db_handler.integration_handler(shop_id, title, description)

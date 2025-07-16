@@ -49,6 +49,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
         </div>
         <h2 className="chat-header-title">Store Assistant</h2>
       </div>
+      
       <div className="chat-header-right-section">
         {showOffersIcon && onToggleOffers && (
           <motion.div 

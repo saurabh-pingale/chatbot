@@ -22,6 +22,7 @@ import { chatAnimation } from '../../styles/animations';
 import './Chatbot.scss';
 
 export const Chatbot = memo<ChatbotProps>(({ config }) => {
+  //TODO: Move all these constants to contants file
   const STATIC_BOT_GREETING = "I'm store assistant. How can I help you 😊";
   const TAG_DICTIONARY: Record<string, string> = {
     'Hi 👋': "Say hello to the assistant",
@@ -172,6 +173,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
   const handleSendMessage = async (content: string) => {
     const isChatAllowed = jwtToken || !config.showEmailGate;
 
+    //TODO: I don't think so, below !isChatAllowed blocks are correct way of defining in code
     if (!isChatAllowed && isEmailGateVisible) {
       setError('Please provide your email to start chatting.');
       return;

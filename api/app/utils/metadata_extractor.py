@@ -10,6 +10,7 @@ class MetadataExtractor:
     def __init__(self):
         sorted_aliases = sorted(CATEGORY_ALIASES.keys(), key=len, reverse=True)
         self._category_regex = re.compile(r"\b(" + "|".join(sorted_aliases) + r")\b", re.IGNORECASE)
+        #Move all these sizes and other product related configuration to seperate file
         self._size_map = {
             "extra small": "XS", "small": "S", "medium": "M", "large": "L", "extra large": "XL",
             "xxl": "XXL", "xxxl": "XXXL"
