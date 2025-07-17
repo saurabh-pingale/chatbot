@@ -29,11 +29,10 @@ async def get_current_user_payload(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
 ) -> Optional[Dict[str, Any]]:
-    if not credentials:
+    if not credentials or not hasattr(credentials, 'credentials') or not credentials.credentials:
         request.state.decoded_token = None
         return None
 
-    #TODO: These might got some errors, always check if exists like more safer one -> credentials.get('credentials') 
     token = credentials.credentials
     decoded_token = decode_access_token(token)
 

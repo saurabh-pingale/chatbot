@@ -12,13 +12,18 @@ class CountryCodeHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    result = await session.execute(select(CountryCodeModel))
-                    country_codes = result.scalars().all()
-                    return [{"label": cc.label, "value": cc.value} for cc in country_codes]
+                    query_result = await session.execute(select(CountryCodeModel))
+                    country_codes = query_result.scalars().all()
+
+                    country_code_list = [
+                        {"label": country.label, "value": country.value}
+                        for country in country_codes
+                    ]
+
+                    return country_code_list
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_country_codes: {error}", exc_info=True)
-                    #TODO: Add the message here like raise Exception('Error message...')
-                    raise
+                    raise Exception("Failed to fetch country codes from the database.")
     
     async def create_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
         """Create country codes in bulk"""
@@ -37,8 +42,7 @@ class CountryCodeHandler:
                 except SQLAlchemyError as error:
                     await session.rollback()
                     logger.error(f"Database error in create_country_codes: {error}", exc_info=True)
-                    #TODO: Add the message here like raise Exception('Error message...')
-                    raise
+                    raise Exception("Failed to create country codes in the database.")
                 except KeyError as error:
                     await session.rollback()
                     logger.error(f"Invalid country code format: {error}", exc_info=True)

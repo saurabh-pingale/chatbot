@@ -24,8 +24,6 @@ class ShopAdminService:
     async def get_shop_status_with_subscription(self, shop_id: str) -> (Optional[ShopModel], Optional[any]):
         """Fetch shop and its subscription status."""
         shop_model = await self.db_handler.get_shop_status(shop_id)
-        if not shop_model:
-            return None, None
         
         subscription = await self.subscription_handler.get_subscription_by_shop_id(shop_model.id)
         return shop_model, subscription

@@ -42,8 +42,12 @@ async def create_color_preference(request: Request, body: ColorPreferenceRequest
 
     try:
         app = get_app()
-        await app.shop_admin_service.create_color_preference(shop_id, color)
-        return {"success": True}
+        preferred_color = await app.shop_admin_service.create_color_preference(shop_id, color)
+        return {
+            "success": True,
+            "message": "Color preference saved successfully.",
+            "color": preferred_color
+        }
     except Exception as error:
         logger.error("Error in create_color_preference: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create color preference")
@@ -72,8 +76,12 @@ async def create_support_info(request: Request, body: SupportInfoRequest):
 
     try:
         app = get_app()
-        await app.shop_admin_service.create_support_info(shop_id, email, phone, country_code)
-        return {"success": True}
+        support_info = await app.shop_admin_service.create_support_info(shop_id, email, phone, country_code)
+        return { 
+            "success": True, 
+            "message": "Support Info saved successfully.",
+            **support_info 
+        }
     except Exception as error:
         logger.error("Error in create_support_info: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create support info")
@@ -96,8 +104,12 @@ async def create_shop_image(request: Request, body: ShopImageRequest):
         raise HTTPException(status_code=400, detail="Missing image")
     try:
         app = get_app()
-        await app.shop_admin_service.create_shop_image(shop_id, image_url)
-        return {"success": True}
+        image = await app.shop_admin_service.create_shop_image(shop_id, image_url)
+        return {
+            "success": True,
+            "message": "Shop Image saved successfully.",
+            "image": image
+            }
     except Exception as error:
         logger.error("Error in create_shop_image: %s", str(error), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create shop image")

@@ -52,25 +52,36 @@ async def agent_conversation(
                 validated_payload.validate_shop_access(shop.id)
                 user_id = validated_payload.user_id
                 is_guest = validated_payload.is_guest
-            except ValidationError as ve:
-                raise HTTPException(status_code=401, detail=str(ve))
-            except ValueError as ve:
-                raise HTTPException(status_code=401, detail=str(ve))
+            except (ValidationError, ValueError) as ve:
+                logger.warning(f"Auth validation failed: {ve}")
+                return {
+                    "answer": "Authentication failed.",
+                    "products": [],
+                    "categories": [],
+                    "success": False,
+                    "error": str(ve)
+                }
 
-        if len(payload.messages) > MESSAGE_LIMIT * 2:
+        contents = payload.messages
+        if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):
             return {
-                "answer": "Your limit is reached", 
-                "products": [], "categories": [], 
-                "success": False, "limit_reached": True
+                "answer": "Invalid 'messages' format. Expected a list of message objects.",
+                "products": [],
+                "categories": [],
+                "success": False
             }
         
-        contents = payload.messages
-        if not isinstance(contents, list):
-            raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
+        if len(contents) > MESSAGE_LIMIT * 2:
+            return {
+                "answer": "Your limit is reached", 
+                "products": [], 
+                "categories": [], 
+                "success": False, 
+                "limit_reached": True
+            }
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
-        #TODO: validate whether contents as data or not, else don't do these below operation, what it contents is string type, then this len('') gives error
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
         await record_chat_analytics(app, user_id, shop.id, guest_id, payload.location_info)
@@ -79,14 +90,18 @@ async def agent_conversation(
 
         conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop.id, is_guest, guest_id )
 
-        await app.conversation_service.record_conversation_into_db(conversation_log_data)
+        conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
+        
+        if isinstance(conversation_response, dict) and conversation_response.get("status") == "error":
+            logger.warning(f"Conversation logging failed: {conversation_response}")
+        else:
+            logger.info(f"Conversation stored with ID: {conversation_response}")
     
         return agent_response
 
     except HTTPException as http_exc:
         logger.warning(f"HTTPException in agent_conversation: {http_exc.detail}")
-        #TODO: Here also return something, if it fall under HTTPException or valueException
-        raise http_exc
+        return {"answer": f"Request failed: {http_exc.detail}", "products": [], "categories": [], "success": False, "error": http_exc.detail}
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         return {"answer": "I'm having trouble processing your request. Please try again later.", "products": [], "categories": [], "success": False, "error": str(e)}
