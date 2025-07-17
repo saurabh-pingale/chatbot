@@ -3,7 +3,6 @@ from typing import Dict, Any
 from app.services.pydantic_service.tools.base_tool import BaseTool
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
-from app.models.api.response import TermsToolResponse
 from app.utils.logger import logger
 
 class TermsTool(BaseTool):
@@ -74,21 +73,22 @@ class TermsTool(BaseTool):
             
             if not extracted_term_texts:
                 logger.warning(f"Warning: No terms found for query: '{query}' in shop: {shop_id}")
-                return TermsToolResponse(
-                    answer= "I apologize, but I couldn't find any specific information.\n"
+                return {
+                    "answer": "I apologize, but I couldn't find any specific information.\n"
                             "Please check the store's policy pages or contact customer support.",
-                    success= False
-                )
-            return TermsToolResponse(
-                answer= "\n\n".join(extracted_term_texts),
-                success= True
-            )
+                    "success": False
+                }
+            
+            return {
+                "answer": "\n\n".join(extracted_term_texts),
+                "success": True
+            }
             
         except Exception as e:
             logger.error(f"Error in terms tool processing message for shopId '{shop_id}': {e}", exc_info=True)
-            return TermsToolResponse(
-                answer= "I'm having trouble accessing the store's policy information right now. "
+            return {
+                "answer": "I'm having trouble accessing the store's policy information right now. "
                         "Please try again later or contact the store directly.",
-                success= False,
-                error= str(e)
-            )
+                "success": False,
+                "error": str(e)
+            }

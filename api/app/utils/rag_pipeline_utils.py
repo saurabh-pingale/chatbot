@@ -1,5 +1,3 @@
-import json
-import re
 from qdrant_client.http import models
 from qdrant_client.http.models import SearchRequest, SearchParams
 from pydantic import ValidationError
@@ -54,39 +52,8 @@ def format_message_history(previous_messages: List[Dict[str, Any]]) -> List[Dict
                 "role": "assistant",
                 "content": content
             })
-    
+
     return formatted_messages
-
-def flatten_message_history_to_text(messages: List[Dict[str, str]]) -> str:
-    """Flatten structured messages into plain text format."""
-    text_history = []
-    for msg in messages:
-        role = msg.get("role", "user")
-        content = msg.get("content", "").strip()
-        if not content:
-            continue
-        if role == "user":
-            text_history.append(f"User: {content}")
-        elif role == "assistant":
-            text_history.append(f"Assistant: {content}")
-    return "\n".join(text_history)
-
-def escape_newlines_inside_json_strings(raw: str) -> str:
-    def replacer(match):
-        key, value = match.group(1), match.group(2)
-        value = value.replace("\n", "\\n")
-        return f'"{key}": "{value}"'
-
-    pattern = r'"(answer|intent)":\s*"([^"]*?)"'
-    return re.sub(pattern, replacer, raw, flags=re.DOTALL)
-
-def safe_parse_json(text: str) -> Dict[str, Any]:
-    try:
-        cleaned_text = escape_newlines_inside_json_strings(text)
-        return json.loads(cleaned_text)
-    except Exception as e:
-        logger.info(f"Failed to parse: {e}")
-        return {}
         
 def build_query_key(
     vector: List[float],
