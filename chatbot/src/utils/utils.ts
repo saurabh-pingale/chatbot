@@ -21,6 +21,7 @@ export const formatVariantId = (id: number): string => {
 };
 
 export const hexToRgbArray = (hex: string): [number, number, number] | null => {
+  //TODO: Add a comment like //phone number validation regex or //email validation regex, also describe little bit of regex by adding comments  or keep variable name explainable 
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? [
     parseInt(result[1], 16),
@@ -30,6 +31,7 @@ export const hexToRgbArray = (hex: string): [number, number, number] | null => {
 };
 
 export const validateEmail = (email: string): boolean => {
+  //TODO: Here explain little bit of regex by adding comments  or keep variable name explainable 
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
@@ -41,16 +43,21 @@ export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
     return formattedHtml;
   }
 
+  //TODO: What are we doing exactly here ?, 
+  //TODO: Try to explain via comments or keep variable name explainable 
   text = text.replace(/â€¢/g, "•").replace(/\s+/g, " ").replace(/\n/g, " ").trim();
 
   const segments: string[] = [];
+  //TODO: Why we choose max segement length 250 ?,  Try to explain via comments or keep variable name explainable 
   const MAX_SEGMENT_LENGTH = 250;
 
   const parts = text.split('•').filter(part => part.trim());
 
   if (parts.length <= 1) {
+    //TODO:  Try to explain via comments or keep variable name explainable 
     const sentences = text.match(/[^.]+\.|[^.]+/g) || [text];
     
+    //TODO: What is buffer about ?. explain via comments or keep variable name explainable 
     let buffer = '';
     for (let sentence of sentences) {
       sentence = sentence.trim();
@@ -59,12 +66,14 @@ export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
       if ((buffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
         buffer += (buffer ? ' ' : '') + sentence;
       } else {
+        //TODO: What is segment about ?, Try to explain via comments or keep variable name explainable 
         if (buffer) segments.push(buffer);
         buffer = sentence;
       }
     }
     if (buffer) segments.push(buffer);
   } else {
+    //TODO:Are we validating whether parts has items ? before extraction or Trim
     const introText = parts[0].trim();
     if (introText) {
       segments.push(introText);

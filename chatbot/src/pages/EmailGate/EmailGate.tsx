@@ -36,6 +36,7 @@ export const EmailGate = memo<EmailGateProps>(({
     '--theme-primary-color': primaryColorFromConfig,
   };
 
+  //TODO: One compoent should not have these many functions, if there then its gives lot more bugs, THINK and seperate based on HTML react code
   const handleEmailSubmit = async () => {
     if (!validateEmail(email)) {
       setError('Please enter a valid email address');
@@ -143,7 +144,9 @@ export const EmailGate = memo<EmailGateProps>(({
             ? `We've sent an OTP to ${email}. Please enter it below.`
             : "To get started with our chat assistant, please enter your email address. This helps us personalize your experience."}
         </p>
+        {/* TODO: Can you move these OTPs to seperate component altogether, also move all these handle functions to that component */}
         {!otpSent ? (
+          //Try to create seperate component of below input
             <input
               type="email"
               className={`email-gate-input ${error ? 'has-error' : ''}`}
@@ -161,6 +164,7 @@ export const EmailGate = memo<EmailGateProps>(({
         ) : (
              <div className="otp-input-container">
               {Array.from({ length: 4 }).map((_, index) => (
+                //Try to create seperate component of below input, also always use key={[feature]-index} i.e key={`otp-${index}`} instead of key={index} its danger
                 <input
                   key={index}
                   ref={el => {
