@@ -95,8 +95,7 @@ export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   }
 };
 
-//TODO: Try to elobrate, syncCartWithShopify -> syncCartItemsToShopifyStoreCart
-export const syncCartWithShopify = async (localCart: CartItem[]): Promise<boolean> => {
+export const syncCartItemsToShopifyStoreCart = async (localCart: CartItem[]): Promise<boolean> => {
   if (!await clearCart()) return false;
 
   if (localCart.length === 0) return true;

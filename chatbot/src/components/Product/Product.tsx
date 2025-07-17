@@ -2,8 +2,11 @@ import { motion } from 'framer-motion';
 import type { ProductProps, StyleWithCustomProps } from '../../types';
 import './Product.scss';
 import { hexToRgbArray } from '../../utils/utils';
+import { useConfig } from '../../context/ConfigContext';
 
-export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) => {
+export const Product = ({ product, onAddToCart }: ProductProps) => {
+  const config = useConfig();
+
   const handleAddToCart = async () => {
     try {
       await onAddToCart(product);
@@ -12,11 +15,11 @@ export const Product = ({ product, onAddToCart, primaryColor }: ProductProps) =>
     }
   };
 
-  const primaryColorRgb = hexToRgbArray(primaryColor);
+  const primaryColorRgb = hexToRgbArray(config.primaryColor);
   const dynamicButtonStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
-  if (primaryColor) {
+  if (config.primaryColor) {
     dynamicButtonStyles['--theme-primary-color-rgb'] = primaryColorRgb?.join(', ');
   }
 

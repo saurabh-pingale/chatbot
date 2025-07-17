@@ -4,16 +4,16 @@ import { IMAGE } from '../../../constants/image';
 import type { ChatbotToggleProps, StyleWithCustomProps } from '../../../types';
 import { iconAnimation, toggleAnimation } from '../../../styles/animations';
 import './ChatbotToggle.scss';
+import { useConfig } from '../../../context/ConfigContext';
 
 export const ChatbotToggle = memo<ChatbotToggleProps>(({ 
   isOpen,
-  storeImage,
-  primaryColor,
   onClick 
 }) => {
+  const config = useConfig();
 
   const toggleStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
 
   return (
@@ -31,7 +31,7 @@ export const ChatbotToggle = memo<ChatbotToggleProps>(({
         variants={iconAnimation}
       >
         <img
-          src={storeImage || IMAGE.FALLBACK}
+          src={config.storeImage || IMAGE.FALLBACK}
           alt="Store Logo"
           onError={(e) => {
             const img = e.target as HTMLImageElement;

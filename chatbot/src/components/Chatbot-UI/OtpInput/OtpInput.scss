@@ -1,0 +1,35 @@
+@use '../../../styles/colors.scss' as *;
+
+.otp-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.otp-input {
+  width: 40px;
+  height: 48px;
+  text-align: center;
+  border: 1px solid $gray-300;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-shadow: none;
+
+  &.has-error {
+    border-color: var(--theme-primary-color, #{$red-500});
+  }
+
+  &:focus {
+    border-color: var(--theme-primary-color, #{$orange-450});
+    box-shadow: none;
+  }
+  
+  &:focus.has-error {
+    border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
+  }
+}
