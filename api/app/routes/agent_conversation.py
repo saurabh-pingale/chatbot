@@ -70,6 +70,7 @@ async def agent_conversation(
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
+        #TODO: validate whether contents as data or not, else don't do these below operation, what it contents is string type, then this len('') gives error
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
         await record_chat_analytics(app, user_id, shop.id, guest_id, payload.location_info)
@@ -84,6 +85,7 @@ async def agent_conversation(
 
     except HTTPException as http_exc:
         logger.warning(f"HTTPException in agent_conversation: {http_exc.detail}")
+        #TODO: Here also return something, if it fall under HTTPException or valueException
         raise http_exc
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)

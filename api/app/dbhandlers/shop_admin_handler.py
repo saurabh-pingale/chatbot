@@ -1,3 +1,4 @@
+#TODO: This is not the proper way, you should do as raise Exception('...')
 from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, join
@@ -23,10 +24,12 @@ class ShopAdminHandler:
                     return result.scalars().first()
                 except SQLAlchemyError as error:
                     logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise error
 
     async def create_collections(self, collections: List[CollectionModel]) -> List[dict]:
         """Create collections in the database using bulk operations."""
+        #TODO: Where did you defined rollback ?
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
@@ -34,6 +37,7 @@ class ShopAdminHandler:
                     collection_data_to_insert = []
                     
                     for collection in collections:
+                        #TODO: Add validation if title and products_count exists
                         collection_data_to_insert.append({
                             'title': collection.title,
                             'products_count': collection.products_count
@@ -46,13 +50,15 @@ class ShopAdminHandler:
                     )
 
                     await session.execute(stmt)
-
+                    #TODO: Don't use c['title'], always use c.get('title', '') if more safer one
+                    #TODO: Don't use "c", "b" or "d", define properly
                     titles = [c['title'] for c in collection_data_to_insert]
                     stmt = select(CollectionModel).where(CollectionModel.title.in_(titles))
                     existing_collections = await session.execute(stmt)
                     collections_list = existing_collections.scalars().all()
 
                     for collection in collections_list:
+                        #TODO: Don't use collection. (colllection dot title), use collection.get('title', ''), its safer won't get errors and has fallback
                         created_collections_info.append({
                             "title": collection.title,
                             "products_count": collection.products_count,
@@ -77,6 +83,7 @@ class ShopAdminHandler:
                 .distinct()
             )
             result = await session.execute(stmt)
+            #Here also if result doesn't have items then it causes issue, make sure validate if row contains items
             return [row[0] for row in result.all() if row[0]]
 
     async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
@@ -87,6 +94,7 @@ class ShopAdminHandler:
                     product_data_to_insert = []
                     for product in products:
                         col_id = collection_id_map.get(product.category)
+                        #TODO: Here also don't use ., instead use get like product.get('id')
                         product_data_to_insert.append({
                             'id': product.id,
                             'title': product.title,
@@ -130,6 +138,8 @@ class ShopAdminHandler:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return None
 
+                    #TODO: These fallback country code we need to mention in .env file, so that we can quickly change
+                    #TODO: Don't use shop.support_country_code or '+1' instead use like shop.get('support_country_code', 'os.env.US_COUNTRY_CODE')
                     return {
                         "support_email": shop.support_email,
                         "support_phone": f"{shop.support_country_code or '+1'}{shop.support_phone}"
@@ -148,6 +158,7 @@ class ShopAdminHandler:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
 
+                    #TODO: What is this use of this line, are we returning anywhere ?, bro please becareful..., we good code
                     shop.preferred_color = color
 
                 except SQLAlchemyError as error:
@@ -162,7 +173,7 @@ class ShopAdminHandler:
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
-
+                    #TODO: What is this use of this line, are we returning anywhere ?, bro please becareful..., we good code
                     shop.support_email = email
                     shop.support_phone = phone
                     shop.support_country_code = country_code
@@ -171,6 +182,7 @@ class ShopAdminHandler:
                 except SQLAlchemyError as error:
                     await session.rollback()
                     logger.error("Error saving support info: %s", str(error), exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise
 
     async def create_shop_image(self, shop_id: str, image_url: str) -> dict:
@@ -182,7 +194,7 @@ class ShopAdminHandler:
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
-
+                    #TODO: What is this use of this line, are we returning anywhere ?, bro please becareful..., we good code
                     shop.image = image_url
                     return {"success": True}
                 except SQLAlchemyError as error:
@@ -196,9 +208,11 @@ class ShopAdminHandler:
             async with session.begin():
                 try:
                     shop = await self.get_shop_by_domain(shop_id)
+                    #TODO: Validate here if there is no shop, raise exception error
                     return shop
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise error
                 
     async def create_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
@@ -217,6 +231,7 @@ class ShopAdminHandler:
          
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in create_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise error
                 
     async def create_integration(self, shop_id: str, title: str, description: str) -> None:
@@ -232,6 +247,7 @@ class ShopAdminHandler:
                     session.add(integration)
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise error
                 
     async def update_shop_setup_completed_status(self, shop_id: int, status: bool) -> None:
@@ -245,4 +261,5 @@ class ShopAdminHandler:
                         logger.info(f"Updated setup_completed status for shop_id {shop_id} to {status}")
                 except SQLAlchemyError as e:
                     logger.error(f"Database error in update_shop_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
+                    #TODO: This is not the proper way, you should do as raise Exception('...')
                     raise

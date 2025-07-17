@@ -33,6 +33,7 @@ async def get_current_user_payload(
         request.state.decoded_token = None
         return None
 
+    #TODO: These might got some errors, always check if exists like more safer one -> credentials.get('credentials') 
     token = credentials.credentials
     decoded_token = decode_access_token(token)
 

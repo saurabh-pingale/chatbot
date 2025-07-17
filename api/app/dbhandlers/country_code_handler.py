@@ -17,6 +17,7 @@ class CountryCodeHandler:
                     return [{"label": cc.label, "value": cc.value} for cc in country_codes]
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_country_codes: {error}", exc_info=True)
+                    #TODO: Add the message here like raise Exception('Error message...')
                     raise
     
     async def create_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
@@ -36,6 +37,7 @@ class CountryCodeHandler:
                 except SQLAlchemyError as error:
                     await session.rollback()
                     logger.error(f"Database error in create_country_codes: {error}", exc_info=True)
+                    #TODO: Add the message here like raise Exception('Error message...')
                     raise
                 except KeyError as error:
                     await session.rollback()

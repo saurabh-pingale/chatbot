@@ -46,8 +46,10 @@ class ConversationHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in record_conversation_into_db: {error}", exc_info=True)
                     await session.rollback()
+                    #TODO: Here send the conversation of json object something went wrong, Also test this senario
                     return None 
                 except Exception as e:
                     logger.error(f"Unhandled error in record_conversation_into_db: {e}", exc_info=True)
                     await session.rollback()
+                    #TODO: Here send the conversation of json object something went wrong, Also test this senario
                     return None

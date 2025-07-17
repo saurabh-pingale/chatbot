@@ -3,6 +3,7 @@ from app.utils.logger import logger
 async def record_chat_analytics(app, user_id, shop_id, guest_id, location_info):
     """Records chat analytics using analytics_service."""
     try:
+        #TODO: Don't blindly add into db, validate these values as string type and does it contain data or None ?, based on it add it.
         success = await app.analytics_service.record_chat_interaction(
             user_id=user_id,
             shop_id=shop_id,
