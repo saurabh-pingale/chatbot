@@ -1,30 +1,38 @@
 import { memo, forwardRef, useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+
 import { messageAnimation } from '../../../styles/animations';
 import { ProductSlider } from '../../ProductSlider/ProductSlider';
+import { ChatbotTags } from '../ChatbotTags/ChatbotTags';
 import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import { formatMessage } from '../../../utils/utils';
-import type { MessageProps, ProductType } from '../../../types';
+import type { MessageProps, ProductType, TagItem } from '../../../types';
 import './Message.scss';
 
 export interface ExtendedMessageProps extends MessageProps {
   onProductAddToCart?: (product: ProductType) => Promise<void>;
   onMessageHeightChange?: () => void;
+  showTagsAfterMessage?: boolean;
+  tags?: TagItem[];
+  onTagClick?: (tag: string) => void;
 }
 
 export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   message,
   primaryColor,
   onProductAddToCart,
-  onMessageHeightChange
+  onMessageHeightChange,
+  showTagsAfterMessage,
+  tags,
+  onTagClick
 }, ref) => {
   const isUser = message.type === 'user';
   const formattedContent = formatMessage(message.content, message.type);
-  const TIMEOUT_DELAY = 1000
-  const hasMultipleSegments = Array.isArray(formattedContent) ? formattedContent.length : 0;
-  const lastMessageRef = useRef<HTMLDivElement | null>(null);
+  const isArrayContent = Array.isArray(formattedContent);
+  const TIMEOUT_DELAY = 1000;
+  const hasMultipleSegments = isArrayContent ? formattedContent.length : 0;
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  
+
   const bubbleStyles: React.CSSProperties & Record<string, string> = {};
   if (isUser && primaryColor) {
     bubbleStyles['--theme-primary-color'] = primaryColor;
@@ -35,14 +43,10 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   const [showProductSlider, setShowProductSlider] = useState(false);
 
   useEffect(() => {
-  if (lastMessageRef.current) {
-    lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  if (typeof onMessageHeightChange === 'function') {
-    onMessageHeightChange();
-  }
-}, [visibleCount]);
+    if (typeof onMessageHeightChange === 'function') {
+      onMessageHeightChange();
+    }
+  }, [visibleCount]);
 
   useEffect(() => {
     if (hasMultipleSegments <= 1) {
@@ -57,14 +61,12 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
     timeoutIdsRef.current = [];
 
     setVisibleCount(1);
-    setShowLoader(hasMultipleSegments > 1);
+    setShowLoader(true);
 
     function showNext() {
       if (!isMounted) return;
 
       if (current < hasMultipleSegments) {
-        setShowLoader(true);
-
         const nextTimeout = setTimeout(() => {
           if (!isMounted) return;
 
@@ -72,7 +74,6 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
           current += 1;
 
           if (current < hasMultipleSegments) {
-            setShowLoader(true);
             const innerTimeout = setTimeout(showNext, 200);
             timeoutIdsRef.current.push(innerTimeout);
           } else {
@@ -82,8 +83,6 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
         }, TIMEOUT_DELAY);
 
         timeoutIdsRef.current.push(nextTimeout);
-      } else {
-        setShowLoader(false);
       }
     }
 
@@ -100,17 +99,21 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   for (let i = 0; i < hasMultipleSegments; i++) {
     if (i < visibleCount) {
       interleavedContent.push(
-        <article 
-          key={`msg-${i}`} 
-          className='message-list' 
-          ref={i === visibleCount - 1 ? lastMessageRef : null}
+        <motion.article
+          key={`msg-${i}`}
+          className={`message-list ${isUser ? 'is-user' : ''}`}
+          variants={messageAnimation}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          ref={i === visibleCount - 1 ? ref : null}
         >
           <div
-            className={`message-bubble ${isUser ? 'is-user' : ''}`}
+            className="message-bubble"
             style={bubbleStyles}
             dangerouslySetInnerHTML={{ __html: formattedContent[i] }}
           />
-        </article>
+        </motion.article>
       );
     }
 
@@ -120,7 +123,11 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
       showLoader
     ) {
       interleavedContent.push(
-        <div key={`loader-${i}`} style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
+        <div 
+          key={`loader-${i}`}
+          className={`message-list ${isUser ? 'is-user' : ''}`}
+          style={{ margin: '4px 0', padding: '0 16px' }}
+        >
           <TypingIndicator primaryColor={primaryColor} />
         </div>
       );
@@ -129,19 +136,16 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   }
 
   return hasMultipleSegments ? (
-    <motion.div
-      ref={ref}
-      className={`message-wrapper ${isUser ? 'is-user' : ''}`}
-      {...messageAnimation}
-    >
+    <>
       {interleavedContent}
 
-      {message.type === 'bot' && message.products && message.products.length > 0 && showProductSlider && (
+      {message.type === 'bot' && Array.isArray(message.products) && message.products?.length > 0 && showProductSlider && (
         <motion.div
           className="product-slider-message-container"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
+          initial="hidden"
+          animate="visible"
+          variants={messageAnimation}
+          ref={ref}
         >
           <ProductSlider
             products={message.products}
@@ -150,6 +154,22 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
           />
         </motion.div>
       )}
-    </motion.div>
-  ) : null;
+
+      {message.type === 'bot' && showTagsAfterMessage && !showLoader && visibleCount === hasMultipleSegments && (
+        <motion.div
+          className="chatbot-tags-after-message"
+          initial="hidden"
+          animate="visible"
+          variants={messageAnimation}
+        >
+          <ChatbotTags
+            tags={tags || []}
+            isTyping={false}
+            primaryColor={primaryColor}
+            onClick={onTagClick ?? (() => {})}
+          />
+        </motion.div>
+      )}
+    </>
+  ) : null
 }));

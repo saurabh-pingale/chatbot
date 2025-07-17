@@ -8,6 +8,7 @@ import { TrashIconSVG } from '../../../assets/TrashIcon';
 import { ChevronDownIconSVG } from '../../../assets/ChevronDownIcon';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeader.scss';
+import { CartLoader } from '../../Cart-UI/CartLoader/CartLoader';
 
 export const ChatHeader = memo<ChatHeaderProps>(({ 
   storeImage,
@@ -23,7 +24,8 @@ export const ChatHeader = memo<ChatHeaderProps>(({
   onOfferClick,
   onClearConversation,
   showClearConversationIcon,
-  onMinimize   
+  onMinimize,
+  isCartSyncing   
 }) => {
 
   const primaryColorRgb = hexToRgbArray(primaryColor);
@@ -71,16 +73,20 @@ export const ChatHeader = memo<ChatHeaderProps>(({
             title="View Cart"
           >
             <CartIconSVG />
-            {cartItemCount > 0 && (
-              <motion.span 
-                className="chat-header-cart-count-badge"
-                style={headerStyles}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-              >
-                {cartItemCount}
-              </motion.span>
+            {isCartSyncing ? (
+              <CartLoader />
+            ) : (
+              cartItemCount > 0 && (
+                <motion.span 
+                  className="chat-header-cart-count-badge"
+                  style={headerStyles}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                >
+                  {cartItemCount}
+                </motion.span>
+              )
             )}
           </motion.div>
         )}

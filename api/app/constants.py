@@ -9,7 +9,7 @@ CLAUDE_MODEL_NAME = "claude-3-haiku-20240307"
 
 SHOPIFY_GRAPHQL_URL = "https://{shop}/admin/api/2023-10/graphql.json"
 
-MESSAGE_LIMIT = 10
+MESSAGE_LIMIT = 30
 LOCK_TIME = 1
 
 AGENT_CONVERSATION_RATE_LIMIT = "30/minute" # Equivalent to: 5 requests every 10 seconds

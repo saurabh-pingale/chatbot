@@ -15,6 +15,7 @@ export const useCart = () => {
     }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartSyncing, setIsCartSyncing] = useState(false);
   
   let lastToken: string | null = null;
   let lastCount = 0;
@@ -85,11 +86,11 @@ export const useCart = () => {
       } else {
         updatedItems = [...prevItems, newItem];
       }
-      
+      setIsCartSyncing(true);
       setTimeout(() => {
-        syncCartWithShopify(updatedItems).catch(err => {
-          console.error('Failed to sync cart with Shopify after add:', err);
-        });
+        syncCartWithShopify(updatedItems)
+          .catch(err => console.error('Failed to sync cart with Shopify after add:', err))
+          .finally(() => setIsCartSyncing(false));
       }, 0)
         return updatedItems;
     });
@@ -98,9 +99,12 @@ export const useCart = () => {
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
+    setIsCartSyncing(true);
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
-        syncCartWithShopify(updatedItems).catch(err => console.error('Failed to sync after remove:', err));
+        syncCartWithShopify(updatedItems)
+          .catch(err => console.error('Failed to sync after remove:', err))
+          .finally(() => setIsCartSyncing(false));
         return updatedItems;
     });
     setIsCartOpen(prev => !prev);
@@ -116,6 +120,7 @@ export const useCart = () => {
       quantity = 10;
     }
 
+    setIsCartSyncing(true);
     setCartItems(prev => {
         let newItems;
         if (quantity < 1) {
@@ -127,7 +132,9 @@ export const useCart = () => {
                 : item
             );
         }
-        syncCartWithShopify(newItems).catch(err => console.error('Failed to sync after update qty:', err));
+        syncCartWithShopify(newItems)
+          .catch(err => console.error('Failed to sync after update qty:', err))
+          .finally(() => setIsCartSyncing(false));
         return newItems;
     });
   }, [removeFromCart]);
@@ -179,5 +186,6 @@ export const useCart = () => {
     updateQuantity,
     toggleCart,
     checkout,
+    isCartSyncing
   };
 }; 

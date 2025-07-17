@@ -34,7 +34,7 @@ const ChatBody = ({
                 isTyping={isTyping}
                 primaryColor={config.primaryColor}
                 onProductAddToCart={handleProductAddToCart}
-                tags={tags}
+                tags={tags || []}
                 handleSendMessage={handleSendMessage}
             />
 

@@ -2,7 +2,6 @@ import { memo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 import { Message } from '../Message/Message';
-import { ChatbotTags } from '../ChatbotTags/ChatbotTags';
 import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import type { MessageListProps } from '../../../types';
 import { messageListVariants } from '../../../styles/variants';
@@ -50,17 +49,13 @@ export const MessageList = memo<MessageListProps>(({
             onProductAddToCart={onProductAddToCart}
             onMessageHeightChange={scrollToBottom}
             ref={index === messages.length - 1 ? lastMessageRef : null}
+            showTagsAfterMessage={index === messages.length - 1 && tags.length > 0}
+            tags={tags}
+            onTagClick={handleSendMessage}
           />
         ))}
 
         {isTyping && <TypingIndicator primaryColor={primaryColor} />}
-
-        <ChatbotTags
-          tags={tags}
-          isTyping={isTyping}
-          primaryColor={primaryColor}
-          onClick={handleSendMessage}
-        />
       </motion.div>
     </div>
   );

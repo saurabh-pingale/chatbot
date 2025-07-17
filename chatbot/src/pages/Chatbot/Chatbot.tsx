@@ -43,7 +43,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
   const isMobile = window.innerWidth <= 768;
 
-  const { cartItems, toggleCart } = useCart();
+  const { cartItems, toggleCart, isCartSyncing } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const { messages, isTyping, handleTyping, addMessage, handleBotResponse, setMessages } = useChat();
@@ -89,14 +89,10 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
 
   useEffect(() => {
     if (isOpen && !isEmailGateVisible && !hasShownStaticMessage) {
-      const timeoutId = setTimeout(() => {
         addMessage(STATIC_BOT_GREETING, 'bot');
         setHasShownStaticMessage(true);
         setTags(DEFAULT_TAGS);
         setShowInitialTags(true);
-      }, 1000);
-
-      return () => clearTimeout(timeoutId);
     }
   }, [isOpen, isEmailGateVisible, hasShownStaticMessage, addMessage]);
 
@@ -317,6 +313,7 @@ export const Chatbot = memo<ChatbotProps>(({ config }) => {
               onClearConversation={handleClearConversation}
               showClearConversationIcon={showClearConversationIcon}
               onMinimize={handleToggle}
+              isCartSyncing={isCartSyncing}
             />
             <div className="chatbot-content">
               {isEmailGateVisible ? (

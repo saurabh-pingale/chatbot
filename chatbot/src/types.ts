@@ -158,6 +158,7 @@ export interface ChatHeaderProps {
   onClearConversation?: () => void;  
   showClearConversationIcon:boolean; 
   onMinimize: () => void;  
+  isCartSyncing: boolean
 }
 
 export interface ChatInputProps {
@@ -188,7 +189,7 @@ export interface MessageListProps {
   isTyping: boolean;
   primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
-  tags?: TagItem[];
+  tags: TagItem[];
   handleSendMessage: (tag: string) => void;
 }
 
