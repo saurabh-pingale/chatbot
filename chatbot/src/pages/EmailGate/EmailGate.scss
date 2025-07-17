@@ -1,5 +1,6 @@
 @use '../../styles/colors.scss' as *;
 
+//TODO: Seperate the OTP & Email to their dedicated css, jsx files
 .email-gate-container {
   display: flex;
   flex-direction: column;

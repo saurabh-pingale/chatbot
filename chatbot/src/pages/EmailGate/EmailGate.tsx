@@ -136,6 +136,7 @@ export const EmailGate = memo<EmailGateProps>(({
       transition={{ duration: 0.2 }}
     >
       <div className="email-gate-content">
+        {/* TODO: Whole below logo make a seperate compoent and handle all these conditions there */}
         {config.displayShopLogo && config.shopLogoUrl && (
           <img src={config.shopLogoUrl} alt="Shop Logo" className="shop-logo-email-gate" />
         )}

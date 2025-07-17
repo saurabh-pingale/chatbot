@@ -112,6 +112,7 @@ export interface ShopifyCartResponse {
     title: string;
     price: number;
     image: string;
+    //TODO: Try to avoid "any", specify the type
     properties: Record<string, any>;
   }>;
   item_count: number;
