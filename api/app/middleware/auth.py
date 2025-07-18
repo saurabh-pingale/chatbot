@@ -1,8 +1,9 @@
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, Any, Optional
-from app.utils.jwt_utils import decode_access_token, create_access_token
 from datetime import datetime, timezone
+
+from app.utils.jwt_utils import decode_access_token, create_access_token
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -28,7 +29,7 @@ async def get_current_user_payload(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
 ) -> Optional[Dict[str, Any]]:
-    if not credentials:
+    if not credentials or not hasattr(credentials, 'credentials') or not credentials.credentials:
         request.state.decoded_token = None
         return None
 

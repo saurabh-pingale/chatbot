@@ -5,7 +5,7 @@ from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.external_service.redis_client import get_redis_client
-from app.utils.rag_pipeline_utils import extract_products_from_response
+from app.utils.rag_pipeline_utils import extract_products_from_response, deduplicate_results_by_variant
 from app.utils.metadata_extractor import metadata_extractor
 from app.utils.logger import logger
 
@@ -23,10 +23,16 @@ class ProductTool(BaseTool):
     @property
     def description(self) -> str:
         return (
-            "This is the primary tool for all product-related inquiries." 
-            "You must use this tool if the user's query is about finding, searching for, or filtering products. This includes any mention of product attributes such as color, size, brand, fabric, category, or price." 
-            "Even if the query is a simple product name or category (e.g., 'red t-shirt', 'shoes', etc.), this tool must be invoked. "
-            "The tool will return a list of matching products or a list of available categories if no direct matches are found."
+            "MANDATORY: Use this tool for ANY product-related query. "
+            "ALWAYS call this tool when the user mentions: "
+            "- Product names (shirt, shoes, dress, pants, etc.) "
+            "- Product attributes (color, size, brand, material, fabric, price) "
+            "- Shopping actions (find, search, show, looking for, want, need) "
+            "- Categories or collections (men's, women's, kids, accessories) "
+            "- Generic browsing (what do you have, show me products, browse) "
+            "- ANY combination of the above. "
+            "Examples requiring this tool: 'red shirt', 'Nike shoes', 'show me dresses', 'what products do you have', 'looking for jeans', 'size medium', 'under $50'. "
+            "DO NOT answer product questions directly - ALWAYS use this tool first."
         )
     
     @property
@@ -51,7 +57,7 @@ class ProductTool(BaseTool):
             metadata_filters = metadata_extractor.extract_all_metadata(query)
             logger.info(f"Extracted Metadata Filters: {metadata_filters}")
 
-            results = await self.embeddings_handler.query_embeddings(
+            results = await self.embeddings_handler.get_embeddings(
                 vector=embedding, 
                 namespace=shop_id, 
                 agent_type="ProductAgent",
@@ -59,20 +65,8 @@ class ProductTool(BaseTool):
             )
             logger.info(f"[ProductTool] Results from vector DB: {results}")
 
-            unique_results = []
             categories = []
-            seen_variant_ids = set()
-
-            if results:
-                for result in results:
-                    variant_id = getattr(result.metadata, 'variant_id', None)
-                    if variant_id and variant_id not in seen_variant_ids:
-                        unique_results.append(result)
-                        seen_variant_ids.add(variant_id)
-                    elif not variant_id:
-                        if result.id not in seen_variant_ids:
-                             unique_results.append(result)
-                             seen_variant_ids.add(result.id)
+            unique_results = deduplicate_results_by_variant(results) if results else []
 
             products = extract_products_from_response(unique_results) or []
             logger.info(f"Extracted Products: {products}")
@@ -93,7 +87,8 @@ class ProductTool(BaseTool):
                     "categories": categories,
                     "refined_query": query,
                     "original_query": query,
-                    "not_found": True 
+                    "not_found": True,
+                    "success": False 
                 }
             
             logger.info(f"Query in Product Tool: {query}")
@@ -125,6 +120,5 @@ class ProductTool(BaseTool):
                 "categories": categories,
                 "refined_query": query,
                 "original_query": query,
-                "not_found": True,
-                "error": str(e)
+                "not_found": True
             }

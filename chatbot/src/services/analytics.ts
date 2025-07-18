@@ -4,12 +4,14 @@ import { getOrCreateGuestId } from '../utils/guest';
 import { getShopId } from '../utils/utils';
 import { fetchWithTokenRefresh } from '../utils/api';
 
-const makeRequest = async (endpoint: string, body: object = {}) => {
+const makeRequest = async (endpoint: string, originalBody: object = {}) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
   const token = getAuthToken();
+  const body = { ...originalBody };
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   } else {
@@ -22,6 +24,7 @@ const makeRequest = async (endpoint: string, body: object = {}) => {
       headers,
       body: JSON.stringify(body),
     });
+    console.log("Response:", response);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -33,36 +36,26 @@ const makeRequest = async (endpoint: string, body: object = {}) => {
 };
 
 export const trackOpenedChatbot = (userId: string | null, shopId: string, utmParams: any) => {
-  const isGuest = !userId;
-  const guestId = isGuest ? getOrCreateGuestId() : null;
+  const payload = {
+    user_id: userId,
+    guest_id: userId ? null : getOrCreateGuestId(),
+    shop_id: shopId,
+    utm_params: utmParams,
+    is_guest: !userId,
+  };
   
-  fetch(API_ENDPOINTS.TRACK_OPENED_CHATBOT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      user_id: userId,
-      guest_id: guestId,
-      shop_id: shopId, 
-      utm_params: utmParams,
-      is_guest: isGuest 
-    }),
-  }).catch(error => console.error(`Error tracking event at ${API_ENDPOINTS.TRACK_OPENED_CHATBOT}:`, error));
+  makeRequest(API_ENDPOINTS.TRACK_OPENED_CHATBOT, payload);
 };
 
 export const trackAddedToCart = () => {
-  const shopId = getShopId();
-  if (!getAuthToken()) {
-    makeRequest(API_ENDPOINTS.TRACK_ADDED_TO_CART, { shop_id: shopId });
-  } else {
-    makeRequest(API_ENDPOINTS.TRACK_ADDED_TO_CART, {});
-  }
+  makeRequest(API_ENDPOINTS.TRACK_ADDED_TO_CART, {
+    shop_id: getShopId() 
+  });
 };
 
 export const trackPurchase = (amount: number) => {
-  const shopId = getShopId();
-  if (!getAuthToken()) {
-    makeRequest(API_ENDPOINTS.TRACK_PURCHASE, { amount, shop_id: shopId });
-  } else {
-    makeRequest(API_ENDPOINTS.TRACK_PURCHASE, { amount });
-  }
+   makeRequest(API_ENDPOINTS.TRACK_PURCHASE, {
+    amount,
+    shop_id: getShopId(),
+  });
 }; 

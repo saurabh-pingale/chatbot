@@ -1,6 +1,6 @@
 from typing import List, Dict
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select, delete
+from sqlalchemy import select
 
 from app.models.db.country_code import CountryCodeModel
 from app.dbhandlers.db import AsyncSessionLocal
@@ -12,27 +12,21 @@ class CountryCodeHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    result = await session.execute(select(CountryCodeModel))
-                    country_codes = result.scalars().all()
-                    return [{"label": cc.label, "value": cc.value} for cc in country_codes]
+                    query_result = await session.execute(select(CountryCodeModel))
+                    country_codes = query_result.scalars().all()
+
+                    country_code_list = [
+                        {"label": country.label, "value": country.value}
+                        for country in country_codes
+                    ]
+
+                    return country_code_list
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in get_country_codes: {error}", exc_info=True)
-                    raise
-
-    #TODO: Follow the naming convention in this way
-    #TODO: we should have only follow only these - create, get, update, delete
-    #TODO: for naming db all handler, you should follow 
-    #TODO: create_db_handler 
-    # i.e create_contry_code OR create_country_codes (don't include handler in name)
-    #TODO: get_db_handler
-    # i.e get_contry_code OR get_country_codes or get_country_code_by_id
-    #TODO: update_db_handler
-    # i.e update_contry_code OR update_country_codes
-    #TODO: delete_db_handler
-    # i.e delete_contry_code OR delete_country_codes
+                    raise Exception("Failed to fetch country codes from the database.")
     
-    async def store_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
-        """Store country codes in bulk"""
+    async def create_country_codes(self, country_codes: List[Dict[str, str]]) -> bool:
+        """Create country codes in bulk"""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
@@ -47,8 +41,8 @@ class CountryCodeHandler:
                     return True
                 except SQLAlchemyError as error:
                     await session.rollback()
-                    logger.error(f"Database error in store_country_codes: {error}", exc_info=True)
-                    raise
+                    logger.error(f"Database error in create_country_codes: {error}", exc_info=True)
+                    raise Exception("Failed to create country codes in the database.")
                 except KeyError as error:
                     await session.rollback()
                     logger.error(f"Invalid country code format: {error}", exc_info=True)

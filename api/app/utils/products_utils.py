@@ -23,11 +23,17 @@ def format_products(shopify_data):
     return formatted_products
 
 def extract_shopify_id(gid: str) -> int:
-    #TODO: Name these things who knows what is it ? -> '/(\d+)$'
-    #Todo: like find_d_in_string_regex = /(\d+)$
-    match = re.search(r'/(\d+)$', gid)
+    """
+    Extracts the numeric Shopify ID from a Global ID (GID) string.
+    Example: gid://shopify/Product/123456789 -> 123456789
+    Raises ValueError if the format is invalid.
+    """
+    shopify_id_pattern = r"/(\d+)$"  # Matches digits at the end of the string after a slash
+    match = re.search(shopify_id_pattern, gid)
+    
     if not match:
         raise ValueError(f"Invalid Shopify GID format: {gid}")
+    
     return int(match.group(1))
 
 def format_collections(shopify_data):

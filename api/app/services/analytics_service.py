@@ -4,6 +4,7 @@ from datetime import datetime
 from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.models.api.shop_admin import UTMParameters
 from app.utils.jwt_utils import create_access_token
+from app.models.api.shop_admin import LocationInfo
 from app.utils.logger import logger
 
 class AnalyticsService:
@@ -20,15 +21,19 @@ class AnalyticsService:
         shop_id: int, 
         user_id: Optional[int] = None,
         guest_id: Optional[str] = None,
-        country: Optional[str] = None,
-        region: Optional[str] = None,
-        city: Optional[str] = None,
-        ip_address: Optional[str] = None
+        location_info: Optional[LocationInfo] = None
     ) -> bool:
         """
         Records a chat interaction by calling the handler's update_user_chat_analytics method.
         The handler manages its own session and transaction for this specific operation.
         """
+        country, region, city, ip = (None, None, None, None)
+        if location_info:
+            country = location_info.country
+            region = location_info.region
+            city = location_info.city
+            ip = location_info.ip
+
         return await self.db_handler.update_user_chat_analytics(
             shop_id=shop_id,
             user_id=user_id,
@@ -36,7 +41,7 @@ class AnalyticsService:
             country=country,
             region=region,
             city=city,
-            ip_address=ip_address
+            ip_address=ip
         )
 
     async def track_opened_chatbot(self, user_identifier: str, shop_domain: str, utm_params: Optional[UTMParameters] = None, is_guest: bool = False) -> bool:

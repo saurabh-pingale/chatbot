@@ -1,19 +1,20 @@
 import { memo, useState, useRef, useEffect } from 'react';
+import { useConfig } from '../../../context/ConfigContext';
 import { hexToRgbArray } from '../../../utils/utils';
 import type { ChatInputProps, StyleWithCustomProps } from '../../../types';
 import './ChatInput.scss';
 
 export const ChatInput = memo<ChatInputProps>(({ 
   onSendMessage,
-  disabled = false,
-  primaryColor 
+  disabled = false
 }) => {
   const [message, setMessage] = useState('');
+  const config = useConfig();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const primaryColorRgb = hexToRgbArray(primaryColor);
+  const primaryColorRgb = hexToRgbArray(config.primaryColor);
   const dynamicStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
   if (primaryColorRgb) {
     dynamicStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');

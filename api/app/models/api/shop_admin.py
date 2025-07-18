@@ -1,6 +1,6 @@
+from fastapi import HTTPException
+from pydantic import BaseModel, Field, EmailStr, model_validator 
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime
 
 class UTMParameters(BaseModel):
     """Defines the structure for UTM parameters."""
@@ -124,3 +124,24 @@ class IntegrationRequest(BaseModel):
 class IntegrationResponse(BaseModel):
     success: bool
     message: Optional[str] = None
+
+class LocationInfo(BaseModel):
+    country: Optional[str]
+    region: Optional[str]
+    city: Optional[str]
+    ip: Optional[str]
+
+class AuthPayloadModel(BaseModel):
+    user_id: Optional[int]
+    shop_id: Optional[int]
+    is_guest: Optional[bool] = False
+
+    @model_validator(mode="after")
+    def validate_fields(cls, values):
+        if not values.user_id or not values.shop_id:
+            raise ValueError("Token is malformed.")
+        return values
+
+    def validate_shop_access(self, actual_shop_id: int):
+        if self.shop_id != actual_shop_id:
+            raise HTTPException(status_code=403, detail="User not authorized for this shop.")

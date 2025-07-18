@@ -51,7 +51,7 @@ class TermsTool(BaseTool):
             logger.info(f"Terms tool called for query: '{query}' in shop: {shop_id}")
             
             user_message_embedding = EmbeddingService.create_embeddings(query)
-            terms_results = await self.embeddings_handler.query_embeddings(
+            terms_results = await self.embeddings_handler.get_embeddings(
                 vector=user_message_embedding, 
                 namespace=shop_id
             )
@@ -73,24 +73,22 @@ class TermsTool(BaseTool):
             
             if not extracted_term_texts:
                 logger.warning(f"Warning: No terms found for query: '{query}' in shop: {shop_id}")
-                no_info_message = [
-                    "I apologize, but I couldn't find any specific information, I recommend:\n",
-                    "Checking the store's policy pages or contacting customer support \n"
-                ]
                 return {
-                    "answer": "".join(no_info_message)
+                    "answer": "I apologize, but I couldn't find any specific information.\n"
+                            "Please check the store's policy pages or contact customer support.",
+                    "success": False
                 }
             
             return {
-                "answer": "\n\n".join(extracted_term_texts)
+                "answer": "\n\n".join(extracted_term_texts),
+                "success": True
             }
             
         except Exception as e:
             logger.error(f"Error in terms tool processing message for shopId '{shop_id}': {e}", exc_info=True)
-            error_message = [
-                "I'm having trouble accessing the store's policy information right now. ",
-                "Please try again later or contact the store directly for immediate assistance."
-            ]
             return {
-                "answer": "".join(error_message)
+                "answer": "I'm having trouble accessing the store's policy information right now. "
+                        "Please try again later or contact the store directly.",
+                "success": False,
+                "error": str(e)
             }

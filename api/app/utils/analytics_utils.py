@@ -28,3 +28,6 @@ def update_user_location_if_missing(
         updated = True
 
     return updated
+
+def validate_string(value):
+            return value if isinstance(value, str) and value.strip() else None

@@ -24,7 +24,7 @@ class ProductsService:
             if not shop:
                 raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
 
-            stored_collections = await self.shop_admin_handler.store_collections(collections)
+            stored_collections = await self.shop_admin_handler.create_collections(collections)
 
             redis_client = await get_redis_client()
             redis_key = f"{namespace}:categories"
@@ -43,10 +43,10 @@ class ProductsService:
             }
 
             unique_products = list({product.id: product for product in products}.values())
-            await self.shop_admin_handler.record_products_handler(unique_products, collection_id_map, shop_id=shop.id)
+            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop.id)
         
             products_embeddings = await create_product_embeddings(products)
-            await self.embeddings_handler.store_embeddings(products_embeddings, namespace)
+            await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
             
             return {
                 "status": "success",

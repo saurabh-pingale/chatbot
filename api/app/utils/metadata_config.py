@@ -41,3 +41,13 @@ CATEGORY_ATTRIBUTES = {
     "makeup": ["price", "title"],
     "dresses": ["price", "color", "size", "fabric", "gender", "title"],
 }
+
+SIZE_ALIASES = {
+    "extra small": "XS",
+    "small": "S",
+    "medium": "M",
+    "large": "L",
+    "extra large": "XL",
+    "xxl": "XXL",
+    "xxxl": "XXXL"
+}
