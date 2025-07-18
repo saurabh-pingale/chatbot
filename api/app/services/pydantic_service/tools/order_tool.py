@@ -43,7 +43,8 @@ class OrderTool(BaseTool):
                 return {
                     "answer": "Support contact is currently unavailable.",
                     "email": "",
-                    "phone": ""
+                    "phone": "",
+                    "success": False
                 }
             
             support_info = await self.shop_admin_handler.get_support_contact(shop_id)
@@ -53,8 +54,9 @@ class OrderTool(BaseTool):
                 return {
                     "answer": "We couldn't find any support contact at the moment.",
                     "email": "",
-                    "phone": ""
-                } 
+                    "phone": "",
+                    "success": False
+                }
         
             return {
                 "answer": "",
@@ -68,5 +70,6 @@ class OrderTool(BaseTool):
             return {
                 "answer": "An error occurred while fetching support details.",
                 "email": "",
-                "phone": ""
+                "phone": "",
+                "success": False
             }

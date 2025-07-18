@@ -1,22 +1,18 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
+from pydantic import ValidationError
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT
+from app.models.api.shop_admin import AuthPayloadModel
+from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
+from app.modules.analytics_module import record_chat_analytics
+from app.utils.rag_pipeline_utils import build_conversation_log_data
 from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
 
 agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=["agent_conversation_router"])
-
-
-@agent_conversation_router.get("/check/status")
-def config_status():
-    """
-    Returns a static status response to confirm the service is up.
-    """
-    return {"status": "success"}
 
 @agent_conversation_router.post(
     "/agent_conversation",
@@ -35,11 +31,6 @@ async def agent_conversation(
     payload: AgentConversationPayload,
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
-    #TODO: Here lot of things happening, seperate 
-    # - auth as auth module
-    # - analytics as analytics module
-    # - agent response & conversation_log_data as seperate module
-
     try:
         shop_id = request.query_params.get("shopId")
         if not shop_id:
@@ -52,68 +43,65 @@ async def agent_conversation(
             raise HTTPException(status_code=404, detail="Shop not found.")
 
         guest_id = request.query_params.get("guest_id")
-        jwt_user_id_pk = None
-        is_guest = True
 
-        if auth_payload:
-            jwt_user_id_pk = auth_payload.get("user_id")
-            jwt_shop_id_pk = auth_payload.get("shop_id")
-            is_guest = auth_payload.get("is_guest", False)
-
-            if not jwt_user_id_pk or not jwt_shop_id_pk:
-                raise HTTPException(status_code=401, detail="Token is malformed.")
-            if jwt_shop_id_pk != shop.id:
-                raise HTTPException(status_code=403, detail="User not authorized for this shop.")
-
-        if len(payload.messages) > MESSAGE_LIMIT * 2:
-            static_response_content = "Your limit is reached"
-            return {"answer": static_response_content, "products": [], "categories": [], "success": False, "limit_reached": True}
+        if not auth_payload:
+            user_id, is_guest = None, True  # Guest
+        else:
+            try:
+                validated_payload = AuthPayloadModel(**auth_payload)
+                validated_payload.validate_shop_access(shop.id)
+                user_id = validated_payload.user_id
+                is_guest = validated_payload.is_guest
+            except (ValidationError, ValueError) as ve:
+                logger.warning(f"Auth validation failed: {ve}")
+                return {
+                    "answer": "Authentication failed.",
+                    "products": [],
+                    "categories": [],
+                    "success": False,
+                    "error": str(ve)
+                }
 
         contents = payload.messages
-        if not isinstance(contents, list):
-            raise HTTPException(status_code=400, detail="Invalid 'messages' format. Expected a list.")
+        if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):
+            return {
+                "answer": "Invalid 'messages' format. Expected a list of message objects.",
+                "products": [],
+                "categories": [],
+                "success": False
+            }
+        
+        if len(contents) > MESSAGE_LIMIT * 2:
+            return {
+                "answer": "Your limit is reached", 
+                "products": [], 
+                "categories": [], 
+                "success": False, 
+                "limit_reached": True
+            }
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
-        previous_messages = []
-        if len(contents) > 1:
-            all_previous = contents[:-1]
-            previous_messages = all_previous[-3:] if len(all_previous) >= 3 else all_previous
-        
-        country, region, city, ip = (None, None, None, None)
-        if payload.location_info:
-            country, region, city, ip = payload.location_info.country, payload.location_info.region, payload.location_info.city, payload.location_info.ip
-      
-        analytics_success = await app.analytics_service.record_chat_interaction(
-            user_id=jwt_user_id_pk, 
-            shop_id=shop.id,
-            guest_id=guest_id,
-            country=country, 
-            region=region, 
-            city=city, 
-            ip_address=ip
-        )
-        if not analytics_success:
-            logger.warning(f"Failed to record chat analytics for user_id: {jwt_user_id_pk}, guest_id: {guest_id}, shop_id: {shop.id}")
-        
-        agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
-        
-        conversation_log_data = {
-            "user_query": user_message,
-            "agent_response": agent_response.get('answer'),
-            "user_id": jwt_user_id_pk,
-            "shop_id": shop.id,
-        }
-        if is_guest:
-            conversation_log_data["guest_id"] = guest_id
+        previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await app.conversation_service.record_conversation_into_db(conversation_log_data)
+        await record_chat_analytics(app, user_id, shop.id, guest_id, payload.location_info)
+
+        agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
+
+        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop.id, is_guest, guest_id )
+
+        conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
         
+        if isinstance(conversation_response, dict) and conversation_response.get("status") == "error":
+            logger.warning(f"Conversation logging failed: {conversation_response}")
+        else:
+            logger.info(f"Conversation stored with ID: {conversation_response}")
+    
         return agent_response
 
     except HTTPException as http_exc:
         logger.warning(f"HTTPException in agent_conversation: {http_exc.detail}")
-        raise http_exc
+        return {"answer": f"Request failed: {http_exc.detail}", "products": [], "categories": [], "success": False, "error": http_exc.detail}
     except Exception as e:
         logger.error(f"Error in agent router conversation endpoint: {str(e)}", exc_info=True)
         return {"answer": "I'm having trouble processing your request. Please try again later.", "products": [], "categories": [], "success": False, "error": str(e)}

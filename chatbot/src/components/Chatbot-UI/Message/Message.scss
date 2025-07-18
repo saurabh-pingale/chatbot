@@ -1,6 +1,6 @@
 @use '../../../styles/colors.scss' as *;
 
-.message-wrapper {
+.message-list {
   display: flex;
   margin: 8px 0;
   padding: 0 16px;
@@ -17,20 +17,22 @@
 }
 
 .message-bubble {
-  max-width: 70%;
+  max-width: 80%;
   padding: 12px 16px;
   color: $white-100;
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
 
-  &.is-user {
+  .message-list.is-user & {
+    margin-left: auto;
     border-radius: 18px 18px 0 18px;
     background-color: var(--theme-primary-color, #{$orange-450});
     text-align: left;
+    min-width: fit-content;
   }
 
-  &:not(.is-user) {
+  .message-list:not(.is-user) & {
     border-radius: 18px 18px 18px 0;
     background-color: $gray-700;
     text-align: left;
@@ -77,4 +79,4 @@
   margin-top: 8px;
   width: 100%;
   max-width: 100%;
-} 
+}

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getCart, syncCartWithShopify } from '../services/shopify';
+import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
 import { getStoredUtmParameters } from '../utils/utm';
@@ -15,6 +15,7 @@ export const useCart = () => {
     }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartSyncing, setIsCartSyncing] = useState(false);
   
   let lastToken: string | null = null;
   let lastCount = 0;
@@ -78,28 +79,32 @@ export const useCart = () => {
       let updatedItems;
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
-        const currentItem = updatedItems[existingItemIndex];
         updatedItems[existingItemIndex] = {
-          ...currentItem,
-          quantity: Math.min(currentItem.quantity + 1, 10),
+          ...updatedItems[existingItemIndex],
+          quantity: Math.min(updatedItems[existingItemIndex].quantity + 1, 10),
         };
       } else {
         updatedItems = [...prevItems, newItem];
       }
-      
-      syncCartWithShopify(updatedItems).catch(err => {
-        console.error('Failed to sync cart with Shopify after add:', err);
-      });
-      return updatedItems;
+      setIsCartSyncing(true);
+      setTimeout(() => {
+        syncCartItemsToShopifyStoreCart(updatedItems)
+          .catch(err => console.error('Failed to sync cart with Shopify after add:', err))
+          .finally(() => setIsCartSyncing(false));
+      }, 0)
+        return updatedItems;
     });
 
     setIsCartOpen(true);
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
+    setIsCartSyncing(true);
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
-        syncCartWithShopify(updatedItems).catch(err => console.error('Failed to sync after remove:', err));
+        syncCartItemsToShopifyStoreCart(updatedItems)
+          .catch(err => console.error('Failed to sync after remove:', err))
+          .finally(() => setIsCartSyncing(false));
         return updatedItems;
     });
     setIsCartOpen(prev => !prev);
@@ -115,6 +120,7 @@ export const useCart = () => {
       quantity = 10;
     }
 
+    setIsCartSyncing(true);
     setCartItems(prev => {
         let newItems;
         if (quantity < 1) {
@@ -126,7 +132,9 @@ export const useCart = () => {
                 : item
             );
         }
-        syncCartWithShopify(newItems).catch(err => console.error('Failed to sync after update qty:', err));
+        syncCartItemsToShopifyStoreCart(newItems)
+          .catch(err => console.error('Failed to sync after update qty:', err))
+          .finally(() => setIsCartSyncing(false));
         return newItems;
     });
   }, [removeFromCart]);
@@ -137,7 +145,7 @@ export const useCart = () => {
 
   const checkout = async () => {
     try {
-      const success = await syncCartWithShopify(cartItems);
+      const success = await syncCartItemsToShopifyStoreCart(cartItems);
       if (success) {
         const utmParams = getStoredUtmParameters();
         const checkoutUrl = new URL('/checkout', window.location.origin);
@@ -178,5 +186,6 @@ export const useCart = () => {
     updateQuantity,
     toggleCart,
     checkout,
+    isCartSyncing
   };
 }; 

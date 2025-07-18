@@ -21,7 +21,7 @@ class UserHandler:
     async def create_user(self, email: str, shop_id: int) -> UserModel:
         async with AsyncSessionLocal() as session:
             try:
-                existing_user = self.get_user_by_email_and_shop_id(email, shop_id)
+                existing_user = await self.get_user_by_email_and_shop_id(email, shop_id)
                 if existing_user:
                     raise ValueError("User with this email already exists for the shop")
 

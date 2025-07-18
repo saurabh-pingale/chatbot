@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 
 from app.models.db.conversation import ConversationModel
-from app.models.db.shop_admin import ShopModel, UserModel
+from app.models.db.shop_admin import UserModel
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
@@ -46,8 +46,18 @@ class ConversationHandler:
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in record_conversation_into_db: {error}", exc_info=True)
                     await session.rollback()
-                    return None 
+                    return {
+                        "status": "error",
+                        "error_type": "DatabaseError",
+                        "message": str(error),
+                        "conversation_data": conversation_data
+                    }
                 except Exception as e:
                     logger.error(f"Unhandled error in record_conversation_into_db: {e}", exc_info=True)
                     await session.rollback()
-                    return None
+                    return {
+                        "status": "error",
+                        "error_type": "UnhandledException",
+                        "message": str(e),
+                        "conversation_data": conversation_data
+                    }

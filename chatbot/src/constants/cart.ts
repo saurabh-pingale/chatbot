@@ -4,6 +4,6 @@ export const CART = {
     ADD: '/cart/add.js'
 }
 
-export const SHOPIFY_VARIANT_PREFIX = 'gid://shopify/ProductVariant/';
+export const SHOPIFY_VARIANT_PREFIX = 'gid://shopify/productvariant/';
 export const CART_STORAGE_KEY = 'chatbotCartItems';
 export const POLL_INTERVAL = 8000;

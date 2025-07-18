@@ -4,6 +4,7 @@ from app.services.pydantic_service.tools.base_tool import BaseTool
 from app.services.pydantic_service.tools.product_tool import ProductTool
 from app.services.pydantic_service.tools.order_tool import OrderTool
 from app.services.pydantic_service.tools.terms_tool import TermsTool
+from app.services.pydantic_service.tools.greeting_tool import GreetingTool
 from app.utils.logger import logger
 
 class ToolRegistry:
@@ -16,6 +17,7 @@ class ToolRegistry:
     def _register_tools(self):
         """Register all available tools"""
         tools_to_register = [
+            GreetingTool(),
             ProductTool(),
             OrderTool(),
             TermsTool()

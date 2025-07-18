@@ -47,7 +47,7 @@ class EmbeddingService:
         agent_type: Optional[str] = None
         ):
         embeddings_handler = EmbeddingsHandler()
-        return await embeddings_handler.query_embeddings(
+        return await embeddings_handler.get_embeddings(
             vector=vector,
             top_k=top_k,
             namespace=namespace,
