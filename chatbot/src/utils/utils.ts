@@ -21,18 +21,22 @@ export const formatVariantId = (id: number): string => {
 };
 
 export const hexToRgbArray = (hex: string): [number, number, number] | null => {
-  //TODO: Add a comment like //phone number validation regex or //email validation regex, also describe little bit of regex by adding comments  or keep variable name explainable 
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16)
+  // This regex matches a 6-digit hexadecimal color code (with or without the leading #).
+  // It captures three pairs of hexadecimal digits (00 to FF), each representing red, green, and blue values.
+  const hexColorMatch = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+  return hexColorMatch ? [
+    parseInt(hexColorMatch[1], 16), // Red component
+    parseInt(hexColorMatch[2], 16), // Green component
+    parseInt(hexColorMatch[3], 16) // Blue component
   ] : null;
 };
 
 export const validateEmail = (email: string): boolean => {
-  //TODO: Here explain little bit of regex by adding comments  or keep variable name explainable 
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // This regex checks for a basic email pattern
+  const basicEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return basicEmailRegex.test(email);
 };
 
 export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
@@ -43,46 +47,55 @@ export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
     return formattedHtml;
   }
 
-  //TODO: What are we doing exactly here ?, 
-  //TODO: Try to explain via comments or keep variable name explainable 
-  text = text.replace(/â€¢/g, "•").replace(/\s+/g, " ").replace(/\n/g, " ").trim();
+  // Replace malformed bullet characters (â€¢) with proper bullets (•)
+  // Collapse multiple whitespaces into single space
+  // Replace newlines with space
+  // Trim leading/trailing spaces
+  const normalizedText = text
+    .replace(/â€¢/g, "•")
+    .replace(/\s+/g, " ")
+    .replace(/\n/g, " ")
+    .trim();
 
   const segments: string[] = [];
-  //TODO: Why we choose max segement length 250 ?,  Try to explain via comments or keep variable name explainable 
+  
+  // Max characters per segment to ensure readability and prevent overflow
   const MAX_SEGMENT_LENGTH = 250;
 
-  const parts = text.split('•').filter(part => part.trim());
+   // Split the text by bullet points to process bullet-formatted content
+  const bulletParts = normalizedText.split('•').filter(part => part.trim());
 
-  if (parts.length <= 1) {
-    //TODO:  Try to explain via comments or keep variable name explainable 
-    const sentences = text.match(/[^.]+\.|[^.]+/g) || [text];
+  if (bulletParts.length <= 1) {
+     // Split by sentence-ending periods (.) while preserving them
+    const sentenceChunks = normalizedText.match(/[^.]+\.|[^.]+/g) || [normalizedText];
     
-    //TODO: What is buffer about ?. explain via comments or keep variable name explainable 
-    let buffer = '';
-    for (let sentence of sentences) {
+    let currentSegmentBuffer = '';
+    for (let sentence of sentenceChunks) {
       sentence = sentence.trim();
       if (!sentence) continue;
 
-      if ((buffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
-        buffer += (buffer ? ' ' : '') + sentence;
+      // Add sentence to the current buffer if within limit
+      if ((currentSegmentBuffer + ' ' + sentence).length <= MAX_SEGMENT_LENGTH) {
+        currentSegmentBuffer += (currentSegmentBuffer ? ' ' : '') + sentence;
       } else {
-        //TODO: What is segment about ?, Try to explain via comments or keep variable name explainable 
-        if (buffer) segments.push(buffer);
-        buffer = sentence;
+        // Push the current buffer as a segment and start a new one
+        if (currentSegmentBuffer) segments.push(currentSegmentBuffer);
+        currentSegmentBuffer = sentence;
       }
     }
-    if (buffer) segments.push(buffer);
+    if (currentSegmentBuffer) segments.push(currentSegmentBuffer);
   } else {
-    //TODO:Are we validating whether parts has items ? before extraction or Trim
-    const introText = parts[0].trim();
-    if (introText) {
-      segments.push(introText);
+    // If bullet points exist, format the first part as introduction if not empty
+    const introduction = bulletParts[0].trim();
+    if (introduction) {
+      segments.push(introduction);
     }
 
-    for (let i = 1; i < parts.length; i++) {
-      const bulletContent = parts[i].trim();
-      if (bulletContent) {
-        segments.push(`• ${bulletContent}`);
+    // Format remaining bullet parts with a leading bullet symbol
+    for (let i = 1; i < bulletParts.length; i++) {
+      const bullet = bulletParts[i].trim();
+      if (bullet) {
+        segments.push(`• ${bullet}`);
       }
     }
   }

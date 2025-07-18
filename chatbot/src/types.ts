@@ -104,6 +104,14 @@ export interface PurchasedItem {
   revenue: number;
 }
 
+type ShopifyPropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: ShopifyPropertyValue }
+  | ShopifyPropertyValue[];
+
 export interface ShopifyCartResponse {
   token: string;
   items: Array<{
@@ -112,8 +120,7 @@ export interface ShopifyCartResponse {
     title: string;
     price: number;
     image: string;
-    //TODO: Try to avoid "any", specify the type
-    properties: Record<string, any>;
+    properties: Record<string, ShopifyPropertyValue>;
   }>;
   item_count: number;
 }

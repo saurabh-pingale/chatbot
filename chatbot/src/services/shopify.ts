@@ -55,7 +55,6 @@ export const clearCart = async (): Promise<boolean> => {
 export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   try {
     const shopifyItems = items.map(item => {
-      //TODO: Below condition looks incorrect, please recheck once again
         const parsedId = parseVariantId(item?.variant_id || item?.id);
         
         return {
