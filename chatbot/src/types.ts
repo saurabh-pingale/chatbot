@@ -104,6 +104,14 @@ export interface PurchasedItem {
   revenue: number;
 }
 
+type ShopifyPropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: ShopifyPropertyValue }
+  | ShopifyPropertyValue[];
+
 export interface ShopifyCartResponse {
   token: string;
   items: Array<{
@@ -112,8 +120,7 @@ export interface ShopifyCartResponse {
     title: string;
     price: number;
     image: string;
-    //TODO: Try to avoid "any", specify the type
-    properties: Record<string, any>;
+    properties: Record<string, ShopifyPropertyValue>;
   }>;
   item_count: number;
 }
@@ -130,48 +137,28 @@ export interface CartProps {
   onClose: () => void;
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   onCheckout: () => Promise<void>;
-  primaryColor: string;
-}
-
-export interface ChatbotProps {
-  config: ChatbotConfig;
 }
 
 export interface ChatbotToggleProps {
   isOpen: boolean;
-  storeImage: string;
-  primaryColor: string;
   onClick: () => void;
 }
 
 export interface ChatHeaderProps {
-  storeImage: string;
-  onToggleCart: () => void;
-  cartItemCount: number;
-  primaryColor: string;
-  showCartIcon: boolean;
-  onToggleOffers: () => void;
-  showOffersIcon: boolean;
-  isOffersPopupOpen: boolean;
-  onCloseOffers: () => void;
-  offerTags: string[];
-  onOfferClick: (tag: string) => void;
-  onClearConversation?: () => void;  
-  showClearConversationIcon:boolean; 
-  onMinimize: () => void;  
-  isCartSyncing: boolean
+  onClearConversation?: () => void;
+  onMinimize: () => void;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  isEmailGateVisible: boolean;
+  messagesCount: number;
 }
 
 export interface ChatInputProps {
   onSendMessage: (text: string) => void;
   disabled?: boolean;
-  primaryColor: string;
 }
 
 export interface EmailGateProps {
-  config: ChatbotConfig;
-  onSubmit: (email: string) => Promise<void>;
-  onSkip: () => Promise<void>;
+  onSuccess: (token: string, locationInfo: LocationInfo | null) => void;
 }
 
 export interface ErrorPopupProps {
@@ -181,14 +168,12 @@ export interface ErrorPopupProps {
 
 export interface MessageProps {
   message: Message;
-  primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
 }
 
 export interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
-  primaryColor: string;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
   tags: TagItem[];
   handleSendMessage: (tag: string) => void;
@@ -197,17 +182,11 @@ export interface MessageListProps {
 export interface ProductProps {
   product: ProductType;
   onAddToCart: (product: ProductType) => Promise<void>;
-  primaryColor: string;
 }
 
 export interface ProductSliderProps {
   products: ProductType[];
   onAddToCart?: (product: ProductType) => Promise<void>;
-  primaryColor: string;
-}
-
-export interface TypingIndicatorProps {
-  primaryColor?: string;
 }
 
 export interface ExtendedMessageProps extends MessageProps {
@@ -239,21 +218,19 @@ export interface AgentConversationRequestPayload {
 export interface OffersPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  offerTags: string[];
-  primaryColor: string;
-  onOfferClick: (tag: string) => void;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 export interface ChatBodyProps {
-  messages: Message[];
-  isTyping: boolean;
-  config: ChatbotAppConfig;
-  handleSendMessage: (text: string) => void;
   jwtToken: string | null;
-  isEmailGateVisible?: boolean;
-  handleError: (error: string) => void;
-  isChatLimitReached?: boolean;
-  tags?: TagItem[];
+  capturedLocationInfo: LocationInfo | null;
+  setError: (error: string | null) => void;
+  isEmailGateVisible: boolean;
+  onMessagesCountChange: (count: number) => void;
+}
+
+export interface ChatBodyHandle {
+  clearConversation: () => void;
 }
 
 export interface CartBodyProps {
@@ -317,4 +294,25 @@ export interface ChatbotTagsProps {
   isTyping: boolean;
   primaryColor?: string;
   onClick: (tagName: string) => void;
+}
+
+export interface EmailInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  disabled: boolean;
+  hasError: boolean;
+  style: StyleWithCustomProps;
+  onContinue: () => void;
+  isLoading: boolean;
+}
+
+export interface OtpInputProps {
+  onOtpChange: (otp: string) => void;
+  disabled: boolean;
+  hasError: boolean;
+  style: React.CSSProperties;
+  onVerify: () => void;
+  onRequestAgain: () => void;
+  isLoading: boolean;
 }

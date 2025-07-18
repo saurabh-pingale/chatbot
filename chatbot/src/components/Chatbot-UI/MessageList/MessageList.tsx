@@ -10,7 +10,6 @@ import './MessageList.scss';
 export const MessageList = memo<MessageListProps>(({ 
   messages,
   isTyping,
-  primaryColor,
   onProductAddToCart,
   tags,
   handleSendMessage
@@ -45,7 +44,6 @@ export const MessageList = memo<MessageListProps>(({
           <Message
             key={message.id}
             message={message}
-            primaryColor={primaryColor}
             onProductAddToCart={onProductAddToCart}
             onMessageHeightChange={scrollToBottom}
             ref={index === messages.length - 1 ? lastMessageRef : null}
@@ -55,7 +53,7 @@ export const MessageList = memo<MessageListProps>(({
           />
         ))}
 
-        {isTyping && <TypingIndicator primaryColor={primaryColor} />}
+        {isTyping && <TypingIndicator />}
       </motion.div>
     </div>
   );

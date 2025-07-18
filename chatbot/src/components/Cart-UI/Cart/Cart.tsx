@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfig } from '../../../context/ConfigContext';
 import { hexToRgbArray } from '../../../utils/utils';
 import type { CartProps, StyleWithCustomProps, CartItem } from '../../../types';
 import { CloseIcon } from '../../../utils/icon';
@@ -12,17 +13,17 @@ export const Cart = memo<CartProps>(({
   items,
   onClose,
   onUpdateQuantity,
-  onCheckout,
-  primaryColor
+  onCheckout
 }) => {
+  const config = useConfig();
   const total = items.reduce((sum, item: CartItem) => {
     const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
     return sum + price * item.quantity;
   }, 0);
 
-  const primaryColorRgb = hexToRgbArray(primaryColor);
+  const primaryColorRgb = hexToRgbArray(config.primaryColor);
   const dynamicStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
 
   if (primaryColorRgb) {

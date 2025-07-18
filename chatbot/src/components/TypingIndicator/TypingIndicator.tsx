@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
-import type { StyleWithCustomProps, TypingIndicatorProps } from '../../types';
+import type { StyleWithCustomProps } from '../../types';
 import { typingAnimation } from '../../styles/animations';
 import { dotVariants } from '../../styles/variants';
 import './TypingIndicator.scss';
+import { useConfig } from '../../context/ConfigContext';
 
-export const TypingIndicator = ({ primaryColor }: TypingIndicatorProps) => {
+export const TypingIndicator = () => {
+  const config = useConfig();
+
   const typingIndicatorStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
 
   return (

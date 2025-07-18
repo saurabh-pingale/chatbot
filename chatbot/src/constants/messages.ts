@@ -1,0 +1,3 @@
+export const CONFIGMESSAGE = {
+    MIN_MESSAGES_TO_SHOW_CLEAR_ICON: 4,
+}

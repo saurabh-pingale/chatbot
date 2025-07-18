@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Chatbot } from './pages/Chatbot/Chatbot';
 import { trackOpenedChatbot } from './services/analytics';
 import { CartProvider } from './context/CartContext';
+import { ConfigProvider } from './context/ConfigContext';
 import { getShopConfig } from './utils/utils';
 import { captureUtmParameters, getStoredUtmParameters } from './utils/utm';
 import type { ChatbotAppConfig } from './types';
@@ -64,9 +65,11 @@ function App() {
 
   return (
     <div>
-      <CartProvider>
-        <Chatbot config={config} />
-      </CartProvider>
+      <ConfigProvider value={config}>
+        <CartProvider>
+          <Chatbot />
+        </CartProvider>
+      </ConfigProvider>
     </div>
   );
 }

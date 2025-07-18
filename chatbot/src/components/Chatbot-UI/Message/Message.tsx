@@ -5,6 +5,7 @@ import { messageAnimation } from '../../../styles/animations';
 import { ProductSlider } from '../../ProductSlider/ProductSlider';
 import { ChatbotTags } from '../ChatbotTags/ChatbotTags';
 import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
+import { useConfig } from '../../../context/ConfigContext';
 import { formatMessage } from '../../../utils/utils';
 import type { MessageProps, ProductType, TagItem } from '../../../types';
 import './Message.scss';
@@ -19,13 +20,13 @@ export interface ExtendedMessageProps extends MessageProps {
 
 export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   message,
-  primaryColor,
   onProductAddToCart,
   onMessageHeightChange,
   showTagsAfterMessage,
   tags,
   onTagClick
 }, ref) => {
+  const config = useConfig();
   const isUser = message.type === 'user';
   const formattedContent = formatMessage(message.content, message.type);
   const isArrayContent = Array.isArray(formattedContent);
@@ -34,8 +35,8 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const bubbleStyles: React.CSSProperties & Record<string, string> = {};
-  if (isUser && primaryColor) {
-    bubbleStyles['--theme-primary-color'] = primaryColor;
+  if (isUser && config.primaryColor) {
+    bubbleStyles['--theme-primary-color'] = config.primaryColor;
   }
 
   const [visibleCount, setVisibleCount] = useState(1);
@@ -128,7 +129,7 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
           className={`message-list ${isUser ? 'is-user' : ''}`}
           style={{ margin: '4px 0', padding: '0 16px' }}
         >
-          <TypingIndicator primaryColor={primaryColor} />
+          <TypingIndicator />
         </div>
       );
       break;
@@ -149,7 +150,6 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
         >
           <ProductSlider
             products={message.products}
-            primaryColor={primaryColor}
             onAddToCart={onProductAddToCart}
           />
         </motion.div>
@@ -165,7 +165,6 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
           <ChatbotTags
             tags={tags || []}
             isTyping={false}
-            primaryColor={primaryColor}
             onClick={onTagClick ?? (() => {})}
           />
         </motion.div>

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Product } from '../Product/Product';
 import type { ProductSliderProps, ProductType } from '../../types';
 import './ProductSlider.scss';
+import { useConfig } from '../../context/ConfigContext';
 
 const defaultOnAddToCart = async (product: ProductType): Promise<void> => {
   console.warn('ProductSlider: onAddToCart prop was not provided.', product);
@@ -9,11 +10,11 @@ const defaultOnAddToCart = async (product: ProductType): Promise<void> => {
 
 export const ProductSlider = memo<ProductSliderProps>(({ 
   products,
-  onAddToCart,
-  primaryColor
+  onAddToCart
 }) => {
   if (!products.length) return null;
 
+  const config = useConfig();
   const handleAddToCart = onAddToCart || defaultOnAddToCart;
 
   return (
@@ -24,14 +25,13 @@ export const ProductSlider = memo<ProductSliderProps>(({
               key={product.id}
               product={product}
               onAddToCart={handleAddToCart}
-              primaryColor={primaryColor}
             />
         ))}
         {products.length > 4 && (
           <div className="product-slider-see-more-container"> 
             <button 
               className="product-slider-see-more-button"
-              style={{ backgroundColor: primaryColor }}
+              style={{ backgroundColor: config.primaryColor }}
               onClick={() => window.location.href = '/'}
             >
               See More

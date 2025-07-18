@@ -1,6 +1,5 @@
 @use '../../styles/colors.scss' as *;
 
-//TODO: Seperate the OTP & Email to their dedicated css, jsx files
 .email-gate-container {
   display: flex;
   flex-direction: column;
@@ -19,37 +18,18 @@
   text-align: center;
 }
 
+.shop-logo-email-gate {
+  max-width: 150px;
+  max-height: 50px;
+  margin-bottom: 16px;
+  object-fit: contain;
+}
+
 .email-gate-description {
   color: $gray-600;
   font-size: 14px;
   line-height: 1.5;
   margin: 0 0 24px;
-}
-
-.email-gate-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid $gray-300;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 8px;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &.has-error {
-    border-color: var(--theme-primary-color, #{$red-500});
-    box-shadow: none;
-  }
-
-  &:focus {
-    border-color: var(--theme-primary-color, #{$orange-450});
-    box-shadow: none;
-  }
-
-  &:focus.has-error {
-    border-color: var(--theme-primary-color, #{$red-500});
-    box-shadow: none;
-  }
 }
 
 .email-gate-error-message {
@@ -59,86 +39,9 @@
   margin-bottom: 12px;
   opacity: 0;
   transition: opacity 0.2s;
-  height: 16px;
+  min-height: 16px;
 
   &.visible {
     opacity: 1;
-  }
-}
-
-.otp-input-container {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  width: 100%;
-  justify-content: center;
-}
-
-.otp-input {
-  width: 40px;
-  height: 48px;
-  text-align: center;
-  border: 1px solid $gray-300;
-  border-radius: 8px;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s;
-  box-shadow: none;
-
-  &.has-error {
-    border-color: var(--theme-primary-color, #{$red-500});
-  }
-
-  &:focus {
-    border-color: var(--theme-primary-color, #{$orange-450});
-    box-shadow: none;
-  }
-  
-  &:focus.has-error {
-    border-color: var(--theme-primary-color, #{$red-500});
-    box-shadow: none;
-  }
-}
-
-.email-gate-continue-button {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--theme-primary-color, #{$orange-450});
-  color: $white-100;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-bottom: 8px;
-
-  &:hover:not(:disabled) {
-    background-color: var(--theme-primary-color, #{$orange-450});
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-}
-
-.email-gate-request-again {
-  background: none;
-  border: none;
-  color: var(--theme-primary-color, #{$orange-450});
-  font-size: 14px;
-  cursor: pointer;
-  padding: 4px;
-  margin-top: 4px;
-  transition: opacity 0.2s;
-
-  &:hover:not(:disabled) {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 }

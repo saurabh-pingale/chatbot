@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getCart, syncCartWithShopify } from '../services/shopify';
+import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
 import { getStoredUtmParameters } from '../utils/utm';
@@ -88,7 +88,7 @@ export const useCart = () => {
       }
       setIsCartSyncing(true);
       setTimeout(() => {
-        syncCartWithShopify(updatedItems)
+        syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync cart with Shopify after add:', err))
           .finally(() => setIsCartSyncing(false));
       }, 0)
@@ -102,7 +102,7 @@ export const useCart = () => {
     setIsCartSyncing(true);
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
-        syncCartWithShopify(updatedItems)
+        syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync after remove:', err))
           .finally(() => setIsCartSyncing(false));
         return updatedItems;
@@ -132,7 +132,7 @@ export const useCart = () => {
                 : item
             );
         }
-        syncCartWithShopify(newItems)
+        syncCartItemsToShopifyStoreCart(newItems)
           .catch(err => console.error('Failed to sync after update qty:', err))
           .finally(() => setIsCartSyncing(false));
         return newItems;
@@ -145,7 +145,7 @@ export const useCart = () => {
 
   const checkout = async () => {
     try {
-      const success = await syncCartWithShopify(cartItems);
+      const success = await syncCartItemsToShopifyStoreCart(cartItems);
       if (success) {
         const utmParams = getStoredUtmParameters();
         const checkoutUrl = new URL('/checkout', window.location.origin);

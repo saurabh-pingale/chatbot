@@ -1,41 +1,63 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { hexToRgbArray, getContrastingTextColor  } from '../../utils/utils';
+import { hexToRgbArray, getContrastingTextColor } from '../../utils/utils';
+import { getShopOfferTags } from '../../services/chat';
 import type { OffersPopupProps, StyleWithCustomProps } from '../../types';
 import './OffersPopup.scss';
+import { useConfig } from '../../context/ConfigContext';
 
-export const OffersPopup = memo<OffersPopupProps>(({ 
-  isOpen, 
-  onClose, 
-  offerTags, 
-  primaryColor, 
-  onOfferClick
+export const OffersPopup = memo<OffersPopupProps>(({
+  isOpen,
+  onClose,
+  setError
 }) => {
   const [container, setContainer] = useState<Element | null>(null);
+  const [offerTags, setOfferTags] = useState<string[]>([]);
+
+  const config = useConfig();
+  
+  const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
 
   useEffect(() => {
     setContainer(document.querySelector('.chatbot-container'));
   }, []);
 
-  const headerTextColor = getContrastingTextColor(primaryColor);
-  const primaryColorRgb = hexToRgbArray(primaryColor);
+  useEffect(() => {
+    const fetchOffers = async () => {
+      if (isOpen) {
+        try {
+          const tags = await getShopOfferTags(config.shopId, storefrontAccessToken);
+          setOfferTags(tags);
+        } catch (err) {
+          console.error('Failed to fetch offer tags:', err);
+          setError('Could not load offers at this time. Please try again later.');
+          setOfferTags([]);
+        }
+      }
+    };
+    fetchOffers();
+  }, [isOpen, config.shopId, storefrontAccessToken, setError]);
+
+  const handleOfferClick = useCallback((tag: string) => {
+    const offerUrl = `https://${config.shopId}/collections/all?constraint=${encodeURIComponent(tag)}`;
+    window.open(offerUrl, '_blank');
+    onClose();
+  }, [config.shopId, onClose]);
+
+  const primaryColorRgb = hexToRgbArray(config.primaryColor);
+  const headerTextColor = getContrastingTextColor(config.primaryColor);
   const headerStyles: StyleWithCustomProps = {
-    '--theme-primary-color': primaryColor,
+    '--theme-primary-color': config.primaryColor,
   };
   if (primaryColorRgb) {
     headerStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
   }
 
-  const handleTagClick = (tag: string) => {
-    onOfferClick(tag);
-    onClose();
-  };
-
   const popupJsx = (
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
+        <motion.div
           className="offers-popup-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -48,7 +70,7 @@ export const OffersPopup = memo<OffersPopupProps>(({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -20, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onClick={(e) => e.stopPropagation()} 
+            onClick={(e) => e.stopPropagation()}
             style={headerStyles}
           >
             <div className="offers-popup-header" style={headerStyles}>
@@ -61,7 +83,7 @@ export const OffersPopup = memo<OffersPopupProps>(({
                 <ul className="offers-popup-list">
                   {offerTags.map((tag) => (
                     <li key={tag} className="offers-popup-list-item">
-                      <button onClick={() => handleTagClick(tag)} className="offers-popup-tag-button">
+                      <button onClick={() => handleOfferClick(tag)} className="offers-popup-tag-button">
                         {tag}
                       </button>
                     </li>
@@ -80,4 +102,4 @@ export const OffersPopup = memo<OffersPopupProps>(({
   }
 
   return createPortal(popupJsx, container);
-}); 
+});
