@@ -145,11 +145,8 @@ export interface ChatbotToggleProps {
 }
 
 export interface ChatHeaderProps {
-  onToggleCart: () => void;
-  cartItemCount: number;
   onClearConversation?: () => void;
   onMinimize: () => void;
-  isCartSyncing: boolean;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
   isEmailGateVisible: boolean;
   messagesCount: number;
@@ -162,7 +159,6 @@ export interface ChatInputProps {
 
 export interface EmailGateProps {
   onSuccess: (token: string, locationInfo: LocationInfo | null) => void;
-  onSkip: () => void;
 }
 
 export interface ErrorPopupProps {
@@ -307,6 +303,8 @@ export interface EmailInputProps {
   disabled: boolean;
   hasError: boolean;
   style: StyleWithCustomProps;
+  onContinue: () => void;
+  isLoading: boolean;
 }
 
 export interface OtpInputProps {
@@ -314,4 +312,7 @@ export interface OtpInputProps {
   disabled: boolean;
   hasError: boolean;
   style: React.CSSProperties;
+  onVerify: () => void;
+  onRequestAgain: () => void;
+  isLoading: boolean;
 }

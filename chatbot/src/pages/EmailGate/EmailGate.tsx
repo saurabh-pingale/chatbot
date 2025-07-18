@@ -12,9 +12,9 @@ import { sendOTP, verifyOTP } from '../../services/auth';
 import type { StyleWithCustomProps, LocationInfo, EmailGateProps } from '../../types';
 import './EmailGate.scss';
 
-export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
+export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState(''); 
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -47,7 +47,7 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
       setIsLoading(false);
     }
   };
-  
+
   const captureLocation = async (): Promise<LocationInfo | null> => {
     try {
       const ip = await getIpAddress();
@@ -58,7 +58,7 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
       return { ip: 'unknown', country: null, city: null, region: null };
     }
   };
-  
+
   const handleVerifyAndInitSession = async () => {
     if (otp.length !== 4) {
       setError('Please enter the 4-digit OTP');
@@ -83,11 +83,6 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSkipFlow = () => {
-    sessionStorage.setItem('sessionViewedEmailGate', 'true');
-    onSkip();
   };
 
   return (
@@ -116,6 +111,8 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
             disabled={isLoading}
             hasError={!!error}
             style={dynamicStyles}
+            onContinue={handleSendOtp}
+            isLoading={isLoading}
           />
         ) : (
           <OtpInput
@@ -123,40 +120,14 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess, onSkip }) => {
             disabled={isLoading}
             hasError={!!error}
             style={dynamicStyles}
+            onVerify={handleVerifyAndInitSession}
+            onRequestAgain={handleSendOtp}
+            isLoading={isLoading}
           />
         )}
 
         {error && <div className="email-gate-error-message visible">{error}</div>}
 
-        <button
-          className="email-gate-continue-button"
-          onClick={otpSent ? handleVerifyAndInitSession : handleSendOtp}
-          disabled={isLoading}
-          style={dynamicStyles}
-        >
-          {isLoading ? 'Loading...' : (otpSent ? 'Verify OTP' : 'Continue')}
-        </button>
-
-        {otpSent && (
-          <button
-            className="email-gate-request-again"
-            onClick={handleSendOtp}
-            disabled={isLoading}
-            style={{ color: config.primaryColor }}
-          >
-            Didn't receive code? Request again
-          </button>
-        )}
-
-        {config.allowGuestMode && (
-          <button
-            className="email-gate-skip-button"
-            onClick={handleSkipFlow}
-            disabled={isLoading}
-          >
-            Skip for now
-          </button>
-        )}
       </div>
     </motion.div>
   );

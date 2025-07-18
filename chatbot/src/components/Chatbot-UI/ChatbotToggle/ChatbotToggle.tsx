@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+
+import { useConfig } from '../../../context/ConfigContext';
 import { IMAGE } from '../../../constants/image';
 import type { ChatbotToggleProps, StyleWithCustomProps } from '../../../types';
 import { iconAnimation, toggleAnimation } from '../../../styles/animations';
 import './ChatbotToggle.scss';
-import { useConfig } from '../../../context/ConfigContext';
 
 export const ChatbotToggle = memo<ChatbotToggleProps>(({ 
   isOpen,

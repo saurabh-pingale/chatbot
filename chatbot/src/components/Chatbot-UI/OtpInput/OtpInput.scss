@@ -1,5 +1,12 @@
 @use '../../../styles/colors.scss' as *;
 
+.otp-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .otp-input-container {
   display: flex;
   gap: 8px;
@@ -31,5 +38,48 @@
   &:focus.has-error {
     border-color: var(--theme-primary-color, #{$red-500});
     box-shadow: none;
+  }
+}
+
+.otp-verify-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--theme-primary-color, #{$orange-450});
+  color: $white-100;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 8px;
+
+  &:hover:not(:disabled) {
+    background-color: var(--theme-primary-color, #{$orange-450});
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.otp-request-again-button {
+  background: none;
+  border: none;
+  color: var(--theme-primary-color, #{$orange-450});
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  margin-top: 4px;
+  transition: opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }

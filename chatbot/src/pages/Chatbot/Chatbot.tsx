@@ -4,9 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ChatBody from '../../components/Chatbot-UI/ChatBody/ChatBody';
 import { ChatHeader } from '../../components/Chatbot-UI/ChatHeader/ChatHeader';
 import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/ChatbotToggle';
-import { EmailGate } from '../EmailGate/EmailGate';
 import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
-import { useCart } from '../../context/CartContext';
+import { EmailGate } from '../EmailGate/EmailGate';
 import { useConfig } from '../../context/ConfigContext';    
 import { getAuthToken } from '../../utils/auth';
 import { hexToRgbArray } from '../../utils/utils';
@@ -26,9 +25,6 @@ export const Chatbot = memo(() => {
   const chatBodyRef = useRef<ChatBodyHandle>(null);
   const isMobile = window.innerWidth <= 768;
 
-  const { cartItems, toggleCart, isCartSyncing } = useCart();
-  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
   useEffect(() => {
     const token = getAuthToken();
     const hasViewedEmailGate = sessionStorage.getItem('sessionViewedEmailGate');
@@ -42,11 +38,6 @@ export const Chatbot = memo(() => {
   const handleAuthSuccess = (token: string, locationInfo: LocationInfo | null) => {
     setJwtToken(token);
     setCapturedLocationInfo(locationInfo);
-    setShowEmailGate(false);
-  };
-
-  const handleAuthSkip = () => {
-    setJwtToken(null);
     setShowEmailGate(false);
   };
 
@@ -78,11 +69,8 @@ export const Chatbot = memo(() => {
             {...chatAnimation}
           >
             <ChatHeader
-              onToggleCart={toggleCart}
-              cartItemCount={totalCartItems}
               onClearConversation={handleClearConversation}
               onMinimize={handleToggle}
-              isCartSyncing={isCartSyncing}
               setError={setError}
               isEmailGateVisible={showEmailGate}
               messagesCount={messagesCount}
@@ -91,7 +79,6 @@ export const Chatbot = memo(() => {
               {showEmailGate ? (
                 <EmailGate
                   onSuccess={handleAuthSuccess}
-                  onSkip={handleAuthSkip}
                 />
               ) : (
                 <ChatBody

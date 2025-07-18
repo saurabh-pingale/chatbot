@@ -2,7 +2,15 @@ import { memo, useState, useRef, useEffect } from 'react';
 import type { OtpInputProps } from '../../../types';
 import './OtpInput.scss';
 
-export const OtpInput = memo<OtpInputProps>(({ onOtpChange, disabled, hasError, style }) => {
+export const OtpInput = memo<OtpInputProps>(({
+  onOtpChange,
+  disabled,
+  hasError,
+  style,
+  onVerify,
+  onRequestAgain,
+  isLoading
+}) => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(''));
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -38,23 +46,43 @@ export const OtpInput = memo<OtpInputProps>(({ onOtpChange, disabled, hasError, 
   };
 
   return (
-    <div className="otp-input-container">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <input
-          key={`otp-${index}`}
-          ref={el => { otpInputRefs.current[index] = el; }}
-          type="text"
-          maxLength={1}
-          className={`otp-input ${hasError ? 'has-error' : ''}`}
-          value={otp[index]}
-          onChange={(e) => handleOtpValueChange(index, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          onPaste={index === 0 ? handlePaste : undefined}
-          disabled={disabled}
-          aria-label={`OTP digit ${index + 1}`}
-          style={style}
-        />
-      ))}
+    <div className="otp-wrapper">
+      <div className="otp-input-container">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <input
+            key={`otp-${index}`}
+            ref={el => { otpInputRefs.current[index] = el; }}
+            type="text"
+            maxLength={1}
+            className={`otp-input ${hasError ? 'has-error' : ''}`}
+            value={otp[index]}
+            onChange={(e) => handleOtpValueChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            onPaste={index === 0 ? handlePaste : undefined}
+            disabled={disabled}
+            aria-label={`OTP digit ${index + 1}`}
+            style={style}
+          />
+        ))}
+      </div>
+      
+      <button
+        className="otp-verify-button"
+        onClick={onVerify}
+        disabled={isLoading}
+        style={style}
+      >
+        {isLoading ? 'Loading...' : 'Verify OTP'}
+      </button>
+
+      <button
+        className="otp-request-again-button"
+        onClick={onRequestAgain}
+        disabled={isLoading}
+        style={style}
+      >
+        Didn't receive code? Request again
+      </button>
     </div>
   );
 });
