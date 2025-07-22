@@ -51,7 +51,8 @@ export const clearCart = async (): Promise<boolean> => {
     return false;
   }
 };
-
+ 
+//TODO: This flow, whole code is not correct
 export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   try {
     const shopifyItems = items.map(item => {
@@ -98,6 +99,7 @@ export const syncCartItemsToShopifyStoreCart = async (localCart: CartItem[]): Pr
   if (!await clearCart()) return false;
 
   if (localCart.length === 0) return true;
-
+ 
+   //TODO: This flow, whole code is not correct
   return await addToCart(localCart);
 }; 

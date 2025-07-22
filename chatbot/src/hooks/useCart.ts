@@ -71,6 +71,7 @@ export const useCart = () => {
       quantity: 1,
     };
 
+    //TODO: Do you think, its correct ?
     setCartItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(item => 
         (item.variant_id && product.variant_id && item.variant_id === product.variant_id) || 
@@ -115,10 +116,12 @@ export const useCart = () => {
     setIsCartSyncing(true);
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
+        //TODO: This flow, whole code is not correct
         syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync after remove:', err))
           .finally(() => setIsCartSyncing(false));
 
+        //TODO: If you remove this below line, what will happen ?
         removeCheckoutProduct(Number(productId))
 
         return updatedItems;
