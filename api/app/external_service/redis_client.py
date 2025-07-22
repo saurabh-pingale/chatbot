@@ -1,6 +1,5 @@
 from redis.asyncio import Redis
 from app.config import REDIS_URL
-from app.utils.logger import logger
 
 dispatcher = None
 

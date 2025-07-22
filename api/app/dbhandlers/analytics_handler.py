@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime
-from typing import Optional, Tuple, Dict
+from typing import Optional, Dict
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.user_handler import UserHandler
@@ -43,54 +43,60 @@ class AnalyticsHandler:
         This function is safe from race conditions due to the 'ON CONFLICT DO NOTHING' clause
         targeting the correct partial unique index.
         """
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                today = datetime.now().date()
+        try:
+            async with AsyncSessionLocal() as session:
+                async with session.begin():
+                    today = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
 
-                if not user_id and not guest_id:
-                    logger.error("Both user_id and guest_id are None. Cannot create analytics record.")
-                    return None
+                    if not user_id and not guest_id:
+                        logger.error("Both user_id and guest_id are None. Cannot create analytics record.")
+                        return None
 
-                insert_values = {"shop_id": shop_id, "date": today}
-                if user_id:
-                    insert_values["user_id"] = user_id
-                else:
-                    insert_values["guest_id"] = guest_id
+                    insert_values = {"shop_id": shop_id, "date": today}
+                    if user_id:
+                        insert_values["user_id"] = user_id
+                    else:
+                        insert_values["guest_id"] = guest_id
 
-                if utm_params:
-                    insert_values.update({
-                        "utm_source": utm_params.utm_source or 'direct', "utm_medium": utm_params.utm_medium,
-                        "utm_campaign": utm_params.utm_campaign, "utm_term": utm_params.utm_term,
-                        "utm_content": utm_params.utm_content
-                    })
-                else:
-                    insert_values.setdefault("utm_source", 'direct')
+                    if utm_params:
+                        insert_values.update({
+                            "utm_source": utm_params.utm_source or 'direct', "utm_medium": utm_params.utm_medium,
+                            "utm_campaign": utm_params.utm_campaign, "utm_term": utm_params.utm_term,
+                            "utm_content": utm_params.utm_content
+                        })
+                    else:
+                        insert_values.setdefault("utm_source", 'direct')
 
-                stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
+                    stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
 
-                if user_id:
-                    conflict_target = ['user_id', 'shop_id', 'date']
-                    index_where = UserShopAnalyticsModel.user_id.isnot(None)
-                else: 
-                    conflict_target = ['guest_id', 'shop_id', 'date']
-                    index_where = UserShopAnalyticsModel.guest_id.isnot(None)
+                    if user_id:
+                        conflict_target = ['user_id', 'shop_id', 'date']
+                        index_where = UserShopAnalyticsModel.user_id.isnot(None)
+                    else: 
+                        conflict_target = ['guest_id', 'shop_id', 'date']
+                        index_where = UserShopAnalyticsModel.guest_id.isnot(None)
 
-                stmt = stmt.on_conflict_do_nothing(
-                    index_elements=conflict_target,
-                    index_where=index_where
-                )
-                await session.execute(stmt)
+                    stmt = stmt.on_conflict_do_nothing(
+                        index_elements=conflict_target,
+                        index_where=index_where
+                    )
+                    await session.execute(stmt)
 
-                select_stmt = select(UserShopAnalyticsModel).where(
-                    UserShopAnalyticsModel.shop_id == shop_id, UserShopAnalyticsModel.date == today
-                )
-                if user_id:
-                    select_stmt = select_stmt.where(UserShopAnalyticsModel.user_id == user_id)
-                else:
-                    select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
+                    select_stmt = select(UserShopAnalyticsModel).where(
+                        UserShopAnalyticsModel.shop_id == shop_id, UserShopAnalyticsModel.date == today
+                    )
+                    if user_id:
+                        select_stmt = select_stmt.where(UserShopAnalyticsModel.user_id == user_id)
+                    else:
+                        select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
 
-                result = await session.execute(select_stmt)
-                return result.scalar_one_or_none()
+                    result = await session.execute(select_stmt)
+                    return result.scalar_one_or_none()
+                
+        except SQLAlchemyError as e:
+            logger.exception(f"Database error while getting or creating analytics record: {e}")
+            await session.rollback()
+            return None
 
     async def _update_user_location(self, user_id: int, shop_id: int, country: Optional[str], region: Optional[str], city: Optional[str], ip_address: Optional[str]):
         """Fetches a user and updates their location information if it's missing."""
@@ -100,17 +106,31 @@ class AnalyticsHandler:
                     user = await session.get(UserModel, user_id, options=[selectinload(UserModel.analytics)])
                     if not user:
                         logger.error(f"User with id {user_id} not found. Cannot update location.")
-                        return
+                        return {
+                            "success": False,
+                            "message": f"User with id {user_id} not found"
+                        }
 
                     if user.shop_id != shop_id:
                         logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id}. Aborting location update.")
-                        return
+                        return {
+                            "success": False,
+                            "message": "User does not belong to this shop"
+                        }
 
                     return update_user_location_if_missing(user, country, region, city, ip_address)
         except SQLAlchemyError as e:
             logger.error(f"Database error while updating user location for user_id {user_id}: {e}", exc_info=True)
+            return {
+                "success": False,
+                "message": "Database error"
+            }
         except Exception as e:
             logger.error(f"Unexpected error while updating user location for user_id {user_id}: {e}", exc_info=True)
+            return {
+                "success": False,
+                "message": "Unexpected error occurred"
+            }
 
     async def get_or_create_user_for_token(self, email: str, shop_id: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
         """

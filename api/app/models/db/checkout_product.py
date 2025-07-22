@@ -9,13 +9,13 @@ class CheckoutProductModel(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     product_count = Column(Integer)
-    product_id = Column(BigInteger, ForeignKey("products.id"), nullable=False)
+    variant_id = Column(BigInteger, ForeignKey("products.variant_id"), nullable=False)
     collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    product = relationship("ProductModel", back_populates="checkout_products")
+    product = relationship("ProductModel", back_populates="checkout_products", primaryjoin="ProductModel.variant_id==CheckoutProductModel.variant_id" )
     collection = relationship("CollectionModel", back_populates="checkout_products")
     user = relationship("UserModel", back_populates="checkout_products")
     shop = relationship("ShopModel", back_populates="checkout_products")

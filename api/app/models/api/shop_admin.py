@@ -26,12 +26,14 @@ class CollectionResponse(BaseModel):
     data: List[CollectionRequest]
 
 class ProductRequest(BaseModel):
+    id: int
     title: str
     description: Optional[str] = None
     category: str
     url: Optional[str] = None
     price: Optional[float] = None
     image: Optional[str] = None
+    variant_id: Optional[int] = None 
 
 class StoreProductsRequest(BaseModel):
     products: List[ProductRequest]

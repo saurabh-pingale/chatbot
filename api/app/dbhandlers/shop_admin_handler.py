@@ -6,25 +6,15 @@ from sqlalchemy.dialects.postgresql import insert
 from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel
 from app.models.api.shop_admin import (ProductRequest)
 from app.dbhandlers.db import AsyncSessionLocal
+from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.config import US_COUNTRY_CODE
+from app.utils.products_utils import extract_shopify_id
 from app.utils.logger import logger
 
 class ShopAdminHandler:
     def __init__(self):
+        self.analytics_handler = AnalyticsHandler()
         pass
-
-    async def get_shop_by_domain(self, shop_domain: str) -> Optional[ShopModel]:
-        """Fetches a shop by its domain."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    result = await session.execute(
-                        select(ShopModel).filter(ShopModel.shop_id == shop_domain)
-                    )
-                    return result.scalars().first()
-                except SQLAlchemyError as error:
-                    logger.error("Database error in get_shop_by_domain: %s", str(error), exc_info=True)
-                    raise Exception("Failed to fetch shop by domain from the database.")
 
     async def create_collections(self, collections: List[CollectionModel]) -> List[dict]:
         """Create collections in the database using bulk operations."""
@@ -107,7 +97,10 @@ class ShopAdminHandler:
                     product_data_to_insert = []
 
                     for product in products:
+                        logger.info(f"Product in Create Product: {product}")
                         col_id = collection_id_map.get(getattr(product, 'category', ''))
+
+                        product_variant_id_gid = getattr(product, 'variant_id', None)
                         
                         product_data_to_insert.append({
                             'id': getattr(product, 'id', None),
@@ -117,6 +110,7 @@ class ShopAdminHandler:
                             'url': getattr(product, 'url', ''),
                             'price': float(getattr(product, 'price', 0.0)) if getattr(product, 'price', None) else None,
                             'image': getattr(product, 'image', ''),
+                            'variant_id': extract_shopify_id(product_variant_id_gid) if product_variant_id_gid else None,
                             'collection_id': col_id if col_id else None,
                             'shop_id': shop_id
                         })
@@ -132,7 +126,8 @@ class ShopAdminHandler:
                             'url': stmt.excluded.url,
                             'price': stmt.excluded.price,
                             'image': stmt.excluded.image,
-                            'collection_id': stmt.excluded.collection_id
+                            'variant_id': stmt.excluded.variant_id,
+                            'collection_id': stmt.excluded.collection_id,
                         }
                     )
 
@@ -147,7 +142,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    shop = await self.analytics_handler.get_shop_pk(shop_id)
                     if not shop:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return {
@@ -175,7 +170,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    shop = await self.analytics_handler.get_shop_pk(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -191,7 +186,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    shop = await self.analytics_handler.get_shop_pk(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -215,7 +210,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    shop = await self.analytics_handler.get_shop_pk(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -235,9 +230,13 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    query = select(ShopModel).where(ShopModel.shop_id == shop_id)
+                    result = await session.execute(query)
+                    shop = result.scalars().first()
+
                     if not shop:
-                        raise Exception(f"No shop found with shop_id: {shop_id}")
+                        logger.warning(f"No shop found with shop_id: {shop_id}")
+                        return None
 
                     return shop
                 except SQLAlchemyError as error:
@@ -249,7 +248,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.get_shop_by_domain(shop_id)
+                    shop = await self.analytics_handler.get_shop_pk(shop_id)
                     if not shop:
                         shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
                         session.add(shop)

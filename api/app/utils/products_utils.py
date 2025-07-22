@@ -19,6 +19,10 @@ def format_products(shopify_data):
     formatted_products = []
     for product in shopify_data["products"]:
         product.id = extract_shopify_id(product.id)
+
+        if not getattr(product, "variant_id", None) and hasattr(product, "variants") and product.variants:
+            product.variant_id = product.variants[0].id
+
         formatted_products.append(product)
     return formatted_products
 
