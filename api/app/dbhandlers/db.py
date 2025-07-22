@@ -1,3 +1,4 @@
+#TODO: We faced lot of issues of this db async, please check the flow once again, Its constructed correctly read blogs, videos etc
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.config import DATABASE_URL

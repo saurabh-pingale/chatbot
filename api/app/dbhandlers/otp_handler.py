@@ -10,8 +10,8 @@ class OTPHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: Shift this OTP to redis, so that we will have expired_at will handle it automatically
                     await session.execute(delete(OTPModel).where(OTPModel.email == email))
-
                     new_otp = OTPModel(email=email, otp=otp, expired_at=expired_at)
                     session.add(new_otp)
                     await session.commit()
@@ -24,6 +24,8 @@ class OTPHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: Here we are not checking expired_at, what is the point of introducing expired_at then ?
+                    #TODO: check from redis, instead of db
                     result = await session.execute(
                         select(OTPModel).where(OTPModel.email == email)
                     )
@@ -32,6 +34,7 @@ class OTPHandler:
                     logger.error(f"Error retrieving OTP: {e}", exc_info=True)
                     raise
 
+    #TODO: Any OTP should delete after 5 mins, so we don't need delete_otp
     async def delete_otp(self, email: str):
         async with AsyncSessionLocal() as session:
             async with session.begin():

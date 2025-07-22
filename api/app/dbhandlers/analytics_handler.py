@@ -3,6 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime
+#TODO: Remove tuple if you are not using it
 from typing import Optional, Tuple, Dict
 
 from app.dbhandlers.db import AsyncSessionLocal
@@ -45,6 +46,7 @@ class AnalyticsHandler:
         """
         async with AsyncSessionLocal() as session:
             async with session.begin():
+                #TODO: Store these today date in epoch unix format - https://www.epochconverter.com/
                 today = datetime.now().date()
 
                 if not user_id and not guest_id:
@@ -70,6 +72,7 @@ class AnalyticsHandler:
 
                 if user_id:
                     conflict_target = ['user_id', 'shop_id', 'date']
+                    #TODO: Lets discuss on it
                     index_where = UserShopAnalyticsModel.user_id.isnot(None)
                 else: 
                     conflict_target = ['guest_id', 'shop_id', 'date']
@@ -90,6 +93,7 @@ class AnalyticsHandler:
                     select_stmt = select_stmt.where(UserShopAnalyticsModel.guest_id == guest_id)
 
                 result = await session.execute(select_stmt)
+                #TODO: Where is the try catch and where is rollback ?
                 return result.scalar_one_or_none()
 
     async def _update_user_location(self, user_id: int, shop_id: int, country: Optional[str], region: Optional[str], city: Optional[str], ip_address: Optional[str]):
@@ -100,9 +104,11 @@ class AnalyticsHandler:
                     user = await session.get(UserModel, user_id, options=[selectinload(UserModel.analytics)])
                     if not user:
                         logger.error(f"User with id {user_id} not found. Cannot update location.")
+                        #TODO: Can you return some form of format instead of returning empty, so that frontend can able to handle it, if necessary
                         return
 
                     if user.shop_id != shop_id:
+                        #TODO: Can you return some form of format instead of returning empty, so that frontend can able to handle it, if necessary
                         logger.error(f"CRITICAL: User {user_id} (shop_id: {user.shop_id}) does not belong to the shop_id {shop_id}. Aborting location update.")
                         return
 

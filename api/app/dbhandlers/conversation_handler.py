@@ -13,6 +13,8 @@ class ConversationHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: Already there is a function which does this job of getting shop_id in handler i think, import and use it
+                    #TODO: Don't duplicate the code, its hard to resolve bugs in future
                     shop_pk = conversation_data.get("shop_id")
                     if not shop_pk:
                         logger.error("shop_id missing from conversation data. Skipping storage.")
@@ -22,6 +24,8 @@ class ConversationHandler:
                     guest_id = conversation_data.get("guest_id")
 
                     if user_pk:
+                        #TODO: Already there is a function which does this job of getting shop_id in handler i think, import and use it else create it in user handler
+                        #TODO: Don't duplicate the code, its hard to resolve bugs in future
                         user_stmt = select(UserModel).where(UserModel.id == user_pk)
                         user_result = await session.execute(user_stmt)
                         user_record = user_result.scalars().first()

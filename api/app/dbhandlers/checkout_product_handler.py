@@ -16,11 +16,13 @@ class CheckoutProductHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO: Already there is a function which does this job of getting shop_id in handler i think, import and use it
+                    #TODO: Don't duplicate the code, its hard to resolve bugs in future
                     shop = await session.execute(select(ShopModel).filter(ShopModel.shop_id == shop_id))
                     shop_id = shop.scalars().first()
                     if not shop_id:
                         raise ValueError("Shop not found")
-
+                    #TODO: Already there is a function which does this job of getting email in handler i think, import and use it
                     user = await session.execute(select(UserModel).filter(UserModel.email == user_email))
                     user_id = user.scalars().first()
                     if not user_id:
@@ -63,6 +65,8 @@ class CheckoutProductHandler:
                         select(exists().where(ProductModel.id == product_id))
                     )
                     if not product_exists.scalar():
+                        #TODO: How are we showing this product not found notification in frontend
+                        #TODO: Can you share me screenshot
                         raise ValueError("Product not found")
     
                     stmt = delete(CheckoutProductModel).where(

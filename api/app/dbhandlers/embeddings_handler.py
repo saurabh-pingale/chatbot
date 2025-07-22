@@ -15,7 +15,7 @@ from app.utils.rag_pipeline_utils import (
 )
 from app.utils.logger import logger
 
-#TODO: If this LRU cache is important then we need to use redis, to create LRU cache for each store,
+#TODO: Check tutorials, how to implement LRUCache using Redis its important, i think capacity also use redis kind of way
 query_cache = LRUCache(capacity=100)
 
 class EmbeddingsHandler:
@@ -73,7 +73,7 @@ class EmbeddingsHandler:
         )
         if cached_result:
             return cached_result
-        
+        #TODO: Why mentioning "ProductAgent", what about other agents ?
         if agent_type == "ProductAgent" and not metadata_filters:
             logger.info("Skipping query: No metadata filters provided for ProductAgent.")
             return []
