@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
+import { removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
 import { getStoredUtmParameters } from '../utils/utm';
@@ -76,23 +77,35 @@ export const useCart = () => {
         (!item.variant_id && !product.variant_id && item.id === product.id)
       );
 
-      let updatedItems;
+      let updatedItems: CartItem[];
+      let updatedProductCount: number;
+
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
+        const currentQty = updatedItems[existingItemIndex].quantity;
+        updatedProductCount = Math.min(currentQty + 1, 10);
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: Math.min(updatedItems[existingItemIndex].quantity + 1, 10),
+          quantity: updatedProductCount,
         };
       } else {
+        updatedProductCount = 1;
         updatedItems = [...prevItems, newItem];
       }
+
+      storeCheckoutProduct({
+        product_id: Number(product.id),
+        product_count: updatedProductCount,
+      });
+
       setIsCartSyncing(true);
       setTimeout(() => {
         syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync cart with Shopify after add:', err))
           .finally(() => setIsCartSyncing(false));
       }, 0)
-        return updatedItems;
+
+      return updatedItems;
     });
 
     setIsCartOpen(true);
@@ -105,6 +118,9 @@ export const useCart = () => {
         syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync after remove:', err))
           .finally(() => setIsCartSyncing(false));
+
+        removeCheckoutProduct(Number(productId))
+
         return updatedItems;
     });
     setIsCartOpen(prev => !prev);

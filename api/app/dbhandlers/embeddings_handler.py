@@ -5,7 +5,7 @@ from qdrant_client.http import models
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
 from app.models.api.rag_pipeline import ProductEmbedding, Vector
-from app.utils.lru_cache import LRUCache
+from app.utils.lru_cache import AsyncRedisLRUCache
 from app.utils.rag_pipeline_utils import (
     get_cache_results,
     normalize_vector, 
@@ -15,15 +15,13 @@ from app.utils.rag_pipeline_utils import (
 )
 from app.utils.logger import logger
 
-#TODO: Check tutorials, how to implement LRUCache using Redis its important, i think capacity also use redis kind of way
-query_cache = LRUCache(capacity=100)
-
 class EmbeddingsHandler:
     """Handles embedding storage and querying."""
 
     def __init__(self):
         self.client = QdrantClient(url=QDRANT_API_URL, api_key=QDRANT_API_KEY)
         self._ensure_collection_exists()
+        self.cache = None
 
     def _ensure_collection_exists(self, vector_size: int = 1024):
         """Ensures the Qdrant collection exists, creates it if not."""
@@ -68,12 +66,15 @@ class EmbeddingsHandler:
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
 
-        cached_result, query_key = get_cache_results(
-            query_cache, vector, namespace, metadata_filters, agent_type
+        if self.cache is None:
+            self.cache = await AsyncRedisLRUCache.create(capacity=100)
+
+        cached_result, query_key = await get_cache_results(
+            self.cache, vector, namespace, metadata_filters, agent_type
         )
         if cached_result:
-            return cached_result
-        #TODO: Why mentioning "ProductAgent", what about other agents ?
+            return [Vector(**item) for item in cached_result]
+        
         if agent_type == "ProductAgent" and not metadata_filters:
             logger.info("Skipping query: No metadata filters provided for ProductAgent.")
             return []
@@ -97,7 +98,7 @@ class EmbeddingsHandler:
 
             results = parse_search_results(search_results, includes_values, top_k, agent_type)
 
-            query_cache.put(query_key, results)
+            await self.cache.put(query_key, [r.dict() for r in results])
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)

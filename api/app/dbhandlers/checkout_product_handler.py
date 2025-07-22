@@ -1,34 +1,32 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, delete, exists
+from typing import Optional
 
-from app.models.db.shop_admin import ProductModel, ShopModel, UserModel
+from app.models.db.shop_admin import ProductModel
 from app.models.db.checkout_product import CheckoutProductModel
 from app.dbhandlers.db import AsyncSessionLocal
+from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.utils.logger import logger
 
 class CheckoutProductHandler:
     def __init__(self):
+        self.analytics_handler = AnalyticsHandler()
         pass
 
-    async def store_checkout_product(self, shop_id: str, user_email: str, product_id: int, product_count: int):
+    async def store_checkout_product(self, shop_id: str, user_id: Optional[int], guest_id: Optional[str], variant_id: int, product_count: int):
         """Stores checkout product information in the database."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    #TODO: Already there is a function which does this job of getting shop_id in handler i think, import and use it
-                    #TODO: Don't duplicate the code, its hard to resolve bugs in future
-                    shop = await session.execute(select(ShopModel).filter(ShopModel.shop_id == shop_id))
-                    shop_id = shop.scalars().first()
-                    if not shop_id:
+                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_pk:
                         raise ValueError("Shop not found")
-                    #TODO: Already there is a function which does this job of getting email in handler i think, import and use it
-                    user = await session.execute(select(UserModel).filter(UserModel.email == user_email))
-                    user_id = user.scalars().first()
-                    if not user_id:
-                        raise ValueError("User not found")
+                    
+                    if not user_id and not guest_id:
+                        raise ValueError("Either user_id or guest_id must be provided")
 
-                    product = await session.execute(select(ProductModel).filter(ProductModel.id == product_id))
+                    product = await session.execute(select(ProductModel).filter(ProductModel.variant_id == variant_id))
                     product_record = product.scalars().first()
                     if not product_record:
                         raise ValueError("Product not found")
@@ -36,14 +34,20 @@ class CheckoutProductHandler:
                     collection_id = product_record.collection_id
                     if not collection_id:
                         raise ValueError("Collection not found")
+                    
+                    insert_data = {
+                        "shop_id": shop_pk,
+                        "variant_id": product_record.variant_id,
+                        "collection_id": collection_id,
+                        "product_count": product_count
+                    }
 
-                    stmt = insert(CheckoutProductModel).values(
-                        shop_id=shop_id.id,
-                        user_id=user_id.id,
-                        product_id=product_record.id,
-                        collection_id=collection_id,
-                        product_count=product_count
-                    )
+                    if user_id:
+                        insert_data["user_id"] = user_id
+                    elif guest_id:
+                        insert_data["guest_id"] = guest_id
+
+                    stmt = insert(CheckoutProductModel).values(**insert_data)
                     await session.execute(stmt)
                     await session.commit()
                     return {"success": True}
@@ -56,21 +60,19 @@ class CheckoutProductHandler:
                     logger.error(f"Error: {error}", exc_info=True)
                     return {"success": False, "error": str(error)}
 
-    async def remove_checkout_product(self, product_id: int):
-        """Removes a checkout product entry by user and product id."""
+    async def remove_checkout_product(self, variant_id: int):
+        """Removes a checkout product entry"""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
                     product_exists = await session.execute(
-                        select(exists().where(ProductModel.id == product_id))
+                        select(exists().where(ProductModel.variant_id == variant_id))
                     )
                     if not product_exists.scalar():
-                        #TODO: How are we showing this product not found notification in frontend
-                        #TODO: Can you share me screenshot
                         raise ValueError("Product not found")
     
                     stmt = delete(CheckoutProductModel).where(
-                        CheckoutProductModel.product_id == product_id
+                        CheckoutProductModel.variant_id == variant_id
                     )
                     result = await session.execute(stmt)
                     await session.commit()

@@ -52,7 +52,7 @@ class UserModel(Base):
     conversations = relationship("ConversationModel", back_populates="user")
     shop = relationship("ShopModel", back_populates="users")
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
-    analytics = relationship("UserShopAnalyticsModel", back_populates="user", uselist=False)
+    analytics = relationship("UserShopAnalyticsModel", back_populates="user")
 
     __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 
@@ -77,11 +77,12 @@ class ProductModel(Base):
     url = Column(String)
     price = Column(Float)
     image = Column(String)
+    variant_id = Column(BigInteger, unique=True ,nullable=True)
     collection_id = Column(Integer, ForeignKey('collections.id'))
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
     
     collection = relationship("CollectionModel", back_populates="products")
-    checkout_products = relationship("CheckoutProductModel", back_populates="product")
+    checkout_products = relationship("CheckoutProductModel", back_populates="product", primaryjoin="ProductModel.variant_id==CheckoutProductModel.variant_id")
     shop = relationship("ShopModel", back_populates="products")
     
 class UserShopAnalyticsModel(Base):
@@ -100,7 +101,7 @@ class UserShopAnalyticsModel(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
     guest_id = Column(String(255), nullable=True, index=True)
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
-    date = Column(Date, default=func.current_date(), nullable=False, index=True)
+    date = Column(BigInteger, nullable=False, index=True)
     chat_interactions_count = Column(Integer, default=0, nullable=False)
     opened_chatbot_count = Column(Integer, default=0, nullable=False)
     added_to_cart_count = Column(Integer, default=0, nullable=False)

@@ -1,47 +1,29 @@
-from sqlalchemy import select, delete
-from datetime import datetime
+from datetime import datetime, UTC
 
-from app.dbhandlers.db import AsyncSessionLocal
-from app.models.db.otp import OTPModel
+from app.external_service.redis_client import get_redis_client
 from app.utils.logger import logger
 
 class OTPHandler:
+    def __init__(self):
+        self.redis_prefix = "otp:"
+
+    def _otp_key(self, email: str) -> str:
+        return f"{self.redis_prefix}{email}"
+
     async def store_otp(self, email: str, otp: str, expired_at: datetime):
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    #TODO: Shift this OTP to redis, so that we will have expired_at will handle it automatically
-                    await session.execute(delete(OTPModel).where(OTPModel.email == email))
-                    new_otp = OTPModel(email=email, otp=otp, expired_at=expired_at)
-                    session.add(new_otp)
-                    await session.commit()
-                except Exception as e:
-                    logger.error(f"Error storing OTP: {e}", exc_info=True)
-                    await session.rollback()
-                    raise
+        try:
+            redis = await get_redis_client()
+            ttl_seconds = int((expired_at - datetime.now(UTC)).total_seconds())
+            await redis.set(self._otp_key(email), otp, ex=ttl_seconds)
+        except Exception as e:
+            logger.error(f"Error storing OTP in Redis: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to store OTP for {email}") from e
 
-    async def get_otp_by_email(self, email: str) -> OTPModel | None:
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    #TODO: Here we are not checking expired_at, what is the point of introducing expired_at then ?
-                    #TODO: check from redis, instead of db
-                    result = await session.execute(
-                        select(OTPModel).where(OTPModel.email == email)
-                    )
-                    return result.scalars().first()
-                except Exception as e:
-                    logger.error(f"Error retrieving OTP: {e}", exc_info=True)
-                    raise
-
-    #TODO: Any OTP should delete after 5 mins, so we don't need delete_otp
-    async def delete_otp(self, email: str):
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    await session.execute(delete(OTPModel).where(OTPModel.email == email))
-                    await session.commit()
-                except Exception as e:
-                    logger.error(f"Error deleting OTP: {e}", exc_info=True)
-                    await session.rollback()
-                    raise 
+    async def get_otp_by_email(self, email: str) -> str | None:
+        try:
+            redis = await get_redis_client()
+            otp = await redis.get(self._otp_key(email))
+            return otp
+        except Exception as e:
+            logger.error(f"Error retrieving OTP from Redis: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to retrieve OTP for {email}") from e

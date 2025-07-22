@@ -38,20 +38,18 @@ async def agent_conversation(
         
         app = get_app()
             
-        shop = await app.shop_admin_handler.get_shop_by_domain(shop_id)
-        if not shop:
+        shop_id_int= await app.analytics_handler.get_shop_pk(shop_id)
+        if not shop_id_int:
             raise HTTPException(status_code=404, detail="Shop not found.")
-
-        guest_id = request.query_params.get("guest_id")
 
         if not auth_payload:
             user_id, is_guest = None, True  # Guest
         else:
             try:
                 validated_payload = AuthPayloadModel(**auth_payload)
-                validated_payload.validate_shop_access(shop.id)
+                validated_payload.validate_shop_access(shop_id_int)
                 user_id = validated_payload.user_id
-                is_guest = validated_payload.is_guest
+                is_guest = validated_payload.is_guest or False
             except (ValidationError, ValueError) as ve:
                 logger.warning(f"Auth validation failed: {ve}")
                 return {
@@ -61,6 +59,11 @@ async def agent_conversation(
                     "success": False,
                     "error": str(ve)
                 }
+            
+        guest_id = request.query_params.get("guest_id")
+        if is_guest and not guest_id:
+            logger.warning("Guest user missing guest_id")
+            raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
 
         contents = payload.messages
         if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):
@@ -84,11 +87,11 @@ async def agent_conversation(
 
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await record_chat_analytics(app, user_id, shop.id, guest_id, payload.location_info)
+        await record_chat_analytics(app, user_id, shop_id_int, guest_id, payload.location_info)
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 
-        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop.id, is_guest, guest_id )
+        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_id_int, is_guest, guest_id )
 
         conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
         

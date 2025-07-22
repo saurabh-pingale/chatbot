@@ -15,7 +15,7 @@ user_auth_router = APIRouter(prefix="/user_auth", tags=["user_auth"])
 async def send_otp(payload: SendOTPRequest):
     try:
         app = get_app()
-        shop = await app.shop_admin_handler.get_shop_by_domain(payload.shop_id)
+        shop = await app.analytics_handler.get_shop_pk(payload.shop_id)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found")
 
@@ -34,24 +34,18 @@ async def send_otp(payload: SendOTPRequest):
 async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
     try:
         app = get_app()
-        shop = await app.shop_admin_handler.get_shop_by_domain(payload.shop_id)
-        if not shop:
+        shop_id = await app.analytics_handler.get_shop_pk(payload.shop_id)
+        if not shop_id:
             raise HTTPException(status_code=404, detail="Shop not found")
 
         stored_otp = await app.otp_handler.get_otp_by_email(email=payload.email)
 
-        if not stored_otp or stored_otp.otp != payload.otp:
+        if not stored_otp or stored_otp != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
-
-        if datetime.now(UTC) > stored_otp.expired_at:
-            await app.otp_handler.delete_otp(email=payload.email)
-            raise HTTPException(status_code=400, detail="OTP has expired")
         
-        user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop.id)
+        user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_id)
         if not user:
-            user = await app.user_handler.create_user(email=payload.email, shop_id=shop.id)
-
-        await app.otp_handler.delete_otp(email=payload.email)
+            user = await app.user_handler.create_user(email=payload.email, shop_id=shop_id)
 
         token_data = {"user_id": user.id, "shop_id": user.shop_id}
         access_token = create_access_token(data=token_data)

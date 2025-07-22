@@ -5,7 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import List, Dict, Any, Optional, Tuple, Set
 
 from app.models.api.rag_pipeline import Vector, VectorMetadata
-from app.utils.lru_cache import LRUCache
+from app.utils.lru_cache import AsyncRedisLRUCache
 from app.utils.logger import logger
 
 def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, Any]]:
@@ -63,15 +63,16 @@ def build_query_key(
 ) -> str:
     return f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
 
-def get_cache_results(
-    cache: LRUCache,    
+async def get_cache_results(
+    cache: AsyncRedisLRUCache,    
     vector: List[float],
     namespace: Optional[str],
     metadata_filters: Optional[Dict[str, Any]],
     agent_type: Optional[str]
 ) -> Tuple[Optional[List[Vector]], str]:
     query_key = build_query_key(vector, namespace, metadata_filters, agent_type)
-    return cache.get(query_key), query_key
+    result = await cache.get(query_key)
+    return result, query_key
 
 def normalize_vector(vector: List[float]) -> List[float]:
     norm = (sum(v ** 2 for v in vector)) ** 0.5
