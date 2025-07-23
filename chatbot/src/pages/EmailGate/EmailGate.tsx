@@ -64,19 +64,23 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
       setError('Please enter the 4-digit OTP');
       return;
     }
+  
     setIsLoading(true);
     setError('');
+  
     try {
       await verifyOTP(email, otp, config.shopId);
+    
       const utmParams = getStoredUtmParameters();
-      const response = await initiateUserSession({ email, shopId: config.shopId, utm_params: utmParams });
-
+      const sessionPromise = initiateUserSession({ email, shopId: config.shopId, utm_params: utmParams });
+      const locationPromise = captureLocation();
+    
+      const [response, locationInfo] = await Promise.all([sessionPromise, locationPromise]);
+    
       if (!response.token) throw new Error("Failed to retrieve authentication token.");
-      
       setAuthToken(response.token);
-      const locationInfo = await captureLocation();
+    
       onSuccess(response.token, locationInfo);
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(`Verification failed: ${errorMessage}. Please try again.`);
