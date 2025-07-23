@@ -1,8 +1,9 @@
-import { memo, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { memo, useState, useEffect, forwardRef, useImperativeHandle, useCallback, useRef } from 'react';
 import { useChat } from '../../../hooks/useChat';
 import { useCart } from '../../../context/CartContext';
 import { sendAgentMessage } from '../../../services/chat';
-import { TAG_DICTIONARY, STATIC_BOT_GREETING } from '../../../constants/botMessages.constants';
+import { getConversationKey } from '../../../services/user';
+import { TAG_DICTIONARY, STATIC_BOT_GREETING, DEFAULT_TAGS } from '../../../constants/botMessages.constants';
 import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
 import { Cart } from '../../Cart-UI/Cart/Cart';
@@ -10,47 +11,45 @@ import { useConfig } from '../../../context/ConfigContext';
 import type { ChatBodyHandle, ChatBodyProps, Message, ProductType, TagItem } from '../../../types';
 
 const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
-  ({ jwtToken, capturedLocationInfo, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {
-    const { messages, isTyping, handleTyping, addMessage, handleBotResponse, setMessages } = useChat();
-    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
-
+  ({ jwtToken, capturedLocationInfo, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {  
     const config = useConfig();
+    const [conversationKey, setConversationKey] = useState<string | null>(null);
     const [chatLimitReached, setChatLimitReached] = useState(false);
     const [tags, setTags] = useState<TagItem[]>([]);
-    const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
     const [showInitialTags, setShowInitialTags] = useState(false);
+    const isInitialMount = useRef(true);
+    
+    useEffect(() => {
+     setConversationKey(getConversationKey(config.shopId));
+    }, [jwtToken]);
+
+    const { messages, isTyping, isLoading, handleTyping, addMessage, handleBotResponse, clearConversation } = useChat(conversationKey);
+    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
     useEffect(() => {
       onMessagesCountChange(messages.length);
     }, [messages.length, onMessagesCountChange]);
 
-    //TODO: Move this DEFAULT_TAGS to constants
-    const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
-      name,
-      description,
-    }));
-
     useEffect(() => {
-      if (!isEmailGateVisible && !hasShownStaticMessage) {
+      if (isInitialMount.current && !isLoading && !isEmailGateVisible && messages.length === 0) {
         addMessage(STATIC_BOT_GREETING, 'bot');
-        setHasShownStaticMessage(true);
         setTags(DEFAULT_TAGS);
         setShowInitialTags(true);
+        isInitialMount.current = false;
       }
-    }, [isEmailGateVisible, hasShownStaticMessage, addMessage, DEFAULT_TAGS]);
-    
-    useImperativeHandle(ref, () => ({
-      clearConversation: () => {
-        setMessages([]);
-        setHasShownStaticMessage(false);
+    }, [isLoading, isEmailGateVisible, messages.length, addMessage]);
+
+    const resetChat = useCallback(async () => {
+        await clearConversation();
+        isInitialMount.current = true;
         setChatLimitReached(false);
-        setTags(DEFAULT_TAGS);
-        setShowInitialTags(true);
-      },
+    }, [clearConversation, addMessage]);
+
+    useImperativeHandle(ref, () => ({
+      clearConversation: resetChat,
     }));
 
-    //TODO: ProcessBotTags means are we formatting ? if yes change function name
-    const processBotTags = (tagsFromResponse: any[]) => {
+    const formatBotTags = (tagsFromResponse: any[]) => {
       if (!tagsFromResponse || !Array.isArray(tagsFromResponse)) {
         setShowInitialTags(false);
         return;
@@ -79,14 +78,12 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
         const response = await sendAgentMessage(config.shopId, payloadBase);
 
         if (response.limit_reached) setChatLimitReached(true);
-        setTimeout(() => processBotTags(response.tags ?? []), 200);
-        //TODO: Why there is this await, is this async function ?
-        await handleBotResponse(response);
+        setTimeout(() => formatBotTags(response.tags ?? []), 200);
+        handleBotResponse(response);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred.';
         setError(errorMessage);
-        //TODO: Why there is this await, is this async function ?
-        await handleBotResponse({ answer: `Sorry, an error occurred: ${errorMessage}`, products: [], success: false, error: errorMessage });
+        handleBotResponse({ answer: `Sorry, an error occurred: ${errorMessage}`, products: [], success: false, error: errorMessage });
       } finally {
         handleTyping(false);
       }

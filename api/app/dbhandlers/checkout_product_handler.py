@@ -60,20 +60,28 @@ class CheckoutProductHandler:
                     logger.error(f"Error: {error}", exc_info=True)
                     return {"success": False, "error": str(error)}
 
-    async def remove_checkout_product(self, variant_id: int):
+    async def remove_checkout_product(self, shop_id: str, user_id: Optional[int], guest_id: Optional[str], variant_id: int):
         """Removes a checkout product entry"""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    product_exists = await session.execute(
-                        select(exists().where(ProductModel.variant_id == variant_id))
-                    )
-                    if not product_exists.scalar():
-                        raise ValueError("Product not found")
+                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_pk:
+                        raise ValueError("Shop not found")
+                    
+                    filters = [
+                        CheckoutProductModel.variant_id == variant_id,
+                        CheckoutProductModel.shop_id == shop_pk,
+                    ]
+
+                    if user_id:
+                        filters.append(CheckoutProductModel.user_id == user_id)
+                    elif guest_id:
+                        filters.append(CheckoutProductModel.guest_id == guest_id)
+                    else:
+                        raise ValueError("Must provide user_id or guest_id")
     
-                    stmt = delete(CheckoutProductModel).where(
-                        CheckoutProductModel.variant_id == variant_id
-                    )
+                    stmt = delete(CheckoutProductModel).where(*filters)
                     result = await session.execute(stmt)
                     await session.commit()
     

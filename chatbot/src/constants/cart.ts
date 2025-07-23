@@ -1,7 +1,8 @@
 export const CART = {
     GET: '/cart.js',
     CLEAR: '/cart/clear.js',
-    ADD: '/cart/add.js'
+    ADD: '/cart/add.js',
+    UPDATE: '/cart/update.js'
 }
 
 export const SHOPIFY_VARIANT_PREFIX = 'gid://shopify/productvariant/';

@@ -24,7 +24,6 @@ const makeRequest = async (endpoint: string, originalBody: object = {}) => {
       headers,
       body: JSON.stringify(body),
     });
-    console.log("Response:", response);
 
     if (!response.ok) {
       const errorText = await response.text();

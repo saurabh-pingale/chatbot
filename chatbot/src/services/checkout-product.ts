@@ -35,14 +35,26 @@ export const storeCheckoutProduct = async (originalBody: object = {}) => {
   }
 };
 
-export const removeCheckoutProduct = async (productId: number) => {
+export const removeCheckoutProduct = async (originalBody: object = {}) => {
   try {
-    const response = await fetch(API_ENDPOINTS.REMOVE_CHECKOUT_PRODUCT, {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    const shopId = getShopId();  
+    const token = getAuthToken() 
+    const body = { ...originalBody } 
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+    } else {
+        (body as any).guest_id = getGuestId();
+    }
+
+    const response = await fetch(`${API_ENDPOINTS.REMOVE_CHECKOUT_PRODUCT}?shop_id=${shopId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ productId }),
+      headers,
+      body: JSON.stringify(body),
     });
 
     const result = await response.json();
