@@ -80,21 +80,51 @@ async def store_checkout_products(
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def remove_checkout_product(request: Request):
-    body = await request.json()
-    
-    product_id = body.get("productId")
+async def remove_checkout_product(
+    request: Request,
+    auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
+):
+    shop_id = request.query_params.get("shop_id") 
+    guest_id = request.query_params.get("guest_id")
 
-    if not product_id:
-        raise HTTPException(status_code=400, detail="Missing user email or product title")
+    if not shop_id:
+        raise HTTPException(status_code=400, detail="Missing shop_id")
+
+    body = await request.json()
+    variant_id = body.get("product_id") 
+
+    if not variant_id:
+        raise HTTPException(status_code=400, detail="Missing product details")
 
     try:
         app = get_app()
-        result = await app.checkout_product_service.remove_checkout_product(product_id)
-        if result.get("success"):
+        user_id = None
+        is_guest = True
+
+        shop_pk = await app.analytics_handler.get_shop_pk(shop_id)
+        if not shop_pk:
+            raise HTTPException(status_code=404, detail="Shop not found.")
+
+        if auth_payload:
+            try:
+                validated_payload = AuthPayloadModel(**auth_payload)
+                validated_payload.validate_shop_access(shop_pk)
+                user_id = validated_payload.user_id
+                is_guest = validated_payload.is_guest or False
+            except (ValidationError, ValueError) as ve:
+                logger.warning(f"Auth validation failed: {ve}")
+                raise HTTPException(status_code=403, detail="Unauthorized access")
+
+        if is_guest and not guest_id:
+            raise HTTPException(status_code=400, detail="Missing guest_id for guest user")
+
+        response = await app.checkout_product_service.remove_checkout_product(
+            shop_id, user_id, guest_id, variant_id
+        )
+        if response.get("success"):
             return {"success": True}
         else:
-            raise HTTPException(status_code=404, detail=result.get("error", "Product not found in cart"))
+            raise HTTPException(status_code=404, detail=response.get("error", "Product not found in cart"))
     except Exception as e:
         logger.error(f"Error removing product: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

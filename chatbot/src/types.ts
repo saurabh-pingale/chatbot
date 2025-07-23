@@ -255,6 +255,7 @@ export interface PlusIconProps {
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   id: string;
   quantity: number;
+  disabled?: boolean;
 }
 
 export interface AnalyticsSummaryData {

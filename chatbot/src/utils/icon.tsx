@@ -29,12 +29,13 @@ export const MinusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity}: Minus
     )
 }
 
-export const PlusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity}: PlusIconProps) => {
+export const PlusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity, disabled}: PlusIconProps) => {
     return (
         <motion.button
         className="cart-quantity-button"
         style={dynamicStyles} 
         onClick={() => onUpdateQuantity(String(id), quantity + 1)}
+        disabled={disabled}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >

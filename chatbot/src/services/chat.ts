@@ -6,7 +6,6 @@ import { getOrCreateGuestId } from '../utils/guest';
 import type {
   ChatResponse,
   LocationInfo,
-  Message,
   InitiateSessionRequest,
   InitiateSessionResponse,
   AgentConversationRequestPayload
@@ -65,69 +64,6 @@ export const getLocationInfo = async (ip: string): Promise<LocationInfo> => {
       city: null,
       region: null,
       ip: ip
-    };
-  }
-};
-
-export const sendChatMessage = async (
-  messages: Message[],
-  userId: string | null
-): Promise<ChatResponse> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-  let shopId = getShopId();
-  if (shopId) {
-    shopId = shopId.split('?')[0];
-  }
-
-  const params = new URLSearchParams({
-    shopId: shopId || '',
-  });
-
-  if (userId) {
-    params.set('user_id', userId);
-  } else {
-    params.set('guest_id', getOrCreateGuestId());
-  }
-
-  try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINTS.AGENT_CONVERSATION}?${params.toString()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ messages }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Chat API Error:", response.status, errorText);
-      try {
-        const errorJson = JSON.parse(errorText);
-         throw new Error(errorJson.message || `Failed to get bot response (status ${response.status})`);
-      } catch(e){
-         throw new Error(`Failed to get bot response (status ${response.status}): ${errorText}`);
-      }
-    }
-    
-    const responseData: ChatResponse = await response.json();
-    return responseData;
-
-   } catch (error: unknown) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      return {
-        answer: "Sorry, I'm taking longer than usual to respond. Please try again in a few moments."
-      };
-    }
-
-    return {
-      answer: "Oops! Something went wrong on our end. Please try again later."
     };
   }
 };

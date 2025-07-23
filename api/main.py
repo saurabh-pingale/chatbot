@@ -6,6 +6,7 @@ from app import create_app
 from app.dbhandlers.db import engine
 from app.models.db.base import Base
 from app.middleware.refresh_token import add_refreshed_token_header
+from app.utils.logger import logger
 
 app = create_app()
 
@@ -36,7 +37,7 @@ async def startup():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all, checkfirst=True)
     except Exception as e:
-        print(f"Warning: Error during table creation: {e}")
+        logger.warning(f"Warning: Error during table creation: {e}")
 
 if __name__ == "__main__":
     if os.getenv("DEV_MODE", "true").lower() == "true":

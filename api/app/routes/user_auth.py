@@ -1,4 +1,5 @@
 import random
+import asyncio
 from fastapi import APIRouter, HTTPException
 from typing import Dict
 from datetime import datetime, timedelta, UTC
@@ -34,18 +35,20 @@ async def send_otp(payload: SendOTPRequest):
 async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
     try:
         app = get_app()
-        shop_id = await app.analytics_handler.get_shop_pk(payload.shop_id)
+
+        shop_pk_task = app.analytics_handler.get_shop_pk(payload.shop_id)
+        otp_task = app.otp_handler.get_otp_by_email(payload.email)
+        shop_id, stored_otp = await asyncio.gather(shop_pk_task, otp_task)
+
         if not shop_id:
             raise HTTPException(status_code=404, detail="Shop not found")
-
-        stored_otp = await app.otp_handler.get_otp_by_email(email=payload.email)
 
         if not stored_otp or stored_otp != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
         user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_id)
         if not user:
-            user = await app.user_handler.create_user(email=payload.email, shop_id=shop_id)
+            user = await app.user_handler.create_user(payload.email, shop_id, existing_user=user)
 
         token_data = {"user_id": user.id, "shop_id": user.shop_id}
         access_token = create_access_token(data=token_data)

@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from typing import Tuple
+from typing import Tuple, Optional
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.models.db.shop_admin import UserModel
@@ -18,12 +18,14 @@ class UserHandler:
                     logger.error(f"Error retrieving user by email and shop_id: {e}", exc_info=True)
                     raise
 
-    async def create_user(self, email: str, shop_id: int) -> UserModel:
+    async def create_user(self, email: str, shop_id: int, existing_user: Optional[UserModel] = None) -> UserModel:
         async with AsyncSessionLocal() as session:
             try:
-                existing_user = await self.get_user_by_email_and_shop_id(email, shop_id)
+                if not existing_user:
+                    existing_user = await self.get_user_by_email_and_shop_id(email, shop_id)
+                
                 if existing_user:
-                    raise ValueError("User with this email already exists for the shop")
+                    raise ValueError("User already exists")
 
                 new_user = UserModel(email=email, shop_id=shop_id)
                 session.add(new_user)

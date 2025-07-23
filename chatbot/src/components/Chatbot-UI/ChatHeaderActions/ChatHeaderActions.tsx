@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 
 import { useCart } from '../../../context/CartContext';
 import { OffersPopup } from '../../OffersPopup/OffersPopup';
-import { CartLoader } from '../../Cart-UI/CartLoader/CartLoader';
 import { CONFIGMESSAGE } from '../../../constants/messages';
 import { CartIconSVG } from '../../../assets/cart_icon';
 import { TrashIconSVG } from '../../../assets/TrashIcon';
@@ -26,7 +25,7 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
 }) => {
   const [isOffersPopupOpen, setIsOffersPopupOpen] = useState(false);
   
-  const { cartItems, toggleCart, isCartSyncing } = useCart();
+  const { cartItems, toggleCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const showCartIcon = !isEmailGateVisible;
@@ -60,20 +59,17 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
             title="View Cart"
           >
             <CartIconSVG />
-            {isCartSyncing ? (
-              <CartLoader />
-            ) : (
-              totalCartItems > 0 && (
-                <motion.span
-                  className="chat-header-cart-count-badge"
-                  style={headerStyles}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                >
-                  {totalCartItems}
-                </motion.span>
-              )
+
+            {totalCartItems > 0 && (
+              <motion.span
+                className="chat-header-cart-count-badge"
+                style={headerStyles}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+              >
+                {totalCartItems}
+              </motion.span>
             )}
           </motion.div>
         )}

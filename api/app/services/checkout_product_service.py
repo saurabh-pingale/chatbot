@@ -11,6 +11,8 @@ class CheckoutProductService:
             shop_id, user_id, guest_id, variant_id, product_count
         )
 
-    async def remove_checkout_product(self, variant_id: int):
+    async def remove_checkout_product(self, shop_id: str, user_id: Optional[int], guest_id: Optional[str], variant_id: int):
         """Remove checkout product via handler."""
-        return await self.db_handler.remove_checkout_product(variant_id)
+        return await self.db_handler.remove_checkout_product(
+            shop_id, user_id, guest_id, variant_id
+        )

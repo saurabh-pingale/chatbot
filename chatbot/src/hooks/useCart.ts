@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
 import { getStoredUtmParameters } from '../utils/utm';
+import { useDebounce } from './useDebounce';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -15,8 +16,11 @@ export const useCart = () => {
       return [];
     }
   });
+
+  const debouncedCartItems = useDebounce(cartItems, 500);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isCartSyncing, setIsCartSyncing] = useState(false);
+  const isInitialMount = useRef(true);
+  const syncLock = useRef(false);
   
   let lastToken: string | null = null;
   let lastCount = 0;
@@ -29,7 +33,27 @@ export const useCart = () => {
     }
   }, [cartItems]);
 
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    if (syncLock.current) {
+      syncLock.current = false;
+      return;
+    }
+
+    syncCartItemsToShopifyStoreCart(debouncedCartItems)
+      .catch(err => console.error('Background sync failed:', err));
+
+  }, [debouncedCartItems]);
+
   const pollCart = async () => {
+    if (JSON.stringify(cartItems) !== JSON.stringify(debouncedCartItems)) {
+        return;
+    }
+
     try {
       const cart = await getCart();
       if (!cart) return;
@@ -51,6 +75,7 @@ export const useCart = () => {
         quantity: item.quantity,
       }));
 
+      syncLock.current = true;
       setCartItems(shopifyItems);
     } catch (err) {
       console.error('Error polling cart:', err);
@@ -60,10 +85,10 @@ export const useCart = () => {
   useEffect(() => {
     const intervalId = setInterval(pollCart, POLL_INTERVAL);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [cartItems, debouncedCartItems]);
 
   const addToCart = useCallback(async (product: ProductType) => {
-    const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+    const productPrice = typeof product?.price === 'string' ? parseFloat(product?.price) : product?.price;
 
     const newItem: CartItem = {
       ...product,
@@ -82,7 +107,7 @@ export const useCart = () => {
 
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
-        const currentQty = updatedItems[existingItemIndex].quantity;
+        const currentQty = updatedItems[existingItemIndex]?.quantity;
         updatedProductCount = Math.min(currentQty + 1, 10);
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
@@ -98,13 +123,6 @@ export const useCart = () => {
         product_count: updatedProductCount,
       });
 
-      setIsCartSyncing(true);
-      setTimeout(() => {
-        syncCartItemsToShopifyStoreCart(updatedItems)
-          .catch(err => console.error('Failed to sync cart with Shopify after add:', err))
-          .finally(() => setIsCartSyncing(false));
-      }, 0)
-
       return updatedItems;
     });
 
@@ -112,15 +130,9 @@ export const useCart = () => {
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    setIsCartSyncing(true);
+    removeCheckoutProduct({product_id: Number(productId)})
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
-        syncCartItemsToShopifyStoreCart(updatedItems)
-          .catch(err => console.error('Failed to sync after remove:', err))
-          .finally(() => setIsCartSyncing(false));
-
-        removeCheckoutProduct(Number(productId))
-
         return updatedItems;
     });
     setIsCartOpen(prev => !prev);
@@ -132,32 +144,25 @@ export const useCart = () => {
       return;
     }
 
-    if (quantity > 10) {
-      quantity = 10;
-    }
+    const cappedQuantity = Math.min(quantity, 10);
 
-    setIsCartSyncing(true);
     setCartItems(prev => {
-        let newItems;
-        if (quantity < 1) {
-            newItems = prev.filter(item => String(item.id) !== productId);
-        } else {
-            newItems = prev.map(item =>
-                String(item.id) === productId
-                ? { ...item, quantity: Math.min(quantity, 10) }
-                : item
-            );
-        }
-        syncCartItemsToShopifyStoreCart(newItems)
-          .catch(err => console.error('Failed to sync after update qty:', err))
-          .finally(() => setIsCartSyncing(false));
-        return newItems;
-    });
-  }, [removeFromCart]);
+      const updatedItems = prev.map(item =>
+        String(item.id) === productId
+          ? { ...item, quantity: cappedQuantity }
+          : item
+      );
+      
+      storeCheckoutProduct({
+        product_id: Number(productId),
+        product_count: cappedQuantity,
+      });
 
-  const toggleCart = useCallback(() => {
-    setIsCartOpen(prev => !prev);
-  }, []);
+      return updatedItems;
+    });
+   }, [removeFromCart]);
+
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
   const checkout = async () => {
     try {
@@ -168,11 +173,9 @@ export const useCart = () => {
         checkoutUrl.searchParams.set('utm_source', 'chatbot');
 
         if (utmParams) {
-          for (const [key, value] of Object.entries(utmParams)) {
-            if (value) {
-              checkoutUrl.searchParams.set(key, value);
-            }
-          }
+          Object.entries(utmParams).forEach(([key, value]) => {
+            if (value) checkoutUrl.searchParams.set(key, value);
+          });
         }
         
         window.location.href = checkoutUrl.toString();
@@ -201,7 +204,6 @@ export const useCart = () => {
     removeFromCart,
     updateQuantity,
     toggleCart,
-    checkout,
-    isCartSyncing
+    checkout
   };
 }; 

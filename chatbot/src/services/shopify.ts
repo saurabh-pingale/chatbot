@@ -51,7 +51,7 @@ export const clearCart = async (): Promise<boolean> => {
     return false;
   }
 };
-
+ 
 export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   try {
     const shopifyItems = items.map(item => {
@@ -94,10 +94,69 @@ export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   }
 };
 
+export const updateCart = async (updates: { [key: string]: number }): Promise<ShopifyCartResponse | null> => {
+  try {
+    const response = await fetch(CART.UPDATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ updates }),
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      console.error('Failed to update cart', response.status, await response.text());
+      return null;
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('Error updating cart:', err);
+    return null;
+  }
+};
+
 export const syncCartItemsToShopifyStoreCart = async (localCart: CartItem[]): Promise<boolean> => {
-  if (!await clearCart()) return false;
+  try {
+    const currentShopifyCart = await getCart();
+    if (!currentShopifyCart) {
+      console.error('Sync failed: Could not get current Shopify cart.');
+      return false;
+    }
 
-  if (localCart.length === 0) return true;
+    const updates: { [key: string]: number } = {};
 
-  return await addToCart(localCart);
-}; 
+    localCart.forEach(item => {
+      const parsedId = parseVariantId(item?.variant_id || item?.id);
+      if (parsedId) {
+        updates[parsedId] = item.quantity;
+      }
+    });
+
+    currentShopifyCart?.items.forEach(shopifyItem => {
+      const variantId = String(shopifyItem.id);
+      if (!updates.hasOwnProperty(variantId)) {
+        updates[variantId] = 0;
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return true;
+    }
+
+    const result = await updateCart(updates);
+
+    if (result) {
+      return true;
+    } else {
+      console.error('Sync failed during the update call.');
+      return false;
+    }
+  } catch (err) {
+    console.error('An error occurred during the full cart sync:', err);
+    return false;
+  }
+};
