@@ -142,13 +142,16 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.analytics_handler.get_shop_pk(shop_id)
-                    if not shop:
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_id_pk:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return {
                             "support_email": None,
                             "support_phone": None
                         }
+                    
+                    shop = await session.get(ShopModel, shop_id_pk)
+                    logger.info(f"[DEBUG] Loaded full shop: {shop}")
                     
                     support_country_code = getattr(shop, "support_country_code", None) or US_COUNTRY_CODE
                     support_email = getattr(shop, "support_email", None)
@@ -170,10 +173,12 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.analytics_handler.get_shop_pk(shop_id)
-                    if not shop:
+                    shop_id_pk  = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
+                    else:
+                        shop = await session.get(ShopModel, shop_id_pk)
 
                     shop.preferred_color = color
                     return shop.preferred_color
@@ -186,10 +191,12 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.analytics_handler.get_shop_pk(shop_id)
-                    if not shop:
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
+                    else:    
+                        shop = await session.get(ShopModel, shop_id_pk)
 
                     shop.support_email = email
                     shop.support_phone = phone
@@ -210,10 +217,12 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.analytics_handler.get_shop_pk(shop_id)
-                    if not shop:
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
+                    else:
+                        shop = await session.get(ShopModel, shop_id_pk)
 
                     shop.image = image_url
 
@@ -248,12 +257,13 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop = await self.analytics_handler.get_shop_pk(shop_id)
-                    if not shop:
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
                         session.add(shop)
                         logger.info(f"New shop created with shop_id {shop_id} and email gate preference {show_email_gate}")
                     else:
+                        shop = await session.get(ShopModel, shop_id_pk)
                         shop.show_email_gate = show_email_gate
                         logger.info(f"Updated email gate preference for shop_id {shop_id} to {show_email_gate}")
          
