@@ -23,18 +23,14 @@ export const useChat = () => {
   }, []);
 
   const handleBotResponse = useCallback((response: ChatResponse) => {
-    const processResponse = () => {
-      const botMessage: Message = {
-        id: uuidv4(),
-        content: response.answer,
-        type: 'bot',
-        timestamp: new Date(),
-        products: response.products,
-      };
-      setMessages(prev => [...prev, botMessage]);
+    const botMessage: Message = {
+      id: uuidv4(),
+      content: response?.answer,
+      type: 'bot',
+      timestamp: new Date(),
+      products: response?.products,
     };
-
-    processResponse();
+    setMessages(prev => [...prev, botMessage]);
   }, []);
 
   return {
@@ -45,4 +41,4 @@ export const useChat = () => {
     handleBotResponse,
     setMessages
   };
-}; 
+};

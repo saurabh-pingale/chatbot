@@ -52,7 +52,6 @@ export const clearCart = async (): Promise<boolean> => {
   }
 };
  
-//TODO: This flow, whole code is not correct
 export const addToCart = async (items: CartItem[]): Promise<boolean> => {
   try {
     const shopifyItems = items.map(item => {
@@ -87,6 +86,7 @@ export const addToCart = async (items: CartItem[]): Promise<boolean> => {
     }
 
     await response.json();
+    //TODO: Why we need trackAddedToCart ?
     trackAddedToCart();
     return true;
   } catch (err) {
@@ -96,10 +96,10 @@ export const addToCart = async (items: CartItem[]): Promise<boolean> => {
 };
 
 export const syncCartItemsToShopifyStoreCart = async (localCart: CartItem[]): Promise<boolean> => {
+  //TODO: We no need to clear the cart
   if (!await clearCart()) return false;
 
   if (localCart.length === 0) return true;
  
-   //TODO: This flow, whole code is not correct
   return await addToCart(localCart);
 }; 

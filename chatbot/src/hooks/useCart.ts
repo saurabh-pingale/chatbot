@@ -63,7 +63,7 @@ export const useCart = () => {
   }, []);
 
   const addToCart = useCallback(async (product: ProductType) => {
-    const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+    const productPrice = typeof product?.price === 'string' ? parseFloat(product?.price) : product?.price;
 
     const newItem: CartItem = {
       ...product,
@@ -83,7 +83,7 @@ export const useCart = () => {
 
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
-        const currentQty = updatedItems[existingItemIndex].quantity;
+        const currentQty = updatedItems[existingItemIndex]?.quantity;
         updatedProductCount = Math.min(currentQty + 1, 10);
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
@@ -113,15 +113,17 @@ export const useCart = () => {
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
+    //TODO: Here first update the setCartItems once it done, in background do the job of syncing
     setIsCartSyncing(true);
     setCartItems(prev => {
         const updatedItems = prev.filter(item => String(item.id) !== productId);
-        //TODO: This flow, whole code is not correct
+        //TODO: Handle In background
         syncCartItemsToShopifyStoreCart(updatedItems)
           .catch(err => console.error('Failed to sync after remove:', err))
           .finally(() => setIsCartSyncing(false));
 
         //TODO: If you remove this below line, what will happen ?
+        //TODO: Handle In background and add analytics inside this remove checkout
         removeCheckoutProduct(Number(productId))
 
         return updatedItems;

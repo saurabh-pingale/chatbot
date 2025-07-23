@@ -47,7 +47,6 @@ export const trackOpenedChatbot = (userId: string | null, shopId: string, utmPar
   makeRequest(API_ENDPOINTS.TRACK_OPENED_CHATBOT, payload);
 };
 
-//TODO: This flow, whole code is not correct
 export const trackAddedToCart = () => {
   makeRequest(API_ENDPOINTS.TRACK_ADDED_TO_CART, {
     shop_id: getShopId() 

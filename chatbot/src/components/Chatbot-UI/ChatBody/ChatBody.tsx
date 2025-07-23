@@ -15,7 +15,6 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
     const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
 
     const config = useConfig();
-
     const [chatLimitReached, setChatLimitReached] = useState(false);
     const [tags, setTags] = useState<TagItem[]>([]);
     const [hasShownStaticMessage, setHasShownStaticMessage] = useState(false);
@@ -25,6 +24,7 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
       onMessagesCountChange(messages.length);
     }, [messages.length, onMessagesCountChange]);
 
+    //TODO: Move this DEFAULT_TAGS to constants
     const DEFAULT_TAGS: TagItem[] = Object.entries(TAG_DICTIONARY).map(([name, description]) => ({
       name,
       description,
@@ -49,6 +49,7 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
       },
     }));
 
+    //TODO: ProcessBotTags means are we formatting ? if yes change function name
     const processBotTags = (tagsFromResponse: any[]) => {
       if (!tagsFromResponse || !Array.isArray(tagsFromResponse)) {
         setShowInitialTags(false);
@@ -79,10 +80,12 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
 
         if (response.limit_reached) setChatLimitReached(true);
         setTimeout(() => processBotTags(response.tags ?? []), 200);
+        //TODO: Why there is this await, is this async function ?
         await handleBotResponse(response);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred.';
         setError(errorMessage);
+        //TODO: Why there is this await, is this async function ?
         await handleBotResponse({ answer: `Sorry, an error occurred: ${errorMessage}`, products: [], success: false, error: errorMessage });
       } finally {
         handleTyping(false);
