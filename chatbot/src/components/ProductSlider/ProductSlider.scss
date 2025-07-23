@@ -8,7 +8,7 @@
 .product-slider-slider {
   display: flex;
   gap: 16px;
-  padding: 0 16px;
+  padding: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;

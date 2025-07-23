@@ -1,18 +1,15 @@
 import { openDB, type IDBPDatabase } from 'idb';
+import { DB } from '../constants/db';
 import type { Message } from '../types';
-
-const DB_NAME = 'chatbot-db';
-const CONVERSATIONS_STORE = 'conversations';
-const DB_VERSION = 1;
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 const getDb = (): Promise<IDBPDatabase> => {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
+    dbPromise = openDB(DB.NAME, DB.VERSION, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains(CONVERSATIONS_STORE)) {
-          db.createObjectStore(CONVERSATIONS_STORE);
+        if (!db.objectStoreNames.contains(DB.CONVERSATIONS_STORE)) {
+          db.createObjectStore(DB.CONVERSATIONS_STORE);
         }
       },
     });
@@ -23,7 +20,7 @@ const getDb = (): Promise<IDBPDatabase> => {
 export const saveConversation = async (userId: string, messages: Message[]): Promise<void> => {
   try {
     const db = await getDb();
-    await db.put(CONVERSATIONS_STORE, messages, userId);
+    await db.put(DB.CONVERSATIONS_STORE, messages, userId);
   } catch (error) {
     console.error('Failed to save conversation to IndexedDB:', error);
   }
@@ -32,7 +29,7 @@ export const saveConversation = async (userId: string, messages: Message[]): Pro
 export const getConversation = async (userId: string): Promise<Message[] | undefined> => {
   try {
     const db = await getDb();
-    const storedMessages = await db.get(CONVERSATIONS_STORE, userId);
+    const storedMessages = await db.get(DB.CONVERSATIONS_STORE, userId);
     if (storedMessages && Array.isArray(storedMessages)) {
       return storedMessages.map(msg => ({
         ...msg,
@@ -49,7 +46,7 @@ export const getConversation = async (userId: string): Promise<Message[] | undef
 export const clearDBConversation = async (userId: string): Promise<void> => {
   try {
     const db = await getDb();
-    await db.delete(CONVERSATIONS_STORE, userId);
+    await db.delete(DB.CONVERSATIONS_STORE, userId);
   } catch (error) {
     console.error('Failed to clear conversation from IndexedDB:', error);
   }

@@ -141,18 +141,20 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
       {interleavedContent}
 
       {message.type === 'bot' && Array.isArray(message.products) && message.products?.length > 0 && showProductSlider && (
-        <motion.div
-          className="product-slider-message-container"
+        <motion.article
+          className="message-list"
           initial="hidden"
           animate="visible"
           variants={messageAnimation}
           ref={ref}
         >
-          <ProductSlider
-            products={message.products}
-            onAddToCart={onProductAddToCart}
-          />
-        </motion.div>
+          <div className="product-slider-message-container">
+            <ProductSlider
+              products={message.products}
+              onAddToCart={onProductAddToCart}
+            />
+          </div>
+        </motion.article>
       )}
 
       {message.type === 'bot' && showTagsAfterMessage && !showLoader && visibleCount === hasMultipleSegments && (
