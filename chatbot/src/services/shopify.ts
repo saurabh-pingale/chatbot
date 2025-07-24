@@ -1,5 +1,5 @@
-import { CART } from '../constants/cart';
-import { parseVariantId } from '../utils/utils';
+import { CART, storefrontAccessToken } from '../constants/cart';
+import { getShopId, normalizeShopifyGID, parseVariantId } from '../utils/utils';
 import { trackAddedToCart } from './analytics';
 import type { CartItem, ShopifyCartResponse } from '../types';
 
@@ -158,5 +158,41 @@ export const syncCartItemsToShopifyStoreCart = async (localCart: CartItem[]): Pr
   } catch (err) {
     console.error('An error occurred during the full cart sync:', err);
     return false;
+  }
+};
+
+export const getVariantQuantity = async ( variantId: string ): Promise<number | null> => {
+  try {
+    const shopDomain = getShopId();
+    const normalizedId = normalizeShopifyGID(variantId);
+
+    const query =`
+      query VariantQty($id: ID!) {
+        node(id: $id) {
+          ... on ProductVariant {
+            quantityAvailable
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(`https://${shopDomain}/api/2025-01/graphql.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { id: normalizedId },
+      }),
+    });
+
+    const json = await response.json();
+    console.log("JSON Response:", json);
+    return json?.data?.node?.quantityAvailable ?? null;
+  } catch (error) {
+    console.error("Error fetching variant quantity:", error);
+    return null;
   }
 };

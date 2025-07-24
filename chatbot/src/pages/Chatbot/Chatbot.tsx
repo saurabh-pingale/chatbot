@@ -7,6 +7,7 @@ import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/Chatbot
 import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { EmailGate } from '../EmailGate/EmailGate';
 import { useConfig } from '../../context/ConfigContext';    
+import { useCart } from '../../context/CartContext';
 import { getAuthToken } from '../../utils/auth';
 import { hexToRgbArray } from '../../utils/utils';
 import type { StyleWithCustomProps, LocationInfo, ChatBodyHandle } from '../../types';
@@ -24,6 +25,9 @@ export const Chatbot = memo(() => {
   const config = useConfig(); 
   const chatBodyRef = useRef<ChatBodyHandle>(null);
   const isMobile = window.innerWidth <= 768;
+
+  const { cartError, setCartError } = useCart();
+  const displayError = error || cartError;
 
   useEffect(() => {
     const token = getAuthToken();
@@ -90,8 +94,11 @@ export const Chatbot = memo(() => {
                   onMessagesCountChange={setMessagesCount}
                 />
               )}
-              {error && (
-                <ErrorPopup message={error} onClose={() => setError(null)} />
+              {displayError && (
+                <ErrorPopup message={displayError} onClose={() => {
+                  setError(null)
+                  setCartError(null)
+                }} />
               )}
             </div>
           </motion.div>
