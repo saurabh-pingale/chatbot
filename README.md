@@ -1,77 +1,54 @@
-# Shopify Remix Chatbot App
+This is a **Shopify Remix Chatbot App** that enables customers to interact with a customizable and trainable chatbot directly on your Shopify storefront. It integrates with **Shopify's Admin API**, **Supabase** for database management, **Qdrant** for vector storage, and **Hugging Face** for natural language processing.
 
-This is a Shopify Remix Chatbot App that allows users to interact with a chatbot on their Shopify store. The chatbot can be customized and trained to provide responses based on the products available in the store. The app integrates with Shopify's Admin API, Supabase for database management, Quadrant for vector storage, and Hugging Face for natural language processing.
+-----
 
 ## Features
 
-- **Chatbot Interface:** Users can interact with the chatbot directly from the storefront. The chatbot  
-  appears in the bottom right corner of the page.
+  * **Chatbot Interface:** Customers will find the chatbot conveniently located in the bottom-right corner of your storefront for easy interaction.
+  * **Customization:** Easily tailor the chatbot's appearance, including its default color, to seamlessly match your store's branding.
+  * **Training:** Train the chatbot by either importing products directly from your Shopify store or by manually entering product data in JSON format.
+  * **Vector Database:** Product data is converted into embeddings and stored in a **Qdrant** vector database, ensuring efficient and relevant information retrieval.
+  * **Response Generation:** The chatbot leverages a powerful language model (**DeepSeek-R1-Distill-Qwen-32B**) to generate intelligent responses based on user queries and the stored product embeddings.
 
-- **Customization:** Users can customize the chatbot's appearance, including the default color.
-
-- **Training:** Users can train the chatbot by fetching products from their Shopify store or by manually 
-  entering product data in JSON format.
-
-- **Vector Database:** Product data is converted into embeddings and stored in a Quadrant vector 
-  database for efficient querying.
-
-- **Response Generation:** The chatbot uses a language model (DeepSeek-R1-Distill-Qwen-32B) to generate 
-  responses based on the user's queries and the stored embeddings.
-
+-----
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+Before you begin, ensure you have the following installed and configured:
 
-1. **Shopify Partners Account:**
-  
-    - If you don’t already have one, create a [Shopify Partners account](https://www.shopify.com/in/partners). This account allows you to manage and develop Shopify apps.
+1.  **Shopify Partners Account:**
+      * If you don't have one, **create a Shopify Partners account** to manage and develop Shopify apps.
+      * Once you have an account, create a **Development Store** from your Shopify Partners dashboard for testing your app during development.
+2.  **Node.js:** Install **Node.js** (v18.20 or higher).
+3.  **Shopify CLI:** Install the **Shopify CLI** to simplify your Shopify app setup and management.
+4.  **Supabase Account:** Set up a **Supabase account** for your database needs.
+5.  **Qdrant Account:** Create a **Qdrant account** for efficient vector storage.
+6.  **Hugging Face Account:** You'll need a **Hugging Face account** to access the language models.
 
-    - After creating a Shopify Partners account, create a `Development Store` from the Shopify Partners  
-      dashboard. This store will be used to test your app during development.
-
-2. **Node.js:**
-
-    - Install [Node.js](https://nodejs.org/en) (v18.20 or higher).
- 
-3. **Shopify CLI:**
-
-    - Install the [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) to set up and manage your 
-    Shopify app.
- 
-4. **Supabase Account:**
-
-    - Create a [Supabase](https://supabase.com/) account for database management.
- 
-5. **Quadrant Account:**
-
-    - Create a [Quadrant](www.quadrant.com) account for vector storage.
-
-6. **Hugging Face Account:**
-
-    - Create a [Hugging Face](https://huggingface.co/) account to access language models.
-
+-----
 
 ## Setup
 
-1. **Clone the Repository**
+Follow these steps to get your Shopify Remix Chatbot App up and running:
+
+### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/saurabh-pingale/chatbot.git 
+git clone https://github.com/saurabh-pingale/chatbot.git
 cd chatbot
 ```
 
-2. **Install Dependencies**
+### 2\. Install Dependencies
 
 ```bash
 npm install
 ```
 
-3. **Set Up Environment Variables**
+### 3\. Set Up Environment Variables
 
-Create a `.env` file in the root directory and add the following environment variables:
+Create a `.env` file in your project's root directory and add these environment variables. Remember to replace the placeholder values with your actual credentials.
 
-```ts
+```typescript
 SHOPIFY_API_KEY='your-shopify-api-key'
 SHOPIFY_API_SECRET='your-shopify-api-secret'
 SHOPIFY_APP_URL='your-shopify-app-url'
@@ -79,42 +56,37 @@ SHOPIFY_APP_URL='your-shopify-app-url'
 SUPABASE_URL='your-supabase-url'
 SUPABASE_SERVICE_ROLE_KEY='your-supabase-service-role-key'
 
-QUADRANT_API_KEY='your-quadrant-api-key'
+QDRANT_API_KEY='your-qdrant-api-key'
 
-HUGGINGFACE_API_KEY='you-huggingface-api-key'
+HUGGINGFACE_API_KEY='your-huggingface-api-key'
 ```
 
-4. **Run the Application**
+### 4\. Run the Application
 
-To start the development server, run:
+To start the development server:
 
 ```bash
 npm run dev
 ```
 
-This will start the Shopify app in development mode. You can access the app by navigating to the URL provided by the Shopify CLI.
+The Shopify CLI will provide a URL to access your app in development mode.
 
-5. **Configure App Proxy**
+### 5\. Configure App Proxy
 
-To set up the app proxy, follow these steps:
+To make the chatbot accessible on your storefront, you'll need to set up an app proxy:
 
-1. **Create a Proxy Route:** In your Shopify Admin, go to Apps > App and Sales Channel Settings. Find 
-   your app and click Configure. Under App Proxy, create a new proxy route.
+1.  **Create a Proxy Route:** In your Shopify Admin, go to **Apps** \> **App and Sales Channel Settings**. Find your app, click **Configure**, and then create a new proxy route under **App Proxy**.
+2.  **Set the Proxy URL:** This URL should point to your app's backend. For instance, if your app is hosted at `https://your-app-url.com`, your proxy URL might be `https://your-app-url.com/`.
+3.  **Verify the Signature:** It's essential to verify the signature of incoming requests using your `SHOPIFY_API_SECRET`. This confirms that requests are genuinely coming from Shopify.
 
-2. **Set the Proxy URL:** The proxy URL should point to your app's backend. For example, if your app is 
-   hosted at `https://your-app-url.com`, the proxy URL might be `https://your-app-url.com/`.
+Here's an example function to verify the signature within your app:
 
-3. **Verify the Signature:** Use the `SHOPIFY_API_SECRET` to verify the signature of incoming requests. 
-   This ensures that the requests are coming from Shopify.
-
-Here is an example of how to verify the signature in your app:
-
-```ts
+```typescript
 function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boolean {
   const { signature, ...params } = Object.fromEntries(query.entries());
-  
+
   if (!signature) return false;
-  
+
   // Sort parameters alphabetically
   const sortedParams = Object.keys(params)
     .sort()
@@ -122,55 +94,63 @@ function verifyAppProxySignature(query: URLSearchParams, apiSecret: string): boo
       acc[key] = params[key];
       return acc;
     }, {} as Record<string, string>);
-  
+
   // Create the signature message
   const signatureMessage = Object.keys(sortedParams)
     .map(key => `${key}=${sortedParams[key]}`)
     .join('');
-  
+
   // Calculate the HMAC
   const hmac = crypto
     .createHmac('sha256', apiSecret)
     .update(signatureMessage)
     .digest('hex');
-  
+
   return hmac === signature;
 }
 ```
 
+-----
+
 ## Usage
 
-- **Chatbot Interface**
-  When a user visits your Shopify store, they will see the chatbot in the bottom right corner of the 
-  page. They can interact with the chatbot by sending messages and receiving responses.
+### Chatbot Interface
 
-- **Customization**
-  To customize the chatbot, log in to the app using your Shopify shop domain. Once logged in, navigate 
-  to the Settings page. Here, you can change the default color of the chatbot. The changes will be 
-  applied automatically after saving.
+Once configured, your customers will see the chatbot in the bottom-right corner of your Shopify store. They can click on it to open the chat interface and begin asking questions.
 
-- **Training the Chatbot**
-  To train the chatbot, navigate to the Training page. You can either fetch products from your Shopify  
-  store using the Fetch Products button or manually enter product data in JSON format. The products will 
-  be converted into embeddings and stored in the Quadrant vector database.
+### Customization
 
-- **Querying the Chatbot**
-  When a user sends a message to the chatbot, the app queries the Quadrant vector database for matching 
-  embeddings. If a match is found, the embeddings and the user's message are passed to the language 
-  model, which generates a response. If no match is found, the chatbot responds with "I don't have much 
-  information on this."
+To customize the chatbot's appearance:
 
+1.  Log in to the app using your Shopify shop domain.
+2.  Navigate to the **Settings** page.
+3.  Here, you can easily change the chatbot's default color. Your changes will be applied automatically after you save them.
+
+### Training the Chatbot
+
+To train the chatbot with your product data:
+
+1.  Go to the **Training** page within the app.
+2.  You have two options:
+      * Click the **Fetch Products** button to automatically import products from your Shopify store.
+      * Manually enter product data in **JSON format**.
+3.  The product data will then be converted into embeddings and stored in the **Qdrant** vector database, making them searchable by the chatbot.
+
+### Querying the Chatbot
+
+When a user sends a message to the chatbot:
+
+  * The app queries the **Qdrant** vector database for matching product embeddings.
+  * If a match is found, these relevant embeddings, along with the user's message, are passed to the language model (**DeepSeek-R1-Distill-Qwen-32B**). This model then generates a detailed and helpful response.
+  * If no relevant product information is found, the chatbot will respond with a default message like: "I don't have much information on this."
+
+-----
 
 ## Technologies Used
 
-- **Shopify CLI:** For setting up and managing the Shopify app.
-
-- **Shopify Polaris:** For building the user interface.
-
-- **Postgres:** For database management.
-
-- **Quadrant:** For storing and querying vector embeddings.
-
-- **Xenova/Transformers:** For generating embeddings using the all-MiniLM-L6-v2 model.
-
-- **Hugging Face:** For generating responses using the Mistral model.
+  * **Shopify CLI:** For setting up, developing, and managing the Shopify app.
+  * **Shopify Polaris:** For building a consistent and user-friendly interface.
+  * **PostgreSQL:** For robust database management (often used with Supabase).
+  * **Qdrant:** For storing and efficiently querying vector embeddings.
+  * **Xenova/Transformers:** For generating embeddings using the `all-MiniLM-L6-v2` model.
+  * **Hugging Face:** For generating responses using the **DeepSeek-R1-Distill-Qwen-32B** model.

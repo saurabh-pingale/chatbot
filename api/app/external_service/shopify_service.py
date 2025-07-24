@@ -1,7 +1,8 @@
-import httpx
-from typing import Dict, Any
-from app.models.api.shopify import ShopifyProduct, ShopifyCollection
+from typing import Dict, Any, Set
+
+from app.external_service.graphql_client import execute_graphql_query
 from app.constants import SHOPIFY_GRAPHQL_URL
+from app.utils.shopify_cleaner import extract_all_metaobject_gids, clean_shopify_data
 from app.utils.logger import logger
 
 class ShopifyService:
@@ -9,12 +10,46 @@ class ShopifyService:
         self.shopify_store = shopify_store
         self.shopify_access_token = shopify_access_token
 
+    async def _fetch_metaobject_display_names(self, gids: Set[str]) -> Dict[str, str]:
+        """Fetch display names for a set of metaobject GIDs."""
+        if not gids:
+            return {}
+
+        nodes_query = """
+        query getMetaobjects($ids: [ID!]!) {
+            nodes(ids: $ids) {
+                ... on Metaobject {
+                    id
+                    displayName
+                }
+            }
+        }
+        """
+        try:
+            url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
+            data = await execute_graphql_query(
+                url=url,
+                query=nodes_query,
+                variables={"ids": list(gids)},
+                access_token=self.shopify_access_token
+            )
+
+            return {
+                node["id"]: node["displayName"]
+                for node in data.get("data", {}).get("nodes", [])
+                if node and "displayName" in node
+            }
+        except Exception as error:
+            logger.error(f"Error fetching metaobjects from Shopify: {error}")
+            return {}
+
     async def fetch_products_and_collections(self) -> Dict[str, Any]:
         """Fetch products and collections from Shopify store using GraphQL API"""
         query = """
-        query {
-            products(first: 250) {
+        query($first: Int!, $afterProducts: String, $afterCollections: String) {
+            products(first: $first, after: $afterProducts) {
                 edges {
+                    cursor 
                     node {
                         id
                         title
@@ -24,11 +59,32 @@ class ShopifyService:
                         }
                         handle
                         onlineStorePreviewUrl
-                        variants(first: 1) {
+                        metafields(first: 20) {
+                            edges {
+                                node {
+                                    key
+                                    namespace
+                                    value
+                                    type
+                                }
+                            }
+                        }
+                        variants(first: 10) {
                             edges {
                                 node {
                                     price
                                     id
+                                    title
+                                    metafields(first: 20) {
+                                        edges {
+                                            node {
+                                                key
+                                                namespace
+                                                value
+                                                type
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -46,9 +102,11 @@ class ShopifyService:
                         }
                     }
                 }
+                pageInfo { hasNextPage endCursor }
             }
-            collections(first: 250) {
+            collections(first: $first, after: $afterCollections) {
                 edges {
+                    cursor 
                     node {
                         id
                         title
@@ -58,58 +116,46 @@ class ShopifyService:
                         handle
                     }
                 }
+                pageInfo { hasNextPage endCursor }
             }
         }
         """
         
         try:
-            async with httpx.AsyncClient(verify=False) as client:
-                url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
-
-                response = await client.post(
-                    url,
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-Shopify-Access-Token": self.shopify_access_token,
-                    },
-                    json={"query": query}
-                )
-
-                response.raise_for_status()
-                data = response.json()
-
-                products = []
-                for edge in data["data"]["products"]["edges"]:
-                    node = edge["node"]
-                    variant = node["variants"]["edges"][0]["node"] if node["variants"]["edges"] else None
-
-                    products.append(ShopifyProduct(
-                        id=node["id"],
-                        title=node["title"],
-                        description=node.get("description") or "No description available",
-                        category=node.get("category", {}).get("name", ""),
-                        handle=node["handle"],
-                        url=node.get("onlineStorePreviewUrl") or f"https://{self.shopify_store}/products/{node['handle']}",
-                        price=variant["price"] if variant else "0.00",
-                        variant_id=variant["id"] if variant else "",  
-                        image=node["media"]["edges"][0]["node"]["preview"]["image"]["url"] if node["media"]["edges"] else "https://via.placeholder.com/150"
-                    ))
-
-                collections = []
-                for edge in data["data"]["collections"]["edges"]:
-                    node = edge["node"]
-                    collections.append(ShopifyCollection(
-                        id=node["id"],
-                        title=node["title"],
-                        products_count=node["productsCount"]["count"],
-                        handle=node["handle"]
-                    ))
-
-                return {
-                    "products": products,
-                    "collections": collections
+            url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
+          
+            all_product_edges = []
+            all_collection_edges = []
+            afterP = afterC = None
+            while True:
+                variables = {
+                    "first": 250,
+                    "afterProducts": afterP,
+                    "afterCollections": afterC
                 }
-
+                data = await execute_graphql_query(
+                    url=url,
+                    query=query,
+                    variables=variables,
+                    access_token=self.shopify_access_token
+                )
+                data = data.get("data", {})
+                prod = data.get("products", {})
+                coll = data.get("collections", {})
+                all_product_edges.extend(prod["edges"])
+                all_collection_edges.extend(coll["edges"])
+                afterP = prod["pageInfo"]["endCursor"] if prod["pageInfo"]["hasNextPage"] else afterP
+                afterC = coll["pageInfo"]["endCursor"] if coll["pageInfo"]["hasNextPage"] else afterC
+                if not prod["pageInfo"]["hasNextPage"] and not coll["pageInfo"]["hasNextPage"]:
+                    break
+            all_metaobject_gids = extract_all_metaobject_gids(all_product_edges)
+            metaobject_names = await self._fetch_metaobject_display_names(all_metaobject_gids)
+            return clean_shopify_data(
+                product_edges=all_product_edges,
+                collection_edges=all_collection_edges,
+                metaobject_names=metaobject_names,
+                shopify_store=self.shopify_store
+            )
         except Exception as error:
             logger.error(f"Error fetching products from Shopify: {error}")
             raise ValueError("Failed to fetch products from Shopify")

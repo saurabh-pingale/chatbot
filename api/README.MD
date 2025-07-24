@@ -1,62 +1,77 @@
-
 ## Getting Started
 
-These instructions will help you set up and run the project on your local machine for development and testing purposes.
+These instructions will guide you through setting up and running the project locally for development and testing.
 
 ### Prerequisites
 
-- Python 3.13 or higher
-- Docker
+Before you begin, make sure you have the following installed:
 
-### Project setup
+  * **Python:** Version 3.11.3
+  * **Docker:** For containerization
 
-Reference - https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f
+-----
 
-### Installation
+## Project Setup
 
-1. Clone the repository:
+This project adopts a modular structure inspired by the guide: [How to Structure Your FastAPI Projects](https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f).
 
-```
-git clone https://[repo].git
-cd [repo]
-```
+### Alembic Database Migrations
 
-2. Create a virtual environment and install the required packages:
+If you're using **Alembic** for database migrations, you'll need to manually create the `alembic_version` table with a `version_num` column of type `NUMBER`.
 
-```
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+-----
 
-3. Run the application using Uvicorn:
+## Installation
 
-```
-python3 main.py
-```
+Follow these steps to get the project running on your local machine:
 
-### Run the application
+1.  **Clone the repository:**
 
-#### To run the application, follow these steps:
+    ```bash
+    git clone https://[repo].git
+    cd [repo]
+    ```
 
-Navigate to the api directory:
+    (Replace `[repo]` with your actual repository URL and directory name.)
 
-```
-cd api
-```
-Run the application using Uvicorn:
-```
-python main.py
-```
+2.  **Create a virtual environment and install dependencies:**
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+-----
+
+## Running the Application
+
+To run the FastAPI application:
+
+1.  **Navigate to the `api` directory:**
+
+    ```bash
+    cd api
+    ```
+
+2.  **Run the application using Uvicorn:**
+
+    ```bash
+    python main.py
+    ```
+
+    The application should then be accessible at `http://localhost:8000`.
+
+-----
 
 ## Project Structure
 
-The project follows a modular structure to keep the code clean and maintainable.
+The project is designed with a clear, modular structure to promote **clean code** and **easy maintenance**, adhering to the principle of **separation of concerns**.
 
-### Routes
+### 1\. Routes (`/routes`)
 
-* Defines API endpoints and handles request validation.
-* It should only contain route definitions and not business logic.
+  * **Purpose:** Defines **API endpoints** and handles **request validation**.
+  * **Rule:** Should *only* contain route definitions and *not* business logic.
 
 **Example:**
 
@@ -67,9 +82,10 @@ def get_items():
     return {"data": items}
 ```
 
-### Services
+### 2\. Services (`/services`)
 
-Contains business logic, separate from route definitions. It processes data and interacts with DB handlers when necessary.
+  * **Purpose:** Contains the **core business logic**, distinct from route definitions. It processes data and interacts with DB handlers as needed.
+  * **Role:** Acts as an intermediary between routes and database handlers.
 
 **Example:**
 
@@ -78,14 +94,15 @@ class ItemService:
     def get_items(self, data):
         item1 = data["item1"]
         item2 = data["item2"]
-        response = app.handlers.fetch_items(item1, item2) #query
-        data = clean_response(response)
-        return data
+        response = app.handlers.fetch_items(item1, item2) # Query database via handler
+        cleaned_data = self.clean_response(response) # Assuming clean_response is a method within the service or a utility
+        return cleaned_data
 ```
 
-### DB Handlers
+### 3\. DB Handlers (`/db_handlers`)
 
-Handles direct database queries and interactions. It abstracts database logic from services.
+  * **Purpose:** Manages **direct database queries** and interactions.
+  * **Role:** Abstracts database-specific logic from the services layer.
 
 **Example:**
 
@@ -95,26 +112,48 @@ class ItemHandler:
         return db.query("SELECT * FROM items")
 ```
 
-### Custom FastAPI
+### 4\. Custom FastAPI (`/main.py` or `custom_fastapi.py`)
 
-A wrapper around FastAPI to allow easy attachment of services and handlers for cleaner initialization.
+  * **Purpose:** A wrapper around the standard `FastAPI` application to allow for easy attachment and access to services and handlers, ensuring cleaner initialization and **dependency injection**.
+
+**Example:**
 
 ```python
-class CustmFastAPI(FastAPI):
-    #Service
-    rag_pipeline_service = RagPipelineService
-    store_admin_service = StoreAdminService
-    
-    #DbHandlers
-    store_admin_handler = StoreAdminHandler
+from fastapi import FastAPI
+
+class CustomFastAPI(FastAPI):
+    # Services attached directly to the app instance
+    rag_pipeline_service: Any # Type hint for clarity
+    store_admin_service: Any # Type hint for clarity
+
+    # DB Handlers attached directly to the app instance
+    store_admin_handler: Any # Type hint for clarity
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize services and handlers (example, actual initialization might vary)
+        self.rag_pipeline_service = RagPipelineService()
+        self.store_admin_service = StoreAdminService()
+        self.store_admin_handler = StoreAdminHandler()
+
+# In your main application file (e.g., main.py):
+# app = CustomFastAPI()
+# app.include_router(...)
 ```
-This ensures proper modularization and separation of concerns in the application.
+
+This structured approach ensures proper modularization and a clear **separation of concerns** throughout the application.
+
+-----
 
 ## Docker
 
-### Run docker
+### Run with Docker
 
-```
+To build a **Docker image** and run the application in a container:
+
+```bash
 docker build -t fastapi-app .
 docker run -p 8000:8000 fastapi-app
 ```
+
+This command will build a Docker image named `fastapi-app` and run it, mapping port `8000` from the container to port `8000` on your host machine.

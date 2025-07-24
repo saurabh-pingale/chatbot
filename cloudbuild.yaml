@@ -1,0 +1,46 @@
+steps:
+  - name: gcr.io/cloud-builders/npm
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        echo "Listing assets in extensions/chatbot-extension/assets:"
+        ls -la extensions/chatbot-extension/assets
+        echo "Checking individual files:"
+        if [ -f extensions/chatbot-extension/assets/chatbot-main.js ]; then
+          echo "chatbot-main.js exists"
+        else
+          echo "chatbot-main.js MISSING"
+        fi
+        if [ -f extensions/chatbot-extension/assets/chatbot-main.css ]; then
+          echo "chatbot-main.css exists"
+        else
+          echo "chatbot-main.css MISSING"
+        fi
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '-t'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args:
+      - run
+      - deploy
+      - $_SERVICE_NAME
+      - '--image'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--region'
+      - $_DEPLOY_REGION
+      - '--platform'
+      - $_PLATFORM
+    entrypoint: gcloud
+timeout: 2400s
+images:
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+options:
+  logging: CLOUD_LOGGING_ONLY

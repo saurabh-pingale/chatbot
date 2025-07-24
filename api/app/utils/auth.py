@@ -35,20 +35,19 @@ def validate_token(token: str, shop_domain: str):
         return {
             "shop_domain": shop_domain,
             "access_token": token_payload.get('access_token') or token,
-            "expires_at": datetime.fromtimestamp(token_payload['exp'])
+            "expired_at": datetime.fromtimestamp(token_payload['exp'])
         }
 
     except JWTError:
         return {
             "shop_domain": shop_domain,
             "access_token": token,
-            "expires_at": datetime.now(UTC) + timedelta(hours=1)
+            "expired_at": datetime.now(UTC) + timedelta(hours=1)
         }
 
 async def get_shopify_auth(request: Request):
     """Extract and validate Shopify authentication details."""
     signature = request.query_params.get("signature")
-    #TODO - Check below modified condition : if not signature or not verify_app_proxy_signature(request.query_params, api_secret=SHOPIFY_API_SECRET):
     if not signature:
         raise HTTPException(status_code=401, detail="Unauthorized access")
 

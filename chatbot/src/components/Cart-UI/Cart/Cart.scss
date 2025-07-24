@@ -1,0 +1,149 @@
+@use '../../../styles/colors.scss' as *;
+
+.cart-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background: $white-100;
+  box-shadow: inset 4px 0 16px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--theme-primary-color-values) / 0.15),
+      transparent
+    );
+    opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+}
+
+.cart-header {
+  padding: 16px;
+  border-bottom: 1px solid $gray-200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cart-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: $black;
+}
+
+.cart-close-button {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: $gray-600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: $gray-100;
+    transform: rotate(90deg);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+.cart-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $gray-400;
+    border-radius: 2px;
+  }
+}
+
+.cart-empty-message {
+  text-align: center;
+  color: $gray-500;
+  margin: 32px 0;
+  font-size: 14px;
+}
+
+.cart-footer {
+  padding: 16px;
+  border-top: 1px solid $gray-200;
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cart-total-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: $black;
+}
+
+.cart-total-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: $black;
+}
+
+.cart-checkout-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--theme-primary-color);
+  color: $white-100;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgb(var(--theme-primary-color-values) / 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+} 

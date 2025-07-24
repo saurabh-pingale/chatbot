@@ -1,20 +1,17 @@
 from typing import List, Dict, Optional, Any, Union
 from pydantic import BaseModel
 
-# Request Model
 class RagPipelineRequestBody(BaseModel):
     messages: Optional[List[Dict[str, str]]] = None
     isTrainingPage: Optional[bool] = False
     shopifyStore: Optional[str] = None
     shopifyAccessToken: Optional[str] = None
 
-# Response Model
 class RagPipelineResponse(BaseModel):
     answer: str
     products: Optional[List[Dict[str, str]]] = []
     categories: Optional[List[str]] = []
 
-# Error Response Model
 class ErrorResponse(BaseModel):
     message: str
     success: bool
@@ -32,7 +29,7 @@ class VectorMetadata(BaseModel):
     type: str
     url: str
     image: str
-    price: str
+    price: int
     variant_id: str
 
 class Vector(BaseModel):

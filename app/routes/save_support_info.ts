@@ -1,11 +1,11 @@
-import { API } from "app/constants/api.constants";
+import { API } from "../constants/api.constants";
 
-export const saveSupportInfo = async (shopId: string, supportEmail: string, supportPhone: string) => {
+export const saveSupportInfo = async (shopId: string, supportEmail: string, supportPhone: string, countryCode : string) => {
   try {
     const response = await fetch(`${API.SAVE_SUPPORT_INFO}?shopId=${shopId}`,
       {
         method: "POST",
-        body: JSON.stringify({ supportEmail, supportPhone }),
+        body: JSON.stringify({ supportEmail, supportPhone, countryCode }),
         headers: {
           "Content-Type": "application/json",
         },

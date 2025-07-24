@@ -1,0 +1,48 @@
+@use '../../styles/colors.scss' as *;
+
+.product-slider-container {
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.product-slider-slider {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.product-slider-see-more-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 200px;
+  padding: 16px;
+}
+
+.product-slider-see-more-button {
+  color: $white-100;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+} 

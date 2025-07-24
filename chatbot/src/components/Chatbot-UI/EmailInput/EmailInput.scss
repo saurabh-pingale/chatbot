@@ -1,0 +1,56 @@
+@use '../../../styles/colors.scss' as *;
+
+.email-input-wrapper {
+  width: 100%;
+}
+
+.custom-email-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid $gray-300;
+  border-radius: 8px;
+  color: $black;
+  background-color: rgba(255, 255, 255, 0.3);
+  font-size: 14px;
+  margin-bottom: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &.has-error {
+    border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
+  }
+
+  &:focus {
+    border-color: var(--theme-primary-color, #{$orange-450});
+    box-shadow: none;
+  }
+
+  &:focus.has-error {
+    border-color: var(--theme-primary-color, #{$red-500});
+    box-shadow: none;
+  }
+}
+
+.email-continue-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--theme-primary-color, #{$orange-450});
+  color: $white-100;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 8px;
+
+  &:hover:not(:disabled) {
+    background-color: var(--theme-primary-color, #{$orange-450});
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}

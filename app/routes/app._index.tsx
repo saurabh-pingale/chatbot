@@ -1,37 +1,172 @@
+import React from "react";
 import {
   Page,
   Layout,
-  Text,
   Card,
-  BlockStack,
   Box,
+  BlockStack,
   List,
+  Text,
   InlineStack,
+  Button,
   Banner,
+  Spinner,
 } from "@shopify/polaris";
+import { json, LoaderFunction } from "@remix-run/node";
+import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { authenticate } from "../shopify.server";
+import { getShopStatus } from "./get_shop_status";
 
-export default function ChatbotIndex() {
+interface LoaderData {
+  shop: string;
+  plan: string | null;
+  setupCompleted: boolean;
+  subscriptionStatus: string | null;
+  endDate: string | null;
+}
 
-  const features = [
+const features = [
     "Trained with specialized vectors for accurate responses",
     "Answers product-specific questions instantly",
     "Reduces customer support workload",
     "Improves customer satisfaction with 24/7 availability",
     "Customizable to match your brand voice"
-  ];
+];
 
-  const exampleQuestions = [
+const exampleQuestions = [
     "How do I track my order?",
     "What's your return policy?",
     "Are there any active promotions?",
     "Do you ship internationally?",
     "How can I contact customer support?"
-  ];
+];
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
+  const shopId = session.shop;
+
+  try {
+    const { plan, setup_completed, subscription_status, end_date } = await getShopStatus(shopId);
+    return json({ 
+      shop: shopId, 
+      plan, 
+      setupCompleted: setup_completed,
+      subscriptionStatus: subscription_status,
+      endDate: end_date 
+    });
+  } catch (error) {
+    console.error("Failed to fetch shop status:", error);
+    return json({ shop: shopId, plan: null, setupCompleted: false, subscriptionStatus: null, endDate: null });
+  }
+};
+
+export default function Index() {
+  const { plan, setupCompleted, subscriptionStatus, endDate } = useLoaderData<LoaderData>();
+  const navigate = useNavigate();
+  const navigation = useNavigation();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const isLoading = navigation.state !== "idle";
+
+  const showSubscriptionWarning = () => {
+    if (!endDate || (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing')) {
+      return false;
+    }
+    const now = new Date();
+    const expiry = new Date(endDate);
+    const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    return daysUntilExpiry <= 7;
+  }
 
   return (
     <Page>
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Spinner accessibilityLabel="Loading..." />
+        </div>
+      )}
       <BlockStack gap="500">
-        <Layout>
+        {showSubscriptionWarning() && (
+            <Banner
+                title="Your subscription is ending soon!"
+                tone="warning"
+                action={{
+                    content: "Renew Now",
+                    onAction: () => handleNavigation("/app/billings"),
+                }}
+            >
+                <p>
+                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}. Please renew to avoid service interruption.
+                </p>
+            </Banner>
+        )}
+        <Card>
+          <BlockStack gap="200">
+            <Text as="h2" variant="headingLg">
+              Welcome to the Smart Chatbot App!
+            </Text>
+            <Text as="p" variant="bodyMd">
+              Your current plan is: <strong>{plan || "Not selected"}</strong>
+            </Text>
+            {!setupCompleted && (
+              <Banner
+                title="Setup required"
+                tone="warning"
+                action={{
+                  content: "Complete Setup",
+                  onAction: () => handleNavigation("/app/settings"),
+                }}
+              >
+                <p>
+                  Please complete the setup process to activate the chatbot for
+                  your store.
+                </p>
+              </Banner>
+            )}
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h3" variant="headingMd">
+              Quick Actions
+            </Text>
+            <InlineStack gap="400" align="center">
+              <Button onClick={() => handleNavigation("/app/settings")}>
+                Go to Settings
+              </Button>
+              <Button onClick={() => handleNavigation("/app/training")}>
+                Train Chatbot
+              </Button>
+              <Button onClick={() => handleNavigation("/app/analytics")}>
+                View Analytics
+              </Button>
+              <Button onClick={() => handleNavigation("/app/billings")}>
+                View Billing
+              </Button>
+              <Button onClick={() => handleNavigation("/app/integrations")}>
+                Go to Integrations
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Card>
+      <Layout>
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -110,7 +245,6 @@ export default function ChatbotIndex() {
                   </List>
                 </BlockStack>
               </Card>
-
               <Card>
                 <BlockStack gap="200">
                   <InlineStack align="center" gap="200">

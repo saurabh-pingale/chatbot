@@ -1,0 +1,90 @@
+import jwt
+from datetime import datetime, timedelta, UTC
+from typing import Optional, Dict, Any
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+
+from app.config import JWT_SECRET_KEY
+from app.utils.logger import logger
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_DAYS = 7
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/analytics_router/initiate_session")
+
+def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> Optional[str]:
+    """
+    Generates a JWT access token.
+
+    Args:
+        data: The data to encode into the token.
+        expires_delta: Optional timedelta object for token expiration. 
+                       Defaults to ACCESS_TOKEN_EXPIRE_DAYS.
+
+    Returns:
+        The encoded JWT token as a string, or None if JWT_SECRET_KEY is not set.
+    """
+    if not JWT_SECRET_KEY:
+        logger.error("JWT_SECRET_KEY is not configured or is set to default. Cannot create token.")
+        return None
+
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(UTC) + expires_delta
+    else:
+        expire = datetime.now(UTC) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    
+    to_encode.update({"exp": expire})
+    
+    try:
+        encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    except Exception as e:
+        logger.error(f"Error encoding JWT: {e}", exc_info=True)
+        return None
+
+def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Decodes a JWT access token.
+
+    Args:
+        token: The JWT token string to decode.
+
+    Returns:
+        The decoded token payload as a dictionary, or None if decoding fails or key is not set.
+    """
+    if not JWT_SECRET_KEY:
+        logger.error("JWT_SECRET_KEY is not configured or is set to default. Cannot decode token.")
+        return None
+        
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
+        return payload
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error decoding JWT: {e}", exc_info=True)
+        return None
+
+def get_current_user_payload(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    """
+    Dependency to decode and validate JWT token from the Authorization header.
+
+    Args:
+        token: The token from the Authorization header.
+
+    Returns:
+        The decoded token payload.
+
+    Raises:
+        HTTPException: If the token is invalid or expired.
+    """
+    payload = decode_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return payload 

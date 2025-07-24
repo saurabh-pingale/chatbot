@@ -1,0 +1,32 @@
+@use '../../../styles/colors.scss' as *;
+
+.chat-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: $white-100;
+  border-bottom: 1px solid $gray-200;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 3;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgb(var(--theme-primary-color-values) / 0.2),
+      transparent
+    );
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+}

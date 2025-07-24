@@ -6,16 +6,33 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const shopDomain = url.searchParams.get('shop');
   const userId = url.searchParams.get('user_id');
+  const guestId = url.searchParams.get('guest_id');
 
   let forwardUrl = '/agent_conversation_router/agent_conversation';
   const params = new URLSearchParams();
 
   if (shopDomain) params.set('shopId', shopDomain);
   if (userId) params.set('user_id', userId);
+  if (guestId) params.set('guest_id', guestId);
 
   if (params.toString()) {
     forwardUrl += `?${params.toString()}`;
   }
   
-  return forwardRequestToBackend(forwardUrl, request);
+  const response = await forwardRequestToBackend(forwardUrl, request);
+
+  const refreshedToken = response.headers.get("x-token-refreshed")
+
+  const responseBody = await response.json();
+
+  const headers = new Headers(response.headers);
+  if (refreshedToken) {
+    headers.set("x-token-refreshed", refreshedToken);
+  }
+  
+  return new Response(JSON.stringify(responseBody), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }

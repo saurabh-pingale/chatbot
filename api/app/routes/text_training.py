@@ -34,3 +34,4 @@ async def train_with_text(
     except Exception as e:
         logger.error(f"Training error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to train with text")
+    

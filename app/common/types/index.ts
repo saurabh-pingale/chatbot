@@ -18,3 +18,18 @@ export interface ActionResponse {
   error?: string;
   color?: string;
 };
+
+export interface AnalyticsSummaryData {
+  total_users: number;
+  total_chat_interactions: number;
+  total_opened_chatbot: number;
+  total_added_to_cart: number;
+  total_purchased: number;
+  total_purchase_amount: number;
+  daily_opened_chatbot: { date: string; count: number }[];
+  error?: string;
+};
+
+export interface SaveEmailGatePreferencePayload {
+  show_email_gate: boolean;
+}

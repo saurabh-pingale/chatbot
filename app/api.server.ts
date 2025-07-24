@@ -1,54 +1,43 @@
-import fetch from "node-fetch";
-import https from "https";
-import { API } from "app/constants/api.constants";
+import axios from "axios";
+import { API } from "./constants/api.constants";
 
 export async function forwardRequestToBackend(path: string, request: Request) {
   const fullUrl = `${API.BACKEND_URL}${path}`;
 
-  const headers = new Headers(request.headers);
-  
-  headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || '');
-  headers.set('X-Shopify-Shop-Domain', request.headers.get('X-Shopify-Shop-Domain') || '');
+  const authorizationHeader = request.headers.get('Authorization');
 
-  const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+  const outgoingHeaders: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (authorizationHeader) {
+    outgoingHeaders['Authorization'] = authorizationHeader;
+  }
 
   try {
-    const response = await fetch(fullUrl, {
+    const axiosResponse = await axios({
+      url: fullUrl,
       method: request.method,
-      headers: headers,
-      body: request.method !== 'GET' ? await request.text() : undefined,
-      agent: httpsAgent,
+      headers: outgoingHeaders,
+      data: request.method !== 'GET' ? await request.text() : undefined,
+      responseType: 'text', 
+      decompress: true,
     });
 
-    if (response.headers.get('content-type')?.includes('application/json')) {
-      const data = await response.json();
-      return new Response(JSON.stringify(data), {
-        status: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-API-Version': response.headers.get('X-Shopify-API-Version') || '',
-        },
-      });
-    }
-
-    return new Response(await response.text(), {
-      status: response.status,
+    return new Response(axiosResponse.data, {
+      status: axiosResponse.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'text/plain',
+        'Content-Type': axiosResponse.headers['content-type'] || 'text/plain',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Proxy request failed:', error);
-    const errorData = {
-      error: 'Failed to process request',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    };
-    
-    return new Response(JSON.stringify(errorData), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Failed to process request',
+        details: error.message || 'Unknown error',
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }

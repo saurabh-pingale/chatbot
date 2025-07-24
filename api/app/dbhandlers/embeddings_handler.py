@@ -1,15 +1,19 @@
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from pydantic import ValidationError
 
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
-from app.models.api.rag_pipeline import ProductEmbedding, Vector, VectorMetadata
-from app.utils.lru_cache import LRUCache
+from app.models.api.rag_pipeline import ProductEmbedding, Vector
+from app.utils.lru_cache import AsyncRedisLRUCache
+from app.utils.rag_pipeline_utils import (
+    get_cache_results,
+    normalize_vector, 
+    build_query_filters, 
+    prepare_search_requests,
+    parse_search_results
+)
 from app.utils.logger import logger
-
-query_cache = LRUCache(capacity=100) 
 
 class EmbeddingsHandler:
     """Handles embedding storage and querying."""
@@ -17,6 +21,7 @@ class EmbeddingsHandler:
     def __init__(self):
         self.client = QdrantClient(url=QDRANT_API_URL, api_key=QDRANT_API_KEY)
         self._ensure_collection_exists()
+        self.cache = None
 
     def _ensure_collection_exists(self, vector_size: int = 1024):
         """Ensures the Qdrant collection exists, creates it if not."""
@@ -29,10 +34,10 @@ class EmbeddingsHandler:
                 )
             )
 
-    async def store_embeddings(
+    async def create_embeddings(
         self, embeddings: List[ProductEmbedding], namespace: Optional[str]
     ) -> None:
-        """Stores embeddings in the Qdrant collection."""
+        """Create embeddings in the Qdrant collection."""
         points = []
         for embedding in embeddings:
             payload = embedding.metadata
@@ -49,11 +54,11 @@ class EmbeddingsHandler:
             collection_name=QDRANT_COLLECTION_NAME,
             points=points
         )
-    
-    async def query_embeddings(
+        
+    async def get_embeddings(
         self,
         vector: List[float],
-        top_k: int = 10,
+        top_k: int = 5,
         namespace: Optional[str] = None,
         includes_values: bool = False,
         metadata_filters: Optional[Dict[str, Any]] = None,
@@ -61,76 +66,40 @@ class EmbeddingsHandler:
     ) -> List[Vector]:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
 
-        query_key = f"{','.join(f'{x:.6f}' for x in vector)}|{namespace}|{str(metadata_filters)}|{agent_type}"
+        if self.cache is None:
+            self.cache = await AsyncRedisLRUCache.create(capacity=100)
 
-        cached_result = self.get_cache_results(query_key)
+        cached_result, query_key = await get_cache_results(
+            self.cache, vector, namespace, metadata_filters, agent_type
+        )
         if cached_result:
-            return cached_result
-
-        norm = (sum(value**2 for value in vector)) ** 0.5
-        normalized_vector = [value / norm for value in vector] if norm > 0 else vector
+            return [Vector(**item) for item in cached_result]
+        
+        if agent_type == "ProductAgent" and not metadata_filters:
+            logger.info("Skipping query: No metadata filters provided for ProductAgent.")
+            return []
+        
+        normalized_vector = normalize_vector(vector)
         
         try:
-            filter_conditions = []
-  
-            if namespace:
-                filter_conditions.append(
-                    models.FieldCondition(
-                        key="namespace",
-                        match=models.MatchValue(value=namespace)
-                    )
-                )
+            query_filters = build_query_filters(metadata_filters, namespace)
 
-            if metadata_filters:
-                for key, value in metadata_filters.items():
-                    filter_conditions.append(
-                        models.FieldCondition(
-                            key=key,
-                            match=models.MatchValue(value=value)
-                        )
-                    )
-
-            query_filter = None if not filter_conditions else models.Filter(must=filter_conditions)
-
-            search_params = models.SearchParams(
-                hnsw_ef=128, 
-                exact=False  
+            search_requests = prepare_search_requests(
+                normalized_vector,
+                query_filters, 
+                includes_values, 
+                top_k
             )
-            
-            search_results = self.client.search(
+
+            search_results = self.client.search_batch(
                 collection_name=QDRANT_COLLECTION_NAME,
-                query_vector=normalized_vector,
-                limit=top_k,
-                with_payload=True,
-                with_vectors=includes_values,
-                query_filter=query_filter,
-                search_params=search_params
+                requests=search_requests
             )
-            
-            results = []
-            for match in search_results:
-                payload = match.payload
-                if not payload:
-                    continue
-                
-                try:
-                    results.append(
-                        Vector(
-                            id=match.id,
-                            values=match.vector if includes_values and match.vector else [],
-                            metadata=VectorMetadata(**payload) if agent_type == "ProductAgent" else payload,
-                            score=match.score 
-                        )
-                    )
-                except ValidationError as e:
-                    logger.error(f"Product validation failed: {e}")
 
-            query_cache.put(query_key, results)
+            results = parse_search_results(search_results, includes_values, top_k, agent_type)
+
+            await self.cache.put(query_key, [r.dict() for r in results])
             return results
         except Exception as e:
             logger.error("Error querying Qdrant: %s", str(e), exc_info=True)
             return []
-
-    def get_cache_results(self, query_key: str) -> Optional[List[Vector]]:
-        """Fetch results from query cache using the query key."""
-        return query_cache.get(query_key)    

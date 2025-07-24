@@ -1,0 +1,67 @@
+.notification-popup {
+  position: fixed;
+  bottom: 10px;
+  right: 90px;
+  z-index: 9998;
+  width: 180px;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 18px 20px;
+  border: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  .notification-content {
+    position: relative;
+  }
+
+  .close-button {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: #000000;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    z-index: 1;
+
+    &:hover {
+      background: #333333;
+    }
+  }
+
+  .message {
+    color: #202223;
+    text-align: left;
+    padding-right: 8px;
+    line-height: 1.3;
+
+    .message-line {
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      
+      &.first-line {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      
+      &:not(.first-line) {
+        font-size: 15px;
+      }
+
+      &.last-line {
+        margin-top: 2px;
+      }
+    }
+  }
+}

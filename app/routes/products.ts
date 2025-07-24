@@ -1,4 +1,5 @@
-import { API } from "app/constants/api.constants";
+import { API } from "../constants/api.constants";
+
 export async function fetchProducts(shop: string, accessToken: string): Promise<{ message: string }> {
     const response = await fetch(`${API.CREATE_PRODUCTS}`, {
       method: "POST",

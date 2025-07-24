@@ -1,0 +1,47 @@
+@use '../../styles/colors.scss' as *;
+
+.email-gate-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: $white-100;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.email-gate-content {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.shop-logo-email-gate {
+  max-width: 150px;
+  max-height: 50px;
+  margin-bottom: 16px;
+  object-fit: contain;
+}
+
+.email-gate-description {
+  color: $gray-600;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.email-gate-error-message {
+  color: var(--theme-primary-color, #{$red-500});
+  font-size: 12px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  min-height: 16px;
+
+  &.visible {
+    opacity: 1;
+  }
+}

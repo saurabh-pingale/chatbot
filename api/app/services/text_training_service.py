@@ -28,7 +28,7 @@ class TextTrainingService:
                     )
                 )
                 
-            await self.embeddings_handler.store_embeddings(wrapped_embeddings, self.shopify_store)
+            await self.embeddings_handler.create_embeddings(wrapped_embeddings, self.shopify_store)
 
             return {
                 "status": "success",

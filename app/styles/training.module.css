@@ -64,6 +64,26 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #008080 #f0f0f0;
+}
+
+.chatWindow::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatWindow::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.chatWindow::-webkit-scrollbar-thumb {
+  background-color: #008080;
+  border-radius: 4px;
+}
+
+.chatWindow::-webkit-scrollbar-thumb:hover {
+  background-color: #006666;
 }
 
 .userMessage {

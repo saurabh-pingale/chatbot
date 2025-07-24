@@ -1,32 +1,33 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "a5e63b353544300e41f67086b871d4ae"
-application_url = "https://silent-spatial-rg-presentation.trycloudflare.com"
+client_id = "5c6356e63895028f5c0c531b2f8c9846"
+name = "Reezo AI"
+handle = "reezo-ai-1"
+application_url = "https://walking-why-rb-friendly.trycloudflare.com"
 embedded = true
-name = "chatbot-test"
-handle = "chatbot-test-15"
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2025-04"
+api_version = "2025-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products"
+scopes = "read_metaobjects,read_products,write_products"
 
 [auth]
 redirect_urls = [
-  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/callback",
-  "https://silent-spatial-rg-presentation.trycloudflare.com/auth/shopify/callback",
-  "https://silent-spatial-rg-presentation.trycloudflare.com/api/auth/callback"
+  "https://walking-why-rb-friendly.trycloudflare.com/auth/callback",
+  "https://walking-why-rb-friendly.trycloudflare.com/auth/shopify/callback",
+  "https://walking-why-rb-friendly.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://silent-spatial-rg-presentation.trycloudflare.com"
-subpath = "chatbot-api"
+url = "https://walking-why-rb-friendly.trycloudflare.com"
+subpath = "chatbot-api-1"
 prefix = "apps"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true

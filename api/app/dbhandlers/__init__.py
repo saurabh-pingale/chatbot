@@ -1,11 +1,14 @@
 from app.custom_fastapi import CustmFastAPI
-from app.dbhandlers.db import create_all_tables
 
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.conversation_handler import ConversationHandler
 from app.dbhandlers.checkout_product_handler import CheckoutProductHandler
+from app.dbhandlers.shop_config_handler import ShopConfigHandler
+from app.dbhandlers.otp_handler import OTPHandler
+from app.dbhandlers.user_handler import UserHandler
+from app.dbhandlers.country_code_handler import CountryCodeHandler
 
 def init_handlers(app: 'CustmFastAPI'):
     """Initialize handlers in the app state."""
@@ -14,7 +17,7 @@ def init_handlers(app: 'CustmFastAPI'):
     app.analytics_handler = AnalyticsHandler()
     app.conversation_handler = ConversationHandler()
     app.checkout_product_handler = CheckoutProductHandler()
-
-    @app.on_event("startup")
-    async def on_startup_create_tables():
-        await create_all_tables()
+    app.shop_config_handler = ShopConfigHandler()
+    app.otp_handler = OTPHandler()
+    app.user_handler = UserHandler()
+    app.country_code_handler = CountryCodeHandler()
