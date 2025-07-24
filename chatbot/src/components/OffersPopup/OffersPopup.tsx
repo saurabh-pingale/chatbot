@@ -1,11 +1,13 @@
 import { memo, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { hexToRgbArray, getContrastingTextColor } from '../../utils/utils';
+
+import { useConfig } from '../../context/ConfigContext';
 import { getShopOfferTags } from '../../services/chat';
+import { storefrontAccessToken } from '../../constants/cart';
+import { hexToRgbArray, getContrastingTextColor } from '../../utils/utils';
 import type { OffersPopupProps, StyleWithCustomProps } from '../../types';
 import './OffersPopup.scss';
-import { useConfig } from '../../context/ConfigContext';
 
 export const OffersPopup = memo<OffersPopupProps>(({
   isOpen,
@@ -17,8 +19,6 @@ export const OffersPopup = memo<OffersPopupProps>(({
 
   const config = useConfig();
   
-  const storefrontAccessToken = import.meta.env.VITE_STOREFRONT_ACCESS_TOKEN || "";
-
   useEffect(() => {
     setContainer(document.querySelector('.chatbot-container'));
   }, []);

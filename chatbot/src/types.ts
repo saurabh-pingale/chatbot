@@ -21,6 +21,7 @@ export interface Message {
 
 export interface CartItem extends ProductType {
   quantity: number;
+  availableQty: number;
 }
 
 export interface ChatbotAppConfig {
@@ -239,6 +240,7 @@ export interface CartBodyProps {
   image_url: string;
   price: number;
   quantity: number;
+  availableQty: number;
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   dynamicStyles: StyleWithCustomProps;
 }
@@ -255,7 +257,7 @@ export interface PlusIconProps {
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   id: string;
   quantity: number;
-  disabled?: boolean;
+  availableQty: number;
 }
 
 export interface AnalyticsSummaryData {

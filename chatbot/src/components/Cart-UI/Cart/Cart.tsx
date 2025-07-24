@@ -52,6 +52,7 @@ export const Cart = memo<CartProps>(({
                   name={item.name}
                   price={Number(item.price)}
                   quantity={item.quantity}
+                  availableQty={item.availableQty}
                   onUpdateQuantity={onUpdateQuantity}
                   image_url={item.image_url || ''}
                   dynamicStyles={dynamicStyles}

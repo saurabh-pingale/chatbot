@@ -141,3 +141,15 @@ export const getContrastingTextColor = (hexcolor: string) => {
 
   return (yiq >= 128) ? '#000000' : '#FFFFFF';
 };
+
+export const normalizeShopifyGID = (id: string): string => {
+  const shopifyGidTypeRegex = /gid:\/\/shopify\/([a-z]+)/i;
+
+  return id.replace(shopifyGidTypeRegex, (_, type: string) => {
+    if (type.toLowerCase() === 'productvariant') {
+      return 'gid://shopify/ProductVariant';
+    }
+
+    return `gid://shopify/${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+  });
+};

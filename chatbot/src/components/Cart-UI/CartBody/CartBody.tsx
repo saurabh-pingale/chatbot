@@ -2,7 +2,7 @@ import type { CartBodyProps } from '../../../types';
 import { MinusIcon, PlusIcon } from '../../../utils/icon';
 import './CartBody.scss';
 
-const CartBody = ({id, name, image_url, price, quantity, onUpdateQuantity, dynamicStyles}: CartBodyProps) => {
+const CartBody = ({id, name, image_url, price, quantity, availableQty, onUpdateQuantity, dynamicStyles}: CartBodyProps) => {
 
     const formatPrice = (price: number) => {
         if(price > 0) {
@@ -23,7 +23,13 @@ const CartBody = ({id, name, image_url, price, quantity, onUpdateQuantity, dynam
         <div className="cart-quantity-controls">
             <MinusIcon dynamicStyles={dynamicStyles} onUpdateQuantity={onUpdateQuantity} id={id} quantity={quantity} />
             <span className="cart-quantity">{quantity}</span>
-            <PlusIcon dynamicStyles={dynamicStyles} onUpdateQuantity={onUpdateQuantity} id={id} quantity={quantity} disabled={quantity >= 10} />
+            <PlusIcon 
+              dynamicStyles={dynamicStyles} 
+              onUpdateQuantity={onUpdateQuantity} 
+              id={id} 
+              quantity={quantity} 
+              availableQty={availableQty}
+            />
         </div>
       </div>
     )
