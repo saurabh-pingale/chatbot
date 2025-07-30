@@ -42,11 +42,10 @@ async def create_color_preference(request: Request, body: ColorPreferenceRequest
 
     try:
         app = get_app()
-        preferred_color = await app.shop_admin_service.create_color_preference(shop_id, color)
+        await app.shop_admin_service.create_color_preference(shop_id, color)
         return {
             "success": True,
-            "message": "Color preference saved successfully.",
-            "color": preferred_color
+            "message": "Color preference saved successfully."
         }
     except Exception as error:
         logger.error("Error in create_color_preference: %s", str(error), exc_info=True)
@@ -76,11 +75,10 @@ async def create_support_info(request: Request, body: SupportInfoRequest):
 
     try:
         app = get_app()
-        support_info = await app.shop_admin_service.create_support_info(shop_id, email, phone, country_code)
+        await app.shop_admin_service.create_support_info(shop_id, email, phone, country_code)
         return { 
             "success": True, 
             "message": "Support Info saved successfully.",
-            **support_info 
         }
     except Exception as error:
         logger.error("Error in create_support_info: %s", str(error), exc_info=True)
@@ -104,11 +102,10 @@ async def create_shop_image(request: Request, body: ShopImageRequest):
         raise HTTPException(status_code=400, detail="Missing image")
     try:
         app = get_app()
-        image = await app.shop_admin_service.create_shop_image(shop_id, image_url)
+        await app.shop_admin_service.create_shop_image(shop_id, image_url)
         return {
             "success": True,
-            "message": "Shop Image saved successfully.",
-            "image": image
+            "message": "Shop Image saved successfully."
             }
     except Exception as error:
         logger.error("Error in create_shop_image: %s", str(error), exc_info=True)

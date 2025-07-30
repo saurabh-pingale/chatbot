@@ -1,12 +1,15 @@
 from fastapi import HTTPException
+from datetime import datetime, timedelta 
 from typing import Dict, Any
 
 from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.dbhandlers.subscription_handler import SubscriptionHandler
 from app.external_service.redis_client import get_redis_client
 from app.constants import CATEGORY_CACHE_TTL_SECONDS
+from app.models.db.subscription import SubscriptionStatus
 from app.utils.products_utils import get_products_from_admin, create_product_embeddings
 from app.utils.logger import logger
 
@@ -16,14 +19,15 @@ class ProductsService:
         self.embeddings_handler = EmbeddingsHandler()
         self.shop_admin_handler = ShopAdminHandler()
         self.analytics_handler = AnalyticsHandler()
+        self.subscription_handler = SubscriptionHandler()
 
     async def create(self, namespace: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
         try:
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
 
-            shop_id = await self.analytics_handler.get_shop_pk(namespace)
-            if not shop_id:
+            shop_pk = await self.analytics_handler.get_shop_pk(namespace)
+            if not shop_pk:
                 raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
 
             stored_collections = await self.shop_admin_handler.create_collections(collections)
@@ -45,16 +49,35 @@ class ProductsService:
             }
 
             unique_products = list({product.id: product for product in products}.values())
-            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_id)
+            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
         
             products_embeddings = await create_product_embeddings(products)
             await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
+
+            shop = await self.shop_admin_handler.get_shop_status(namespace)
+
+            if not shop or not shop.setup_completed:
+                start_date = datetime.utcnow();
+                end_date = start_date + timedelta(days=90)
+
+                await self.subscription_handler.create_subscription(
+                    shop_id=shop_pk,
+                    plan="Free",
+                    stripe_subscription_id=f"free-trial-{namespace}-{int(start_date.timestamp())}",
+                    stripe_customer_id=f"free-customer-{namespace}",
+                    status=SubscriptionStatus.TRIALING,
+                    start_date=start_date,
+                    end_date=end_date
+                )
+
+                await self.shop_admin_handler.update_shop_setup_completed_status(shop_pk, status=True)
             
             return {
                 "status": "success",
                 "message": "Products fetched and stored successfully",
                 "product_count": len(products),
-                "collection_count": len(collections)
+                "collection_count": len(collections),
+                "setupCompleted": True
             }
             
         except Exception as error:

@@ -97,13 +97,14 @@ export default function TrainingPage() {
     await textTrain({
       input,
       shop,
-      onSuccess: () => {
+      onSuccess: (data) => {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
-        if (!setupCompleted) {
-          navigate('/app/billings');
+
+        if (data.setupCompleted) {
+          navigate('/app/');
         } else {
           processingRef.current = false;
           setIsProcessing(false);
@@ -133,8 +134,9 @@ export default function TrainingPage() {
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
       }]);
-      if (!setupCompleted) {
-        navigate('/app/billings');
+
+      if (result.setupCompleted) {
+        navigate('/app/');
       } else {
         processingRef.current = false;
         setIsProcessing(false);

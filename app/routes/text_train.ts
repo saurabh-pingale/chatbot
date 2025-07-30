@@ -8,7 +8,7 @@ export const textTrain = async ({
 }: {
   input: string;
   shop: string;
-  onSuccess: () => void;
+  onSuccess: (data: { setupCompleted: boolean }) => void;
   onError: () => void;
 }) => {
   try {
@@ -28,7 +28,7 @@ export const textTrain = async ({
     }
 
     const data = await response.json();
-    onSuccess();
+    onSuccess(data);
     return data;
   } catch (err) {
     onError();
