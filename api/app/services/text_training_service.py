@@ -5,11 +5,17 @@ from fastapi import HTTPException
 
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
+
+# TODO: Remove it when pricing flow is automated completely
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.subscription_handler import SubscriptionHandler
+
 from app.utils.text_utils import split_text_with_overlap
+
+# TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
+
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.utils.logger import logger
 
@@ -17,6 +23,8 @@ class TextTrainingService:
     def __init__(self, shopify_store: str):
         self.shopify_store = shopify_store
         self.embeddings_handler = EmbeddingsHandler()
+
+        # TODO: Remove it when pricing flow is automated completely
         self.shop_admin_handler = ShopAdminHandler()
         self.analytics_handler = AnalyticsHandler()
         self.subscription_handler = SubscriptionHandler()
@@ -38,6 +46,7 @@ class TextTrainingService:
                 
             await self.embeddings_handler.create_embeddings(wrapped_embeddings, self.shopify_store)
 
+            # TODO: Remove it when pricing flow is automated completely
             shop = await self.shop_admin_handler.get_shop_status(self.shopify_store)
 
             if not shop or not shop.setup_completed:
@@ -60,7 +69,7 @@ class TextTrainingService:
                 "status": "success",
                 "message": "Text trained and stored successfully",
                 "chunk_count": len(chunks),
-                "setupCompleted": True
+                "setupCompleted": True # TODO: Remove it when pricing flow is automated completely
             }
 
         except Exception as e:

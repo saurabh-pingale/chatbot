@@ -8,7 +8,9 @@ export const textTrain = async ({
 }: {
   input: string;
   shop: string;
-  onSuccess: (data: { setupCompleted: boolean }) => void;
+  onSuccess: (
+    data: { setupCompleted: boolean } // TODO: Remove it when pricing flow is automated completely
+  ) => void;
   onError: () => void;
 }) => {
   try {

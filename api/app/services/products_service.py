@@ -6,10 +6,16 @@ from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+
+# TODO: Remove it when pricing flow is automated completely
 from app.dbhandlers.subscription_handler import SubscriptionHandler
+
 from app.external_service.redis_client import get_redis_client
 from app.constants import CATEGORY_CACHE_TTL_SECONDS
+
+# TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
+
 from app.utils.products_utils import get_products_from_admin, create_product_embeddings
 from app.utils.logger import logger
 
@@ -19,6 +25,8 @@ class ProductsService:
         self.embeddings_handler = EmbeddingsHandler()
         self.shop_admin_handler = ShopAdminHandler()
         self.analytics_handler = AnalyticsHandler()
+
+        # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
 
     async def create(self, namespace: str) -> Dict[str, Any]:
@@ -54,6 +62,7 @@ class ProductsService:
             products_embeddings = await create_product_embeddings(products)
             await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
 
+            # TODO: Remove it when pricing flow is automated completely
             shop = await self.shop_admin_handler.get_shop_status(namespace)
 
             if not shop or not shop.setup_completed:
@@ -77,7 +86,7 @@ class ProductsService:
                 "message": "Products fetched and stored successfully",
                 "product_count": len(products),
                 "collection_count": len(collections),
-                "setupCompleted": True
+                "setupCompleted": True # TODO: Remove it when pricing flow is automated completely
             }
             
         except Exception as error:
