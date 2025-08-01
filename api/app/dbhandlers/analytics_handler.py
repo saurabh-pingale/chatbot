@@ -311,7 +311,13 @@ class AnalyticsHandler:
                 summary = summary_result.first()
 
                 daily_result = await session.execute(daily_query)
-                daily_data = [{"date": row.date.isoformat(), "count": row.daily_opens or 0} for row in daily_result]
+                daily_data = [
+                    {
+                        "date": datetime.utcfromtimestamp(row.date).date().isoformat(), 
+                        "count": row.daily_opens or 0
+                    } 
+                    for row in daily_result
+                ]
 
                 return {
                     "total_users": summary.total_users or 0,
