@@ -1,6 +1,11 @@
 import { API } from "../constants/api.constants";
 
-export async function fetchProducts(shop: string, accessToken: string): Promise<{ message: string }> {
+export async function fetchProducts(
+  shop: string, 
+  accessToken: string
+): Promise<{ message: string; 
+  setupCompleted: boolean // TODO: remove it when pricing flow is automated completely
+}> {
     const response = await fetch(`${API.CREATE_PRODUCTS}`, {
       method: "POST",
       headers: {

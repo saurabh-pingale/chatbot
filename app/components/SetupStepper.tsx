@@ -57,7 +57,8 @@ export default function SetupStepper({ currentStep, setupCompleted }: SetupStepp
   const steps = [
     { label: "Configure Settings", path: "/app/settings" },
     { label: "Train Chatbot", path: "/app/training" },
-    { label: "Select Plan", path: "/app/billing" },
+    // TODO: Uncomment when pricing flow is automated completely
+    // { label: "Select Plan", path: "/app/billing" },
   ];
 
   const handleStepClick = (stepIndex: number) => {

@@ -106,13 +106,16 @@ export default function Index() {
             <Banner
                 title="Your subscription is ending soon!"
                 tone="warning"
-                action={{
-                    content: "Renew Now",
-                    onAction: () => handleNavigation("/app/billings"),
-                }}
+                // TODO: Uncomment when pricing flow is automated completely
+                // action={{
+                //     content: "Renew Now",
+                //     onAction: () => handleNavigation("/app/billings"),
+                // }}
             >
                 <p>
-                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}. Please renew to avoid service interruption.
+                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}. 
+                    {/*// TODO: Uncomment when pricing flow is automated completely
+                      Please renew to avoid service interruption. */}
                 </p>
             </Banner>
         )}
@@ -157,9 +160,11 @@ export default function Index() {
               <Button onClick={() => handleNavigation("/app/analytics")}>
                 View Analytics
               </Button>
-              <Button onClick={() => handleNavigation("/app/billings")}>
+              // TODO: Uncomment when pricing flow is automated completely
+              {/* TODO: Uncomment when pricing flow is automated completely
+                <Button onClick={() => handleNavigation("/app/billings")}>
                 View Billing
-              </Button>
+              </Button> */}
               <Button onClick={() => handleNavigation("/app/integrations")}>
                 Go to Integrations
               </Button>

@@ -97,13 +97,17 @@ export default function TrainingPage() {
     await textTrain({
       input,
       shop,
-      onSuccess: () => {
+      // TODO: Remove data when pricing flow is automated completely
+      onSuccess: (data) => {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
-        if (!setupCompleted) {
-          navigate('/app/billings');
+
+        // TODO: Remove data when pricing flow is automated completely
+        // Simply use !setupCompleted
+        if (data.setupCompleted) {
+          navigate('/app'); // TODO: Update the navigation to /app/billings when pricing flow is automated completely
         } else {
           processingRef.current = false;
           setIsProcessing(false);
@@ -133,8 +137,11 @@ export default function TrainingPage() {
         sender: "bot", 
         text: result.message || "Products fetched successfully!" 
       }]);
-      if (!setupCompleted) {
-        navigate('/app/billings');
+
+      // TODO: Remove result when pricing flow is automated completely
+      // Simply use !setupCompleted
+      if (result.setupCompleted) {
+        navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
       } else {
         processingRef.current = false;
         setIsProcessing(false);
