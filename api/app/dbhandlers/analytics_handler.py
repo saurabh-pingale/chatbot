@@ -299,11 +299,13 @@ class AnalyticsHandler:
                 ).where(UserShopAnalyticsModel.shop_id == shop_pk).group_by(UserShopAnalyticsModel.date).order_by(UserShopAnalyticsModel.date)
 
                 if start_date:
-                    summary_query = summary_query.where(UserShopAnalyticsModel.date >= start_date)
-                    daily_query = daily_query.where(UserShopAnalyticsModel.date >= start_date)
+                    start_ts = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+                    summary_query = summary_query.where(UserShopAnalyticsModel.date >= start_ts)
+                    daily_query = daily_query.where(UserShopAnalyticsModel.date >= start_ts)
                 if end_date:
-                    summary_query = summary_query.where(UserShopAnalyticsModel.date <= end_date)
-                    daily_query = daily_query.where(UserShopAnalyticsModel.date <= end_date)
+                    end_ts = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+                    summary_query = summary_query.where(UserShopAnalyticsModel.date <= end_ts)
+                    daily_query = daily_query.where(UserShopAnalyticsModel.date <= end_ts)
 
                 summary_result = await session.execute(summary_query)
                 summary = summary_result.first()
