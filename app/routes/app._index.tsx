@@ -160,7 +160,6 @@ export default function Index() {
               <Button onClick={() => handleNavigation("/app/analytics")}>
                 View Analytics
               </Button>
-              // TODO: Uncomment when pricing flow is automated completely
               {/* TODO: Uncomment when pricing flow is automated completely
                 <Button onClick={() => handleNavigation("/app/billings")}>
                 View Billing
