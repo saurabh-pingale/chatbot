@@ -13,7 +13,7 @@
     justify-content: flex-start;
     flex-direction: column;
     align-items: flex-start;
-    margin: 4px
+    margin: 4px 0;
   }
 }
 
@@ -24,19 +24,31 @@
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  position: relative;
 
   .message-list.is-user & {
     margin-left: auto;
-    border-radius: 18px 18px 0 18px;
     background-color: var(--theme-primary-color, #{$orange-450});
     text-align: left;
     min-width: fit-content;
+    border-radius: 12px;
+
+    &:not(:last-child) {
+      border-radius: 12px;
+      margin-bottom: 2px;
+    }
   }
 
   .message-list:not(.is-user) & {
-    border-radius: 18px 18px 18px 0;
     background-color: $gray-700;
     text-align: left;
+    border-radius: 12px;
+    margin-bottom: 2px;
+
+    &.last-bot-message {
+      border-bottom-left-radius: 0;
+    }
   }
 
   ul.message-list-items {
