@@ -110,7 +110,7 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
           ref={i === visibleCount - 1 ? ref : null}
         >
           <div
-            className="message-bubble"
+            className={`message-bubble ${!isUser && i === hasMultipleSegments - 1 ? 'last-bot-message' : ''}`}
             style={bubbleStyles}
             dangerouslySetInnerHTML={{ __html: formattedContent[i] }}
           />
