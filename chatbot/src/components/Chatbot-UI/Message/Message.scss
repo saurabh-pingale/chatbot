@@ -33,10 +33,10 @@
     text-align: left;
     min-width: fit-content;
     border-radius: 12px;
+    border-bottom-left-radius: 0;
 
     &:not(:last-child) {
       border-radius: 12px;
-      margin-bottom: 2px;
     }
   }
 
@@ -44,7 +44,6 @@
     background-color: $gray-700;
     text-align: left;
     border-radius: 12px;
-    margin-bottom: 2px;
 
     &.last-bot-message {
       border-bottom-left-radius: 0;
@@ -60,13 +59,6 @@
       position: relative;
       margin: 4px 0;
       padding-left: 16px;
-
-      &::before {
-        content: "•";
-        position: absolute;
-        left: 0;
-        color: $white-100;
-      }
     }
   }
 
