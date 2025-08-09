@@ -91,11 +91,11 @@ export const formatMessage = (text: string, type: 'bot' | 'user'): string[] => {
       segments.push(introduction);
     }
 
-    // Format remaining bullet parts with a leading bullet symbol
+    // Format remaining bullet parts
     for (let i = 1; i < bulletParts.length; i++) {
       const bullet = bulletParts[i].trim();
       if (bullet) {
-        segments.push(`• ${bullet}`);
+        segments.push(bullet);
       }
     }
   }
