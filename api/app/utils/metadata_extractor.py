@@ -1,8 +1,8 @@
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
-from app.utils.metadata_config import CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, ATTRIBUTE_PATTERNS, SIZE_ALIASES
+from app.utils.metadata_config import CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, ATTRIBUTE_PATTERNS, SIZE_ALIASES, COMMON_ATTRIBUTES
 
 class MetadataExtractor:
     """A centralized class to extract metadata for various apparel categories."""
@@ -17,12 +17,29 @@ class MetadataExtractor:
         end_pos = category_matches[current_index + 1].start() if current_index < len(category_matches) - 1 else len(query)
         return query[start_pos:end_pos]
 
-    def extract_all_metadata(self, query: str) -> Dict[str, Any]:
+    def extract_all_metadata(self, query: str, dynamic_categories: Optional[List[str]]) -> Dict[str, Any]:
         """
         Extracts all products and their attributes from a query.
         Handles multiple product descriptions in a single query.
         """
-        category_matches = list(self._category_regex.finditer(query))
+        category_aliases = CATEGORY_ALIASES.copy()
+        category_attributes = CATEGORY_ATTRIBUTES.copy()
+        category_regex = self._category_regex
+
+        if dynamic_categories:
+            for category in dynamic_categories:
+                cat_lower = category.lower()
+                if cat_lower not in category_aliases:
+                    if not cat_lower.endswith('s'):
+                        category_aliases[f"{cat_lower}s"] = cat_lower
+
+                if cat_lower not in category_attributes:
+                    category_attributes[cat_lower] = COMMON_ATTRIBUTES
+
+            sorted_aliases = sorted(category_aliases.keys(), key=len, reverse=True)
+            category_regex = re.compile(r"\b(" + "|".join(sorted_aliases) + r")\b", re.IGNORECASE)
+
+        category_matches = list(category_regex.finditer(query))
 
         if not category_matches:
             return self._extract_title(query)
@@ -33,11 +50,11 @@ class MetadataExtractor:
             segment = self._get_segment_from_query(query, category_matches, i)
             
             alias = current_match.group(1).lower()
-            category = CATEGORY_ALIASES.get(alias)
+            category = category_aliases.get(alias)
             if category and category not in combined_metadata["category"]:
                  combined_metadata["category"].append(category)
 
-            attributes_to_find = CATEGORY_ATTRIBUTES.get(category, [])
+            attributes_to_find = category_attributes.get(category, [])
             for attr in attributes_to_find:
                 if attr == "category":
                     continue

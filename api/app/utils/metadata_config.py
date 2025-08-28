@@ -1,5 +1,7 @@
 import re
 
+COMMON_ATTRIBUTES = ["price", "color", "title"]
+
 ATTRIBUTE_PATTERNS = {
     "price": {
         "exact": re.compile(r"(?:costs?|price(?:d)? at|worth)\s*₹?\s?(\d{2,6}(?:\.\d{1,2})?)", re.IGNORECASE),
