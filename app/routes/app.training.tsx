@@ -106,7 +106,7 @@ export default function TrainingPage() {
 
         // TODO: Remove data when pricing flow is automated completely
         // Simply use !setupCompleted
-        if (data.setupCompleted) {
+        if (!data.setupCompleted) {
           navigate('/app'); // TODO: Update the navigation to /app/billings when pricing flow is automated completely
         } else {
           processingRef.current = false;
@@ -140,7 +140,7 @@ export default function TrainingPage() {
 
       // TODO: Remove result when pricing flow is automated completely
       // Simply use !setupCompleted
-      if (result.setupCompleted) {
+      if (!result.setupCompleted) {
         navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
       } else {
         processingRef.current = false;
