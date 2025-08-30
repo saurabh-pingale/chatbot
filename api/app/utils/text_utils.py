@@ -9,6 +9,7 @@ def split_text_with_overlap(text: str, chunk_size: int = 500, overlap: int = 100
         chunk = tokens[i:i + chunk_size]
         chunks.append(" ".join(chunk))
 
+        #TODO: DO we require this condition ?
         if i + chunk_size >= len(tokens):
             break
 

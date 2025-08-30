@@ -6,6 +6,7 @@ from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
 
 class EmbeddingService:
+    #TODO: In future, we need change this embedding model to claude or gemini embedding model
     model = FlagModel(
         'BAAI/bge-small-en-v1.5',
         query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
@@ -14,6 +15,8 @@ class EmbeddingService:
 
     @staticmethod
     def create_embeddings(text: str | List[str]) -> List[float] | List[List[float]]:
+
+        #TODO: Why do we need to handle this condition of instance str, Mainly we are restricting to List
         if isinstance(text, str):
             embedding = EmbeddingService.model.encode(text)
             embedding = np.array(embedding)
@@ -40,7 +43,7 @@ class EmbeddingService:
     @staticmethod
     async def get_embeddings(
         vector: List[float], 
-        top_k: int = 10, 
+        top_k: int = 10,
         namespace: Optional[str] = None, 
         includes_values: bool = False,
         metadata_filters: Optional[Dict[str, Any]] = None,
