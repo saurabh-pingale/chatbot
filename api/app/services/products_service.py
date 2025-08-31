@@ -11,7 +11,6 @@ from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.subscription_handler import SubscriptionHandler
 
 from app.external_service.redis_client import get_redis_client
-from app.constants import CATEGORY_CACHE_TTL_SECONDS
 
 # TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
@@ -34,6 +33,7 @@ class ProductsService:
         try:
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
 
+            #TODO: Use LLM to get structured attributes and update metadata_config in redis and fetch config where metadata filtering is used!
             shop_pk = await self.analytics_handler.get_shop_pk(namespace)
             if not shop_pk:
                 raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
@@ -50,7 +50,7 @@ class ProductsService:
             titles = [col["title"] for col in stored_collections if col.get("title")]
             if titles:
                 await redis_client.sadd(redis_key, *titles)
-                await redis_client.expire(redis_key, CATEGORY_CACHE_TTL_SECONDS)
+                await redis_client.expire(redis_key)
 
             collection_id_map = {
                 collection["title"]: collection["id"] for collection in stored_collections

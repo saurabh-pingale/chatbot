@@ -139,7 +139,6 @@ export default function TrainingPage() {
       }]);
 
       // TODO: Remove result when pricing flow is automated completely
-      // Simply use !setupCompleted
       if (!result.setupCompleted) {
         navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
       } else {
