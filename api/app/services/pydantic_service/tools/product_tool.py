@@ -63,6 +63,7 @@ class ProductTool(BaseTool):
             else:
                 dynamic_categories = await self.shop_admin_handler.get_collections(shop_id)
                 logger.info(f"Dynamically fetched categories from DB: {dynamic_categories}")
+                #TODO: We need to add them in redis cache
         except Exception as cat_e:
             logger.warning(f"Could not fetch dynamic categories: {cat_e}")
             dynamic_categories = []
@@ -84,23 +85,21 @@ class ProductTool(BaseTool):
             products = extract_products_from_response(unique_results) or []
             logger.info(f"Extracted Products: {products}")
 
-            if not products and metadata_filters:
-                logger.info("Filtered search returned no results. Retrying with a pure semantic search.")
-                results = await self.embeddings_handler.get_embeddings(
-                    vector=embedding,
-                    namespace=shop_id,
-                    agent_type="ProductAgent",
-                    metadata_filters=None
-                )
+            if not products:
+                redis_client = await get_redis_client()
+                redis_key = f"{shop_id}:categories"
+                categories = list(await redis_client.smembers(redis_key))
+                logger.info(f"Categories from Redis: {categories}")
 
-                unique_results = deduplicate_results_by_variant(results) if results else []
-                products = extract_products_from_response(unique_results) or []
+            if not categories:
+                categories = await self.shop_admin_handler.get_collections(shop_id)
+                logger.info(f"Categories from DB: {categories}")
 
             if not products:
                 return {
                     "answer": f"No products found for '{query}', but other categories are available.",
                     "products": [],
-                    "categories": dynamic_categories,
+                    "categories": categories,
                     "refined_query": query,
                     "original_query": query,
                     "not_found": True,
@@ -113,7 +112,7 @@ class ProductTool(BaseTool):
             return {
                 "answer": f"Successfully found {len(products)} products for '{query}'.",
                 "products": products,
-                "categories": dynamic_categories,
+                "categories": categories,
                 "refined_query": query,
                 "original_query": query,
                 "not_found": False
@@ -121,10 +120,18 @@ class ProductTool(BaseTool):
             
         except Exception as e:
             logger.error(f"Product tool failed with error: {e}", exc_info=True)
+            try:
+                redis_client = await get_redis_client()
+                redis_key = f"{shop_id}:categories"
+                categories = list(await redis_client.smembers(redis_key))
+                if not categories:
+                    categories = await self.shop_admin_handler.get_collections(shop_id)
+            except:
+                categories = []
             return {
                 "answer": "An error occurred while searching for products.",
                 "products": [],
-                "categories": dynamic_categories,
+                "categories": categories,
                 "refined_query": query,
                 "original_query": query,
                 "not_found": True
