@@ -106,7 +106,7 @@ export default function TrainingPage() {
 
         // TODO: Remove data when pricing flow is automated completely
         // Simply use !setupCompleted
-        if (data.setupCompleted) {
+        if (!data.setupCompleted) {
           navigate('/app'); // TODO: Update the navigation to /app/billings when pricing flow is automated completely
         } else {
           processingRef.current = false;
@@ -141,8 +141,7 @@ export default function TrainingPage() {
       //TODO: Here is the issue is happening not giving confirmation, thats it, I mean give a confirmation popup and move to next screen
       // TODO: Remove result when pricing flow is automated completely
       // Simply use !setupCompleted
-      if (result.setupCompleted) {
-        //Why are we navigating it to /app ?
+      if (!result.setupCompleted) {
         navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
       } else {
         processingRef.current = false;

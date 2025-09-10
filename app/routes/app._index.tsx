@@ -61,7 +61,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function Index() {
-  const { plan, setupCompleted, subscriptionStatus, endDate } = useLoaderData<LoaderData>();
+  const { shop, plan, setupCompleted, subscriptionStatus, endDate } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const navigation = useNavigation();
 
@@ -80,6 +80,8 @@ export default function Index() {
     const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
     return daysUntilExpiry <= 7;
   }
+
+  const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
 
   return (
     <Page>
@@ -124,9 +126,9 @@ export default function Index() {
             <Text as="h2" variant="headingLg">
               Welcome to the Smart Chatbot App!
             </Text>
-            <Text as="p" variant="bodyMd">
+            {/* <Text as="p" variant="bodyMd">
               Your current plan is: <strong>{plan || "Not selected"}</strong>
-            </Text>
+            </Text> */}
             {!setupCompleted && (
               <Banner
                 title="Setup required"
@@ -144,6 +146,71 @@ export default function Index() {
             )}
           </BlockStack>
         </Card>
+
+        {!setupCompleted && (
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingLg">
+              Install Chatbot on Your Store
+            </Text>
+            <Text as="p" variant="bodyMd">
+              Follow these steps to add the chatbot to your storefront:
+            </Text>
+            
+            <BlockStack gap="300">
+              <InlineStack wrap={false} gap="500" align="start">
+                <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="40px">
+                  <Text as="p" variant="headingMd" alignment="center" fontWeight="bold">1</Text>
+                </Box>
+                <Box minWidth="0" width="100%">
+                  <Text as="h3" variant="headingSm" fontWeight="semibold">
+                    Add via Theme Editor
+                  </Text>
+                  <Text as="p" variant="bodyMd">
+                    The easiest way to add the chatbot to your store is through the theme editor.
+                  </Text>
+                  <Box paddingBlockStart="300">
+                    <Button 
+                      variant="primary" 
+                      onClick={() => window.open(themeEditorDeepLink, '_blank')}
+                    >
+                      Open Theme Editor
+                    </Button>
+                  </Box>
+                </Box>
+              </InlineStack>
+
+              <InlineStack wrap={false} gap="500" align="start">
+                <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="40px">
+                  <Text as="p" variant="headingMd" alignment="center" fontWeight="bold">2</Text>
+                </Box>
+                <Box minWidth="0" width="100%">
+                  <Text as="h3" variant="headingSm" fontWeight="semibold">
+                    Locate App Embed section
+                  </Text>
+                  <Text as="p" variant="bodyMd">
+                    In the theme editor, look for the "App embeds" section (usually in theme settings or footer).
+                  </Text>
+                </Box>
+              </InlineStack>
+
+              <InlineStack wrap={false} gap="500" align="start">
+                <Box padding="400" background="bg-surface-secondary" borderRadius="200" minWidth="40px">
+                  <Text as="p" variant="headingMd" alignment="center" fontWeight="bold">3</Text>
+                </Box>
+                <Box minWidth="0" width="100%">
+                  <Text as="h3" variant="headingSm" fontWeight="semibold">
+                    Enable Chatbot App Embed
+                  </Text>
+                  <Text as="p" variant="bodyMd">
+                    Toggle on the "Smart Chatbot" option to enable the chatbot on your storefront.
+                  </Text>
+                </Box>
+              </InlineStack>
+            </BlockStack>
+          </BlockStack>
+        </Card>
+        )}
 
         <Card>
           <BlockStack gap="400">
