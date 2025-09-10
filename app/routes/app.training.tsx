@@ -97,7 +97,7 @@ export default function TrainingPage() {
     await textTrain({
       input,
       shop,
-      // TODO: Remove data when pricing flow is automated completely
+      // TODO: Remove data when pricing flow is automated completely -> what did it TODO mean for?
       onSuccess: (data) => {
         setMessages((prev) => [
           ...prev,
@@ -138,6 +138,7 @@ export default function TrainingPage() {
         text: result.message || "Products fetched successfully!" 
       }]);
 
+      //TODO: Here is the issue is happening not giving confirmation, thats it, I mean give a confirmation popup and move to next screen
       // TODO: Remove result when pricing flow is automated completely
       // Simply use !setupCompleted
       if (!result.setupCompleted) {
