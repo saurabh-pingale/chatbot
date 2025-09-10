@@ -6,6 +6,8 @@ from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.utils.metadata_generator import MetadataGenerator
+from app.utils.category_cache import CategoryCache
 
 # TODO: Remove it when pricing flow is automated completely
 from app.dbhandlers.subscription_handler import SubscriptionHandler
@@ -15,7 +17,7 @@ from app.external_service.redis_client import get_redis_client
 # TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
 
-from app.utils.products_utils import get_products_from_admin, create_product_embeddings
+from app.utils.products_utils import get_products_from_admin, create_product_embeddings, normalize_and_clean_metafields
 from app.utils.logger import logger
 
 class ProductsService:
@@ -24,6 +26,8 @@ class ProductsService:
         self.embeddings_handler = EmbeddingsHandler()
         self.shop_admin_handler = ShopAdminHandler()
         self.analytics_handler = AnalyticsHandler()
+        self.metadata_generator = MetadataGenerator()
+        self.category_cache = CategoryCache()
 
         # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
@@ -33,24 +37,30 @@ class ProductsService:
         try:
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
 
-            #TODO: Use LLM to get structured attributes and update metadata_config in redis and fetch config where metadata filtering is used!
+            for product in products:
+                if hasattr(product , "metafields"):
+                    product.metafields = normalize_and_clean_metafields(product.metafields)
+
+            sample_products_by_category = {}
+            for product in products:
+                category = getattr(product, 'category', None)
+                if category and category not in sample_products_by_category:
+                    sample_products_by_category[category] = product
+
+            await self.metadata_generator.generate_and_store_config(
+                namespace, 
+                sample_products_by_category, 
+                collections
+            )
+
             shop_pk = await self.analytics_handler.get_shop_pk(namespace)
             if not shop_pk:
                 raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
 
             stored_collections = await self.shop_admin_handler.create_collections(collections)
 
-            redis_client = await get_redis_client()
-            redis_key = f"{namespace}:categories"
-
-            categories_exists = await redis_client.exists(redis_key)
-            if categories_exists:
-                await redis_client.delete(redis_key)
-
             titles = [col["title"] for col in stored_collections if col.get("title")]
-            if titles:
-                await redis_client.sadd(redis_key, *titles)
-                await redis_client.expire(redis_key)
+            await self.category_cache.update_categories_cache(namespace, titles)
 
             collection_id_map = {
                 collection["title"]: collection["id"] for collection in stored_collections
