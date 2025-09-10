@@ -140,7 +140,6 @@ export default function TrainingPage() {
 
       //TODO: Here is the issue is happening not giving confirmation, thats it, I mean give a confirmation popup and move to next screen
       // TODO: Remove result when pricing flow is automated completely
-      // Simply use !setupCompleted
       if (!result.setupCompleted) {
         navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
       } else {

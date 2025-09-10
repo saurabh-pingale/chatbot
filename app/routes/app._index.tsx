@@ -126,7 +126,8 @@ export default function Index() {
             <Text as="h2" variant="headingLg">
               Welcome to the Smart Chatbot App!
             </Text>
-            {/* <Text as="p" variant="bodyMd">
+            {/*  TODO: Uncomment when pricing flow is introduced
+             <Text as="p" variant="bodyMd">
               Your current plan is: <strong>{plan || "Not selected"}</strong>
             </Text> */}
             {!setupCompleted && (

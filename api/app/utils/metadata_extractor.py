@@ -2,13 +2,19 @@ import re
 from typing import Dict, Any, Optional, List
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
-from app.utils.metadata_config import CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, ATTRIBUTE_PATTERNS, SIZE_ALIASES, COMMON_ATTRIBUTES
+from app.utils.metadata_config import (
+    CATEGORY_ALIASES as FALLBACK_ALIASES,
+    CATEGORY_ATTRIBUTES as FALLBACK_ATTRIBUTES,
+    ATTRIBUTE_PATTERNS as FALLBACK_PATTERNS,
+    SIZE_ALIASES, 
+    COMMON_ATTRIBUTES
+)
 
 class MetadataExtractor:
     """A centralized class to extract metadata for various apparel categories."""
 
     def __init__(self):
-        sorted_aliases = sorted(CATEGORY_ALIASES.keys(), key=len, reverse=True)
+        sorted_aliases = sorted(FALLBACK_ALIASES.keys(), key=len, reverse=True)
         self._category_regex = re.compile(r"\b(" + "|".join(sorted_aliases) + r")\b", re.IGNORECASE)
 
     def _get_segment_from_query(self, query: str, category_matches: list, current_index: int) -> str:
@@ -17,19 +23,25 @@ class MetadataExtractor:
         end_pos = category_matches[current_index + 1].start() if current_index < len(category_matches) - 1 else len(query)
         return query[start_pos:end_pos]
 
-    def extract_all_metadata(self, query: str, dynamic_categories: Optional[List[str]]) -> Dict[str, Any]:
+    def extract_all_metadata(self, query: str, dynamic_categories: Optional[List[str]], config: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Extracts all products and their attributes from a query.
-        Handles multiple product descriptions in a single query.
+        Uses dynamic config from Redis if provided, otherwise uses static fallback.
         """
-        category_aliases = CATEGORY_ALIASES.copy()
-        category_attributes = CATEGORY_ATTRIBUTES.copy()
-        category_regex = self._category_regex
+        if config:
+            category_aliases = config.get("category_aliases", FALLBACK_ALIASES).copy()
+            category_attributes = config.get("category_attributes", FALLBACK_ATTRIBUTES).copy()
+            attribute_patterns = config.get("attribute_patterns", FALLBACK_PATTERNS)
+        else:
+            category_aliases = FALLBACK_ALIASES.copy()
+            category_attributes = FALLBACK_ATTRIBUTES.copy()
+            attribute_patterns = FALLBACK_PATTERNS
 
         if dynamic_categories:
             for category in dynamic_categories:
                 cat_lower = category.lower()
                 if cat_lower not in category_aliases:
+                    category_aliases[cat_lower] = cat_lower
                     if not cat_lower.endswith('s'):
                         category_aliases[f"{cat_lower}s"] = cat_lower
 
@@ -37,12 +49,12 @@ class MetadataExtractor:
                     category_attributes[cat_lower] = COMMON_ATTRIBUTES
 
             sorted_aliases = sorted(category_aliases.keys(), key=len, reverse=True)
-            category_regex = re.compile(r"\b(" + "|".join(sorted_aliases) + r")\b", re.IGNORECASE)
+            category_regex = re.compile(r"\b(" + "|".join(re.escape(alias) for alias in sorted_aliases) + r")\b", re.IGNORECASE)
 
         category_matches = list(category_regex.finditer(query))
 
         if not category_matches:
-            return self._extract_title(query)
+            return self._extract_title(query, attribute_patterns)
 
         combined_metadata = defaultdict(list)
         
@@ -61,7 +73,7 @@ class MetadataExtractor:
                 
                 extractor_method = getattr(self, f"_extract_{attr}", None)
                 if extractor_method:
-                    attr_value = extractor_method(segment)
+                    attr_value = extractor_method(segment, attribute_patterns)
                     if attr_value:
                         for key, val in attr_value.items():
                             if val not in combined_metadata[key]:
@@ -79,76 +91,106 @@ class MetadataExtractor:
 
         return final_metadata
 
-    def _extract_price(self, query: str) -> Dict[str, Any]:
+    def _extract_price(self, query: str, patterns: Dict) -> Dict[str, Any]:
         """Extracts exact or conditional price."""
-        exact_match = ATTRIBUTE_PATTERNS["price"]["exact"].search(query)
-        if exact_match:
-            price = int(Decimal(exact_match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))
-            return {"price": price}
+        pattern_set = patterns.get("price", {})
+
+        if not isinstance(pattern_set, dict):
+            match = pattern_set.search(query)
+            if match:
+                try:
+                    price_str = match.group(1) if pattern_set.groups > 0 else match.group(0)
+                    price = int(Decimal(price_str).to_integral_value(rounding=ROUND_HALF_UP))
+                    return {"price": price}
+                except (IndexError, ValueError):
+                    return {}
+            return {}
         
-        range_match = ATTRIBUTE_PATTERNS["price"]["range"].search(query)
-        if range_match:
-            lower = int(Decimal(range_match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))
-            upper = int(Decimal(range_match.group(2)).to_integral_value(rounding=ROUND_HALF_UP))
-            return {"price": {"$gte": lower, "$lte": upper}}
+        for key, pattern in pattern_set.items():
+            match = pattern.search(query)
+            if not match: continue
+            
+            if key == "exact":
+                price = int(Decimal(match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))
+                return {"price": price}
+        
+            if key == "range":
+                lower = int(Decimal(match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))
+                upper = int(Decimal(match.group(2)).to_integral_value(rounding=ROUND_HALF_UP))
+                return {"price": {"$gte": lower, "$lte": upper}}
 
-        under_match = ATTRIBUTE_PATTERNS["price"]["under"].search(query)
-        if under_match:
-            return {"price": {"$lte": int(Decimal(under_match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))}}
+            if key == "under":
+                return {"price": {"$lte": int(Decimal(match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))}}
 
-        over_match = ATTRIBUTE_PATTERNS["price"]["over"].search(query)
-        if over_match:
-            return {"price": {"$gte": int(Decimal(over_match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))}}
+            if key == "over":
+                return {"price": {"$gte": int(Decimal(match.group(1)).to_integral_value(rounding=ROUND_HALF_UP))}}
         
         return {}
-
-    def _extract_color(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["color"].search(query)
-        return {"color": match.group(1).lower()} if match else {}
-
-    def _extract_fabric(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["fabric"].search(query)
-        return {"fabric": match.group(1).lower()} if match else {}
-
-    def _extract_size(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["size"].search(query)
+    
+    def _extract_single_attribute(self, query: str, patterns: Dict, attr_name: str) -> Dict[str, str]:
+        """ Extractor for attributes that expect a single value."""
+        pattern = patterns.get(attr_name)
+        if not pattern: return {}
+        
+        match = pattern.search(query)
         if match:
-            size_raw = match.group(1).lower()
+            value = match.group(1) if pattern.groups >= 1 else match.group(0)
+            return {attr_name: value.lower()}
+        return {}
+
+    def _extract_color(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "color")
+
+    def _extract_fabric(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "fabric")
+
+    def _extract_size(self, query: str, patterns: Dict) -> Dict[str, str]:
+        pattern = patterns.get("size")
+        if not pattern: return {}
+
+        match = pattern.search(query)
+        if match:
+            size_raw = (match.group(1) if pattern.groups >= 1 else match.group(0)).lower()
             return {"size": SIZE_ALIASES.get(size_raw, size_raw.upper())}
         return {}
     
-    def _extract_title(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["title"].search(query)
+    def _extract_title(self, query: str, patterns: Dict) -> Dict[str, str]:
+        pattern = patterns.get("title")
+        if not pattern: return {}
+
+        match = pattern.search(query)
         if match:
-            title = match.group(1) or match.group(2)
+            title = None
+            if match.groups():
+                title = next((g for g in reversed(match.groups()) if g is not None), None)
+            
             if title:
                 cleaned = re.sub(r"\s+(in|under|for|with|on)$", "", title.strip(), flags=re.IGNORECASE)
                 cleaned = re.sub(r"[?.!,]+$", "", cleaned).lower()
                 return {"title": cleaned}
         return {}
 
-    def _extract_sleeve_length(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["sleeve_length"].search(query)
-        return {"sleeve_length": match.group(1).lower()} if match else {}
+    def _extract_sleeve_length(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "sleeve_length")
         
-    def _extract_fit(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["fit"].search(query)
-        return {"fit": match.group(1).lower()} if match else {}
+    def _extract_fit(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "fit")
 
-    def _extract_pattern(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["pattern"].search(query)
-        return {"pattern": match.group(1).lower()} if match else {}
+    def _extract_pattern(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "pattern")
         
-    def _extract_neckline(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["neckline"].search(query)
-        return {"neckline": match.group(1).lower()} if match else {}
+    def _extract_neckline(self, query: str, patterns: Dict) -> Dict[str, str]:
+        return self._extract_single_attribute(query, patterns, "neckline")
     
-    def _extract_gender(self, query: str) -> Dict[str, str]:
-        match = ATTRIBUTE_PATTERNS["gender"].search(query)
+    def _extract_gender(self, query: str, patterns: Dict) -> Dict[str, str]:
+        pattern = patterns.get("gender")
+        if not pattern: return {}
+
+        match = pattern.search(query)
         if not match:
             return {}
 
-        val = match.group(1).lower()
+        val = (match.group(1) if pattern.groups >= 1 else match.group(0)).lower()
         if val in ["men", "man", "male", "boys", "boyfriend", "husband"]:
             return {"gender": "male"}
         elif val in ["women", "woman", "female", "ladies", "girls", "girlfriend", "wife"]:
@@ -157,6 +199,5 @@ class MetadataExtractor:
             return {"gender": "unisex"}
 
         return {}
-
 
 metadata_extractor = MetadataExtractor()

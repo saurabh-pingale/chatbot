@@ -75,11 +75,6 @@ class EmbeddingsHandler:
         if cached_result:
             return [Vector(**item) for item in cached_result]
         
-        # TODO: If you want to skip the fetching the products if metadata fileters are none
-        # if agent_type == "ProductAgent" and not metadata_filters:
-        #     logger.info("Skipping query: No metadata filters provided for ProductAgent.")
-        #     return []
-        
         normalized_vector = normalize_vector(vector)
         
         try:
