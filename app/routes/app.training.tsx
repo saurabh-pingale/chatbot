@@ -39,6 +39,9 @@ export default function TrainingPage() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [productsFetched, setProductsFetched] = useState(false);
+  const [rawDataTrained, setRawDataTrained] = useState(false);
+
 
   const MAX_CHAR_LIMIT = 1000;
 
@@ -104,13 +107,17 @@ export default function TrainingPage() {
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
 
-        // TODO: Remove data when pricing flow is automated completely
-        // Simply use !setupCompleted
-        if (!data.setupCompleted) {
-          navigate('/app'); // TODO: Update the navigation to /app/billings when pricing flow is automated completely
-        } else {
-          processingRef.current = false;
-          setIsProcessing(false);
+        setRawDataTrained(true);
+
+        processingRef.current = false;
+        setIsProcessing(false);
+
+        if (productsFetched) {
+          setMessages((prev) => [
+            ...prev,
+            { sender: "bot", text: "Setup is complete. Redirecting to main page..." }
+          ]);
+          setTimeout(() => navigate('/app'), 2000);
         }
       },
       onError: () => {
@@ -138,19 +145,24 @@ export default function TrainingPage() {
         text: result.message || "Products fetched successfully!" 
       }]);
 
-      //TODO: Here is the issue is happening not giving confirmation, thats it, I mean give a confirmation popup and move to next screen
-      // TODO: Remove result when pricing flow is automated completely
-      if (!result.setupCompleted) {
-        navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
-      } else {
-        processingRef.current = false;
-        setIsProcessing(false);
+      setProductsFetched(true);
+      
+      processingRef.current = false;
+      setIsProcessing(false);
+
+      if (rawDataTrained) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: "Setup is complete. Redirecting to main page..." }
+        ]);
+        setTimeout(() => navigate('/app'), 2000);
       }
     } catch (error) {
       setMessages((prev) => [...prev, { 
         sender: "bot", 
         text: "Failed to fetch products. Please try again." 
       }]);
+      setProductsFetched(true); 
       processingRef.current = false;
       setIsProcessing(false);
     }
