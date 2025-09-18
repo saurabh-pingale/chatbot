@@ -24,7 +24,7 @@ class MetadataGenerator:
                 "attributes": list(metafields.keys())
             })
 
-        collection_titles = [f"- {c.title or ''}" for c in collections]
+        collection_titles = [c.title for c in collections if c.title]
 
         prompt = f"""
         You are an expert Shopify data analyst. Your task is to generate three JSON objects for filtering products based on samples from an e-commerce store: CATEGORY_ALIASES, CATEGORY_ATTRIBUTES, and ATTRIBUTE_PATTERNS.

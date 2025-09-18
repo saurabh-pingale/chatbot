@@ -1,10 +1,13 @@
 import re
+import json
 from typing import List
 from decimal import Decimal
 
 from app.external_service.shopify_service import ShopifyService
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.services.embeddings_service import EmbeddingService
+from app.external_service.redis_client import get_redis_client
+from app.utils.logger import logger
 
 async def get_products_from_admin(shopify_store: str, shopify_access_token: str):
     shopify_service = ShopifyService(shopify_store, shopify_access_token)
@@ -123,3 +126,16 @@ def normalize_and_clean_metafields(metafields: dict) -> dict:
         cleaned_metafields[simple_key] = processed_value
         
     return cleaned_metafields
+
+async def update_progress(task_id: str, percentage: int, message: str, status: str = "processing"):
+    """Update task progress in Redis"""
+    try:
+        redis_client = await get_redis_client()
+        progress_data = {
+            "percentage": percentage,
+            "message": message,
+            "status": status
+        }
+        await redis_client.set(f"task_progress_{task_id}", json.dumps(progress_data), ex=3600)
+    except Exception as e:
+        logger.error(f"Could not update Redis progress for task {task_id}: {e}")

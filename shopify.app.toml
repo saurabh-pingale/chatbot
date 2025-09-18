@@ -1,32 +1,29 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5c6356e63895028f5c0c531b2f8c9846"
-name = "Reezo AI"
-handle = "reezo-ai-1"
-application_url = "https://walking-why-rb-friendly.trycloudflare.com"
+client_id = "219c1c8dbe42911175fe6cfb1572779f"
+name = "chatbot-v8"
+application_url = "https://promotional-ways-targeted-graphic.trycloudflare.com"
 embedded = true
 
-[build]
-automatically_update_urls_on_dev = true
-
 [webhooks]
-api_version = "2025-07"
+api_version = "2025-10"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_metaobjects,read_products,write_products"
+optional_scopes = [ ]
+use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [
-  "https://walking-why-rb-friendly.trycloudflare.com/auth/callback",
-  "https://walking-why-rb-friendly.trycloudflare.com/auth/shopify/callback",
-  "https://walking-why-rb-friendly.trycloudflare.com/api/auth/callback"
-]
+redirect_urls = ["https://promotional-ways-targeted-graphic.trycloudflare.com/auth/callback", "https://promotional-ways-targeted-graphic.trycloudflare.com/auth/shopify/callback", "https://promotional-ways-targeted-graphic.trycloudflare.com/api/auth/callback"]
 
 [app_proxy]
-url = "https://walking-why-rb-friendly.trycloudflare.com"
+url = "https://promotional-ways-targeted-graphic.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 
 [pos]
 embedded = false
+
+[build]
+automatically_update_urls_on_dev = true

@@ -1,4 +1,5 @@
-const BACKEND_URL = "https://shopify-chatbot-fastapi-578494102556.us-central1.run.app";
+// const BACKEND_URL = "https://shopify-chatbot-fastapi-578494102556.us-central1.run.app";
+const BACKEND_URL = "http://127.0.0.1:8000";
 
 export const API = {
     BACKEND_URL,
@@ -7,6 +8,7 @@ export const API = {
     SAVE_COLOR_PREFERENCE: `${BACKEND_URL}/shop-admin/save-color-preference`,
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,
     CREATE_PRODUCTS : `${BACKEND_URL}/products_router/create`,
+    GET_PRODUCTS_STATUS: `${BACKEND_URL}/products_router/create/status`,
     TEXT_TRAIN : `${BACKEND_URL}/text_training/train`,
     GET_ANALYTICS: `${BACKEND_URL}/analytics_router/analytics`,
     GET_DAILY_ANALYTICS: `${BACKEND_URL}/analytics_router/daily_analytics`,

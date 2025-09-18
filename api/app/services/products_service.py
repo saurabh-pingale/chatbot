@@ -17,7 +17,12 @@ from app.external_service.redis_client import get_redis_client
 # TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
 
-from app.utils.products_utils import get_products_from_admin, create_product_embeddings, normalize_and_clean_metafields
+from app.utils.products_utils import (
+    get_products_from_admin,
+    create_product_embeddings,
+    normalize_and_clean_metafields,
+    update_progress,
+)
 from app.utils.logger import logger
 
 class ProductsService:
@@ -32,10 +37,13 @@ class ProductsService:
         # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
 
-    async def create(self, namespace: str) -> Dict[str, Any]:
+    async def create(self, namespace: str, task_id: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
         try:
+            await update_progress(task_id, 5, "Connecting to your Shopify store...")
+
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
+            await update_progress(task_id, 20, f"Found {len(products)} products to sync.")
 
             for product in products:
                 if hasattr(product , "metafields"):
@@ -52,6 +60,7 @@ class ProductsService:
                 sample_products_by_category, 
                 collections
             )
+            await update_progress(task_id, 35, "Analyzing product categories and metadata.")
 
             shop_pk = await self.analytics_handler.get_shop_pk(namespace)
             if not shop_pk:
@@ -68,9 +77,13 @@ class ProductsService:
 
             unique_products = list({product.id: product for product in products}.values())
             await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
+            await update_progress(task_id, 50, "Saving product information to our database.")
         
             products_embeddings = await create_product_embeddings(products)
+            await update_progress(task_id, 75, "Generating AI-powered embeddings...")
+
             await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
+            await update_progress(task_id, 90, "Storing embeddings in the vector database.")
 
             # TODO: Remove it when pricing flow is automated completely
             shop = await self.shop_admin_handler.get_shop_status(namespace)
@@ -90,15 +103,10 @@ class ProductsService:
                 )
 
                 await self.shop_admin_handler.update_shop_setup_completed_status(shop_pk, status=True)
-            
-            return {
-                "status": "success",
-                "message": "Products fetched and stored successfully",
-                "product_count": len(products),
-                "collection_count": len(collections),
-                "setupCompleted": True # TODO: Remove it when pricing flow is automated completely
-            }
+
+            await update_progress(task_id, 100, "Sync complete!", "completed")
             
         except Exception as error:
-            logger.error(f"Error syncing products to vector DB: {error}")
-            raise HTTPException(status_code=500, detail="Failed to sync products to vector DB")
+            error_message = f"Error syncing products: {error}"
+            logger.error(f"Background task {task_id} failed: {error_message}", exc_info=True)
+            await update_progress(task_id, 100, "An unexpected error occurred.", "failed")
