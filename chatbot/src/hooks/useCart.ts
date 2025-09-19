@@ -5,6 +5,7 @@ import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../cons
 import type { CartItem, ProductType } from '../types';
 import { getStoredUtmParameters } from '../utils/utm';
 import { useDebounce } from './useDebounce';
+import { trackAddedToCart } from '../services/analytics';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -142,6 +143,8 @@ export const useCart = () => {
         product_count: updatedProductCount,
       });
 
+      trackAddedToCart();
+
       return updatedItems;
     });
 
@@ -165,6 +168,11 @@ export const useCart = () => {
 
     const cappedQuantity = Math.min(quantity, 10);
 
+    const currentItem = cartItems.find(item => String(item.id) === productId);
+    const oldQuantity = currentItem ? currentItem.quantity : 0;
+
+    const isIncreasing = cappedQuantity > oldQuantity;
+
     setCartItems(prev => {
       const updatedItems = prev.map(item =>
         String(item.id) === productId
@@ -177,9 +185,13 @@ export const useCart = () => {
         product_count: cappedQuantity,
       });
 
+      if (isIncreasing) {
+        trackAddedToCart();
+      }
+
       return updatedItems;
     });
-   }, [removeFromCart]);
+   }, [cartItems, removeFromCart]);
 
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 

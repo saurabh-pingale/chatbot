@@ -6,6 +6,7 @@ from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse
 from app.models.api.shop_admin import AuthPayloadModel
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.checkout_product_utils import SuccessResponse, ErrorResponse
 from app.utils.logger import logger
 
@@ -42,9 +43,10 @@ async def store_checkout_products(
         user_id = None
         is_guest = True
 
-        shop_pk = await app.analytics_handler.get_shop_pk(shop_id)
-        if not shop_pk:
-            raise HTTPException(status_code=404, detail="Shop not found.")
+        async with AsyncSessionLocal() as session:
+            shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
+            if not shop_pk:
+                raise HTTPException(status_code=404, detail="Shop not found.")
 
         if auth_payload:
             try:
@@ -101,9 +103,10 @@ async def remove_checkout_product(
         user_id = None
         is_guest = True
 
-        shop_pk = await app.analytics_handler.get_shop_pk(shop_id)
-        if not shop_pk:
-            raise HTTPException(status_code=404, detail="Shop not found.")
+        async with AsyncSessionLocal() as session:
+            shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
+            if not shop_pk:
+                raise HTTPException(status_code=404, detail="Shop not found.")
 
         if auth_payload:
             try:

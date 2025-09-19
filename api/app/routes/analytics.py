@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 
 from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse, TrackPurchaseRequest
 from app.models.api.shop_admin import UTMParameters
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.app_utils import get_app
 from app.utils.jwt_utils import get_current_user_payload
 from app.utils.logger import logger
@@ -161,7 +162,9 @@ async def track_added_to_cart(
             shop_domain = body.get("shop_id")
             if not shop_domain:
                 raise HTTPException(status_code=400, detail="Shop ID is required for guests.")
-            shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain)
+            
+            async with AsyncSessionLocal() as session:
+                shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain, session)
         else:
             raise HTTPException(status_code=400, detail="Missing user or guest identifier.")
 
@@ -197,7 +200,9 @@ async def track_purchase(
             shop_domain = body.get("shop_id")
             if not shop_domain:
                 raise HTTPException(status_code=400, detail="Shop ID is required for guests.")
-            shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain)
+            
+            async with AsyncSessionLocal() as session:
+                shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain, session)
         else:
             raise HTTPException(status_code=400, detail="Missing user or guest identifier.")
 

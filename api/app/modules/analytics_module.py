@@ -1,9 +1,12 @@
 from app.utils.analytics_utils import validate_string
+from app.utils.app_utils import get_app
 from app.utils.logger import logger
 
-async def record_chat_analytics(app, user_id, shop_id, guest_id, location_info):
+async def record_chat_analytics(user_id, shop_id, guest_id, location_info):
     """Records chat analytics using analytics_service."""
     try:
+        app = get_app()
+
         validated_location_info = validate_string(location_info)
 
         success = await app.analytics_service.record_chat_interaction(

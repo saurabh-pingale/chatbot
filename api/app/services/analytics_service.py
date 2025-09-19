@@ -60,9 +60,9 @@ class AnalyticsService:
         """Tracks a purchase event coming from a webhook, using email to identify the user."""
         return await self.db_handler.increment_purchased_count_by_email(email, shop_identifier, amount, order_id)
 
-    async def get_shop_pk(self, shop_domain: str) -> Optional[int]:
+    async def get_shop_pk(self, shop_domain: str, session) -> Optional[int]:
         """Convenience method to get shop PK from domain."""
-        return await self.db_handler.get_shop_pk_by_identifier(shop_domain)
+        return await self.db_handler.get_shop_pk(shop_domain, session)
 
     async def fetch_shop_analytics_summary(self, shop_identifier: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
         """

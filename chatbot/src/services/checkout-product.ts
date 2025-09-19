@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '../constants/api';
 import { getAuthToken } from '../utils/auth';
-import { getGuestId } from '../utils/guest';
+import { getOrCreateGuestId } from '../utils/guest';
 import { getShopId } from '../utils/utils';
 
 export const storeCheckoutProduct = async (originalBody: object = {}) => {
@@ -13,13 +13,15 @@ export const storeCheckoutProduct = async (originalBody: object = {}) => {
     const token = getAuthToken() 
     const body = { ...originalBody } 
 
+    let url = `${API_ENDPOINTS.STORE_CHECKOUT_PRODUCT}?shop_id=${shopId}`;
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`
     } else {
-        (body as any).guest_id = getGuestId();
+        const guestId = getOrCreateGuestId();
+        url += `&guest_id=${guestId}`;   
     }
 
-    const url = `${API_ENDPOINTS.STORE_CHECKOUT_PRODUCT}?shop_id=${shopId}`;
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -45,13 +47,16 @@ export const removeCheckoutProduct = async (originalBody: object = {}) => {
     const token = getAuthToken() 
     const body = { ...originalBody } 
 
+    let url = `${API_ENDPOINTS.REMOVE_CHECKOUT_PRODUCT}?shop_id=${shopId}`;
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`
     } else {
-        (body as any).guest_id = getGuestId();
+        const guestId = getOrCreateGuestId();
+        url += `&guest_id=${guestId}`; 
     }
 
-    const response = await fetch(`${API_ENDPOINTS.REMOVE_CHECKOUT_PRODUCT}?shop_id=${shopId}`, {
+    const response = await fetch(url, {
       method: 'DELETE',
       headers,
       body: JSON.stringify(body),

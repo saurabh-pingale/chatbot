@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime, timedelta 
 from typing import Dict, Any
 
+from app.dbhandlers.db import AsyncSessionLocal
 from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
@@ -17,7 +18,12 @@ from app.external_service.redis_client import get_redis_client
 # TODO: Remove it when pricing flow is automated completely
 from app.models.db.subscription import SubscriptionStatus
 
-from app.utils.products_utils import get_products_from_admin, create_product_embeddings, normalize_and_clean_metafields
+from app.utils.products_utils import (
+    get_products_from_admin,
+    create_product_embeddings,
+    normalize_and_clean_metafields,
+)
+from app.utils.progress_tracker import ProgressTracker
 from app.utils.logger import logger
 
 class ProductsService:
@@ -32,10 +38,25 @@ class ProductsService:
         # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
 
-    async def create(self, namespace: str) -> Dict[str, Any]:
+    async def create(self, namespace: str, task_id: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
+
+        steps_config = {
+            "INITIALIZE": 2,
+            "FETCH_PRODUCTS": 8,
+            "PROCESS_METADATA": 10,
+            "SAVE_PRODUCTS_DB": 15,
+            "GENERATE_EMBEDDINGS": 55,
+            "STORE_EMBEDDINGS": 5,
+            "FINALIZE_SETUP": 5,
+        }
+        tracker = ProgressTracker(task_id, steps_config)
+
         try:
+            await tracker.report_progress("INITIALIZE", "Connecting to your Shopify store...")
+
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
+            await tracker.report_progress("FETCH_PRODUCTS", f"Found {len(products)} products to sync.")
 
             for product in products:
                 if hasattr(product , "metafields"):
@@ -52,10 +73,12 @@ class ProductsService:
                 sample_products_by_category, 
                 collections
             )
+            await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
 
-            shop_pk = await self.analytics_handler.get_shop_pk(namespace)
-            if not shop_pk:
-                raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
+            async with AsyncSessionLocal() as session:
+                shop_pk = await self.analytics_handler.get_shop_pk(namespace, session)
+                if not shop_pk:
+                    raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
 
             stored_collections = await self.shop_admin_handler.create_collections(collections)
 
@@ -68,9 +91,12 @@ class ProductsService:
 
             unique_products = list({product.id: product for product in products}.values())
             await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
+            await tracker.report_progress("SAVE_PRODUCTS_DB", "Saving product information to our database.")
         
-            products_embeddings = await create_product_embeddings(products)
+            products_embeddings = await create_product_embeddings(products, tracker)
+           
             await self.embeddings_handler.create_embeddings(products_embeddings, namespace)
+            await tracker.report_progress("STORE_EMBEDDINGS", "Storing embeddings in the vector database.")
 
             # TODO: Remove it when pricing flow is automated completely
             shop = await self.shop_admin_handler.get_shop_status(namespace)
@@ -90,15 +116,11 @@ class ProductsService:
                 )
 
                 await self.shop_admin_handler.update_shop_setup_completed_status(shop_pk, status=True)
-            
-            return {
-                "status": "success",
-                "message": "Products fetched and stored successfully",
-                "product_count": len(products),
-                "collection_count": len(collections),
-                "setupCompleted": True # TODO: Remove it when pricing flow is automated completely
-            }
+
+            await tracker.report_progress("FINALIZE_SETUP", "Finalizing setup...")
+            await tracker.complete("Sync complete!")
             
         except Exception as error:
-            logger.error(f"Error syncing products to vector DB: {error}")
-            raise HTTPException(status_code=500, detail="Failed to sync products to vector DB")
+            error_message = f"Error syncing products: {error}"
+            logger.error(f"Background task {task_id} failed: {error_message}", exc_info=True)
+            await tracker.fail("An unexpected error occurred.")

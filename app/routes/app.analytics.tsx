@@ -120,7 +120,13 @@ export default function AnalyticsPage() {
 
   const renderContent = () => {
     if (isLoading) {
-      return <LegacyCard sectioned><Spinner accessibilityLabel="Loading analytics data" size="large" /></LegacyCard>;
+      return (
+      <LegacyCard sectioned>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '150px' }}>
+          <Spinner accessibilityLabel="Loading analytics data" size="large" />
+        </div>
+      </LegacyCard>
+    );
   }
     if (fetchError) {
     return (

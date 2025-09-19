@@ -8,6 +8,7 @@ from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
 from app.models.api.shop_admin import AuthPayloadModel
 from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
 from app.modules.analytics_module import record_chat_analytics
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.rag_pipeline_utils import build_conversation_log_data
 from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
@@ -37,10 +38,11 @@ async def agent_conversation(
             raise HTTPException(status_code=400, detail="shopId is required.")
         
         app = get_app()
-            
-        shop_id_int= await app.analytics_handler.get_shop_pk(shop_id)
-        if not shop_id_int:
-            raise HTTPException(status_code=404, detail="Shop not found.")
+
+        async with AsyncSessionLocal() as session:    
+            shop_id_int= await app.analytics_handler.get_shop_pk(shop_id, session)
+            if not shop_id_int:
+                raise HTTPException(status_code=404, detail="Shop not found.")
 
         if not auth_payload:
             user_id, is_guest = None, True  # Guest
@@ -87,7 +89,7 @@ async def agent_conversation(
 
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await record_chat_analytics(app, user_id, shop_id_int, guest_id, payload.location_info)
+        await record_chat_analytics(user_id, shop_id_int, guest_id, payload.location_info)
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 

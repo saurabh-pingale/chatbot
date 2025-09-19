@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { Page } from "@shopify/polaris";
+import SetupStepper from "../components/SetupStepper";
+import ProgressLoader from "../components/ProgressLoader";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
-import { FetcherResponse, LoaderData } from "../common/types/index";
 import { textTrain } from "./text_train";
-import SetupStepper from "../components/SetupStepper";
-import { Page, Spinner } from "@shopify/polaris";
 import { getShopStatus } from "./get_shop_status";
+import { API } from "../constants/api.constants";
+import type { FetcherResponse, LoaderData } from "../common/types/index";
 import styles from '../styles/training.module.css';
 
 interface TrainingLoaderData extends LoaderData {
@@ -35,10 +37,16 @@ export default function TrainingPage() {
   const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
   const processingRef = useRef(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [visualProgress, setVisualProgress] = useState<number | null>(null);
+  const [displayedProgress, setDisplayedProgress] = useState<number>(0);
+  const [targetProgress, setTargetProgress] = useState<number>(0);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [isSyncComplete, setIsSyncComplete] = useState(false);
 
   const MAX_CHAR_LIMIT = 1000;
 
@@ -73,6 +81,35 @@ export default function TrainingPage() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (visualProgress === null) return;
+    
+    let animationFrame: number;
+    
+    const step = () => {
+      setDisplayedProgress((prev) => {
+        if (prev < visualProgress) {
+          animationFrame = requestAnimationFrame(step);
+          return prev + 1;
+        } else {
+          return visualProgress;
+        }
+      });
+    };
+  
+    animationFrame = requestAnimationFrame(step);
+  
+    return () => cancelAnimationFrame(animationFrame);
+  }, [visualProgress]);
+
   const handleSend = async () => {
     if (!input.trim() || processingRef.current) return;
 
@@ -97,54 +134,97 @@ export default function TrainingPage() {
     await textTrain({
       input,
       shop,
-      // TODO: Remove data when pricing flow is automated completely -> what did it TODO mean for?
       onSuccess: (data) => {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "Chatbot trained successfully with the above data." },
         ]);
 
-        // TODO: Remove data when pricing flow is automated completely
-        // Simply use !setupCompleted
-        if (!data.setupCompleted) {
-          navigate('/app'); // TODO: Update the navigation to /app/billings when pricing flow is automated completely
-        } else {
-          processingRef.current = false;
-          setIsProcessing(false);
-        }
+        processingRef.current = false;
+        setIsProcessing(false);
       },
       onError: () => {
         setMessages((prev) => [
           ...prev,
-          { sender: "bot", text: "Failed to train, Please try again." },
+          { sender: "bot", text: "Failed to train with text. Please try again." },
         ]);
-        setInput("");
+        setInput(input);
         processingRef.current = false;
         setIsProcessing(false);
       },
     });
   };
 
+  const pollTaskStatus = (taskId: string) => {
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`);
+        if (!response.ok) throw new Error('Polling request failed');
+        const data = await response.json();
+
+        setVisualProgress(data.percentage);
+        setTargetProgress(data.percentage);
+        setProgressMessage(data.message);
+
+        if (data.status === 'completed' || data.status === 'failed') {
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+          }
+
+          if (data.status === 'completed') {
+            setVisualProgress(100);
+            setTargetProgress(100);
+
+            if (!setupCompleted) {
+              setTimeout(() => {
+                setIsSyncComplete(true);
+              }, 600);
+            } else {
+              setTimeout(() => {
+                setMessages((prev) => [...prev, { sender: 'bot', text: 'Products synced successfully!' }]);
+                setVisualProgress(null);
+                setIsSyncComplete(false);
+                processingRef.current = false;
+                setIsProcessing(false);
+              }, 1000);
+            }
+          } else {
+            setMessages((prev) => [...prev, { sender: 'bot', text: `Failed to sync products: ${data.message || 'Please try again.'}` }]);
+            processingRef.current = false;
+            setIsProcessing(false);
+            setVisualProgress(null);
+          }
+        }
+      } catch (error) {
+        console.error("Polling failed:", error);
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        setMessages((prev) => [...prev, { sender: 'bot', text: 'An error occurred while checking sync status. Please try again.' }]);
+        processingRef.current = false;
+        setIsProcessing(false);
+        setVisualProgress(null);
+      }
+    }, 3000);
+  };
+
   const handleFetchProducts = async () => {
     if (processingRef.current) return;
     processingRef.current = true;
     setIsProcessing(true);
+
+    setVisualProgress(0);
+    setDisplayedProgress(0);
+    setTargetProgress(0);
+    setIsSyncComplete(false);
+
+    setProgressMessage("Initiating product sync...");
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
-      const result = await fetchProducts(shop, accessToken)
-      setMessages((prev) => [...prev, { 
-        sender: "bot", 
-        text: result.message || "Products fetched successfully!" 
-      }]);
-
-      //TODO: Here is the issue is happening not giving confirmation, thats it, I mean give a confirmation popup and move to next screen
-      // TODO: Remove result when pricing flow is automated completely
-      if (!result.setupCompleted) {
-        navigate('/app');  // TODO: Update navigation /app/billings when pricing flow is automated completely
+      const { task_id } = await fetchProducts(shop, accessToken)
+      if (task_id) {
+        pollTaskStatus(task_id);
       } else {
-        processingRef.current = false;
-        setIsProcessing(false);
+        throw new Error("Failed to get a task ID for product sync.");
       }
     } catch (error) {
       setMessages((prev) => [...prev, { 
@@ -153,6 +233,7 @@ export default function TrainingPage() {
       }]);
       processingRef.current = false;
       setIsProcessing(false);
+      setVisualProgress(null); 
     }
   };
 
@@ -164,25 +245,18 @@ export default function TrainingPage() {
     }
   }, [fetcher.data, fetcher.state]);
 
+  const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
+
   return (
     <Page>
-      {isProcessing && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-          }}
-        >
-          <Spinner accessibilityLabel="Processing..." />
-        </div>
+      {visualProgress !== null && (
+        <ProgressLoader 
+          progress={displayedProgress}
+          message={progressMessage}
+          isComplete={isSyncComplete}
+          onNavigate={navigate}
+          chatbotDeepLink={themeEditorDeepLink}
+        />
       )}
       <SetupStepper currentStep={1} setupCompleted={setupCompleted} />
       <div className={styles.container}>

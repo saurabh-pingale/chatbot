@@ -16,20 +16,18 @@ class AnalyticsHandler:
     def __init__(self):
         self.user_handler = UserHandler()
 
-    async def get_shop_pk(self, shop_id: str) -> Optional[int]:
+    async def get_shop_pk(self, shop_id: str, session) -> Optional[int]:
         """Fetches the integer primary key of a shop by its public string ID."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
-                    result = await session.execute(stmt)
-                    shop_pk = result.scalar_one_or_none()
-                    if not shop_pk:
-                        return None
-                    return shop_pk
-                except SQLAlchemyError as e:
-                    logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
-                    return None
+        try:
+            stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
+            result = await session.execute(stmt)
+            shop_pk = result.scalar_one_or_none()
+            if not shop_pk:
+                return None
+            return shop_pk
+        except SQLAlchemyError as e:
+            logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
+            return None
 
     async def _get_or_create_analytics_record(
         self,
@@ -140,7 +138,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         return None
                     
@@ -180,6 +178,7 @@ class AnalyticsHandler:
 
                     if analytics_record:
                         analytics_record.chat_interactions_count += 1
+                        session.add(analytics_record)
                         logger.info(f"Incremented chat_interactions_count for {'guest' if guest_id else 'user'}:{guest_id or user_id}, shop_id:{shop_id}")
                     else:
                         logger.error(f"Failed to find/create analytics record for user:{user_id}/guest:{guest_id}, shop:{shop_id}")
@@ -196,7 +195,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk: return False
 
                     user_pk, guest_id_val = (None, identifier) if is_guest else (None, None)
@@ -214,6 +213,7 @@ class AnalyticsHandler:
                     
                     if analytics_record:
                         analytics_record.opened_chatbot_count += 1
+                        session.add(analytics_record)
                         
                     return True
                 except SQLAlchemyError as e:
@@ -229,6 +229,7 @@ class AnalyticsHandler:
                     analytics_record = await self._get_or_create_analytics_record(shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.added_to_cart_count += 1
+                        session.add(analytics_record)
                     return True
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing added_to_cart_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
@@ -243,6 +244,7 @@ class AnalyticsHandler:
                     if analytics_record:
                         analytics_record.purchased_count += 1
                         analytics_record.purchase_amount += amount
+                        session.add(analytics_record)
                     return True
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing purchased_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
@@ -257,7 +259,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk: return False
                     
                     user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
@@ -268,6 +270,7 @@ class AnalyticsHandler:
                     
                     analytics_record.purchased_count += 1
                     analytics_record.purchase_amount = (analytics_record.purchase_amount or 0) + amount
+                    session.add(analytics_record)
                     
                     logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop_pk}. New total purchases: {analytics_record.purchased_count}, New total amount: {analytics_record.purchase_amount}")
                     return True
@@ -281,7 +284,7 @@ class AnalyticsHandler:
         """
         async with AsyncSessionLocal() as session:
             try:
-                shop_pk = await self.get_shop_pk(shop_id)
+                shop_pk = await self.get_shop_pk(shop_id, session)
                 if not shop_pk: return None
 
                 summary_query = select(

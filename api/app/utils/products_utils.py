@@ -1,10 +1,14 @@
 import re
+import json
 from typing import List
 from decimal import Decimal
 
 from app.external_service.shopify_service import ShopifyService
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.services.embeddings_service import EmbeddingService
+from app.external_service.redis_client import get_redis_client
+from app.utils.progress_tracker import ProgressTracker
+from app.utils.logger import logger
 
 async def get_products_from_admin(shopify_store: str, shopify_access_token: str):
     shopify_service = ShopifyService(shopify_store, shopify_access_token)
@@ -44,11 +48,14 @@ def format_collections(shopify_data):
     """Formats raw collection data from Shopify"""
     return shopify_data["collections"]
 
-async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
+async def create_product_embeddings(products: List, tracker: ProgressTracker) -> List[ProductEmbedding]:
     """Generates embeddings for a list of products"""
     embeddings = []
+    total_products = len(products)
+    if total_products == 0:
+        return []
 
-    for product in products:
+    for i, product in enumerate(products):
         normalize_product_fields_to_lowercase(product)
 
         standardized_metafields = normalize_and_clean_metafields(product.metafields)
@@ -76,6 +83,14 @@ async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
             values=embedding_values,
             metadata=metadata
         ))
+
+        await tracker.report_incremental_progress(
+            step_name="GENERATE_EMBEDDINGS",
+            current_item=i + 1,
+            total_items=total_products,
+            message_template="Training your data with AI... ({current}/{total})"
+        )
+
     return embeddings
 
 def normalize_product_fields_to_lowercase(product):
