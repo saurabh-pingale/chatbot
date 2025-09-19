@@ -7,6 +7,7 @@ from app.external_service.shopify_service import ShopifyService
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.services.embeddings_service import EmbeddingService
 from app.external_service.redis_client import get_redis_client
+from app.utils.progress_tracker import ProgressTracker
 from app.utils.logger import logger
 
 async def get_products_from_admin(shopify_store: str, shopify_access_token: str):
@@ -47,11 +48,14 @@ def format_collections(shopify_data):
     """Formats raw collection data from Shopify"""
     return shopify_data["collections"]
 
-async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
+async def create_product_embeddings(products: List, tracker: ProgressTracker) -> List[ProductEmbedding]:
     """Generates embeddings for a list of products"""
     embeddings = []
+    total_products = len(products)
+    if total_products == 0:
+        return []
 
-    for product in products:
+    for i, product in enumerate(products):
         normalize_product_fields_to_lowercase(product)
 
         standardized_metafields = normalize_and_clean_metafields(product.metafields)
@@ -79,6 +83,14 @@ async def create_product_embeddings(products: List) -> List[ProductEmbedding]:
             values=embedding_values,
             metadata=metadata
         ))
+
+        await tracker.report_incremental_progress(
+            step_name="GENERATE_EMBEDDINGS",
+            current_item=i + 1,
+            total_items=total_products,
+            message_template="Generating AI embeddings... ({current}/{total})"
+        )
+
     return embeddings
 
 def normalize_product_fields_to_lowercase(product):
@@ -126,16 +138,3 @@ def normalize_and_clean_metafields(metafields: dict) -> dict:
         cleaned_metafields[simple_key] = processed_value
         
     return cleaned_metafields
-
-async def update_progress(task_id: str, percentage: int, message: str, status: str = "processing"):
-    """Update task progress in Redis"""
-    try:
-        redis_client = await get_redis_client()
-        progress_data = {
-            "percentage": percentage,
-            "message": message,
-            "status": status
-        }
-        await redis_client.set(f"task_progress_{task_id}", json.dumps(progress_data), ex=3600)
-    except Exception as e:
-        logger.error(f"Could not update Redis progress for task {task_id}: {e}")

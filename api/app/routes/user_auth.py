@@ -5,6 +5,7 @@ from typing import Dict
 from datetime import datetime, timedelta, UTC
 
 from app.models.api.user_auth import SendOTPRequest, VerifyOTPRequest
+from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.app_utils import get_app
 from app.utils.email_utils import send_otp_email
 from app.utils.jwt_utils import create_access_token
@@ -16,7 +17,8 @@ user_auth_router = APIRouter(prefix="/user_auth", tags=["user_auth"])
 async def send_otp(payload: SendOTPRequest):
     try:
         app = get_app()
-        shop = await app.analytics_handler.get_shop_pk(payload.shop_id)
+        async with AsyncSessionLocal() as session:
+            shop = await app.analytics_handler.get_shop_pk(payload.shop_id, session)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found")
 
@@ -36,7 +38,8 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
     try:
         app = get_app()
 
-        shop_pk_task = app.analytics_handler.get_shop_pk(payload.shop_id)
+        async with AsyncSessionLocal() as session:
+            shop_pk_task = app.analytics_handler.get_shop_pk(payload.shop_id, session)
         otp_task = app.otp_handler.get_otp_by_email(payload.email)
         shop_id, stored_otp = await asyncio.gather(shop_pk_task, otp_task)
 

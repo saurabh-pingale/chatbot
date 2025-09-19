@@ -83,7 +83,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     switch (intent) {
-      case "saveAllSettings":
+      case "saveAllSettings": {
         const color = formData.get("color") as string;
         const supportEmail = formData.get("supportEmail") as string;
         const supportPhone = formData.get("supportPhone") as string;
@@ -96,12 +96,16 @@ export const action: ActionFunction = async ({ request }) => {
         }
         
         const countryCode = countryCodeValue.split('_')[0];
-        await saveColorPreference(shopId, color);
-        await saveSupportInfo(shopId, supportEmail, supportPhone, countryCode);
         const showEmailGate = emailGatePrefString === "true";
-        await saveEmailGatePreference(shopId, { show_email_gate: showEmailGate });
-        await saveImageURLs(shopId, imageUrl);
+
+        await Promise.all([
+          saveColorPreference(shopId, color),
+          saveSupportInfo(shopId, supportEmail, supportPhone, countryCode),
+          saveEmailGatePreference(shopId, { show_email_gate: showEmailGate }),
+          saveImageURLs(shopId, imageUrl),
+        ])
         return json({ success: true });
+      }
 
       case "saveColor":
         const colorOnly = formData.get("color") as string;
@@ -196,10 +200,7 @@ export default function Settings() {
       setShowSuccessBanner(true);
       if (!setupCompleted) {
         setIsRedirecting(true);
-        const timer = setTimeout(() => {
-          navigate("/app/training");
-        }, 2000);
-        return () => clearTimeout(timer);
+        navigate("/app/training");
       } else {
         const timer = setTimeout(() => setShowSuccessBanner(false), 2000);
         return () => clearTimeout(timer);

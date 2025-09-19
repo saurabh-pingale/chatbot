@@ -12,7 +12,8 @@
 }
 
 .container {
-  width: 400px;
+  width: 450px;
+  max-width: 90%;
   padding: 24px;
   background-color: white;
   border-radius: 8px;
@@ -24,6 +25,56 @@
 }
 
 .progressBarContainer {
-    margin-top: 8px;
-    margin-bottom: 4px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.progressBarContainer :global(.Polaris-ProgressBar__Indicator) {
+  transition: width 0.5s ease-in-out !important;
+}
+
+.progressBarContainer :global(.Polaris-ProgressBar__Bar) {
+  background-image: linear-gradient(45deg, #2c6ecb, #3f8bf9);
+  animation: pulseAnimation 2s infinite;
+}
+
+@keyframes pulseAnimation {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+.completionContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.completionIcon {
+  color: #008060;
+  width: 48px;
+  height: 48px;
+}
+
+.completionImage {
+  border-radius: 4px;
+  border: 1px solid #e1e3e5;
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-top: 8px;
+}
+
+.buttonGroup {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }

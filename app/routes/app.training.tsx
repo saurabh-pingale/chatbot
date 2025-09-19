@@ -42,8 +42,11 @@ export default function TrainingPage() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
+  const [visualProgress, setVisualProgress] = useState<number | null>(null);
+  const [displayedProgress, setDisplayedProgress] = useState<number>(0);
+  const [targetProgress, setTargetProgress] = useState<number>(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [isSyncComplete, setIsSyncComplete] = useState(false);
 
   const MAX_CHAR_LIMIT = 1000;
 
@@ -85,6 +88,27 @@ export default function TrainingPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (visualProgress === null) return;
+    
+    let animationFrame: number;
+    
+    const step = () => {
+      setDisplayedProgress((prev) => {
+        if (prev < visualProgress) {
+          animationFrame = requestAnimationFrame(step);
+          return prev + 1;
+        } else {
+          return visualProgress;
+        }
+      });
+    };
+  
+    animationFrame = requestAnimationFrame(step);
+  
+    return () => cancelAnimationFrame(animationFrame);
+  }, [visualProgress]);
 
   const handleSend = async () => {
     if (!input.trim() || processingRef.current) return;
@@ -138,7 +162,8 @@ export default function TrainingPage() {
         if (!response.ok) throw new Error('Polling request failed');
         const data = await response.json();
 
-        setProgress(data.percentage);
+        setVisualProgress(data.percentage);
+        setTargetProgress(data.percentage);
         setProgressMessage(data.message);
 
         if (data.status === 'completed' || data.status === 'failed') {
@@ -147,23 +172,27 @@ export default function TrainingPage() {
           }
 
           if (data.status === 'completed') {
-            const successMessage = setupCompleted ? 'Products synced successfully!' : 'Setup complete! Redirecting you...';
-            setMessages((prev) => [...prev, { sender: 'bot', text: successMessage }]);
-            
+            setVisualProgress(100);
+            setTargetProgress(100);
+
             if (!setupCompleted) {
-                setTimeout(() => navigate('/app'), 2000);
+              setTimeout(() => {
+                setIsSyncComplete(true);
+              }, 600);
             } else {
-                setTimeout(() => {
-                  processingRef.current = false;
-                  setIsProcessing(false);
-                  setProgress(null);
-                }, 2000);
+              setTimeout(() => {
+                setMessages((prev) => [...prev, { sender: 'bot', text: 'Products synced successfully!' }]);
+                setVisualProgress(null);
+                setIsSyncComplete(false);
+                processingRef.current = false;
+                setIsProcessing(false);
+              }, 1000);
             }
           } else {
             setMessages((prev) => [...prev, { sender: 'bot', text: `Failed to sync products: ${data.message || 'Please try again.'}` }]);
             processingRef.current = false;
             setIsProcessing(false);
-            setProgress(null);
+            setVisualProgress(null);
           }
         }
       } catch (error) {
@@ -172,7 +201,7 @@ export default function TrainingPage() {
         setMessages((prev) => [...prev, { sender: 'bot', text: 'An error occurred while checking sync status. Please try again.' }]);
         processingRef.current = false;
         setIsProcessing(false);
-        setProgress(null);
+        setVisualProgress(null);
       }
     }, 3000);
   };
@@ -181,7 +210,12 @@ export default function TrainingPage() {
     if (processingRef.current) return;
     processingRef.current = true;
     setIsProcessing(true);
-    setProgress(0);
+
+    setVisualProgress(0);
+    setDisplayedProgress(0);
+    setTargetProgress(0);
+    setIsSyncComplete(false);
+
     setProgressMessage("Initiating product sync...");
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
@@ -199,7 +233,7 @@ export default function TrainingPage() {
       }]);
       processingRef.current = false;
       setIsProcessing(false);
-      setProgress(null); 
+      setVisualProgress(null); 
     }
   };
 
@@ -211,10 +245,18 @@ export default function TrainingPage() {
     }
   }, [fetcher.data, fetcher.state]);
 
+  const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
+
   return (
     <Page>
-      {progress !== null && (
-        <ProgressLoader progress={progress} message={progressMessage} />
+      {visualProgress !== null && (
+        <ProgressLoader 
+          progress={displayedProgress}
+          message={progressMessage}
+          isComplete={isSyncComplete}
+          onNavigate={navigate}
+          chatbotDeepLink={themeEditorDeepLink}
+        />
       )}
       <SetupStepper currentStep={1} setupCompleted={setupCompleted} />
       <div className={styles.container}>

@@ -142,7 +142,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return {
@@ -173,7 +173,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk  = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_id_pk  = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -191,7 +191,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -217,7 +217,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
@@ -257,7 +257,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
                         session.add(shop)

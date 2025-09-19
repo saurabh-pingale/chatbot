@@ -19,7 +19,7 @@ class CheckoutProductHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         raise ValueError("Shop not found")
                     
@@ -65,7 +65,7 @@ class CheckoutProductHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id)
+                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         raise ValueError("Shop not found")
                     

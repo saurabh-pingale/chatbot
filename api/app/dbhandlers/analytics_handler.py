@@ -16,20 +16,18 @@ class AnalyticsHandler:
     def __init__(self):
         self.user_handler = UserHandler()
 
-    async def get_shop_pk(self, shop_id: str) -> Optional[int]:
+    async def get_shop_pk(self, shop_id: str, session) -> Optional[int]:
         """Fetches the integer primary key of a shop by its public string ID."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
-                    result = await session.execute(stmt)
-                    shop_pk = result.scalar_one_or_none()
-                    if not shop_pk:
-                        return None
-                    return shop_pk
-                except SQLAlchemyError as e:
-                    logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
-                    return None
+        try:
+            stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
+            result = await session.execute(stmt)
+            shop_pk = result.scalar_one_or_none()
+            if not shop_pk:
+                return None
+            return shop_pk
+        except SQLAlchemyError as e:
+            logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
+            return None
 
     async def _get_or_create_analytics_record(
         self,
@@ -140,7 +138,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         return None
                     
@@ -196,7 +194,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk: return False
 
                     user_pk, guest_id_val = (None, identifier) if is_guest else (None, None)
@@ -257,7 +255,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id)
+                    shop_pk = await self.get_shop_pk(shop_id, session)
                     if not shop_pk: return False
                     
                     user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
@@ -281,7 +279,7 @@ class AnalyticsHandler:
         """
         async with AsyncSessionLocal() as session:
             try:
-                shop_pk = await self.get_shop_pk(shop_id)
+                shop_pk = await self.get_shop_pk(shop_id, session)
                 if not shop_pk: return None
 
                 summary_query = select(
