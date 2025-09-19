@@ -1,9 +1,12 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "219c1c8dbe42911175fe6cfb1572779f"
-name = "chatbot-v8"
-application_url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
+client_id = "241227516eda9ea7090d909f8c6decb1"
+name = "chatbot-final"
+application_url = "https://example.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-10"
@@ -15,19 +18,9 @@ optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [
-    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/auth/callback",
-    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/auth/shopify/callback",
-    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/api/auth/callback"
-]
+redirect_urls = [ "https://example.com/api/auth" ]
 
 [app_proxy]
 url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
-
-[pos]
-embedded = false
-
-[build]
-automatically_update_urls_on_dev = true
