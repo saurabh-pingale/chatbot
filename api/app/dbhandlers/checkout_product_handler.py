@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import select, delete, exists
+from sqlalchemy import select, delete
 from typing import Optional
 
 from app.models.db.shop_admin import ProductModel
@@ -44,11 +44,19 @@ class CheckoutProductHandler:
 
                     if user_id:
                         insert_data["user_id"] = user_id
+                        conflict_target = ['shop_id', 'variant_id', 'user_id']
                     elif guest_id:
                         insert_data["guest_id"] = guest_id
+                        conflict_target = ['shop_id', 'variant_id', 'guest_id']
 
                     stmt = insert(CheckoutProductModel).values(**insert_data)
-                    await session.execute(stmt)
+
+                    update_stmt = stmt.on_conflict_do_update(
+                        index_elements=conflict_target,
+                        set_=dict(product_count=product_count)
+                    )
+                    
+                    await session.execute(update_stmt)
                     await session.commit()
                     return {"success": True}
 

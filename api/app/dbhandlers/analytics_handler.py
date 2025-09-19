@@ -178,6 +178,7 @@ class AnalyticsHandler:
 
                     if analytics_record:
                         analytics_record.chat_interactions_count += 1
+                        session.add(analytics_record)
                         logger.info(f"Incremented chat_interactions_count for {'guest' if guest_id else 'user'}:{guest_id or user_id}, shop_id:{shop_id}")
                     else:
                         logger.error(f"Failed to find/create analytics record for user:{user_id}/guest:{guest_id}, shop:{shop_id}")
@@ -212,6 +213,7 @@ class AnalyticsHandler:
                     
                     if analytics_record:
                         analytics_record.opened_chatbot_count += 1
+                        session.add(analytics_record)
                         
                     return True
                 except SQLAlchemyError as e:
@@ -227,6 +229,7 @@ class AnalyticsHandler:
                     analytics_record = await self._get_or_create_analytics_record(shop_id, user_id, guest_id)
                     if analytics_record:
                         analytics_record.added_to_cart_count += 1
+                        session.add(analytics_record)
                     return True
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing added_to_cart_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
@@ -241,6 +244,7 @@ class AnalyticsHandler:
                     if analytics_record:
                         analytics_record.purchased_count += 1
                         analytics_record.purchase_amount += amount
+                        session.add(analytics_record)
                     return True
                 except SQLAlchemyError as e:
                     logger.error(f"DB error incrementing purchased_count for user {user_id}/guest {guest_id}, shop {shop_id}: {e}", exc_info=True)
@@ -266,6 +270,7 @@ class AnalyticsHandler:
                     
                     analytics_record.purchased_count += 1
                     analytics_record.purchase_amount = (analytics_record.purchase_amount or 0) + amount
+                    session.add(analytics_record)
                     
                     logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop_pk}. New total purchases: {analytics_record.purchased_count}, New total amount: {analytics_record.purchase_amount}")
                     return True

@@ -88,7 +88,7 @@ async def create_product_embeddings(products: List, tracker: ProgressTracker) ->
             step_name="GENERATE_EMBEDDINGS",
             current_item=i + 1,
             total_items=total_products,
-            message_template="Generating AI embeddings... ({current}/{total})"
+            message_template="Training your data with AI... ({current}/{total})"
         )
 
     return embeddings

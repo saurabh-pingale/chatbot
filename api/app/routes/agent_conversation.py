@@ -89,7 +89,7 @@ async def agent_conversation(
 
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await record_chat_analytics(app, user_id, shop_id_int, guest_id, payload.location_info)
+        await record_chat_analytics(user_id, shop_id_int, guest_id, payload.location_info)
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 

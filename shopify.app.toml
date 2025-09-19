@@ -2,7 +2,7 @@
 
 client_id = "219c1c8dbe42911175fe6cfb1572779f"
 name = "chatbot-v8"
-application_url = "https://photographer-casting-homeland-equipped.trycloudflare.com"
+application_url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
 embedded = true
 
 [webhooks]
@@ -16,13 +16,13 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-    "https://photographer-casting-homeland-equipped.trycloudflare.com/auth/callback",
-    "https://photographer-casting-homeland-equipped.trycloudflare.com/auth/shopify/callback",
-    "https://photographer-casting-homeland-equipped.trycloudflare.com/api/auth/callback"
+    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/auth/callback",
+    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/auth/shopify/callback",
+    "https://highest-renewal-alternatives-newfoundland.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://photographer-casting-homeland-equipped.trycloudflare.com"
+url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 
