@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from pydantic import BaseModel
 
 class ShopifyProduct(BaseModel):
@@ -12,6 +12,8 @@ class ShopifyProduct(BaseModel):
     image: str
     variant_id: str 
     metafields: Dict[str, str]
+    tags: List[str] = [] 
+    variant_quantity: int = 0 
 
 class ShopifyCollection(BaseModel):
     id: str

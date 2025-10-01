@@ -9,6 +9,7 @@ export interface ProductType {
   description?: string;
   category?: string;
   variant_id?: string;
+  variant_quantity: number;
 }
 
 export interface Message {
@@ -21,7 +22,7 @@ export interface Message {
 
 export interface CartItem extends ProductType {
   quantity: number;
-  availableQty: number;
+  variant_quantity: number;
 }
 
 export interface ChatbotAppConfig {
@@ -318,4 +319,10 @@ export interface OtpInputProps {
   onVerify: () => void;
   onRequestAgain: () => void;
   isLoading: boolean;
+}
+
+export interface Offer {
+  id: number;
+  tag: string;
+  product: Record<string, any>; 
 }

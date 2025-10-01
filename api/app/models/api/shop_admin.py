@@ -34,6 +34,7 @@ class ProductRequest(BaseModel):
     price: Optional[float] = None
     image: Optional[str] = None
     variant_id: Optional[int] = None 
+    variant_quantity: Optional[int] = None
 
 class StoreProductsRequest(BaseModel):
     products: List[ProductRequest]
@@ -147,3 +148,20 @@ class AuthPayloadModel(BaseModel):
     def validate_shop_access(self, actual_shop_id: int):
         if self.shop_id != actual_shop_id:
             raise HTTPException(status_code=403, detail="User not authorized for this shop.")
+        
+class ProductResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    price: Optional[float] = None
+    image: Optional[str] = None
+    url: Optional[str] = None
+    variant_id: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+        
+class OfferResponse(BaseModel):
+    id: int
+    tag: str
+    product: ProductResponse

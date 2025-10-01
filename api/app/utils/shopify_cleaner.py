@@ -47,6 +47,8 @@ def _clean_product_edge(edge: Dict[str, Any], metaobject_names: Dict[str, str], 
         f"{mf['node']['namespace']}.{mf['node']['key']}": _get_metafield_value(mf['node'], metaobject_names)
         for mf in node.get("metafields", {}).get("edges", []) if mf.get('node')
     }
+
+    product_tags = node.get("tags", [])
     
     cleaned_products = []
     for variant_edge in node.get("variants", {}).get("edges", []):
@@ -81,6 +83,8 @@ def _clean_product_edge(edge: Dict[str, Any], metaobject_names: Dict[str, str], 
             url=node.get("onlineStorePreviewUrl") or f"https://{shopify_store}/products/{node.get('handle')}",
             price=variant.get("price", "0.00"),
             variant_id=variant.get("id"),
+            variant_quantity=variant.get("inventoryQuantity"),
+            tags=product_tags,
             image=image_url,
             metafields=all_metafields
         ))

@@ -13,17 +13,33 @@ def extract_products_from_response(query_results: List[Any]) -> List[Dict[str, A
     products = []
     for result in query_results:
         if result and hasattr(result, 'metadata') and result.metadata:
+            metadata = result.metadata
             product_id = getattr(result, 'id', None)
-            product = {
-                "id": str(product_id) if product_id is not None else None,
-                "name": getattr(result.metadata, 'title', None),
-                "description": getattr(result.metadata, 'description', None),
-                "price": getattr(result.metadata, 'price', None),
-                "url": getattr(result.metadata, 'url', None),
-                "image_url": getattr(result.metadata, 'image', None),
-                "category": getattr(result.metadata, 'category', None),
-                "variant_id": getattr(result.metadata, 'variant_id', None),
-            }
+
+            if isinstance(metadata, dict):
+                product = {
+                    "id": str(product_id) if product_id is not None else None,
+                    "name": metadata.get('title'),
+                    "description": metadata.get('description'),
+                    "price": metadata.get('price'),
+                    "url": metadata.get('url'),
+                    "image_url": metadata.get('image'),
+                    "category": metadata.get('category'),
+                    "variant_id": metadata.get('variant_id'),
+                    "variant_quantity": metadata.get('variant_quantity'),
+                }
+            else:
+                product = {
+                    "id": str(product_id) if product_id is not None else None,
+                    "name": getattr(metadata, 'title', None),
+                    "description": getattr(metadata, 'description', None),
+                    "price": getattr(metadata, 'price', None),
+                    "url": getattr(metadata, 'url', None),
+                    "image_url": getattr(metadata, 'image', None),
+                    "category": getattr(metadata, 'category', None),
+                    "variant_id": getattr(metadata, 'variant_id', None),
+                    "variant_quantity": getattr(metadata, 'variant_quantity', None),
+                }
             products.append(product)
     
     return [product for product in products if product["name"] and product["image_url"]]

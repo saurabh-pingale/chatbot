@@ -35,6 +35,7 @@ class ShopModel(Base):
     integrations = relationship("IntegrationModel", back_populates="shop")
     subscriptions = relationship("SubscriptionModel", back_populates="shop")
     products = relationship("ProductModel", back_populates="shop")
+    offers = relationship("OfferModel", back_populates="shop", cascade="all, delete-orphan")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -78,12 +79,14 @@ class ProductModel(Base):
     price = Column(Float)
     image = Column(String)
     variant_id = Column(BigInteger, unique=True ,nullable=True)
+    variant_quantity = Column(Integer)
     collection_id = Column(Integer, ForeignKey('collections.id'))
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
     
     collection = relationship("CollectionModel", back_populates="products")
     checkout_products = relationship("CheckoutProductModel", back_populates="product", primaryjoin="ProductModel.variant_id==CheckoutProductModel.variant_id")
     shop = relationship("ShopModel", back_populates="products")
+    offers = relationship("OfferModel", back_populates="product", cascade="all, delete-orphan")
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'
@@ -127,3 +130,18 @@ class IntegrationModel(Base):
     shop_id = Column(String, ForeignKey('shops.shop_id'), nullable=False, index=True)
 
     shop = relationship("ShopModel", back_populates="integrations")
+
+class OfferModel(Base):
+    __tablename__ = 'offers'
+    __table_args__ = (
+        UniqueConstraint('tag', 'product_id', name='_tag_product_uc'),
+        {'sqlite_autoincrement': True, 'extend_existing': True}
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tag = Column(String, nullable=False)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
+    product_id = Column(BigInteger, ForeignKey('products.id'), nullable=False)
+
+    shop = relationship("ShopModel", back_populates="offers")
+    product = relationship("ProductModel", back_populates="offers")

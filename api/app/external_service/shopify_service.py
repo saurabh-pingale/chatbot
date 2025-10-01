@@ -54,6 +54,7 @@ class ShopifyService:
                         id
                         title
                         description
+                        tags
                         category {
                             name
                         }
@@ -75,6 +76,7 @@ class ShopifyService:
                                     price
                                     id
                                     title
+                                    inventoryQuantity
                                     metafields(first: 20) {
                                         edges {
                                             node {

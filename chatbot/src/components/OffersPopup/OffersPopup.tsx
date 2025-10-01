@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { useConfig } from '../../context/ConfigContext';
 import { getShopOfferTags } from '../../services/chat';
-import { storefrontAccessToken } from '../../constants/cart';
 import { hexToRgbArray, getContrastingTextColor } from '../../utils/utils';
 import type { OffersPopupProps, StyleWithCustomProps } from '../../types';
 import './OffersPopup.scss';
@@ -15,29 +14,35 @@ export const OffersPopup = memo<OffersPopupProps>(({
   setError
 }) => {
   const [container, setContainer] = useState<Element | null>(null);
-  const [offerTags, setOfferTags] = useState<string[]>([]);
+  const [offerTags, setOfferTags] = useState<string[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const config = useConfig();
   
   useEffect(() => {
     setContainer(document.querySelector('.chatbot-container'));
   }, []);
+  
+  const fetchOffers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const tags = await getShopOfferTags(config.shopId);
+      setOfferTags(tags);
+    } catch (err) {
+      console.error('Failed to fetch offer tags:', err);
+      setError('Could not load offers at this time. Please try again later.');
+      setOfferTags([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [config.shopId, setError]);
 
   useEffect(() => {
-    const fetchOffers = async () => {
-      if (isOpen) {
-        try {
-          const tags = await getShopOfferTags(config.shopId, storefrontAccessToken);
-          setOfferTags(tags);
-        } catch (err) {
-          console.error('Failed to fetch offer tags:', err);
-          setError('Could not load offers at this time. Please try again later.');
-          setOfferTags([]);
-        }
-      }
-    };
-    fetchOffers();
-  }, [isOpen, config.shopId, storefrontAccessToken, setError]);
+    if (isOpen && offerTags === null) {
+      fetchOffers();
+    }
+  }, [isOpen, offerTags, fetchOffers]);
+
 
   const handleOfferClick = useCallback((tag: string) => {
     const offerUrl = `https://${config.shopId}/collections/all?constraint=${encodeURIComponent(tag)}`;
@@ -53,6 +58,8 @@ export const OffersPopup = memo<OffersPopupProps>(({
   if (primaryColorRgb) {
     headerStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
   }
+
+  const shouldShowLoader = isLoading || offerTags === null;
 
   const popupJsx = (
     <AnimatePresence>
@@ -76,8 +83,12 @@ export const OffersPopup = memo<OffersPopupProps>(({
             <div className="offers-popup-header" style={headerStyles}>
               <h3 className="offers-popup-title" style={{ color: headerTextColor }}>Latest Offers</h3>
             </div>
-            <div className="offers-popup-content">
-              {offerTags.length === 0 ? (
+             <div className="offers-popup-content">
+              {shouldShowLoader ? (
+                <div className="offers-popup-loader-container">
+                  <div className="offers-popup-loader"></div>
+                </div>
+              ) : offerTags.length === 0 ? (
                 <p className="offers-popup-no-offers">No special offers available at the moment.</p>
               ) : (
                 <ul className="offers-popup-list">

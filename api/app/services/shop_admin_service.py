@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Dict
 
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.subscription_handler import SubscriptionHandler
@@ -45,3 +45,7 @@ class ShopAdminService:
     async def update_shop_setup_completed_status(self, shop_id: int):
         """Mark the shop's setup as completed."""
         await self.db_handler.update_shop_setup_completed_status(shop_id, True)
+
+    async def get_offers(self, shop_id: int) -> List[Dict]:
+        """Gets all offers for a shop."""
+        return await self.db_handler.get_offers(shop_id)

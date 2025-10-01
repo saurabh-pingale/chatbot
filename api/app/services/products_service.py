@@ -89,6 +89,11 @@ class ProductsService:
                 collection["title"]: collection["id"] for collection in stored_collections
             }
 
+            products_with_tags = [p for p in products if getattr(p, 'tags', [])]
+            if products_with_tags:
+                await self.shop_admin_handler.create_offers(products_with_tags, shop_id=shop_pk)
+                await self.shop_admin_handler.cache_offer_products(namespace, products_with_tags)
+
             unique_products = list({product.id: product for product in products}.values())
             await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
             await tracker.report_progress("SAVE_PRODUCTS_DB", "Saving product information to our database.")
