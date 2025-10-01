@@ -31,6 +31,7 @@ class VectorMetadata(BaseModel):
     image: str
     price: int
     variant_id: str
+    variant_quantity: int
 
 class Vector(BaseModel):
     id: int

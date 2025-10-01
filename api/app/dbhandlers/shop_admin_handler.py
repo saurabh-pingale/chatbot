@@ -1,12 +1,16 @@
+import json
 from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select, join
+from sqlalchemy import select, join, delete
+from sqlalchemy.orm import joinedload
 from sqlalchemy.dialects.postgresql import insert
 
-from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel
+from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel, OfferModel
 from app.models.api.shop_admin import (ProductRequest)
+from app.models.api.shopify import ShopifyProduct
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.external_service.redis_client import get_redis_client
 from app.config import US_COUNTRY_CODE
 from app.utils.products_utils import extract_shopify_id
 from app.utils.logger import logger
@@ -91,6 +95,10 @@ class ShopAdminHandler:
 
     async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
         """Create products in the database and links them to collections using bulk insert."""
+        if not products:
+            logger.info("No products to create. Skipping database insert.")
+            return 
+        
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
@@ -111,6 +119,7 @@ class ShopAdminHandler:
                             'price': float(getattr(product, 'price', 0.0)) if getattr(product, 'price', None) else None,
                             'image': getattr(product, 'image', ''),
                             'variant_id': extract_shopify_id(product_variant_id_gid) if product_variant_id_gid else None,
+                            'variant_quantity': getattr(product, 'variant_quantity', None),
                             'collection_id': col_id if col_id else None,
                             'shop_id': shop_id
                         })
@@ -127,6 +136,7 @@ class ShopAdminHandler:
                             'price': stmt.excluded.price,
                             'image': stmt.excluded.image,
                             'variant_id': stmt.excluded.variant_id,
+                            'variant_quantity': stmt.excluded.variant_quantity,
                             'collection_id': stmt.excluded.collection_id,
                         }
                     )
@@ -298,3 +308,86 @@ class ShopAdminHandler:
                 except SQLAlchemyError as e:
                     logger.error(f"Database error in update_shop_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
                     raise Exception(f"Failed to update setup_completed status for shop {shop_id}")
+                
+    async def create_offers(self, products: List[ShopifyProduct], shop_id: int) -> None:
+        """Extracts unique tags from products and stores them as offers."""
+        offers_to_insert = []
+        for product in products:
+            if getattr(product, 'tags', []):
+                for tag in product.tags:
+                    if tag.strip():
+                        offers_to_insert.append({
+                            'tag': tag.strip(),
+                            'shop_id': shop_id,
+                            'product_id': product.id
+                        })
+
+        if not offers_to_insert:
+            return
+
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                await session.execute(delete(OfferModel).where(OfferModel.shop_id == shop_id))
+                stmt = insert(OfferModel).values(offers_to_insert)
+                stmt = stmt.on_conflict_do_nothing(index_elements=['tag', 'product_id'])
+                await session.execute(stmt)
+
+    async def cache_offer_products(self, namespace: str, products: List[ShopifyProduct]) -> None:
+        """Serializes and caches products that have tags in Redis."""
+        redis_key = f"offers:{namespace}:products"
+        try:
+            redis_client = await get_redis_client()
+            products_data = [product.model_dump() for product in products]
+            # Cache for 24 hours
+            await redis_client.set(redis_key, json.dumps(products_data), ex=86400)
+            logger.info(f"Successfully cached {len(products)} products with offers for '{namespace}'.")
+        except Exception as e:
+            logger.error(f"Failed to cache offer products for '{namespace}': {e}", exc_info=True)
+
+    async def get_offers(self, shop_id: int) -> List[Dict]:
+        """Retrieves all offers (tags) for a shop, using Redis as a cache."""
+        redis_key = f"offers:{shop_id}:tags"
+        try:
+            redis_client = await get_redis_client()
+            cached_offers = await redis_client.get(redis_key)
+            if cached_offers:
+                logger.info(f"Cache hit for offers in namespace '{shop_id}'.")
+                return json.loads(cached_offers)
+        except Exception as e:
+            logger.error(f"Redis error getting offers for '{shop_id}': {e}", exc_info=True)
+
+        logger.info(f"Cache miss for offers in namespace '{shop_id}'. Fetching from DB.")
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+                
+                stmt = (
+                    select(OfferModel)
+                    .options(joinedload(OfferModel.product))
+                    .where(OfferModel.shop_id == shop_id_pk)
+                )
+                result = await session.execute(stmt)
+                offers = result.scalars().unique().all()
+
+                offers_data = [{
+                    "id": offer.id,
+                    "tag": offer.tag,
+                    "product": {
+                        "id": offer.product.id,
+                        "title": offer.product.title,
+                        "description": offer.product.description,
+                        "price": offer.product.price,
+                        "image": offer.product.image,
+                        "url": offer.product.url,
+                        "variant_id": offer.product.variant_id
+                    }
+                } for offer in offers if offer.product]
+
+                try:
+                    redis_client = await get_redis_client()
+                    # Cache the result for 1 hour
+                    await redis_client.set(redis_key, json.dumps(offers_data), ex=3600)
+                except Exception as e:
+                    logger.error(f"Redis error setting offers for '{shop_id}': {e}", exc_info=True)
+
+                return offers_data

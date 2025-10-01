@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
+from typing import List
 import re
 
 from app.utils.app_utils import get_app
@@ -11,7 +12,8 @@ from app.models.api.shop_admin import (
     ShopStatusResponse,
     EmailGatePreferenceRequest,
     IntegrationRequest,
-    IntegrationResponse
+    IntegrationResponse,
+    OfferResponse
 )
 from app.utils.logger import logger
 
@@ -197,3 +199,20 @@ async def create_integration(request: Request, body: IntegrationRequest):
     except Exception as error:
         logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save integration")
+    
+@shop_admin_router.get(
+    "/offers",
+    summary="Get all offers for the shop",
+    response_model=List[OfferResponse],
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def get_offers(shopId: str):
+    try:
+        app = get_app()
+        offers = await app.shop_admin_service.get_offers(shopId)
+        return offers
+    except Exception as error:
+        logger.error(f"Error getting offers for shop {shopId}: {error}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve offers")

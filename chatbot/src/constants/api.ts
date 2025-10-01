@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   TRACK_ADDED_TO_CART: '/apps/chatbot-api-1/track_added_to_cart',
   TRACK_PURCHASE: '/apps/chatbot-api-1/track_purchase',
   SHOP_CONFIG: '/apps/chatbot-api-1/shop-config',
+  GET_OFFERS: '/apps/chatbot-api-1/get-offers',
   IP_INFO: 'https://api.ipify.org?format=json',
   LOCATION_INFO: 'https://ipapi.co'
 };

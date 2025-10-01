@@ -8,7 +8,8 @@ import type {
   LocationInfo,
   InitiateSessionRequest,
   InitiateSessionResponse,
-  AgentConversationRequestPayload
+  AgentConversationRequestPayload,
+  Offer
 } from '../types';
 import { fetchWithTokenRefresh } from '../utils/api';
 
@@ -165,42 +166,33 @@ export const sendAgentMessage = async (
   return response.json();
 };
 
-export const getShopOfferTags = async (
-  shopDomain: string,
-  storefrontAccessToken: string
-): Promise<string[]> => {
-  const query = `
-    query {
-        productTags(first: 100) {
-          edges {
-            node
-        }
-      }
-    }
-  `;
+export const getShopOfferTags = async (shopId: string): Promise<string[]> => {
+  const params = new URLSearchParams({
+    shopId: shopId,
+  });
 
   try {
-    const response = await fetch(`https://${shopDomain}/api/2024-04/graphql.json`, {
-      method: 'POST',
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINTS.GET_OFFERS}?${params.toString()}`, {
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': storefrontAccessToken,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Shopify GraphQL error:', errorText);
+      const errorData = await response.json().catch(() => ({ detail: "Failed to fetch offers" }));
+      console.error('Backend API error:', errorData.detail || 'Unknown error');
       return [];
     }
 
-    const json = await response.json();
-    const edges = json?.data?.productTags?.edges ?? [];
-    const tags = edges.map((edge: { node: string }) => edge.node);
+    const offers: Offer[] = await response.json();
+    
+    const tags = offers.map((offer) => offer.tag);
+
     return Array.from(new Set(tags));
+
   } catch (err) {
-    console.error('Error fetching Shopify product tags:', err);
+    console.error('Error fetching offers from backend:', err);
     return [];
   }
 };

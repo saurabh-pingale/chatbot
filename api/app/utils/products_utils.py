@@ -60,6 +60,8 @@ async def create_product_embeddings(products: List, tracker: ProgressTracker) ->
 
         standardized_metafields = normalize_and_clean_metafields(product.metafields)
 
+        variant_quantity = getattr(product, 'variant_quantity', 0)
+
         metadata = {
             "title": product.title,
             "description": product.description,
@@ -68,12 +70,20 @@ async def create_product_embeddings(products: List, tracker: ProgressTracker) ->
             "url": product.url,
             "image": product.image,
             "variant_id": product.variant_id,
+            "variant_quantity": variant_quantity,
             "type": "product"
         }
         metadata.update(standardized_metafields)
 
         metafields_str = " ".join([f"{key}: {value}" for key, value in product.metafields.items() if value])
-        embedding_text = f"Product: {product.title}. Description: {product.description}. Category: {product.category}. Price: {product.price}. {metafields_str}"
+        embedding_text = (
+            f"Product: {product.title}. "
+            f"Description: {product.description}. "
+            f"Category: {product.category}. "
+            f"Price: {product.price}. "
+            f"Available stock: {variant_quantity}. "
+            f"{metafields_str}"
+        )
         
         embedding_values = EmbeddingService.create_embeddings(embedding_text)
         variant_id = extract_shopify_id(product.variant_id)

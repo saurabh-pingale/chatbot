@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getCart, getVariantQuantity, syncCartItemsToShopifyStoreCart } from '../services/shopify';
+import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
 import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
@@ -67,9 +67,8 @@ export const useCart = () => {
       lastToken = cart.token;
       lastCount = cart.item_count;
 
-      const shopifyItems: CartItem[] = await Promise.all(
-        cart.items.map(async (item) => {
-          const availableQty = await getVariantQuantity(`${SHOPIFY_VARIANT_PREFIX}${item.id}`);
+      const shopifyItems: CartItem[] = cart.items.map((item) => {
+          const existingItem = cartItems.find(localItem => localItem.variant_id === `${SHOPIFY_VARIANT_PREFIX}${item.id}`);
           return {
             id: String(item.id),
             variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
@@ -78,10 +77,9 @@ export const useCart = () => {
             image_url: item.image,
             description: '',
             quantity: item.quantity,
-            availableQty: availableQty ?? 10,
+            variant_quantity: existingItem?.variant_quantity ?? 10,
           };
-        })
-      );
+        });
 
       syncLock.current = true;
       setCartItems(shopifyItems);
@@ -95,15 +93,15 @@ export const useCart = () => {
     return () => clearInterval(intervalId);
   }, [cartItems, debouncedCartItems]);
 
-  const addToCart = useCallback(async (product: ProductType) => {
-    const availableQty= await getVariantQuantity(product.variant_id || "");
+  const addToCart = useCallback((product: ProductType) => {
+    const availableQty= product.variant_quantity;
 
     const existingItem = cartItems.find(item => item.variant_id === product.variant_id);
     const currentQty = existingItem?.quantity ?? 0;
 
-    if (availableQty !== null && currentQty >= availableQty) {
+    if (typeof availableQty === 'number' && currentQty >= availableQty) {
       setCartError("No more product available in the store");
-      return
+      return;
     }
 
     const productPrice = typeof product?.price === 'string' ? parseFloat(product?.price) : product?.price;
@@ -112,7 +110,7 @@ export const useCart = () => {
       ...product,
       price: productPrice,
       quantity: 1,
-      availableQty: availableQty ?? 10
+      variant_quantity: availableQty ?? 10
     };
 
     setCartItems(prevItems => {
@@ -131,7 +129,7 @@ export const useCart = () => {
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity: updatedProductCount,
-          availableQty: availableQty ?? 10,
+          variant_quantity: availableQty ?? 10,
         };
       } else {
         updatedProductCount = 1;
