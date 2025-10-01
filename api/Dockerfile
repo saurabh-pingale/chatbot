@@ -35,11 +35,5 @@ USER app
 # Expose the port the app runs on
 EXPOSE $PORT
 
-# Set HF_HOME so models go into /app/.cache
-ENV HF_HOME=/app/.cache/huggingface
-
-# Pre-download the model into Hugging Face cache during build
-RUN python -c "from FlagEmbedding import FlagModel; FlagModel('BAAI/bge-small-en-v1.5')"
-
 # Command to run the application in production
 CMD ["/bin/sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
