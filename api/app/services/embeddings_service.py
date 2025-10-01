@@ -6,19 +6,31 @@ from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
 
 class EmbeddingService:
-    #TODO: In future, we need change this embedding model to claude or gemini embedding model
-    model = FlagModel(
-        'BAAI/bge-small-en-v1.5',
-        query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
-        use_fp16=False 
-    )
+    """
+    EmbeddingService with lazy model loading.
+    The model will only be loaded the first time it's used,
+    which avoids long startup times on Cloud Run.
+    """
 
-    @staticmethod
-    def create_embeddings(text: str | List[str]) -> List[float] | List[List[float]]:
+    _model = None 
 
-        #TODO: Why do we need to handle this condition of instance str, Mainly we are restricting to List
+    @classmethod
+    def get_model(cls) -> FlagModel:
+        """Lazily load and return the embedding model."""
+        if cls._model is None:
+            cls._model = FlagModel(
+                'BAAI/bge-small-en-v1.5',
+                query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
+                use_fp16=False
+            )
+        return cls._model
+
+    @classmethod
+    def create_embeddings(cls, text: str | List[str]) -> List[float] | List[List[float]]:
+        model = cls.get_model()  # load model only when needed
+
         if isinstance(text, str):
-            embedding = EmbeddingService.model.encode(text)
+            embedding = model.encode(text)
             embedding = np.array(embedding)
 
             norm = np.linalg.norm(embedding)
@@ -28,7 +40,7 @@ class EmbeddingService:
             return pad_vector(embedding.tolist(), 1024)
 
         elif isinstance(text, list):
-            embeddings = EmbeddingService.model.encode(text)
+            embeddings = model.encode(text)
             embeddings = np.array(embeddings)
 
             padded_embeddings = []
@@ -38,7 +50,7 @@ class EmbeddingService:
                     emb = emb / norm
                 padded_embeddings.append(pad_vector(emb.tolist(), 1024))
 
-        return padded_embeddings
+            return padded_embeddings
 
     @staticmethod
     async def get_embeddings(
