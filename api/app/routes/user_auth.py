@@ -46,12 +46,14 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
         if not shop_id:
             raise HTTPException(status_code=404, detail="Shop not found")
 
-        if not stored_otp or stored_otp != payload.otp:
+        if not stored_otp or stored_otp != payload.otp: #TODO: Here trim is required, i mean payload.otp.trim() to remove any extra spaces
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
         user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_id)
         if not user:
             user = await app.user_handler.create_user(payload.email, shop_id, existing_user=user)
+
+        #TODO: For safer side, we need to check if user and user.id and user.shop_id are not None: then only token_data etc
 
         token_data = {"user_id": user.id, "shop_id": user.shop_id}
         access_token = create_access_token(data=token_data)

@@ -6,6 +6,7 @@ import ssl
 from app import config
 from app.utils.logger import logger
 
+#TODO: Add company name as ReezoAI.
 async def send_otp_email(to_email: str, otp: str, shop_domain):
     sender_email = config.SMTP_SENDER_EMAIL
     password = config.SMTP_PASSWORD

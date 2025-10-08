@@ -40,13 +40,14 @@ async def agent_conversation(
         app = get_app()
 
         async with AsyncSessionLocal() as session:    
-            shop_id_int= await app.analytics_handler.get_shop_pk(shop_id, session)
+            shop_id_int= await app.analytics_handler.get_shop_pk(shop_id, session) #TODO: get_shop_pk we need to get either from shop_config or shop_admin service not from analytics_handler
             if not shop_id_int:
                 raise HTTPException(status_code=404, detail="Shop not found.")
 
         if not auth_payload:
             user_id, is_guest = None, True  # Guest
         else:
+            #TODO: Move below code to seperate function, function should do one thing only
             try:
                 validated_payload = AuthPayloadModel(**auth_payload)
                 validated_payload.validate_shop_access(shop_id_int)
@@ -61,7 +62,8 @@ async def agent_conversation(
                     "success": False,
                     "error": str(ve)
                 }
-            
+
+        #TODO: If suppose it went to else condition with is_guest = True and user_id is None, then below condition fails ?
         guest_id = request.query_params.get("guest_id")
         if is_guest and not guest_id:
             logger.warning("Guest user missing guest_id")
