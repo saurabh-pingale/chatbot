@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
-from pydantic import ValidationError
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.models.api.shop_admin import AuthPayloadModel
 from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
 from app.modules.analytics_module import record_chat_analytics
 from app.dbhandlers.db import AsyncSessionLocal
-from app.utils.rag_pipeline_utils import build_conversation_log_data
+from app.utils.rag_pipeline_utils import build_conversation_log_data, validate_and_get_user_info
 from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
 
@@ -40,34 +38,23 @@ async def agent_conversation(
         app = get_app()
 
         async with AsyncSessionLocal() as session:    
-            shop_id_int= await app.analytics_handler.get_shop_pk(shop_id, session) #TODO: get_shop_pk we need to get either from shop_config or shop_admin service not from analytics_handler
+            shop_id_int= await app.shop_config_service.get_shop_pk(shop_id, session)
             if not shop_id_int:
                 raise HTTPException(status_code=404, detail="Shop not found.")
 
         if not auth_payload:
             user_id, is_guest = None, True  # Guest
         else:
-            #TODO: Move below code to seperate function, function should do one thing only
-            try:
-                validated_payload = AuthPayloadModel(**auth_payload)
-                validated_payload.validate_shop_access(shop_id_int)
-                user_id = validated_payload.user_id
-                is_guest = validated_payload.is_guest or False
-            except (ValidationError, ValueError) as ve:
-                logger.warning(f"Auth validation failed: {ve}")
-                return {
-                    "answer": "Authentication failed.",
-                    "products": [],
-                    "categories": [],
-                    "success": False,
-                    "error": str(ve)
-                }
+            user_id, is_guest, error_response = await validate_and_get_user_info(auth_payload, shop_id_int)
+            if error_response:
+                return error_response
 
-        #TODO: If suppose it went to else condition with is_guest = True and user_id is None, then below condition fails ?
         guest_id = request.query_params.get("guest_id")
-        if is_guest and not guest_id:
-            logger.warning("Guest user missing guest_id")
-            raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
+        if is_guest: 
+            if not guest_id:
+                logger.warning("Guest user missing guest_id")
+                raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
+            user_id = None
 
         contents = payload.messages
         if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):

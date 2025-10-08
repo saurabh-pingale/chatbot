@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index, CheckConstraint, JSON
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Index, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 
 from app.models.db.base import Base
@@ -36,6 +38,7 @@ class ShopModel(Base):
     subscriptions = relationship("SubscriptionModel", back_populates="shop")
     products = relationship("ProductModel", back_populates="shop")
     offers = relationship("OfferModel", back_populates="shop", cascade="all, delete-orphan")
+    shop_metadata = relationship("ShopMetadataModel", back_populates="shop", cascade="all, delete-orphan", uselist=False)
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -145,3 +148,15 @@ class OfferModel(Base):
 
     shop = relationship("ShopModel", back_populates="offers")
     product = relationship("ProductModel", back_populates="offers")
+
+class ShopMetadataModel(Base):
+    __tablename__ = "shop_metadata"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False, unique=True)
+    namespace = Column(String(255), nullable=False)
+    config_data = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    shop = relationship("ShopModel", back_populates="shop_metadata")

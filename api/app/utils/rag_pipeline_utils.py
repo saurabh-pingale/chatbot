@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import List, Dict, Any, Optional, Tuple, Set
 
 from app.models.api.rag_pipeline import Vector, VectorMetadata
+from app.models.api.shop_admin import AuthPayloadModel
 from app.utils.lru_cache import AsyncRedisLRUCache
 from app.utils.logger import logger
 
@@ -234,3 +235,28 @@ def build_conversation_log_data(
         data["guest_id"] = guest_id
 
     return data
+
+async def validate_and_get_user_info(auth_payload: Optional[Dict[str, Any]], shop_id_int: int) -> tuple[Optional[int], bool, Optional[Dict[str, Any]]]:
+    """
+    Validates the auth payload and returns user_id and is_guest flag.
+    Returns (user_id, is_guest, error_response)
+    """
+    if not auth_payload:
+        # Guest user
+        return None, True, None
+
+    try:
+        validated_payload = AuthPayloadModel(**auth_payload)
+        validated_payload.validate_shop_access(shop_id_int)
+        user_id = validated_payload.user_id
+        is_guest = validated_payload.is_guest or False
+        return user_id, is_guest, None
+    except (ValidationError, ValueError) as ve:
+        logger.warning(f"Auth validation failed: {ve}")
+        return None, False, {
+            "answer": "Authentication failed.",
+            "products": [],
+            "categories": [],
+            "success": False,
+            "error": str(ve)
+        }

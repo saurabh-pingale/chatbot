@@ -4,8 +4,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, join, delete
 from sqlalchemy.orm import joinedload
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql import func
 
-from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel, OfferModel
+from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, IntegrationModel, OfferModel, ShopMetadataModel
 from app.models.api.shop_admin import (ProductRequest)
 from app.models.api.shopify import ShopifyProduct
 from app.dbhandlers.db import AsyncSessionLocal
@@ -391,3 +392,28 @@ class ShopAdminHandler:
                     logger.error(f"Redis error setting offers for '{shop_id}': {e}", exc_info=True)
 
                 return offers_data
+
+    async def upsert_shop_metadata(self, shop_id: int, namespace: str, metadata: dict):        
+        async with AsyncSessionLocal() as session:
+            try:
+                stmt = insert(ShopMetadataModel).values(
+                    shop_id=shop_id,
+                    namespace=namespace,
+                    config_data=metadata
+                )
+
+                update_stmt = stmt.on_conflict_do_update(
+                    index_elements=['shop_id'],
+                    set_=dict(config_data=metadata, updated_at=func.now())
+                )
+                
+                await session.execute(update_stmt)
+                await session.commit()
+                logger.info(f"Successfully upserted metadata for shop_id: {shop_id}")
+
+            except SQLAlchemyError as e:
+                await session.rollback()
+                logger.error(f"Database error on metadata upsert for shop_id {shop_id}: {e}", exc_info=True)
+            except Exception as e:
+                await session.rollback()
+                logger.error(f"Unexpected error on metadata upsert for shop_id {shop_id}: {e}", exc_info=True)

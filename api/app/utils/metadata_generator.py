@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 from app.external_service.llm_service import LLMService
+from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.utils.metadata_cache import MetadataCache
 from app.utils.logger import logger
 
@@ -11,6 +12,7 @@ class MetadataGenerator:
     def __init__(self):
         self.llm_service = LLMService()
         self.cache_handler = MetadataCache()
+        self.shop_admin_handler = ShopAdminHandler()
 
     def _build_prompt(self, sample_products_by_category: List[Dict], collections: List[Dict]) -> str:
         """Constructs a detailed prompt for the LLM."""
@@ -51,8 +53,8 @@ class MetadataGenerator:
         """
         return prompt
 
-    async def generate_and_store_config(self, namespace: str, sample_products_by_category: List[Dict], collections: List[Dict]):
-        """Generates config via LLM and saves it to Redis."""
+    async def generate_and_store_config(self, shop_id: int, namespace: str, sample_products_by_category: List[Dict], collections: List[Dict]):
+        """Generates config via LLM and saves it to both Redis and the PostgreSQL DB."""
         try:
             if not sample_products_by_category and not collections:
                 logger.warning("No product samples or collections provided to generate metadata config. Skipping.")
@@ -66,6 +68,13 @@ class MetadataGenerator:
                 return
             
             await self.cache_handler.store_config(namespace, generated_config)
+            logger.info(f"Successfully stored metadata in cache for namespace: {namespace}")
+
+            await self.shop_admin_handler.upsert_shop_metadata(
+                shop_id=shop_id,
+                namespace=namespace,
+                metadata=generated_config
+            )
 
         except Exception as e:
             logger.error(f"Failed to generate or store LLM-based metadata config: {e}", exc_info=True)
