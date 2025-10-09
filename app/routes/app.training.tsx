@@ -158,7 +158,9 @@ export default function TrainingPage() {
   const pollTaskStatus = (taskId: string) => {
     pollingIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`);
+        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`, {
+          headers: { "x-shopify-store": shop}
+        });
         if (!response.ok) throw new Error('Polling request failed');
         const data = await response.json();
 

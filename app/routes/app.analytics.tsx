@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {
   Page,
@@ -12,14 +12,13 @@ import {
   DatePicker,
   Popover,
   Button,
-  TextField,
   LegacyStack,
   Spinner,
 } from "@shopify/polaris";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { API } from '../constants/api.constants';
 import { authenticate } from '../shopify.server';
-import { AnalyticsSummaryData, LoaderData } from '../common/types';
+import type { AnalyticsSummaryData, LoaderData } from '../common/types';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -39,6 +38,8 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const today = new Date();
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(today.getDate() - 7);
 
   const [dateRange, setDateRange] = useState({
     start: today,
@@ -93,16 +94,39 @@ export default function AnalyticsPage() {
   }, [shop]);
 
   useEffect(() => {
-    handleFetchAnalytics(dateRange.start, dateRange.end);
+    if (shop) {
+      handleFetchAnalytics(dateRange.start, dateRange.end);
+    }
   }, [shop, dateRange, handleFetchAnalytics]);
   
-  const chartData = data?.daily_opened_chatbot?.map(item => {
-    const localDate = new Date(item.date + 'T00:00:00');
-    return {
-      date: localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      count: item.count,
+  const { chartData, granularity } = useMemo(() => {
+    if (!data?.timeseries?.data) {
+      return { chartData: [], granularity: 'daily' };
+    }
+
+    const formatLabel = (timestamp: number, gran: string) => {
+      const date = new Date(timestamp * 1000); // Convert Unix seconds to JS milliseconds
+      switch (gran) {
+        case 'minutely':
+          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        case 'hourly':
+          return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+        case 'daily':
+        default:
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
     };
-  }) || [];
+
+    const processedData = data.timeseries.data.map(item => ({
+      label: formatLabel(item.timestamp, data.timeseries.granularity),
+      count: item.count,
+    }));
+
+    return {
+      chartData: processedData,
+      granularity: data.timeseries.granularity,
+    };
+  }, [data]);
   
   const formattedStartDate = dateRange.start.toLocaleDateString();
   const formattedEndDate = dateRange.end.toLocaleDateString();
@@ -139,46 +163,49 @@ export default function AnalyticsPage() {
             </Card>
     );
   }
-    if (data) {
+    if (data?.summary && data?.timeseries) {
     return (
         <BlockStack gap="500">
           <Grid>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Users" sectioned>
-                <Text variant="heading2xl" as="p">{data.total_users?.toLocaleString() || '0'}</Text>
+                <Text variant="heading2xl" as="p">{data.summary.total_users?.toLocaleString() || '0'}</Text>
               </LegacyCard>
             </Grid.Cell>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Chat Interactions" sectioned>
-                <Text variant="heading2xl" as="p">{data.total_chat_interactions?.toLocaleString() || '0'}</Text>
+                <Text variant="heading2xl" as="p">{data.summary.total_chat_interactions?.toLocaleString() || '0'}</Text>
               </LegacyCard>
             </Grid.Cell>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Chatbot Opens" sectioned>
-                <Text variant="heading2xl" as="p">{data.total_opened_chatbot?.toLocaleString() || '0'}</Text>
+                <Text variant="heading2xl" as="p">{data.summary.total_opened_chatbot?.toLocaleString() || '0'}</Text>
               </LegacyCard>
             </Grid.Cell>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Products Added to Cart" sectioned>
-                <Text variant="heading2xl" as="p">{data.total_added_to_cart?.toLocaleString() || '0'}</Text>
+                <Text variant="heading2xl" as="p">{data.summary.total_added_to_cart?.toLocaleString() || '0'}</Text>
               </LegacyCard>
             </Grid.Cell>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Purchases" sectioned>
-                <Text variant="heading2xl" as="p">{data.total_purchased?.toLocaleString() || '0'}</Text>
+                <Text variant="heading2xl" as="p">{data.summary.total_purchased?.toLocaleString() || '0'}</Text>
               </LegacyCard>
             </Grid.Cell>
             <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
               <LegacyCard title="Total Purchase Amount" sectioned>
-                <Text variant="heading2xl" as="p">${data.total_purchase_amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</Text>
+                <Text variant="heading2xl" as="p">${data.summary.total_purchase_amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</Text>
               </LegacyCard>
             </Grid.Cell>
           </Grid>
-          <LegacyCard title="Chatbot Engagement" sectioned>
+          <LegacyCard 
+            title={`Chatbot Engagement (${granularity.charAt(0).toUpperCase() + granularity.slice(1)})`} 
+            sectioned
+          >
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
+              <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" minTickGap={20} />
+                <XAxis dataKey="label" minTickGap={20} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />

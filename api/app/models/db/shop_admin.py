@@ -122,6 +122,30 @@ class UserShopAnalyticsModel(Base):
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")
 
+class UserShopMinutelyAnalyticsModel(Base):
+    __tablename__ = 'user_shop_minutely_analytics'
+    __table_args__ = (
+        Index('uq_minutely_user_shop_minute', 'user_id', 'shop_id', 'minute_timestamp', unique=True, postgresql_where=Column('user_id').isnot(None)),
+        Index('uq_minutely_guest_shop_minute', 'guest_id', 'shop_id', 'minute_timestamp', unique=True, postgresql_where=Column('guest_id').isnot(None)),
+        
+        CheckConstraint(
+            '(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)', 
+            name='check_minutely_user_or_guest'
+        ),
+    )
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    guest_id = Column(String(255), nullable=True, index=True)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
+    minute_timestamp = Column(BigInteger, nullable=False, index=True)
+    date = Column(BigInteger, nullable=False, index=True)
+    chat_interactions_count = Column(Integer, default=0, nullable=False)
+    opened_chatbot_count = Column(Integer, default=0, nullable=False)
+    added_to_cart_count = Column(Integer, default=0, nullable=False)
+    purchased_count = Column(Integer, default=0, nullable=False)
+    purchase_amount = Column(Float, default=0.0, nullable=False)
+
 class IntegrationModel(Base):
     __tablename__ = 'integrations'
 

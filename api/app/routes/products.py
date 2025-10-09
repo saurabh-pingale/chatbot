@@ -41,7 +41,7 @@ async def create(
 
         background_tasks.add_task(products_service.create, namespace, task_id)
 
-        return {"task_id": task_id}
+        return {"task_id": task_id, "shop_id": namespace}
         
     except Exception as e:
         logger.error(f"Error in sync-products endpoint: {e}", exc_info=True)
@@ -51,11 +51,17 @@ async def create(
     "/create/status/{task_id}", 
     summary="Get the status of a product sync task"
 )
-async def get_create_status(task_id: str):
+async def get_create_status(task_id: str, request: Request):
     """Poll for the status of the product creation task."""
     try:
+        shop_id = request.headers.get("x-shopify-store")
+        if not shop_id:
+            return {"error": "Missing x-shopify-store header"}
+        
         redis_client = await get_redis_client()
-        progress_data = await redis_client.get(f"task_progress_{task_id}")
+
+        redis_key = f"task_progress_{shop_id}_{task_id}"
+        progress_data = await redis_client.get(redis_key)
         
         if progress_data is None:
             return {

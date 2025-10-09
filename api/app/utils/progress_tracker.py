@@ -5,9 +5,11 @@ from app.utils.logger import logger
 class ProgressTracker:
     """Manages and reports the progress of a background task using a weight-based system."""
 
-    def __init__(self, task_id: str, steps_config: dict):
+    def __init__(self, namespace: str, task_id: str, steps_config: dict):
+        self.namespace = namespace
         self.task_id = task_id
         self.steps_config = steps_config
+        self.redis_key = f"task_progress_{namespace}_{task_id}"
         self.total_weight = sum(steps_config.values())
         self.completed_weight = 0
         self.last_reported_percentage = -1
@@ -28,7 +30,7 @@ class ProgressTracker:
                 "message": message,
                 "status": status,
             }
-            await redis_client.set(f"task_progress_{self.task_id}", json.dumps(progress_data), ex=3600)
+            await redis_client.set(self.redis_key, json.dumps(progress_data), ex=3600)
             self.last_reported_percentage = safe_percentage
         except Exception as e:
             logger.error(f"Could not update Redis progress for task {self.task_id}: {e}")

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from pydantic import BaseModel, Field, EmailStr, model_validator 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 
 class UTMParameters(BaseModel):
     """Defines the structure for UTM parameters."""
@@ -87,15 +87,22 @@ class UserInitiateResponse(BaseModel):
     """Defines the structure for the user initiation response."""
     token: str
 
+class TimeseriesData(BaseModel):
+    granularity: Literal['daily', 'hourly', 'minutely']
+    data: List[Dict[str, Any]] = []
+
+class AnalyticsSummary(BaseModel):
+    total_users: int = 0
+    total_chat_interactions: int = 0
+    total_opened_chatbot: int = 0
+    total_added_to_cart: int = 0
+    total_purchased: int = 0
+    total_purchase_amount: float = 0.0
+
 class ShopAnalyticsSummaryResponse(BaseModel):
     """Defines the structure for the analytics summary response."""
-    total_users: int
-    total_chat_interactions: int
-    total_opened_chatbot: int
-    total_added_to_cart: int
-    total_purchased: int
-    total_purchase_amount: float
-    daily_opened_chatbot: List[Dict[str, Any]] = []
+    summary: AnalyticsSummary
+    timeseries: TimeseriesData
     error: Optional[str] = None
 
 class TrackPurchaseRequest(BaseModel):

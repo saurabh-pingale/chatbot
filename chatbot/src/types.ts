@@ -18,6 +18,7 @@ export interface Message {
   type: 'user' | 'bot';
   timestamp: Date;
   products?: ProductType[];
+  tags?: TagItem[];
 }
 
 export interface CartItem extends ProductType {
@@ -70,7 +71,7 @@ export interface ChatResponse {
   success?: boolean;
   error?: string | null;
   limit_reached?: boolean;
-  tags?: string[]; 
+  tags?: TagItem[];
 }
 
 export interface LocationInfo {

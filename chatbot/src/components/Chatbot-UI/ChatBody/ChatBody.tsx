@@ -3,20 +3,18 @@ import { useChat } from '../../../hooks/useChat';
 import { useCart } from '../../../context/CartContext';
 import { sendAgentMessage } from '../../../services/chat';
 import { getConversationKey } from '../../../services/user';
-import { TAG_DICTIONARY, STATIC_BOT_GREETING, DEFAULT_TAGS } from '../../../constants/botMessages.constants';
+import { STATIC_BOT_GREETING, DEFAULT_TAGS } from '../../../constants/botMessages.constants';
 import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
 import { Cart } from '../../Cart-UI/Cart/Cart';
 import { useConfig } from '../../../context/ConfigContext';
-import type { ChatBodyHandle, ChatBodyProps, Message, ProductType, TagItem } from '../../../types';
+import type { ChatBodyHandle, ChatBodyProps, Message, ProductType } from '../../../types';
 
 const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
   ({ jwtToken, capturedLocationInfo, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {  
     const config = useConfig();
     const [conversationKey, setConversationKey] = useState<string | null>(null);
     const [chatLimitReached, setChatLimitReached] = useState(false);
-    const [tags, setTags] = useState<TagItem[]>([]);
-    const [showInitialTags, setShowInitialTags] = useState(false);
     const isInitialMount = useRef(true);
     
     useEffect(() => {
@@ -32,9 +30,7 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
 
     useEffect(() => {
       if (isInitialMount.current && !isLoading && !isEmailGateVisible && messages.length === 0) {
-        addMessage(STATIC_BOT_GREETING, 'bot');
-        setTags(DEFAULT_TAGS);
-        setShowInitialTags(true);
+        addMessage(STATIC_BOT_GREETING, 'bot', undefined, DEFAULT_TAGS);
         isInitialMount.current = false;
       }
     }, [isLoading, isEmailGateVisible, messages.length, addMessage]);
@@ -48,19 +44,6 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
     useImperativeHandle(ref, () => ({
       clearConversation: resetChat,
     }));
-
-    const formatBotTags = (tagsFromResponse: any[]) => {
-      if (!tagsFromResponse || !Array.isArray(tagsFromResponse)) {
-        setShowInitialTags(false);
-        return;
-      }
-      const mappedTags: TagItem[] = tagsFromResponse.map((tag: any) => ({
-        name: typeof tag === 'string' ? tag : tag.name,
-        description: typeof tag === 'string' ? TAG_DICTIONARY[tag] || tag : tag.description,
-      }));
-      setTags(mappedTags);
-      setShowInitialTags(mappedTags.length > 0);
-    };
 
     const handleSendMessage = async (content: string) => {
       addMessage(content, 'user');
@@ -78,7 +61,6 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
         const response = await sendAgentMessage(config.shopId, payloadBase);
 
         if (response.limit_reached) setChatLimitReached(true);
-        setTimeout(() => formatBotTags(response.tags ?? []), 200);
         handleBotResponse(response);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred.';
@@ -98,13 +80,16 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
       }
     };
 
+    const lastMessage = messages[messages.length - 1];
+    const tagsToShow = lastMessage?.type === 'bot' ? lastMessage.tags || [] : [];
+
     return (
       <>
         <MessageList
           messages={messages}
           isTyping={isTyping}
           onProductAddToCart={handleProductAddToCart}
-          tags={showInitialTags ? tags : []}
+          tags={tagsToShow}
           handleSendMessage={handleSendMessage}
         />
 

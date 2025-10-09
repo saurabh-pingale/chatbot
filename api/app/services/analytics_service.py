@@ -73,9 +73,5 @@ class AnalyticsService:
         end_date_only = end_date.date() if end_date else None
 
         summary_data = await self.db_handler.get_shop_analytics_summary(shop_identifier, start_date_only, end_date_only)
-
-        if summary_data and "error" in summary_data:
-            logger.warning(f"Error fetching analytics summary for shop {shop_identifier}: {summary_data['error']}")
-            return summary_data
             
         return summary_data

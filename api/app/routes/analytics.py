@@ -67,24 +67,23 @@ async def get_shop_analytics_summary_route(
     
     try:
         app = get_app()
-        summary_data = await app.analytics_service.fetch_shop_analytics_summary(shopId, startDate, endDate)
+        analytics_data = await app.analytics_service.fetch_shop_analytics_summary(shopId, startDate, endDate)
 
-        if summary_data is None:
+        if not analytics_data:
             logger.warning(f"No analytics summary returned for shopId {shopId}, likely shop not found.")
-            raise HTTPException(status_code=404, detail=f"Shop with identifier {shopId} not found or no data available.")
+            raise HTTPException(status_code=404, detail=f"Shop with identifier {shopId} not found.")
         
-        if summary_data.get("error"):
-            logger.error(f"Error reported from service for shop analytics summary {shopId}: {summary_data.get('error')}")
-            raise HTTPException(status_code=500, detail="Failed to retrieve analytics summary due to an internal error.")
+        if analytics_data.get("error"):
+            logger.error(f"Error reported from service for shop analytics summary {shopId}: {analytics_data.get('error')}")
+            return ShopAnalyticsSummaryResponse(
+                summary={}, 
+                timeseries={"granularity": "daily", "data": []}, 
+                error=analytics_data["error"]
+            )
 
         return ShopAnalyticsSummaryResponse(
-            total_users=summary_data.get("total_users", 0),
-            total_chat_interactions=summary_data.get("total_chat_interactions", 0),
-            total_opened_chatbot=summary_data.get("total_opened_chatbot", 0),
-            total_added_to_cart=summary_data.get("total_added_to_cart", 0),
-            total_purchased=summary_data.get("total_purchased", 0),
-            total_purchase_amount=summary_data.get("total_purchase_amount", 0.0),
-            daily_opened_chatbot=summary_data.get("daily_opened_chatbot", [])
+            summary=analytics_data.get("summary", {}),
+            timeseries=analytics_data.get("timeseries", {"granularity": "daily", "data": []})
         )
 
     except HTTPException as http_exc:
