@@ -19,7 +19,6 @@ class ConversationHandler:
                         return None
                     
                     user_pk = conversation_data.get("user_id")
-                    guest_id = conversation_data.get("guest_id")
 
                     if user_pk:
                         user_stmt = select(UserModel).where(UserModel.id == user_pk)
@@ -33,14 +32,12 @@ class ConversationHandler:
                         user_query=conversation_data["user_query"],
                         agent_response=conversation_data["agent_response"],
                         user_id=user_pk,
-                        guest_id=guest_id,
                         shop_id=shop_pk
                     )
                     session.add(conversation)
                     await session.flush()
                     
-                    log_identifier = f"guest_id {guest_id}" if guest_id else f"user_pk {user_pk}"
-                    logger.info(f"Successfully stored conversation with id {conversation.id} for {log_identifier}, shop_pk {shop_pk}")
+                    logger.info(f"Successfully stored conversation with id {conversation.id}, shop_pk {shop_pk}")
                     
                     return conversation.id
                 except SQLAlchemyError as error:

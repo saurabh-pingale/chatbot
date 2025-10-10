@@ -3,6 +3,7 @@ import { getAuthToken } from '../utils/auth';
 import { getOrCreateGuestId } from '../utils/guest';
 import { getShopId } from '../utils/utils';
 import { fetchWithTokenRefresh } from '../utils/api';
+import type { LocationInfo } from '../types';
 
 const makeRequest = async (endpoint: string, originalBody: object = {}) => {
   const headers: HeadersInit = {
@@ -34,13 +35,18 @@ const makeRequest = async (endpoint: string, originalBody: object = {}) => {
   }
 };
 
-export const trackOpenedChatbot = (userId: string | null, shopId: string, utmParams: any) => {
+export const trackOpenedChatbot = (
+  userId: string | null,
+  shopId: string,
+  utmParams: any,
+  locationInfo: LocationInfo | null
+) => {
   const payload = {
     user_id: userId,
     guest_id: userId ? null : getOrCreateGuestId(),
     shop_id: shopId,
     utm_params: utmParams,
-    is_guest: !userId,
+    location_info: locationInfo,
   };
   
   makeRequest(API_ENDPOINTS.TRACK_OPENED_CHATBOT, payload);
