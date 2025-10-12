@@ -18,6 +18,7 @@ export interface Message {
   type: 'user' | 'bot';
   timestamp: Date;
   products?: ProductType[];
+  tags?: TagItem[];
 }
 
 export interface CartItem extends ProductType {
@@ -70,7 +71,7 @@ export interface ChatResponse {
   success?: boolean;
   error?: string | null;
   limit_reached?: boolean;
-  tags?: string[]; 
+  tags?: TagItem[];
 }
 
 export interface LocationInfo {
@@ -160,7 +161,7 @@ export interface ChatInputProps {
 }
 
 export interface EmailGateProps {
-  onSuccess: (token: string, locationInfo: LocationInfo | null) => void;
+  onSuccess: (token: string) => void;
 }
 
 export interface ErrorPopupProps {
@@ -214,7 +215,6 @@ export interface InitiateSessionResponse {
 export interface AgentConversationRequestPayload {
   messages: Message[];
   token?: string;
-  location_info?: LocationInfo; 
 }
 
 export interface OffersPopupProps {
@@ -225,7 +225,6 @@ export interface OffersPopupProps {
 
 export interface ChatBodyProps {
   jwtToken: string | null;
-  capturedLocationInfo: LocationInfo | null;
   setError: (error: string | null) => void;
   isEmailGateVisible: boolean;
   onMessagesCountChange: (count: number) => void;

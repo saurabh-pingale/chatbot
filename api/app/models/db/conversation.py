@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, String
+from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 from app.models.db.base import Base
 
@@ -11,8 +12,7 @@ class ConversationModel(Base):
     user_query = Column(Text, nullable=False)
     agent_response = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    guest_id = Column(String, nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
 
     user = relationship("UserModel", back_populates="conversations")

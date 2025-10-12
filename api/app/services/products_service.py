@@ -50,7 +50,7 @@ class ProductsService:
             "STORE_EMBEDDINGS": 5,
             "FINALIZE_SETUP": 5,
         }
-        tracker = ProgressTracker(task_id, steps_config)
+        tracker = ProgressTracker(namespace, task_id, steps_config)
 
         try:
             await tracker.report_progress("INITIALIZE", "Connecting to your Shopify store...")

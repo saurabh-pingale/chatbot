@@ -1,14 +1,11 @@
 import re
-import json
 from typing import List
 from decimal import Decimal
 
 from app.external_service.shopify_service import ShopifyService
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.services.embeddings_service import EmbeddingService
-from app.external_service.redis_client import get_redis_client
 from app.utils.progress_tracker import ProgressTracker
-from app.utils.logger import logger
 
 async def get_products_from_admin(shopify_store: str, shopify_access_token: str):
     shopify_service = ShopifyService(shopify_store, shopify_access_token)
