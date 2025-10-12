@@ -2,14 +2,14 @@ import { memo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import { useConfig } from '../../context/ConfigContext';
-import { initiateUserSession, getLocationInfo, getIpAddress } from '../../services/chat';
+import { initiateUserSession } from '../../services/chat';
 import { EmailInput } from '../../components/Chatbot-UI/EmailInput/EmailInput';
 import { OtpInput } from '../../components/Chatbot-UI/OtpInput/OtpInput';
 import { validateEmail } from '../../utils/utils';
 import { getStoredUtmParameters } from '../../utils/utm';
 import { setAuthToken } from '../../utils/auth';
 import { sendOTP, verifyOTP } from '../../services/auth';
-import type { StyleWithCustomProps, LocationInfo, EmailGateProps } from '../../types';
+import type { StyleWithCustomProps, EmailGateProps } from '../../types';
 import './EmailGate.scss';
 
 export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
@@ -48,17 +48,6 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
     }
   };
 
-  const captureLocation = async (): Promise<LocationInfo | null> => {
-    try {
-      const ip = await getIpAddress();
-      const ipLocation = await getLocationInfo(ip);
-      return { ip, country: ipLocation?.country, city: ipLocation?.city, region: ipLocation?.region };
-    } catch (locError) {
-      console.error('Error capturing location:', locError);
-      return { ip: 'unknown', country: null, city: null, region: null };
-    }
-  };
-
   const handleVerifyAndInitSession = async () => {
     if (otp.length !== 4) {
       setError('Please enter the 4-digit OTP');
@@ -72,15 +61,12 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
       await verifyOTP(email, otp, config.shopId);
     
       const utmParams = getStoredUtmParameters();
-      const sessionPromise = initiateUserSession({ email, shopId: config.shopId, utm_params: utmParams });
-      const locationPromise = captureLocation();
-    
-      const [response, locationInfo] = await Promise.all([sessionPromise, locationPromise]);
+      const response = await initiateUserSession({ email, shopId: config.shopId, utm_params: utmParams });
     
       if (!response.token) throw new Error("Failed to retrieve authentication token.");
       setAuthToken(response.token);
     
-      onSuccess(response.token, locationInfo);
+      onSuccess(response.token);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(`Verification failed: ${errorMessage}. Please try again.`);

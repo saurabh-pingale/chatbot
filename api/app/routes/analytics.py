@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Body, Request
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse, TrackPurchaseRequest
+from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse
 from app.models.api.shop_admin import UTMParameters
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.app_utils import get_app
@@ -107,8 +107,8 @@ async def track_opened_chatbot(
         user_id = payload.get("user_id")
         guest_id = payload.get("guest_id")
         shop_id = payload.get("shop_id")
-        is_guest = payload.get("is_guest", False)
         utm_data = payload.get("utm_params")
+        location_info = payload.get("location_info")
         
         utm_params = UTMParameters(**utm_data) if utm_data else None
 
@@ -116,19 +116,19 @@ async def track_opened_chatbot(
             logger.error(f"Track chatbot open request failed: Missing shop_id in payload. Payload: {payload}")
             raise HTTPException(status_code=400, detail="Malformed request payload.")
 
-        if is_guest and not guest_id:
-            logger.error(f"Track chatbot open request failed: Missing guest_id for guest user. Payload: {payload}")
-            raise HTTPException(status_code=400, detail="Malformed request payload.")
+        async with AsyncSessionLocal() as session:
+            shop_id_pk = await app.analytics_service.get_shop_pk(shop_id, session)
 
-        if not is_guest and not user_id:
-            logger.error(f"Track chatbot open request failed: Missing user_id for authenticated user. Payload: {payload}")
-            raise HTTPException(status_code=400, detail="Malformed request payload.")
+            if guest_id:
+                guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_id_pk)
+                user_id = guest_user.id
 
-        identifier = guest_id if is_guest else user_id
-        logger.info(f"Tracking chatbot open for {'guest_id' if is_guest else 'user_id'}: {identifier}, shop_id: {shop_id}")
-        success = await app.analytics_service.track_opened_chatbot(identifier, shop_id, utm_params, is_guest)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Missing user identifier.")
+
+        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id_pk, utm_params, location_info)
         if not success:
-            logger.error(f"Analytics service failed to track chatbot open for {'guest_id' if is_guest else 'user_id'}: {identifier}, shop_id: {shop_id}")
+            logger.error(f"Analytics service failed to track chatbot open for {user_id}, shop_id: {shop_id}")
             raise HTTPException(status_code=500, detail="Failed to track event due to service error.")
 
     except HTTPException as http_exc:
@@ -164,13 +164,16 @@ async def track_added_to_cart(
             
             async with AsyncSessionLocal() as session:
                 shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain, session)
+
+                guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_id_pk)
+                user_id = guest_user.id
         else:
             raise HTTPException(status_code=400, detail="Missing user or guest identifier.")
 
         if not shop_id_pk:
             raise HTTPException(status_code=404, detail="Shop not found.")
 
-        await app.analytics_service.track_added_to_cart(user_id=user_id, shop_id=shop_id_pk, guest_id=guest_id)
+        await app.analytics_service.track_added_to_cart(user_id=user_id, shop_id=shop_id_pk)
     except Exception as e:
         logger.error(f"Error tracking added to cart: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to track event.")
@@ -202,13 +205,16 @@ async def track_purchase(
             
             async with AsyncSessionLocal() as session:
                 shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain, session)
+
+                guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_id_pk)
+                user_id = guest_user.id
         else:
             raise HTTPException(status_code=400, detail="Missing user or guest identifier.")
 
         if not shop_id_pk or amount is None:
             raise HTTPException(status_code=400, detail="Shop ID and amount are required.")
 
-        await app.analytics_service.track_purchase(user_id=user_id, shop_id=shop_id_pk, guest_id=guest_id, amount=amount)
+        await app.analytics_service.track_purchase(user_id=user_id, shop_id=shop_id_pk, amount=amount)
     except Exception as e:
         logger.error(f"Error tracking purchase: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to track event.")

@@ -8,10 +8,10 @@ import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
 import { Cart } from '../../Cart-UI/Cart/Cart';
 import { useConfig } from '../../../context/ConfigContext';
-import type { ChatBodyHandle, ChatBodyProps, Message, ProductType } from '../../../types';
+import type { AgentConversationRequestPayload, ChatBodyHandle, ChatBodyProps, Message, ProductType } from '../../../types';
 
 const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
-  ({ jwtToken, capturedLocationInfo, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {  
+  ({ jwtToken, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {  
     const config = useConfig();
     const [conversationKey, setConversationKey] = useState<string | null>(null);
     const [chatLimitReached, setChatLimitReached] = useState(false);
@@ -51,9 +51,8 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
 
       handleTyping(true);
       try {
-        const payloadBase: any = {
+        const payloadBase: AgentConversationRequestPayload = {
           messages: currentMessages,
-          location_info: capturedLocationInfo ?? undefined,
         };
         if (jwtToken) {
           payloadBase.token = jwtToken;

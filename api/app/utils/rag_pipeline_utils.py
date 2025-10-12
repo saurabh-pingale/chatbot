@@ -3,6 +3,7 @@ from qdrant_client.http.models import SearchRequest, SearchParams
 from pydantic import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
 from typing import List, Dict, Any, Optional, Tuple, Set
+import uuid
 
 from app.models.api.rag_pipeline import Vector, VectorMetadata
 from app.models.api.shop_admin import AuthPayloadModel
@@ -218,23 +219,16 @@ def deduplicate_results_by_variant(results: List[Any]) -> List[Any]:
 def build_conversation_log_data(
     user_message: str,
     agent_response: Dict[str, Any],
-    user_id: Optional[int],
+    user_id: uuid.UUID,
     shop_id: int,
-    is_guest: bool = False,
-    guest_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """Builds a dictionary for logging conversation data"""
-    data = {
+    return {
         "user_query": user_message,
         "agent_response": agent_response.get("answer"),
         "user_id": user_id,
         "shop_id": shop_id,
     }
-
-    if is_guest:
-        data["guest_id"] = guest_id
-
-    return data
 
 async def validate_and_get_user_info(auth_payload: Optional[Dict[str, Any]], shop_id_int: int) -> tuple[Optional[int], bool, Optional[Dict[str, Any]]]:
     """

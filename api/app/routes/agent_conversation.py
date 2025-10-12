@@ -5,7 +5,6 @@ from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
 from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
-from app.modules.analytics_module import record_chat_analytics
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.rag_pipeline_utils import build_conversation_log_data, validate_and_get_user_info
 from app.utils.rate_limiter import limiter
@@ -43,18 +42,17 @@ async def agent_conversation(
                 raise HTTPException(status_code=404, detail="Shop not found.")
 
         if not auth_payload:
-            user_id, is_guest = None, True  # Guest
-        else:
-            user_id, is_guest, error_response = await validate_and_get_user_info(auth_payload, shop_id_int)
-            if error_response:
-                return error_response
-
-        guest_id = request.query_params.get("guest_id")
-        if is_guest: 
-            if not guest_id:
+            guest_user_id = request.query_params.get("guest_id")
+            if not guest_user_id:
                 logger.warning("Guest user missing guest_id")
                 raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
-            user_id = None
+
+            user_record, _ = await app.user_handler.create_guest_if_not_exists(guest_user_id, shop_id_int)
+            user_id = user_record.id
+        else:
+            user_id, _, error_response = await validate_and_get_user_info(auth_payload, shop_id_int)
+            if error_response:
+                return error_response
 
         contents = payload.messages
         if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):
@@ -78,11 +76,11 @@ async def agent_conversation(
 
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await record_chat_analytics(user_id, shop_id_int, guest_id, payload.location_info)
+        await app.analytics_service.record_chat_interaction(user_id=user_id, shop_id=shop_id_int)
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 
-        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_id_int, is_guest, guest_id )
+        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_id_int )
 
         conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
         

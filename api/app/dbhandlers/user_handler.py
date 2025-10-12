@@ -58,3 +58,43 @@ class UserHandler:
                 except Exception as e:
                     logger.error(f"Error in get_or_create_user: {e}", exc_info=True)
                     raise
+
+    async def get_user_by_id_and_shop(self, user_id: int, shop_id: int) -> Optional[UserModel]:
+        """Fetch a user by id and shop_id."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    result = await session.execute(
+                        select(UserModel).where(UserModel.id == user_id, UserModel.shop_id == shop_id)
+                    )
+                    return result.scalars().first()
+                except Exception as e:
+                    logger.error(f"Error fetching user by id/shop_id: {e}", exc_info=True)
+                    raise
+
+    async def create_guest_if_not_exists(self, guest_id: str, shop_id: int) -> Tuple[UserModel, bool]:
+        """Create a guest user if not exists using the guest_id from frontend."""
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    result = await session.execute(
+                        select(UserModel).where(UserModel.id == guest_id, UserModel.shop_id == shop_id)
+                    )
+                    existing_user = result.scalars().first()
+
+                    if existing_user:
+                        logger.info(f"Guest already exists with id {guest_id} for shop {shop_id}")
+                        return existing_user, False
+
+                    guest_user = UserModel(
+                        id=guest_id,
+                        shop_id=shop_id,
+                    )
+                    session.add(guest_user)
+                    await session.flush()
+                    logger.info(f"Created new guest user {guest_id} for shop {shop_id}")
+                    return guest_user, True
+
+                except Exception as e:
+                    logger.error(f"Error in create_guest_if_not_exists: {e}", exc_info=True)
+                    raise
