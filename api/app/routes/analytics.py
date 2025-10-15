@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 from app.models.api.shop_admin import ErrorResponse, UserInitiateResponse, UserInitiateRequest, ShopAnalyticsSummaryResponse
-from app.models.api.shop_admin import UTMParameters
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.app_utils import get_app
 from app.utils.jwt_utils import get_current_user_payload
@@ -29,7 +28,6 @@ async def initiate_user_session(payload: UserInitiateRequest):
         access_token = await app.analytics_service.process_user_initiation(
             email=payload.email,
             shop_identifier=payload.shopId,
-            utm_params=payload.utm_params
         )
 
         if not access_token:
@@ -98,7 +96,7 @@ async def get_shop_analytics_summary_route(
     status_code=204,
 )
 async def track_opened_chatbot(
-    payload: Dict[str, Any] = Body(..., example={"user_id": "some_user_id", "shop_id": "some_shop_id", "utm_params": {}})
+    payload: Dict[str, Any] = Body(..., example={"user_id": "some_user_id", "shop_id": "some_shop_id"})
 ):
     """Endpoint to track when a user opens the chatbot."""
     logger.info("Received request to track chatbot open.")
@@ -107,10 +105,7 @@ async def track_opened_chatbot(
         user_id = payload.get("user_id")
         guest_id = payload.get("guest_id")
         shop_id = payload.get("shop_id")
-        utm_data = payload.get("utm_params")
         location_info = payload.get("location_info")
-        
-        utm_params = UTMParameters(**utm_data) if utm_data else None
 
         if not shop_id:
             logger.error(f"Track chatbot open request failed: Missing shop_id in payload. Payload: {payload}")
@@ -126,7 +121,7 @@ async def track_opened_chatbot(
         if not user_id:
             raise HTTPException(status_code=400, detail="Missing user identifier.")
 
-        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id_pk, utm_params, location_info)
+        success = await app.analytics_service.track_opened_chatbot(user_id, shop_id_pk, location_info)
         if not success:
             logger.error(f"Analytics service failed to track chatbot open for {user_id}, shop_id: {shop_id}")
             raise HTTPException(status_code=500, detail="Failed to track event due to service error.")
@@ -176,45 +171,4 @@ async def track_added_to_cart(
         await app.analytics_service.track_added_to_cart(user_id=user_id, shop_id=shop_id_pk)
     except Exception as e:
         logger.error(f"Error tracking added to cart: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to track event.")
-
-@analytics_router.post(
-    "/track_purchase",
-    summary="Track a purchase event",
-    status_code=204,
-)
-async def track_purchase(
-    request: Request,
-    auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
-):
-    """Endpoint to track a purchase event. Handles both guests and authenticated users."""
-    try:
-        app = get_app()
-        body = await request.json()
-        guest_id = body.get("guest_id")
-        amount = body.get("amount")
-        user_id, shop_id_pk = None, None
-
-        if auth_payload:
-            user_id = auth_payload.get("user_id")
-            shop_id_pk = auth_payload.get("shop_id")
-        elif guest_id:
-            shop_domain = body.get("shop_id")
-            if not shop_domain:
-                raise HTTPException(status_code=400, detail="Shop ID is required for guests.")
-            
-            async with AsyncSessionLocal() as session:
-                shop_id_pk = await app.analytics_service.get_shop_pk(shop_domain, session)
-
-                guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_id_pk)
-                user_id = guest_user.id
-        else:
-            raise HTTPException(status_code=400, detail="Missing user or guest identifier.")
-
-        if not shop_id_pk or amount is None:
-            raise HTTPException(status_code=400, detail="Shop ID and amount are required.")
-
-        await app.analytics_service.track_purchase(user_id=user_id, shop_id=shop_id_pk, amount=amount)
-    except Exception as e:
-        logger.error(f"Error tracking purchase: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to track event.")

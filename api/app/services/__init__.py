@@ -9,6 +9,7 @@ def init_services(app: CustmFastAPI):
     from app.services.checkout_product_service import CheckoutProductService
     from app.services.shop_config_service import ShopConfigService
     from app.services.country_code_service import CountryCodeService
+    from app.services.webhook_service import WebhookService
  
     app.shop_admin_service = ShopAdminService()
     app.llm_service = LLMService()
@@ -17,3 +18,4 @@ def init_services(app: CustmFastAPI):
     app.checkout_product_service = CheckoutProductService()
     app.shop_config_service = ShopConfigService()
     app.country_code_service = CountryCodeService()
+    app.webhook_service = WebhookService()

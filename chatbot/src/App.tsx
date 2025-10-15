@@ -3,7 +3,6 @@ import { Chatbot } from './pages/Chatbot/Chatbot';
 import { CartProvider } from './context/CartContext';
 import { ConfigProvider } from './context/ConfigContext';
 import { getShopConfig } from './utils/utils';
-import { captureUtmParameters } from './utils/utm';
 import type { ChatbotAppConfig } from './types';
 import './App.scss';
 
@@ -12,8 +11,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    captureUtmParameters();
-
     const fetchConfig = async () => {
       try {
         const config = await getShopConfig();
@@ -24,7 +21,6 @@ function App() {
         setIsLoading(false);
       }
     };
-
     fetchConfig();
   }, []);
 

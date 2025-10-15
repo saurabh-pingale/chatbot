@@ -81,14 +81,14 @@ class ProductsService:
                 )
                 await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
 
-            stored_collections = await self.shop_admin_handler.create_collections(collections)
+                stored_collections = await self.shop_admin_handler.create_collections(collections, shop_pk)
 
-            titles = [col["title"] for col in stored_collections if col.get("title")]
-            await self.category_cache.update_categories_cache(namespace, titles)
+                titles = [col["title"] for col in stored_collections if col.get("title")]
+                await self.category_cache.update_categories_cache(namespace, titles)
 
-            collection_id_map = {
-                collection["title"]: collection["id"] for collection in stored_collections
-            }
+                collection_id_map = {
+                    collection["title"]: collection["id"] for collection in stored_collections
+                }
 
             products_with_tags = [p for p in products if getattr(p, 'tags', [])]
             if products_with_tags:

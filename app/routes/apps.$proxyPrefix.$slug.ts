@@ -17,7 +17,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     "verify-otp": () => import("./verify-otp"),
     "track_opened_chatbot": () => import("./track_opened_chatbot"),
     "track_added_to_cart": () => import("./track_added_to_cart"),
-    "track_purchase": () => import("./track_purchase"),
     "shop-config": () => import("./shop-config"),
   };
 

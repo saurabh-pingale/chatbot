@@ -38,14 +38,12 @@ const makeRequest = async (endpoint: string, originalBody: object = {}) => {
 export const trackOpenedChatbot = (
   userId: string | null,
   shopId: string,
-  utmParams: any,
   locationInfo: LocationInfo | null
 ) => {
   const payload = {
     user_id: userId,
     guest_id: userId ? null : getOrCreateGuestId(),
     shop_id: shopId,
-    utm_params: utmParams,
     location_info: locationInfo,
   };
   
@@ -57,10 +55,3 @@ export const trackAddedToCart = () => {
     shop_id: getShopId() 
   });
 };
-
-export const trackPurchase = (amount: number) => {
-   makeRequest(API_ENDPOINTS.TRACK_PURCHASE, {
-    amount,
-    shop_id: getShopId(),
-  });
-}; 

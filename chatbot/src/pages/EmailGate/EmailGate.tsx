@@ -6,7 +6,6 @@ import { initiateUserSession } from '../../services/chat';
 import { EmailInput } from '../../components/Chatbot-UI/EmailInput/EmailInput';
 import { OtpInput } from '../../components/Chatbot-UI/OtpInput/OtpInput';
 import { validateEmail } from '../../utils/utils';
-import { getStoredUtmParameters } from '../../utils/utm';
 import { setAuthToken } from '../../utils/auth';
 import { sendOTP, verifyOTP } from '../../services/auth';
 import type { StyleWithCustomProps, EmailGateProps } from '../../types';
@@ -60,8 +59,7 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
     try {
       await verifyOTP(email, otp, config.shopId);
     
-      const utmParams = getStoredUtmParameters();
-      const response = await initiateUserSession({ email, shopId: config.shopId, utm_params: utmParams });
+      const response = await initiateUserSession({ email, shopId: config.shopId });
     
       if (!response.token) throw new Error("Failed to retrieve authentication token.");
       setAuthToken(response.token);
