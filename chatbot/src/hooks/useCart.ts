@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
-import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
-import type { CartItem, ProductType } from '../types';
-import { getStoredUtmParameters } from '../utils/utm';
 import { useDebounce } from './useDebounce';
 import { trackAddedToCart } from '../services/analytics';
+import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
+import type { CartItem, ProductType } from '../types';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -189,7 +188,7 @@ export const useCart = () => {
 
       return updatedItems;
     });
-   }, [cartItems, removeFromCart]);
+  }, [cartItems, removeFromCart]);
 
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
@@ -197,15 +196,8 @@ export const useCart = () => {
     try {
       const success = await syncCartItemsToShopifyStoreCart(cartItems);
       if (success) {
-        const utmParams = getStoredUtmParameters();
         const checkoutUrl = new URL('/checkout', window.location.origin);
         checkoutUrl.searchParams.set('utm_source', 'chatbot');
-
-        if (utmParams) {
-          Object.entries(utmParams).forEach(([key, value]) => {
-            if (value) checkoutUrl.searchParams.set(key, value);
-          });
-        }
         
         window.location.href = checkoutUrl.toString();
       } else {

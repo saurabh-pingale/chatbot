@@ -40,6 +40,8 @@ class ShopModel(Base):
     products = relationship("ProductModel", back_populates="shop")
     offers = relationship("OfferModel", back_populates="shop", cascade="all, delete-orphan")
     shop_metadata = relationship("ShopMetadataModel", back_populates="shop", cascade="all, delete-orphan", uselist=False)
+    collections = relationship("CollectionModel", back_populates="shop", cascade="all, delete-orphan")
+    orders = relationship("OrderModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -58,16 +60,22 @@ class UserModel(Base):
     shop = relationship("ShopModel", back_populates="users")
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
     analytics = relationship("UserShopAnalyticsModel", back_populates="user")
+    orders = relationship("OrderModel", back_populates="user")
 
     __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 
 class CollectionModel(Base):
     __tablename__ = 'collections'
+    __table_args__ = (
+        UniqueConstraint('shop_id', 'title', name='_shop_id_title_uc'),
+    )
     
     id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True)
+    title = Column(String, index=True)
     products_count = Column(Integer)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
     
+    shop = relationship("ShopModel", back_populates="collections")
     products = relationship("ProductModel", back_populates="collection")
     checkout_products = relationship("CheckoutProductModel", back_populates="collection")
 
@@ -91,6 +99,7 @@ class ProductModel(Base):
     checkout_products = relationship("CheckoutProductModel", back_populates="product", primaryjoin="ProductModel.variant_id==CheckoutProductModel.variant_id")
     shop = relationship("ShopModel", back_populates="products")
     offers = relationship("OfferModel", back_populates="product", cascade="all, delete-orphan")
+    order_items = relationship("OrderItemModel", back_populates="product")
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'
@@ -107,11 +116,6 @@ class UserShopAnalyticsModel(Base):
     added_to_cart_count = Column(Integer, default=0, nullable=False)
     purchased_count = Column(Integer, default=0, nullable=False)
     purchase_amount = Column(Float, default=0.0, nullable=False)
-    utm_source = Column(String, nullable=True)
-    utm_medium = Column(String, nullable=True)
-    utm_campaign = Column(String, nullable=True)
-    utm_term = Column(String, nullable=True)
-    utm_content = Column(String, nullable=True)
 
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")
@@ -143,7 +147,7 @@ class IntegrationModel(Base):
     description = Column(String(500), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    shop_id = Column(String, ForeignKey('shops.shop_id'), nullable=False, index=True)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
 
     shop = relationship("ShopModel", back_populates="integrations")
 

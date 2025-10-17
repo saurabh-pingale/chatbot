@@ -38,3 +38,7 @@ EXCLUDE_LAST_MESSAGE = -1
 MIN_DATAPOINTS_FOR_HOURLY_GRANULARITY = 10
 HOURLY_GRANULARITY_THRESHOLD_HOURS = 4
 SECONDS_IN_A_DAY = 86400 # 24 * 3600
+
+# Maximum allowed time (in minutes) a task can stay in "processing" state
+# before being considered stalled (i.e., not making progress) and marked as failed
+TASK_STALLED_TIMEOUT_MINUTES = 10

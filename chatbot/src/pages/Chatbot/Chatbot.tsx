@@ -10,7 +10,6 @@ import { ErrorPopup } from '../../components/ErrorPopup/ErrorPopup';
 import { EmailGate } from '../EmailGate/EmailGate';
 import { useConfig } from '../../context/ConfigContext';    
 import { useCart } from '../../context/CartContext';
-import { getStoredUtmParameters } from '../../utils/utm';
 import { getAuthToken } from '../../utils/auth';
 import { hexToRgbArray } from '../../utils/utils';
 import type { StyleWithCustomProps, LocationInfo, ChatBodyHandle } from '../../types';
@@ -42,7 +41,6 @@ export const Chatbot = memo(() => {
   const handleToggle = async () => {
     if (!isOpen) {
       const userId = localStorage.getItem('user_id');
-      const utmParams = getStoredUtmParameters();
       let location: LocationInfo | null = null;
 
       const hasCapturedLocation = sessionStorage.getItem('hasCapturedLocation');
@@ -58,7 +56,7 @@ export const Chatbot = memo(() => {
       }
 
       if (config?.shopId) {
-        trackOpenedChatbot(userId, config.shopId, utmParams, location);
+        trackOpenedChatbot(userId, config.shopId, location);
       }
     }
     setIsOpen(prev => !prev);

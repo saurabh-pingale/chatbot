@@ -10,7 +10,6 @@ import uuid
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.user_handler import UserHandler
 from app.models.db.shop_admin import UserModel, ShopModel, UserShopAnalyticsModel, UserShopMinutelyAnalyticsModel
-from app.models.api.shop_admin import UTMParameters
 from app.constants import MIN_DATAPOINTS_FOR_HOURLY_GRANULARITY, HOURLY_GRANULARITY_THRESHOLD_HOURS, SECONDS_IN_A_DAY
 from app.utils.analytics_utils import update_user_location_if_missing
 from app.utils.logger import logger
@@ -37,7 +36,6 @@ class AnalyticsHandler:
         session: AsyncSession,
         shop_id: int,
         user_id: uuid.UUID,
-        utm_params: Optional[UTMParameters] = None
     ) -> Optional[UserShopAnalyticsModel]:
         """
         Atomically retrieves or creates an analytics record for the current day for a user or guest.
@@ -52,15 +50,6 @@ class AnalyticsHandler:
                 return None
 
             insert_values = {"shop_id": shop_id, "date": today, "user_id": user_id}
-
-            if utm_params:
-                insert_values.update({
-                    "utm_source": utm_params.utm_source or 'direct', "utm_medium": utm_params.utm_medium,
-                    "utm_campaign": utm_params.utm_campaign, "utm_term": utm_params.utm_term,
-                    "utm_content": utm_params.utm_content
-                })
-            else:
-                insert_values.setdefault("utm_source", 'direct')
 
             stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
 
@@ -119,12 +108,12 @@ class AnalyticsHandler:
         session: AsyncSession,
         shop_id: int,
         user_id: uuid.UUID,
-        utm_params: Optional[UTMParameters] = None, **kwargs
+        **kwargs
     ):
         """Generic helper to increment counts on both daily and minutely tables."""
         try:
             # Daily Record
-            daily_record = await self._get_or_create_analytics_record(session, shop_id, user_id, utm_params)
+            daily_record = await self._get_or_create_analytics_record(session, shop_id, user_id)
             if not daily_record:
                 logger.error(f"Failed to get/create daily analytics record for user:{user_id}")
                 return False
@@ -185,7 +174,7 @@ class AnalyticsHandler:
                 "message": "Unexpected error occurred"
             }
 
-    async def get_or_create_user_for_token(self, email: str, shop_id: str, utm_params: Optional[UTMParameters] = None) -> Optional[Dict[str, any]]:
+    async def get_or_create_user_for_token(self, email: str, shop_id: str, ) -> Optional[Dict[str, any]]:
         """
         Handles user initiation: gets/creates a user, ensures an analytics record exists,
         and returns primary keys required for creating a JWT token.
@@ -202,7 +191,7 @@ class AnalyticsHandler:
                         logger.error(f"Failed to get/create user for email {email}, shop {shop_id}")
                         return None
 
-                    await self._get_or_create_analytics_record(session, shop_pk, user_id=user.id, utm_params=utm_params)
+                    await self._get_or_create_analytics_record(session, shop_pk, user_id=user.id)
 
                     return {"user_id": user.id, "shop_id": shop_pk}
                 except (SQLAlchemyError, ValueError) as e:
@@ -231,8 +220,7 @@ class AnalyticsHandler:
     async def increment_opened_chatbot_count(
         self, 
         user_id: uuid.UUID, 
-        shop_id_pk: int, 
-        utm_params: Optional[UTMParameters] = None, 
+        shop_id_pk: int,
         location_info: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
@@ -258,7 +246,7 @@ class AnalyticsHandler:
                     except Exception as e:
                         logger.error(f"Failed to update location for user {user.id} during chatbot open tracking: {e}")
 
-                await self._increment_analytics_counts(session, shop_id_pk, user.id, utm_params, opened_chatbot_count=1)
+                await self._increment_analytics_counts(session, shop_id_pk, user.id, opened_chatbot_count=1)
                 return True
 
     async def increment_added_to_cart_count(self, shop_id: int, user_id: uuid.UUID) -> bool:
@@ -266,48 +254,7 @@ class AnalyticsHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 await self._increment_analytics_counts(session, shop_id, user_id, added_to_cart_count=1)
-                return True
-
-    async def increment_purchased_count(self, shop_id: int, amount: float, user_id: uuid.UUID) -> bool:
-        """Increments the purchase count and adds the purchase amount for a user."""
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                await self._increment_analytics_counts(session, shop_id, user_id, purchased_count=1, purchase_amount=amount)
-                return True            
-
-    async def increment_purchased_count_by_email(self, email: str, shop_id: str, amount: float, order_id: str) -> bool:
-        """
-        Finds a user by email and shop identifier (or creates them if they don't exist)
-        and increments their purchase analytics for today. This is designed to be called 
-        from a webhook where we may not have our internal user_id.
-        """
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    shop_pk = await self.get_shop_pk(shop_id, session)
-                    if not shop_pk: return False
-                    
-                    user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
-                    if not user: return False
-
-                    success = await self._increment_analytics_counts(
-                        session,
-                        shop_id=shop_pk,
-                        user_id=user.id,
-                        guest_id=None,
-                        purchased_count=1,
-                        purchase_amount=amount
-                    )
-
-                    if success:
-                        logger.info(f"Successfully tracked purchase for order {order_id} for user {user.id} on shop {shop_pk}.")
-                    else:
-                        logger.error(f"Failed to track purchase for order {order_id} via _increment_analytics_counts.")
-
-                    return success
-                except SQLAlchemyError as e:
-                    logger.error(f"DB Error tracking purchase by email for {email}, shop {shop_id}: {e}", exc_info=True)
-                    return False
+                return True         
 
     async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
         """

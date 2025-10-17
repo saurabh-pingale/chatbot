@@ -1,26 +1,34 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "241227516eda9ea7090d909f8c6decb1"
-name = "chatbot-final"
-application_url = "https://example.com"
+client_id = "219c1c8dbe42911175fe6cfb1572779f"
+name = "chatbot-v8"
+application_url = "https://composite-savannah-apnic-glasgow.trycloudflare.com"
 embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-10"
 
+  [[webhooks.subscriptions]]
+  topics = [ "orders/create" ]
+  uri = "https://74f35a2e8262.ngrok-free.app/webhooks/orders/create"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_metaobjects,read_products,write_products"
+scopes = "read_metaobjects,read_orders,read_products,write_products"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://composite-savannah-apnic-glasgow.trycloudflare.com/auth/callback",
+  "https://composite-savannah-apnic-glasgow.trycloudflare.com/auth/shopify/callback",
+  "https://composite-savannah-apnic-glasgow.trycloudflare.com/api/auth/callback"
+]
 
 [app_proxy]
-url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
+url = "https://composite-savannah-apnic-glasgow.trycloudflare.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
+
+[build]
+automatically_update_urls_on_dev = true

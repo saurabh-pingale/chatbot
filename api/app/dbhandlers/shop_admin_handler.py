@@ -1,7 +1,8 @@
 import json
+from fastapi import HTTPException
 from typing import Optional, List, Dict
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select, join, delete
+from sqlalchemy import select, delete
 from sqlalchemy.orm import joinedload
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import func
@@ -21,7 +22,7 @@ class ShopAdminHandler:
         self.analytics_handler = AnalyticsHandler()
         pass
 
-    async def create_collections(self, collections: List[CollectionModel]) -> List[dict]:
+    async def create_collections(self, collections: List[CollectionModel], shop_id: int) -> List[dict]:
         """Create collections in the database using bulk operations."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
@@ -39,7 +40,8 @@ class ShopAdminHandler:
 
                         collection_data_to_insert.append({
                             'title': collection.title,
-                            'products_count': collection.products_count
+                            'products_count': collection.products_count,
+                            'shop_id': shop_id
                         })
 
                     if not collection_data_to_insert:
@@ -48,14 +50,17 @@ class ShopAdminHandler:
 
                     stmt = insert(CollectionModel).values(collection_data_to_insert)
                     stmt = stmt.on_conflict_do_update(
-                        index_elements=['title'],  
+                        index_elements=['shop_id', 'title'],
                         set_={'products_count': stmt.excluded.products_count}
                     )
 
                     await session.execute(stmt)
 
                     titles = [col.get('title') for col in collection_data_to_insert]
-                    stmt = select(CollectionModel).where(CollectionModel.title.in_(titles))
+                    stmt = select(CollectionModel).where(
+                        CollectionModel.shop_id == shop_id,
+                        CollectionModel.title.in_(titles)
+                    )
                     existing_collections = await session.execute(stmt)
                     collections_list = existing_collections.scalars().all()
 
@@ -75,23 +80,14 @@ class ShopAdminHandler:
                 
     async def get_collections(self, shop_id: str) -> List[str]:
         async with AsyncSessionLocal() as session:
-            stmt = (
-                select(CollectionModel.title)
-                .select_from(
-                    join(CollectionModel, ProductModel, CollectionModel.id == ProductModel.collection_id)
-                )
-                .join(ShopModel, ProductModel.shop_id == ShopModel.id)
-                .where(ShopModel.shop_id == shop_id)
-                .distinct()
-            )
+            shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+            if not shop_pk:
+                raise HTTPException(status_code=404, detail=f"Shop with domain {shop_id} not found.")
+                
+            stmt = select(CollectionModel.title).where(CollectionModel.shop_id == shop_pk)
             execution_result = await session.execute(stmt)
-            collection_rows = execution_result.all()
+            collection_titles = execution_result.all()
 
-            if not collection_rows:
-                logger.info(f"No collections found for shop_id: {shop_id}")
-                return []
-            
-            collection_titles = [row[0] for row in collection_rows if row and row[0]]
             return collection_titles
 
     async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:

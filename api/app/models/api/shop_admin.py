@@ -2,14 +2,6 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field, EmailStr, model_validator 
 from typing import List, Optional, Dict, Any, Literal
 
-class UTMParameters(BaseModel):
-    """Defines the structure for UTM parameters."""
-    utm_source: Optional[str] = None
-    utm_medium: Optional[str] = None
-    utm_campaign: Optional[str] = None
-    utm_term: Optional[str] = None
-    utm_content: Optional[str] = None
-
 class ErrorResponse(BaseModel):
     message: str
     success: bool
@@ -81,7 +73,6 @@ class UserInitiateRequest(BaseModel):
     """Defines the structure for the user initiation request."""
     email: EmailStr
     shopId: str
-    utm_params: Optional[UTMParameters] = None
 
 class UserInitiateResponse(BaseModel):
     """Defines the structure for the user initiation response."""
