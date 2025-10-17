@@ -8,13 +8,13 @@ embedded = true
 [webhooks]
 api_version = "2025-10"
 
-[[webhooks.subscriptions]]
-topics = ["orders/create"]
-uri = "https://74f35a2e8262.ngrok-free.app/webhooks/orders/create"
+  [[webhooks.subscriptions]]
+  topics = [ "orders/create" ]
+  uri = "https://74f35a2e8262.ngrok-free.app/webhooks/orders/create"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_metaobjects,read_products,write_products,read_orders"
+scopes = "read_metaobjects,read_orders,read_products,write_products"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 

@@ -4,6 +4,8 @@ import json
 
 from app.services.products_service import ProductsService
 from app.external_service.redis_client import get_redis_client
+from app.constants import TASK_STALLED_TIMEOUT_MINUTES
+from app.utils.products_utils import cleanup_stale_task_before_start, check_and_update_stalled_status
 from app.utils.logger import logger
 
 products_router = APIRouter(prefix="/products_router", tags=["products_router"])
@@ -28,6 +30,20 @@ async def create(
                 status_code=400,
                 detail="Both X-Shopify-Store and X-Shopify-Access-Token headers are required"
             )
+        
+        redis_client = await get_redis_client()
+        lock_key = f"task_lock_{x_shopify_store}"
+
+        await cleanup_stale_task_before_start(redis_client, x_shopify_store, TASK_STALLED_TIMEOUT_MINUTES)
+
+        # Try to acquire a lock that expires in 1 hour (3600s)
+        # SETNX (set if not exists) is an atomic operation.
+        is_lock_acquired = await redis_client.set(lock_key, "locked", ex=3600, nx=True)
+        if not is_lock_acquired:
+            raise HTTPException(
+                status_code=409,
+                detail="A product sync is already in progress for this store. Please wait for it to complete."
+            )
 
         products_service = ProductsService(
             shopify_store=x_shopify_store,
@@ -39,12 +55,14 @@ async def create(
 
         task_id = str(uuid.uuid4())
 
-        background_tasks.add_task(products_service.create, namespace, task_id)
+        background_tasks.add_task(products_service.create, namespace, task_id, lock_key)
 
         return {"task_id": task_id, "shop_id": namespace}
         
     except Exception as e:
         logger.error(f"Error in sync-products endpoint: {e}", exc_info=True)
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(status_code=500, detail="Failed to sync products")
     
 @products_router.get(
@@ -69,8 +87,15 @@ async def get_create_status(task_id: str, request: Request):
                 "message": "Initializing...",
                 "status": "pending"
             }
-            
-        return json.loads(progress_data)
+
+        task_details = json.loads(progress_data)
+
+        if task_details.get("shop_id") != shop_id:
+            raise HTTPException(status_code=403, detail="Access denied for this task.")
+        
+        task_details = check_and_update_stalled_status(task_details)
+        
+        return task_details
 
     except Exception as e:
         logger.error(f"Error fetching task status for {task_id}: {e}", exc_info=True)

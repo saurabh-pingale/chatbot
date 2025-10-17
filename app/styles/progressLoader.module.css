@@ -78,3 +78,8 @@
   gap: 12px;
   justify-content: center;
 }
+
+.contentWrapper {
+  max-width: 400px;
+  margin: 0 auto;
+}
