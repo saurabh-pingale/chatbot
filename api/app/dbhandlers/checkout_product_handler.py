@@ -14,6 +14,7 @@ class CheckoutProductHandler:
         self.analytics_handler = AnalyticsHandler()
         pass
 
+    #TODO P0: If we are raising ValueError, Are these errors are correctly showing in frontend, needs to test and check on it.
     async def store_checkout_product(self, shop_id: str, user_id: uuid.UUID, variant_id: int, product_count: int):
         """Stores checkout product information in the database."""
         async with AsyncSessionLocal() as session:

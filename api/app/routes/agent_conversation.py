@@ -74,6 +74,8 @@ async def agent_conversation(
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
+        #TODO P1: Below logic is not seems to be proper
+        #TODO P1: Please create a doc explaining this logic
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
         await app.analytics_service.record_chat_interaction(user_id=user_id, shop_id=shop_id_int)

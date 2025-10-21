@@ -18,6 +18,7 @@ class AnalyticsHandler:
     def __init__(self):
         self.user_handler = UserHandler()
 
+    #TODO P0: In analytics handler, we need to add only analytics related handlers. so need to move this handler to shop config handler or shop admin handler
     async def get_shop_pk(self, shop_id: str, session) -> Optional[int]:
         """Fetches the integer primary key of a shop by its public string ID."""
         try:
@@ -103,6 +104,7 @@ class AnalyticsHandler:
             logger.exception(f"Database error while getting or creating minutely analytics record: {e}")
             return None
         
+    #TODO P0: Need to rewrite this function to make it more readable
     async def _increment_analytics_counts(
         self,
         session: AsyncSession,
@@ -174,6 +176,7 @@ class AnalyticsHandler:
                 "message": "Unexpected error occurred"
             }
 
+    #TODO P0: In analytics handler, we need to add only analytics related handlers. so need to move shop config or admin or any other related handler.
     async def get_or_create_user_for_token(self, email: str, shop_id: str, ) -> Optional[Dict[str, any]]:
         """
         Handles user initiation: gets/creates a user, ensures an analytics record exists,
@@ -198,6 +201,7 @@ class AnalyticsHandler:
                     logger.error(f"Error during user processing for {email}, {shop_id}: {e}", exc_info=True)
                     return None
     
+    #TODO P0: We no neeed to have update_user_chat_analytics, because its routing internally to _increment_analytics_counts, so directly call _increment_analytics_counts
     async def update_user_chat_analytics(
         self, 
         shop_id: int, 
@@ -256,6 +260,7 @@ class AnalyticsHandler:
                 await self._increment_analytics_counts(session, shop_id, user_id, added_to_cart_count=1)
                 return True         
 
+    #TODO P0: Need to check this function, if possibe need to move service layer and rewrite to make it more readable
     async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
         """
         Fetches aggregated analytics and daily chatbot open data for a given shop.
