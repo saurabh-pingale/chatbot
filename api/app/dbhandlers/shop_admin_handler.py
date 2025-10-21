@@ -22,6 +22,7 @@ class ShopAdminHandler:
         self.analytics_handler = AnalyticsHandler()
         pass
 
+    #TODO P0: I see we are looping collections two times, so need to optimize it by reviewing it.
     async def create_collections(self, collections: List[CollectionModel], shop_id: int) -> List[dict]:
         """Create collections in the database using bulk operations."""
         async with AsyncSessionLocal() as session:

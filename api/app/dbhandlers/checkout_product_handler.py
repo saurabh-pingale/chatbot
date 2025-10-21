@@ -68,6 +68,7 @@ class CheckoutProductHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO P0: We need to keep below store checking verification in the middleware as well 
                     shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         raise ValueError("Shop not found")
