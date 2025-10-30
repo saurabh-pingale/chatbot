@@ -35,6 +35,9 @@ class ConversationHandler:
                         shop_id=shop_pk
                     )
                     session.add(conversation)
+                    #TODO P1: Remove this session.flush() because we are not using it anywhere the generated ID ?
+                    #TODO P1: Mainly session.flush() helps to get the generated ID, but we are not using it anywhere, so remove this line
+                    #TODO P1: So return the True or {status: "success"} instead of returning conversation.id directly
                     await session.flush()
                     
                     logger.info(f"Successfully stored conversation with id {conversation.id}, shop_pk {shop_pk}")

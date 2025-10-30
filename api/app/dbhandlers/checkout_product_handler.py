@@ -14,6 +14,7 @@ class CheckoutProductHandler:
         self.analytics_handler = AnalyticsHandler()
         pass
 
+    #TODO P0: If we are raising ValueError, Are these errors are correctly showing in frontend, needs to test and check on it.
     async def store_checkout_product(self, shop_id: str, user_id: uuid.UUID, variant_id: int, product_count: int):
         """Stores checkout product information in the database."""
         async with AsyncSessionLocal() as session:
@@ -67,6 +68,7 @@ class CheckoutProductHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO P0: We need to keep below store checking verification in the middleware as well 
                     shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         raise ValueError("Shop not found")
