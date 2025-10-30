@@ -8,6 +8,8 @@ interface ProgressLoaderProps {
   progress: number;
   message: string;
   isComplete: boolean;
+  isError: boolean;
+  onRetry: () => void;
   onNavigate: (path: string) => void;
   chatbotDeepLink: string;
 }
@@ -16,6 +18,8 @@ export default function ProgressLoader({
   progress,
   message, 
   isComplete, 
+  isError,
+  onRetry,
   onNavigate,
   chatbotDeepLink 
 }: ProgressLoaderProps) {
@@ -91,10 +95,30 @@ export default function ProgressLoader({
     </div>
   );
 
+  const errorView = (
+    <div className={styles.contentWrapper}>
+      <BlockStack gap="400" inlineAlign="center">
+        <Text variant="headingLg" as="h2" tone="critical">
+            Sync Failed
+        </Text>
+        <Text variant="bodyMd" as="p" tone="subdued" alignment="center">
+            {message || "An unexpected error occurred. Please try again."}
+        </Text>
+        <Button 
+            variant="primary" 
+            onClick={onRetry}
+            size="large"
+        >
+            Try Again
+        </Button>
+      </BlockStack>
+    </div>
+  );
+
   return (
     <div className={styles.overlay}>
       <div className={styles.container}>
-        {isComplete ? completedView : inProgressView}
+        {isComplete ? completedView : isError ? errorView : inProgressView}
       </div>
     </div>
   );

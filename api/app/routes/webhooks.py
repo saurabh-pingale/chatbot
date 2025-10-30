@@ -41,7 +41,7 @@ async def handle_order_creation(
 ):
     """
     Handles the 'orders/create' webhook from Shopify.
-    Tracks purchases attributed to the chatbot via UTM parameters.
+    Tracks purchases for analytics and stores detailed order information.
     """
     logger.info(f"Received 'orders/create' webhook for shop: {x_shopify_shop_domain}")
     
@@ -52,7 +52,7 @@ async def handle_order_creation(
     try:
         app = get_app()
         
-        landing_site = payload.get('landing_site', '')
+        landing_site = payload.get('landing_site') or ""
         utm_source_present = 'utm_source=chatbot' in landing_site
         source_name = payload.get('source_name')
         
@@ -67,12 +67,23 @@ async def handle_order_creation(
             customer_email = payload.get('customer', {}).get('email')
 
             if customer_email:
-                logger.info(f"Attempting to track purchase for email: {customer_email}, amount: {total_price}")
-                await app.analytics_service.track_purchase_from_webhook(
+                user, _ = await app.user_handler.get_or_create_user(email=customer_email, shop_id=shop_domain)
+                if not user:
+                    logger.error(f"Could not get or create user for email {customer_email} on shop {shop_domain}.")
+                    return {"status": "error", "message": "User lookup failed"}, 200
+
+                logger.info(f"Processing order for user_id: {user.id}")
+                await app.webhook_service.track_purchase_from_webhook(
                     email=customer_email,
                     shop_identifier=shop_domain,
                     amount=total_price,
                     order_id=str(order_id)
+                )
+
+                await app.webhook_service.record_detailed_order(
+                    payload=payload,
+                    shop_identifier=shop_domain,
+                    user_id=user.id
                 )
             else:
                 logger.warning(f"Order {order_id} for {shop_domain} has no customer email, cannot attribute purchase.")

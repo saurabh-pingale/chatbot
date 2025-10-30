@@ -1,6 +1,8 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { trackOpenedChatbot } from '../../services/analytics';
+import { getIpAddress, getLocationInfo } from '../../services/chat';
 import ChatBody from '../../components/Chatbot-UI/ChatBody/ChatBody';
 import { ChatHeader } from '../../components/Chatbot-UI/ChatHeader/ChatHeader';
 import { ChatbotToggle } from '../../components/Chatbot-UI/ChatbotToggle/ChatbotToggle';
@@ -18,7 +20,6 @@ export const Chatbot = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jwtToken, setJwtToken] = useState<string | null>(() => getAuthToken());
-  const [capturedLocationInfo, setCapturedLocationInfo] = useState<LocationInfo | null>(null);
   const [showEmailGate, setShowEmailGate] = useState(false);
   const [messagesCount, setMessagesCount] = useState(0);
   
@@ -37,11 +38,32 @@ export const Chatbot = memo(() => {
     }
   }, [config?.showEmailGate]);
 
-  const handleToggle = () => setIsOpen(prev => !prev);
+  const handleToggle = async () => {
+    if (!isOpen) {
+      const userId = localStorage.getItem('user_id');
+      let location: LocationInfo | null = null;
 
-  const handleAuthSuccess = (token: string, locationInfo: LocationInfo | null) => {
+      const hasCapturedLocation = sessionStorage.getItem('hasCapturedLocation');
+      if (!hasCapturedLocation) {
+        sessionStorage.setItem('hasCapturedLocation', 'true');
+
+        try {
+          const ip = await getIpAddress();
+          location = await getLocationInfo(ip);
+        } catch (err) {
+          console.error("Failed to capture location and track open event:", err);
+        }
+      }
+
+      if (config?.shopId) {
+        trackOpenedChatbot(userId, config.shopId, location);
+      }
+    }
+    setIsOpen(prev => !prev);
+  }
+
+  const handleAuthSuccess = (token: string) => {
     setJwtToken(token);
-    setCapturedLocationInfo(locationInfo);
     setShowEmailGate(false);
   };
 
@@ -88,7 +110,6 @@ export const Chatbot = memo(() => {
                 <ChatBody
                   ref={chatBodyRef}
                   jwtToken={jwtToken}
-                  capturedLocationInfo={capturedLocationInfo}
                   setError={handleError}
                   isEmailGateVisible={showEmailGate}
                   onMessagesCountChange={setMessagesCount}

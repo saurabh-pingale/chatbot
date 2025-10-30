@@ -18,6 +18,9 @@ async def send_otp(payload: SendOTPRequest):
     try:
         app = get_app()
         async with AsyncSessionLocal() as session:
+            #TODO P2: First check if shop exists in redis, if not, then check in db
+            #TODO P2: Those checking redis code keep inside handler of get_shop_pk
+            #TODO P2: Check others handlers, Does it exists in cache use it, else check in db
             shop = await app.analytics_handler.get_shop_pk(payload.shop_id, session)
         if not shop:
             raise HTTPException(status_code=404, detail="Shop not found")
@@ -46,13 +49,19 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
         if not shop_id:
             raise HTTPException(status_code=404, detail="Shop not found")
 
-        if not stored_otp or stored_otp != payload.otp:
+        if not stored_otp or stored_otp != payload.otp.strip():
             raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+        await app.otp_handler.delete_otp(payload.email)
         
         user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_id)
         if not user:
             user = await app.user_handler.create_user(payload.email, shop_id, existing_user=user)
 
+        if not user or not getattr(user, "id", None) or not getattr(user, "shop_id", None):
+            logger.warning(f"Invalid user data during OTP verification: {user}")
+            raise HTTPException(status_code=400, detail="User verification failed")
+        
         token_data = {"user_id": user.id, "shop_id": user.shop_id}
         access_token = create_access_token(data=token_data)
 
@@ -61,4 +70,4 @@ async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
         raise http_exc
     except Exception as e:
         logger.error(f"Error verifying OTP: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to verify OTP") 
+        raise HTTPException(status_code=500, detail="Failed to verify OTP")

@@ -27,3 +27,12 @@ class OTPHandler:
         except Exception as e:
             logger.error(f"Error retrieving OTP from Redis: {e}", exc_info=True)
             raise RuntimeError(f"Failed to retrieve OTP for {email}") from e
+        
+    async def delete_otp(self, email: str):
+        try:
+            redis = await get_redis_client()
+            await redis.delete(self._otp_key(email))
+            logger.info(f"Deleted OTP for {email} from Redis")
+        except Exception as e:
+            logger.error(f"Error deleting OTP from Redis: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to delete OTP for {email}") from e

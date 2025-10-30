@@ -1,12 +1,14 @@
 import re
 import json
-from typing import List
+from typing import List, Dict, Any
 from decimal import Decimal
+from datetime import datetime, timedelta, timezone
+from dateutil.parser import isoparse
 
 from app.external_service.shopify_service import ShopifyService
 from app.models.api.rag_pipeline import ProductEmbedding
 from app.services.embeddings_service import EmbeddingService
-from app.external_service.redis_client import get_redis_client
+from app.constants import TASK_STALLED_TIMEOUT_MINUTES
 from app.utils.progress_tracker import ProgressTracker
 from app.utils.logger import logger
 
@@ -148,3 +150,70 @@ def normalize_and_clean_metafields(metafields: dict) -> dict:
         cleaned_metafields[simple_key] = processed_value
         
     return cleaned_metafields
+
+async def cleanup_stale_task_before_start(redis_client, shop_id, stalled_threshold_minutes):
+    lock_key = f"task_lock_{shop_id}"
+    task_key_pattern = f"task_progress_{shop_id}_*"
+
+    existing_lock = await redis_client.get(lock_key)
+    if not existing_lock:
+        return False
+
+    async for key in redis_client.scan_iter(task_key_pattern):
+        task_data_json = await redis_client.get(key)
+        if not task_data_json:
+            continue
+
+        task_data = json.loads(task_data_json)
+        updated_at_str = task_data.get("updated_at")
+        status = task_data.get("status")
+
+        if not updated_at_str or status != "processing":
+            continue
+
+        try: 
+            updated_at = isoparse(updated_at_str)
+            minutes_since_update = (datetime.now(timezone.utc) - updated_at).total_seconds() / 60
+
+            if minutes_since_update > stalled_threshold_minutes:
+                task_data.update({
+                    "status": "failed",
+                    "message": "Previous sync stalled. Auto-cleaned before retry.",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                })
+                
+                pipe = redis_client.pipeline()
+                pipe.set(key, json.dumps(task_data))
+                pipe.delete(lock_key)
+                await pipe.execute()
+
+                logger.info(f"Auto-cleaned stale task {task_data['task_id']} for shop {shop_id}.")
+                return True
+        except (ValueError, TypeError) as e:
+            logger.error(f"Could not parse date for task key {key}: {e}")
+            continue
+
+    return False
+
+def check_and_update_stalled_status(task_details: Dict[str, Any]) -> Dict[str, Any]:
+    """Checks if a task appears stalled and updates the dictionary for reporting."""
+    status = task_details.get("status")
+    updated_at_str = task_details.get("updated_at")
+
+    if status == "processing" and updated_at_str:
+        try:
+            updated_at = isoparse(updated_at_str)
+            
+            # if the time since the last update exceeds the threshold
+            if datetime.now(timezone.utc) - updated_at > timedelta(minutes=TASK_STALLED_TIMEOUT_MINUTES):
+                task_details["status"] = "failed"
+                task_details["message"] = "Task timed out and appears to be stalled. Please try again."
+                task_id = task_details.get("task_id")
+                logger.warning(f"Reporting stalled status for task {task_id}.")
+
+        except (ValueError, TypeError) as e:
+            # If the date is malformed, we can't check it. Log it and return original details.
+            task_id = task_details.get("task_id")
+            logger.error(f"Could not parse timestamp for task {task_id}: {e}")
+            
+    return task_details

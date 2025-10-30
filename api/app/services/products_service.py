@@ -38,7 +38,7 @@ class ProductsService:
         # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
 
-    async def create(self, namespace: str, task_id: str) -> Dict[str, Any]:
+    async def create(self, namespace: str, task_id: str, lock_key: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
 
         steps_config = {
@@ -50,9 +50,11 @@ class ProductsService:
             "STORE_EMBEDDINGS": 5,
             "FINALIZE_SETUP": 5,
         }
-        tracker = ProgressTracker(task_id, steps_config)
+        tracker = ProgressTracker(namespace, task_id, steps_config)
+        redis_client = None
 
         try:
+            await tracker.initialize()
             await tracker.report_progress("INITIALIZE", "Connecting to your Shopify store...")
 
             products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
@@ -68,26 +70,27 @@ class ProductsService:
                 if category and category not in sample_products_by_category:
                     sample_products_by_category[category] = product
 
-            await self.metadata_generator.generate_and_store_config(
-                namespace, 
-                sample_products_by_category, 
-                collections
-            )
-            await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
-
             async with AsyncSessionLocal() as session:
                 shop_pk = await self.analytics_handler.get_shop_pk(namespace, session)
                 if not shop_pk:
                     raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
+                
+                await self.metadata_generator.generate_and_store_config(
+                    shop_id=shop_pk,
+                    namespace=namespace,
+                    sample_products_by_category=sample_products_by_category,
+                    collections=collections
+                )
+                await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
 
-            stored_collections = await self.shop_admin_handler.create_collections(collections)
+                stored_collections = await self.shop_admin_handler.create_collections(collections, shop_pk)
 
-            titles = [col["title"] for col in stored_collections if col.get("title")]
-            await self.category_cache.update_categories_cache(namespace, titles)
+                titles = [col["title"] for col in stored_collections if col.get("title")]
+                await self.category_cache.update_categories_cache(namespace, titles)
 
-            collection_id_map = {
-                collection["title"]: collection["id"] for collection in stored_collections
-            }
+                collection_id_map = {
+                    collection["title"]: collection["id"] for collection in stored_collections
+                }
 
             products_with_tags = [p for p in products if getattr(p, 'tags', [])]
             if products_with_tags:
@@ -126,6 +129,13 @@ class ProductsService:
             await tracker.complete("Sync complete!")
             
         except Exception as error:
-            error_message = f"Error syncing products: {error}"
-            logger.error(f"Background task {task_id} failed: {error_message}", exc_info=True)
-            await tracker.fail("An unexpected error occurred.")
+            error_message = f"Sync failed due to a critical system error. Please try again later. (Details: {str(error)})"
+            logger.error(f"Background task {task_id} for shop {namespace} failed: {error}", exc_info=True)
+            await tracker.fail(error_message)
+        finally:
+            try:
+                redis_client = await get_redis_client()
+                await redis_client.delete(lock_key)
+                logger.info(f"Released lock: {lock_key}")
+            except Exception as e:
+                logger.error(f"Failed to release lock {lock_key}: {e}")

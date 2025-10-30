@@ -1,7 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, delete
-from typing import Optional
+import uuid
 
 from app.models.db.shop_admin import ProductModel
 from app.models.db.checkout_product import CheckoutProductModel
@@ -14,7 +14,8 @@ class CheckoutProductHandler:
         self.analytics_handler = AnalyticsHandler()
         pass
 
-    async def store_checkout_product(self, shop_id: str, user_id: Optional[int], guest_id: Optional[str], variant_id: int, product_count: int):
+    #TODO P0: If we are raising ValueError, Are these errors are correctly showing in frontend, needs to test and check on it.
+    async def store_checkout_product(self, shop_id: str, user_id: uuid.UUID, variant_id: int, product_count: int):
         """Stores checkout product information in the database."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
@@ -23,8 +24,8 @@ class CheckoutProductHandler:
                     if not shop_pk:
                         raise ValueError("Shop not found")
                     
-                    if not user_id and not guest_id:
-                        raise ValueError("Either user_id or guest_id must be provided")
+                    if not user_id:
+                        raise ValueError("user_id must be provided")
 
                     product = await session.execute(select(ProductModel).filter(ProductModel.variant_id == variant_id))
                     product_record = product.scalars().first()
@@ -39,20 +40,14 @@ class CheckoutProductHandler:
                         "shop_id": shop_pk,
                         "variant_id": product_record.variant_id,
                         "collection_id": collection_id,
-                        "product_count": product_count
+                        "product_count": product_count,
+                        "user_id": user_id,
                     }
-
-                    if user_id:
-                        insert_data["user_id"] = user_id
-                        conflict_target = ['shop_id', 'variant_id', 'user_id']
-                    elif guest_id:
-                        insert_data["guest_id"] = guest_id
-                        conflict_target = ['shop_id', 'variant_id', 'guest_id']
 
                     stmt = insert(CheckoutProductModel).values(**insert_data)
 
                     update_stmt = stmt.on_conflict_do_update(
-                        index_elements=conflict_target,
+                        index_elements=['shop_id', 'variant_id', 'user_id'],
                         set_=dict(product_count=product_count)
                     )
                     
@@ -68,28 +63,21 @@ class CheckoutProductHandler:
                     logger.error(f"Error: {error}", exc_info=True)
                     return {"success": False, "error": str(error)}
 
-    async def remove_checkout_product(self, shop_id: str, user_id: Optional[int], guest_id: Optional[str], variant_id: int):
+    async def remove_checkout_product(self, shop_id: str, user_id: uuid.UUID, variant_id: int):
         """Removes a checkout product entry"""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    #TODO P0: We need to keep below store checking verification in the middleware as well 
                     shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     if not shop_pk:
                         raise ValueError("Shop not found")
-                    
-                    filters = [
-                        CheckoutProductModel.variant_id == variant_id,
-                        CheckoutProductModel.shop_id == shop_pk,
-                    ]
-
-                    if user_id:
-                        filters.append(CheckoutProductModel.user_id == user_id)
-                    elif guest_id:
-                        filters.append(CheckoutProductModel.guest_id == guest_id)
-                    else:
-                        raise ValueError("Must provide user_id or guest_id")
     
-                    stmt = delete(CheckoutProductModel).where(*filters)
+                    stmt = delete(CheckoutProductModel).where(
+                        CheckoutProductModel.shop_id == shop_pk,
+                        CheckoutProductModel.variant_id == variant_id,
+                        CheckoutProductModel.user_id == user_id
+                    )
                     result = await session.execute(stmt)
                     await session.commit()
     

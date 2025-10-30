@@ -20,6 +20,7 @@ async def send_otp_email(to_email: str, otp: str, shop_domain):
         part.capitalize() 
         for part in shop_domain.replace(".myshopify.com", "").split("-")
     )
+    company_name = "ReezoAI"
 
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Your {store_name} Verification Code"
@@ -35,6 +36,8 @@ async def send_otp_email(to_email: str, otp: str, shop_domain):
       
       Thanks,
       The {store_name} Team
+
+      Powered by {company_name}
       """
 
     html = f"""\
@@ -51,6 +54,9 @@ async def send_otp_email(to_email: str, otp: str, shop_domain):
               This code will expire in 5 minutes.
             </p>
             <p>Thanks,<br>The {store_name} Team</p>
+            <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+              Powered by {company_name}
+            </p>
           </div>
           <p style="font-size: 12px; color: #6c757d; text-align: center; margin-top: 20px;">
             If you didn't request this code, please ignore this email.

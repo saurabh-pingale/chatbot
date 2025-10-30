@@ -1,9 +1,6 @@
 QDRANT_COLLECTION_NAME = 'chatbot_products'
 LANGFUSE_HOST  = "https://cloud.langfuse.com"
 
-TOGETHER_MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"
-TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions"
-
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 CLAUDE_MODEL_NAME = "claude-3-haiku-20240307"
 
@@ -34,3 +31,11 @@ TAG_LIBRARY = {
 
 PREVIOUS_MESSAGE_CONTEXT_LIMIT = -3
 EXCLUDE_LAST_MESSAGE = -1
+
+MIN_DATAPOINTS_FOR_HOURLY_GRANULARITY = 10
+HOURLY_GRANULARITY_THRESHOLD_HOURS = 4
+SECONDS_IN_A_DAY = 86400 # 24 * 3600
+
+# Maximum allowed time (in minutes) a task can stay in "processing" state
+# before being considered stalled (i.e., not making progress) and marked as failed
+TASK_STALLED_TIMEOUT_MINUTES = 10

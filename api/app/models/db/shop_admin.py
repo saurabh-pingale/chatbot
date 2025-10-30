@@ -1,7 +1,10 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Date, Index, CheckConstraint, JSON
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, BigInteger, Boolean, func, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from datetime import datetime
+import uuid
 
 from app.models.db.base import Base
 
@@ -36,13 +39,16 @@ class ShopModel(Base):
     subscriptions = relationship("SubscriptionModel", back_populates="shop")
     products = relationship("ProductModel", back_populates="shop")
     offers = relationship("OfferModel", back_populates="shop", cascade="all, delete-orphan")
+    shop_metadata = relationship("ShopMetadataModel", back_populates="shop", cascade="all, delete-orphan", uselist=False)
+    collections = relationship("CollectionModel", back_populates="shop", cascade="all, delete-orphan")
+    orders = relationship("OrderModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at = Column(DateTime, default=func.now())
-    email = Column(Text, nullable=False)
+    email = Column(Text, nullable=True)
     city = Column(Text, nullable=True)
     region = Column(Text, nullable=True) 
     country = Column(Text, nullable=True) 
@@ -54,16 +60,22 @@ class UserModel(Base):
     shop = relationship("ShopModel", back_populates="users")
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
     analytics = relationship("UserShopAnalyticsModel", back_populates="user")
+    orders = relationship("OrderModel", back_populates="user")
 
     __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 
 class CollectionModel(Base):
     __tablename__ = 'collections'
+    __table_args__ = (
+        UniqueConstraint('shop_id', 'title', name='_shop_id_title_uc'),
+    )
     
     id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True)
+    title = Column(String, index=True)
     products_count = Column(Integer)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
     
+    shop = relationship("ShopModel", back_populates="collections")
     products = relationship("ProductModel", back_populates="collection")
     checkout_products = relationship("CheckoutProductModel", back_populates="collection")
 
@@ -87,22 +99,16 @@ class ProductModel(Base):
     checkout_products = relationship("CheckoutProductModel", back_populates="product", primaryjoin="ProductModel.variant_id==CheckoutProductModel.variant_id")
     shop = relationship("ShopModel", back_populates="products")
     offers = relationship("OfferModel", back_populates="product", cascade="all, delete-orphan")
+    order_items = relationship("OrderItemModel", back_populates="product")
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'
     __table_args__ = (
         Index('uq_user_shop_date', 'user_id', 'shop_id', 'date', unique=True, postgresql_where=Column('user_id').isnot(None)),
-        Index('uq_guest_shop_date', 'guest_id', 'shop_id', 'date', unique=True, postgresql_where=Column('guest_id').isnot(None)),
-        
-        CheckConstraint(
-            '(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)', 
-            name='check_user_or_guest'
-        ),
     )
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
-    guest_id = Column(String(255), nullable=True, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True, index=True)
     shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False, index=True)
     date = Column(BigInteger, nullable=False, index=True)
     chat_interactions_count = Column(Integer, default=0, nullable=False)
@@ -110,14 +116,28 @@ class UserShopAnalyticsModel(Base):
     added_to_cart_count = Column(Integer, default=0, nullable=False)
     purchased_count = Column(Integer, default=0, nullable=False)
     purchase_amount = Column(Float, default=0.0, nullable=False)
-    utm_source = Column(String, nullable=True)
-    utm_medium = Column(String, nullable=True)
-    utm_campaign = Column(String, nullable=True)
-    utm_term = Column(String, nullable=True)
-    utm_content = Column(String, nullable=True)
 
     user = relationship("UserModel", back_populates="analytics")
     shop = relationship("ShopModel")
+    minutely_data = relationship("UserShopMinutelyAnalyticsModel", back_populates="daily_analytics", cascade="all, delete-orphan")
+
+class UserShopMinutelyAnalyticsModel(Base):
+    __tablename__ = 'user_shop_minutely_analytics'
+    __table_args__ = (
+        Index('uq_analytics_id_minute_timestamp', 'analytics_id', 'minute_timestamp', unique=True),
+    )
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    analytics_id = Column(Integer, ForeignKey('user_shop_analytics.id', ondelete="CASCADE"), nullable=False, index=True)
+    minute_timestamp = Column(BigInteger, nullable=False, index=True)
+
+    chat_interactions_count = Column(Integer, default=0, nullable=False)
+    opened_chatbot_count = Column(Integer, default=0, nullable=False)
+    added_to_cart_count = Column(Integer, default=0, nullable=False)
+    purchased_count = Column(Integer, default=0, nullable=False)
+    purchase_amount = Column(Float, default=0.0, nullable=False)
+
+    daily_analytics = relationship("UserShopAnalyticsModel", back_populates="minutely_data")
 
 class IntegrationModel(Base):
     __tablename__ = 'integrations'
@@ -127,7 +147,7 @@ class IntegrationModel(Base):
     description = Column(String(500), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    shop_id = Column(String, ForeignKey('shops.shop_id'), nullable=False, index=True)
+    shop_id = Column(Integer, ForeignKey('shops.id'), nullable=False)
 
     shop = relationship("ShopModel", back_populates="integrations")
 
@@ -145,3 +165,15 @@ class OfferModel(Base):
 
     shop = relationship("ShopModel", back_populates="offers")
     product = relationship("ProductModel", back_populates="offers")
+
+class ShopMetadataModel(Base):
+    __tablename__ = "shop_metadata"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False, unique=True)
+    namespace = Column(String(255), nullable=False)
+    config_data = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    shop = relationship("ShopModel", back_populates="shop_metadata")

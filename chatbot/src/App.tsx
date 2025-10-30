@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Chatbot } from './pages/Chatbot/Chatbot';
-import { trackOpenedChatbot } from './services/analytics';
 import { CartProvider } from './context/CartContext';
 import { ConfigProvider } from './context/ConfigContext';
 import { getShopConfig } from './utils/utils';
-import { captureUtmParameters, getStoredUtmParameters } from './utils/utm';
 import type { ChatbotAppConfig } from './types';
 import './App.scss';
 
@@ -13,25 +11,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    captureUtmParameters();
-
     const fetchConfig = async () => {
       try {
         const config = await getShopConfig();
         setConfig(config);
-
-        if (config.setupCompleted) {
-          const userId = localStorage.getItem('user_id');
-          const utmParams = getStoredUtmParameters();
-          trackOpenedChatbot(userId, config.shopId, utmParams);
-        }
       } catch (error) {
         console.error("Failed to fetch configuration:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchConfig();
   }, []);
 

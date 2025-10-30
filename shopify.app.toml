@@ -1,26 +1,34 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "241227516eda9ea7090d909f8c6decb1"
-name = "chatbot-final"
-application_url = "https://example.com"
+client_id = "aabd13e30cfbf14b27e3bd7adfc6edbf"
+name = "chatbot-final-version"
+application_url = "https://bot.reezoai.com"
 embedded = true
 
-[build]
-automatically_update_urls_on_dev = true
-
 [webhooks]
-api_version = "2025-10"
+api_version = "2026-01"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/create" ]
+  uri = "https://api.reezoai.com/webhooks/orders/create"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_metaobjects,read_products,write_products"
+scopes = "read_metaobjects,read_orders,read_products,write_products"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://bot.reezoai.com/auth/callback",
+  "https://bot.reezoai.com/auth/shopify/callback",
+  "https://bot.reezoai.com/api/auth/callback"
+]
 
 [app_proxy]
-url = "https://highest-renewal-alternatives-newfoundland.trycloudflare.com"
+url = "https://bot.reezoai.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
+
+[build]
+automatically_update_urls_on_dev = true

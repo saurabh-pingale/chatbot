@@ -44,9 +44,9 @@ export default function TrainingPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [visualProgress, setVisualProgress] = useState<number | null>(null);
   const [displayedProgress, setDisplayedProgress] = useState<number>(0);
-  const [targetProgress, setTargetProgress] = useState<number>(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [isSyncComplete, setIsSyncComplete] = useState(false);
+  const [isSyncError, setIsSyncError] = useState(false);
 
   const MAX_CHAR_LIMIT = 1000;
 
@@ -158,12 +158,13 @@ export default function TrainingPage() {
   const pollTaskStatus = (taskId: string) => {
     pollingIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`);
+        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`, {
+          headers: { "x-shopify-store": shop}
+        });
         if (!response.ok) throw new Error('Polling request failed');
         const data = await response.json();
 
         setVisualProgress(data.percentage);
-        setTargetProgress(data.percentage);
         setProgressMessage(data.message);
 
         if (data.status === 'completed' || data.status === 'failed') {
@@ -172,8 +173,8 @@ export default function TrainingPage() {
           }
 
           if (data.status === 'completed') {
+            setIsSyncError(false);
             setVisualProgress(100);
-            setTargetProgress(100);
 
             if (!setupCompleted) {
               setTimeout(() => {
@@ -188,20 +189,20 @@ export default function TrainingPage() {
                 setIsProcessing(false);
               }, 1000);
             }
-          } else {
+          } else if (data.status === 'failed') {
+            setIsSyncError(true);
             setMessages((prev) => [...prev, { sender: 'bot', text: `Failed to sync products: ${data.message || 'Please try again.'}` }]);
             processingRef.current = false;
             setIsProcessing(false);
-            setVisualProgress(null);
           }
         }
       } catch (error) {
         console.error("Polling failed:", error);
         if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-        setMessages((prev) => [...prev, { sender: 'bot', text: 'An error occurred while checking sync status. Please try again.' }]);
+        setIsSyncError(true);
+        setProgressMessage('An error occurred while checking sync status. Please try again.');
         processingRef.current = false;
         setIsProcessing(false);
-        setVisualProgress(null);
       }
     }, 3000);
   };
@@ -213,8 +214,8 @@ export default function TrainingPage() {
 
     setVisualProgress(0);
     setDisplayedProgress(0);
-    setTargetProgress(0);
     setIsSyncComplete(false);
+    setIsSyncError(false);
 
     setProgressMessage("Initiating product sync...");
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
@@ -227,13 +228,14 @@ export default function TrainingPage() {
         throw new Error("Failed to get a task ID for product sync.");
       }
     } catch (error) {
+      setIsSyncError(true);
+      setProgressMessage("Failed to start product sync. Please check your connection and try again.");
       setMessages((prev) => [...prev, { 
         sender: "bot", 
         text: "Failed to fetch products. Please try again." 
       }]);
       processingRef.current = false;
       setIsProcessing(false);
-      setVisualProgress(null); 
     }
   };
 
@@ -245,6 +247,10 @@ export default function TrainingPage() {
     }
   }, [fetcher.data, fetcher.state]);
 
+  const handleRetry = () => {
+    handleFetchProducts();
+  };
+
   const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
 
   return (
@@ -254,6 +260,8 @@ export default function TrainingPage() {
           progress={displayedProgress}
           message={progressMessage}
           isComplete={isSyncComplete}
+          isError={isSyncError}
+          onRetry={handleRetry}
           onNavigate={navigate}
           chatbotDeepLink={themeEditorDeepLink}
         />

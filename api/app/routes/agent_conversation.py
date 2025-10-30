@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
-from pydantic import ValidationError
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
 from app.middleware.auth import get_current_user_payload
 from app.models.api.agent_router import ErrorResponse, AgentConversationPayload
-from app.models.api.shop_admin import AuthPayloadModel
 from app.constants import MESSAGE_LIMIT, AGENT_CONVERSATION_RATE_LIMIT, PREVIOUS_MESSAGE_CONTEXT_LIMIT, EXCLUDE_LAST_MESSAGE
-from app.modules.analytics_module import record_chat_analytics
 from app.dbhandlers.db import AsyncSessionLocal
-from app.utils.rag_pipeline_utils import build_conversation_log_data
+from app.utils.rag_pipeline_utils import build_conversation_log_data, validate_and_get_user_info
 from app.utils.rate_limiter import limiter
 from app.utils.logger import logger
 
@@ -40,32 +37,22 @@ async def agent_conversation(
         app = get_app()
 
         async with AsyncSessionLocal() as session:    
-            shop_id_int= await app.analytics_handler.get_shop_pk(shop_id, session)
+            shop_id_int= await app.shop_config_service.get_shop_pk(shop_id, session)
             if not shop_id_int:
                 raise HTTPException(status_code=404, detail="Shop not found.")
 
         if not auth_payload:
-            user_id, is_guest = None, True  # Guest
+            guest_user_id = request.query_params.get("guest_id")
+            if not guest_user_id:
+                logger.warning("Guest user missing guest_id")
+                raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
+
+            user_record, _ = await app.user_handler.create_guest_if_not_exists(guest_user_id, shop_id_int)
+            user_id = user_record.id
         else:
-            try:
-                validated_payload = AuthPayloadModel(**auth_payload)
-                validated_payload.validate_shop_access(shop_id_int)
-                user_id = validated_payload.user_id
-                is_guest = validated_payload.is_guest or False
-            except (ValidationError, ValueError) as ve:
-                logger.warning(f"Auth validation failed: {ve}")
-                return {
-                    "answer": "Authentication failed.",
-                    "products": [],
-                    "categories": [],
-                    "success": False,
-                    "error": str(ve)
-                }
-            
-        guest_id = request.query_params.get("guest_id")
-        if is_guest and not guest_id:
-            logger.warning("Guest user missing guest_id")
-            raise HTTPException(status_code=400, detail="Missing guest_id for guest session")
+            user_id, _, error_response = await validate_and_get_user_info(auth_payload, shop_id_int)
+            if error_response:
+                return error_response
 
         contents = payload.messages
         if not isinstance(contents, list) or not all(isinstance(item, dict) for item in contents):
@@ -87,13 +74,15 @@ async def agent_conversation(
 
         user_message = next((m.get('content') for m in reversed(contents) if m.get('role', 'user') == 'user'), None)
 
+        #TODO P1: Below logic is not seems to be proper
+        #TODO P1: Please create a doc explaining this logic
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await record_chat_analytics(user_id, shop_id_int, guest_id, payload.location_info)
+        await app.analytics_service.record_chat_interaction(user_id=user_id, shop_id=shop_id_int)
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 
-        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_id_int, is_guest, guest_id )
+        conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_id_int )
 
         conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
         

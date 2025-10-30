@@ -41,7 +41,6 @@ async def store_checkout_products(
     try:
         app = get_app()
         user_id = None
-        is_guest = True
 
         async with AsyncSessionLocal() as session:
             shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
@@ -53,16 +52,18 @@ async def store_checkout_products(
                 validated_payload = AuthPayloadModel(**auth_payload)
                 validated_payload.validate_shop_access(shop_pk)
                 user_id = validated_payload.user_id
-                is_guest = validated_payload.is_guest or False
             except (ValidationError, ValueError) as ve:
                 logger.warning(f"Auth validation failed: {ve}")
                 raise HTTPException(status_code=403, detail="Unauthorized access")
-
-        if is_guest and not guest_id:
-            raise HTTPException(status_code=400, detail="Missing guest_id for guest user")
+            
+        elif guest_id:
+            guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_pk)
+            user_id = guest_user.id
+        else:
+            raise HTTPException(status_code=400, detail="Missing user_id or guest_id")
 
         response = await app.checkout_product_service.store_checkout_product(
-            shop_id, user_id, guest_id, variant_id, product_count
+            shop_id=shop_pk, user_id=user_id, variant_id=variant_id, product_count=product_count
         )
         if response.get("success"):
             return {"success": True}
@@ -101,7 +102,6 @@ async def remove_checkout_product(
     try:
         app = get_app()
         user_id = None
-        is_guest = True
 
         async with AsyncSessionLocal() as session:
             shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
@@ -113,16 +113,18 @@ async def remove_checkout_product(
                 validated_payload = AuthPayloadModel(**auth_payload)
                 validated_payload.validate_shop_access(shop_pk)
                 user_id = validated_payload.user_id
-                is_guest = validated_payload.is_guest or False
             except (ValidationError, ValueError) as ve:
                 logger.warning(f"Auth validation failed: {ve}")
                 raise HTTPException(status_code=403, detail="Unauthorized access")
 
-        if is_guest and not guest_id:
+        elif guest_id:
+            guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_pk)
+            user_id = guest_user.id
+        else:
             raise HTTPException(status_code=400, detail="Missing guest_id for guest user")
 
         response = await app.checkout_product_service.remove_checkout_product(
-            shop_id, user_id, guest_id, variant_id
+            shop_id=shop_pk, user_id=user_id, variant_id=variant_id
         )
         if response.get("success"):
             return {"success": True}

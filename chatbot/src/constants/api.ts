@@ -7,7 +7,6 @@ export const API_ENDPOINTS = {
   VERIFY_OTP: '/apps/chatbot-api-1/verify-otp',
   TRACK_OPENED_CHATBOT: '/apps/chatbot-api-1/track_opened_chatbot',
   TRACK_ADDED_TO_CART: '/apps/chatbot-api-1/track_added_to_cart',
-  TRACK_PURCHASE: '/apps/chatbot-api-1/track_purchase',
   SHOP_CONFIG: '/apps/chatbot-api-1/shop-config',
   GET_OFFERS: '/apps/chatbot-api-1/get-offers',
   IP_INFO: 'https://api.ipify.org?format=json',

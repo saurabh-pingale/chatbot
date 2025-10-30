@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import * as db from '../services/db';
-import type { Message, ChatResponse, ProductType } from '../types';
+import type { Message, ChatResponse, ProductType, TagItem } from '../types';
 
 export const useChat = (conversationKey: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,13 +34,19 @@ export const useChat = (conversationKey: string | null) => {
     setIsTyping(isTyping);
   };
 
-  const addMessage = useCallback((content: string, type: 'user' | 'bot', products?: ProductType[]) => {
+  const addMessage = useCallback((
+    content: string,
+    type: 'user' | 'bot',
+    products?: ProductType[],
+    tags?: TagItem[]
+  ) => {
     const newMessage: Message = {
       id: uuidv4(),
       content,
       type,
       timestamp: new Date(),
       products,
+      tags,
     };
     setMessages(prev => [...prev, newMessage]);
   }, []);
@@ -52,6 +58,7 @@ export const useChat = (conversationKey: string | null) => {
       type: 'bot',
       timestamp: new Date(),
       products: response?.products,
+      tags: response?.tags,
     };
     setMessages(prev => [...prev, botMessage]);
   }, []);
