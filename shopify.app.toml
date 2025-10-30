@@ -1,16 +1,16 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "219c1c8dbe42911175fe6cfb1572779f"
-name = "chatbot-v8"
-application_url = "https://composite-savannah-apnic-glasgow.trycloudflare.com"
+client_id = "aabd13e30cfbf14b27e3bd7adfc6edbf"
+name = "chatbot-final-version"
+application_url = "https://bot.reezoai.com"
 embedded = true
 
 [webhooks]
-api_version = "2025-10"
+api_version = "2026-01"
 
   [[webhooks.subscriptions]]
   topics = [ "orders/create" ]
-  uri = "https://74f35a2e8262.ngrok-free.app/webhooks/orders/create"
+  uri = "https://api.reezoai.com/webhooks/orders/create"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -20,13 +20,13 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://composite-savannah-apnic-glasgow.trycloudflare.com/auth/callback",
-  "https://composite-savannah-apnic-glasgow.trycloudflare.com/auth/shopify/callback",
-  "https://composite-savannah-apnic-glasgow.trycloudflare.com/api/auth/callback"
+  "https://bot.reezoai.com/auth/callback",
+  "https://bot.reezoai.com/auth/shopify/callback",
+  "https://bot.reezoai.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://composite-savannah-apnic-glasgow.trycloudflare.com"
+url = "https://bot.reezoai.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
 
