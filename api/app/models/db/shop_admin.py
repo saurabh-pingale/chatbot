@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 
 from app.models.db.base import Base
+from app.models.db.cart import CartItemModel
 
 class ShopModel(Base):
     __tablename__ = 'shops'
@@ -15,6 +16,7 @@ class ShopModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     shop_id = Column(String, unique=True, index=True, nullable=False)
+    access_token = Column(String(500), nullable=True)
     shop_description = Column(Text, nullable=True)
     preferred_color = Column(String, nullable=True)
     region = Column(String, nullable=True)
@@ -42,6 +44,7 @@ class ShopModel(Base):
     shop_metadata = relationship("ShopMetadataModel", back_populates="shop", cascade="all, delete-orphan", uselist=False)
     collections = relationship("CollectionModel", back_populates="shop", cascade="all, delete-orphan")
     orders = relationship("OrderModel", back_populates="shop")
+    carts = relationship("CartModel", back_populates="shop")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -61,6 +64,7 @@ class UserModel(Base):
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
     analytics = relationship("UserShopAnalyticsModel", back_populates="user")
     orders = relationship("OrderModel", back_populates="user")
+    carts = relationship("CartModel", back_populates="user")
 
     __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 
@@ -100,6 +104,7 @@ class ProductModel(Base):
     shop = relationship("ShopModel", back_populates="products")
     offers = relationship("OfferModel", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderItemModel", back_populates="product")
+    cart_items = relationship("CartItemModel", back_populates="product", foreign_keys=[CartItemModel.variant_id])
     
 class UserShopAnalyticsModel(Base):
     __tablename__ = 'user_shop_analytics'

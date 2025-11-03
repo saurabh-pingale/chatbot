@@ -12,7 +12,7 @@ import {
   Banner,
   Spinner,
 } from "@shopify/polaris";
-import { json, LoaderFunction } from "@remix-run/node";
+import { json, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { getShopStatus } from "./get_shop_status";
@@ -71,15 +71,16 @@ export default function Index() {
 
   const isLoading = navigation.state !== "idle";
 
-  const showSubscriptionWarning = () => {
-    if (!endDate || (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing')) {
-      return false;
-    }
-    const now = new Date();
-    const expiry = new Date(endDate);
-    const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
-    return daysUntilExpiry <= 7;
-  }
+  // TODO: Uncomment when pricing flow is automated completely
+  // const showSubscriptionWarning = () => {
+  //   if (!endDate || (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing')) {
+  //     return false;
+  //   }
+  //   const now = new Date();
+  //   const expiry = new Date(endDate);
+  //   const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
+  //   return daysUntilExpiry <= 7;
+  // }
 
   const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
 
@@ -104,23 +105,22 @@ export default function Index() {
         </div>
       )}
       <BlockStack gap="500">
-        {showSubscriptionWarning() && (
+        {/* TODO: Uncomment when pricing flow is automated completely */}
+        {/* {showSubscriptionWarning() && (
             <Banner
                 title="Your subscription is ending soon!"
                 tone="warning"
-                // TODO: Uncomment when pricing flow is automated completely
-                // action={{
-                //     content: "Renew Now",
-                //     onAction: () => handleNavigation("/app/billings"),
-                // }}
+                action={{
+                    content: "Renew Now",
+                    onAction: () => handleNavigation("/app/billings"),
+                }}
             >
                 <p>
-                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}. 
-                    {/*// TODO: Uncomment when pricing flow is automated completely
-                      Please renew to avoid service interruption. */}
+                    Your <strong>{plan}</strong> plan will expire on {new Date(endDate!).toLocaleDateString()}.
+                      Please renew to avoid service interruption.
                 </p>
             </Banner>
-        )}
+        )} */}
         <Card>
           <BlockStack gap="200">
             <Text as="h2" variant="headingLg">

@@ -16,3 +16,7 @@ class CheckoutProductService:
         return await self.db_handler.remove_checkout_product(
             shop_id, user_id, variant_id
         )
+    
+    async def get_latest_inventory(self, shop_id: str, shop_pk: int, variant_id: int, session) -> int:
+        """Get latest inventory."""
+        return await self.db_handler.get_latest_inventory(shop_id, shop_pk, variant_id, session)

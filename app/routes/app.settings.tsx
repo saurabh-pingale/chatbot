@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { json, LoaderFunction, ActionFunction } from "@remix-run/node";
+import { json, type LoaderFunction, type ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import { DeleteIcon, PlusIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import { saveColorPreference } from "./save_color_preference";
 import { saveSupportInfo } from "./save_support_info";
@@ -10,7 +9,7 @@ import { saveImageURLs } from "./save_image_urls";
 import { saveEmailGatePreference } from "./save_email_gate_preference";
 import { getShopStatus } from "./get_shop_status";
 import { getShopSettings } from "./get_shop_settings";
-import { ActionResponse } from "../common/types/index";
+import type { ActionResponse } from "../common/types/index";
 import {
   Page,
   Layout,
@@ -59,6 +58,19 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
   } catch (error) {
     console.error("Failed to load country codes:", error);
+  }
+
+  if (!setup_completed && session.accessToken) {
+    try {
+      await fetch(`${API.STORE_ACCESS_TOKEN}?shop_id=${session.shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: session.accessToken })
+      });
+      console.log('Access token stored successfully during setup');
+    } catch (error) {
+      console.error('Failed to store access token during setup:', error);
+    }
   }
 
   if (setup_completed) {

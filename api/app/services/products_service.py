@@ -7,6 +7,7 @@ from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.dbhandlers.shop_config_handler import ShopConfigHandler
 from app.utils.metadata_generator import MetadataGenerator
 from app.utils.category_cache import CategoryCache
 
@@ -27,16 +28,24 @@ from app.utils.progress_tracker import ProgressTracker
 from app.utils.logger import logger
 
 class ProductsService:
-    def __init__(self, shopify_store: str, shopify_access_token: str):
-        self.shopify_service = ShopifyService(shopify_store, shopify_access_token)
+    def __init__(self, shopify_store: str):
+        self.shopify_store = shopify_store
+        self.shopify_access_token = None
+        self.shopify_service = None
         self.embeddings_handler = EmbeddingsHandler()
         self.shop_admin_handler = ShopAdminHandler()
         self.analytics_handler = AnalyticsHandler()
+        self.shop_config_handler = ShopConfigHandler()
         self.metadata_generator = MetadataGenerator()
         self.category_cache = CategoryCache()
 
         # TODO: Remove it when pricing flow is automated completely
         self.subscription_handler = SubscriptionHandler()
+
+    async def get_shopify_access_token(self, shop_domain: str) -> str:
+        """Fetch Shopify access token from DB for the shop domain."""
+        async with AsyncSessionLocal() as session:
+            return await self.shop_config_handler.get_shopify_access_token(shop_domain, session)
 
     async def create(self, namespace: str, task_id: str, lock_key: str) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
@@ -57,7 +66,10 @@ class ProductsService:
             await tracker.initialize()
             await tracker.report_progress("INITIALIZE", "Connecting to your Shopify store...")
 
-            products, collections = await get_products_from_admin(self.shopify_service.shopify_store, self.shopify_service.shopify_access_token)
+            self.shopify_access_token = await self.get_shopify_access_token(namespace)
+            self.shopify_service = ShopifyService(self.shopify_store, self.shopify_access_token)
+
+            products, collections = await get_products_from_admin(self.shopify_service)
             await tracker.report_progress("FETCH_PRODUCTS", f"Found {len(products)} products to sync.")
 
             for product in products:
@@ -92,13 +104,14 @@ class ProductsService:
                     collection["title"]: collection["id"] for collection in stored_collections
                 }
 
+            unique_products = list({product.id: product for product in products}.values())
+            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
+            
             products_with_tags = [p for p in products if getattr(p, 'tags', [])]
             if products_with_tags:
                 await self.shop_admin_handler.create_offers(products_with_tags, shop_id=shop_pk)
                 await self.shop_admin_handler.cache_offer_products(namespace, products_with_tags)
-
-            unique_products = list({product.id: product for product in products}.values())
-            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
+        
             await tracker.report_progress("SAVE_PRODUCTS_DB", "Saving product information to our database.")
         
             products_embeddings = await create_product_embeddings(products, tracker)

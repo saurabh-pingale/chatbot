@@ -1,18 +1,20 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 import uuid
 
 from app.models.db.shop_admin import ProductModel
 from app.models.db.checkout_product import CheckoutProductModel
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.dbhandlers.shop_config_handler import ShopConfigHandler
+from app.external_service.shopify_service import ShopifyService
 from app.utils.logger import logger
 
 class CheckoutProductHandler:
     def __init__(self):
         self.analytics_handler = AnalyticsHandler()
-        pass
+        self.shop_config_handler = ShopConfigHandler()
 
     #TODO P0: If we are raising ValueError, Are these errors are correctly showing in frontend, needs to test and check on it.
     async def store_checkout_product(self, shop_id: str, user_id: uuid.UUID, variant_id: int, product_count: int):
@@ -92,3 +94,31 @@ class CheckoutProductHandler:
                 except ValueError as error:
                     logger.error(f"Validation error: {error}", exc_info=True)
                     return {"success": False, "error": str(error)}
+                
+    async def get_latest_inventory(self, shop_id: str, shop_pk: int, variant_id: int, session):
+        """
+        Fetch the latest inventory quantity for a specific product variant and sync to DB.
+        """
+        try:
+            access_token = await self.shop_config_handler.get_shopify_access_token(shop_id, session)
+            shopify_service = ShopifyService(shop_id, access_token)
+            latest_quantity = await shopify_service.fetch_variant_inventory(variant_id)
+
+            update_stmt = update(ProductModel).where(
+                ProductModel.shop_id == shop_pk,
+                ProductModel.variant_id == variant_id
+            ).values(variant_quantity=latest_quantity)
+
+            result = await session.execute(update_stmt)
+            if result.rowcount == 0: 
+                logger.warning(f"No products found to update inventory for variant: {variant_id} in shop {shop_id}")
+            await session.commit()
+
+            return latest_quantity
+        except SQLAlchemyError as error:
+            await session.rollback()
+            logger.error(f"Database error updating inventory: {error}", exec_info=True)
+            raise ValueError("Database error while updating product inventory.")
+        except ValueError as error:
+            logger.error(f"Validation error fetching inventory: {error}", exc_info=True)
+            raise ValueError(str(error))

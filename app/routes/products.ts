@@ -1,15 +1,13 @@
 import { API } from "../constants/api.constants";
 
 export async function fetchProducts(
-  shop: string, 
-  accessToken: string
+  shop: string
 ): Promise<{ task_id: string }> {
     const response = await fetch(`${API.CREATE_PRODUCTS}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Store": shop,
-        "X-Shopify-Access-Token": accessToken,
+        "X-Shopify-Store": shop
       },
       body: JSON.stringify({ namespace: shop }),
     });

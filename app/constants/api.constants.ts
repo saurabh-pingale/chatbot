@@ -3,6 +3,7 @@ const BACKEND_URL = "https://shopify-chatbot-fastapi-578494102556.us-central1.ru
 export const API = {
     BACKEND_URL,
     SHOP_CONFIG: `${BACKEND_URL}/shop_config_router/config`,
+    STORE_ACCESS_TOKEN: `${BACKEND_URL}/shop_config_router/store-access-token`,
     SAVE_STORE_IMAGE: `${BACKEND_URL}/shop-admin/save-shop-image`,
     SAVE_COLOR_PREFERENCE: `${BACKEND_URL}/shop-admin/save-color-preference`,
     SAVE_SUPPORT_INFO: `${BACKEND_URL}/shop-admin/save-support-info`,

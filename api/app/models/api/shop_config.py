@@ -11,3 +11,6 @@ class ShopConfigResponse(BaseModel):
     support_phone: Optional[str]
     support_country_code: Optional[str]
     quick_replies: Optional[List[str]] = []
+
+class StoreAccessTokenRequest(BaseModel):
+    access_token: str

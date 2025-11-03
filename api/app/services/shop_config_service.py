@@ -13,3 +13,9 @@ class ShopConfigService:
         Retrieves consolidated shop configuration.
         """
         return await self.db_handler.get_shop_config(shop_id) 
+    
+    async def store_shopify_access_token(self, shop_domain: str, access_token: str) -> bool:
+        """
+        Stores or updates the Shopify access token for the shop.
+        """
+        return await self.db_handler.store_shopify_access_token(shop_domain, access_token)

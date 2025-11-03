@@ -161,3 +161,35 @@ class ShopifyService:
         except Exception as error:
             logger.error(f"Error fetching products from Shopify: {error}")
             raise ValueError("Failed to fetch products from Shopify")
+        
+    async def fetch_variant_inventory(self, variant_id: int) -> int:
+        "Fecth latest inventoty quantity for a specific product variant."
+        variant_gid = f"gid://shopify/ProductVariant/{variant_id}"
+        query = """
+            query getVariantInventory($id: ID!) {
+                node(id: $id) {
+                    ... on ProductVariant {
+                        inventoryQuantity
+                    }
+                }
+            }
+            """
+        
+        variables = {"id": variant_gid}
+        try:
+            url = SHOPIFY_GRAPHQL_URL.format(shop=self.shopify_store)
+            data = await execute_graphql_query(
+                url=url,
+                query=query,
+                variables=variables,
+                access_token=self.shopify_access_token
+            )
+
+            inventory_node = data.get("data", {}).get("node", {})
+            if "inventoryQuantity" not in inventory_node:
+                raise ValueError(f"Invalid variant ID: {variant_gid}")
+            quantity = inventory_node["inventoryQuantity"]
+            return quantity
+        except Exception as e:
+            logger.error(f"Failed to fetch inventory fpr variant {variant_id}: {e}")
+            raise ValueError("Failed to fetch latest inventory from Shopify.")

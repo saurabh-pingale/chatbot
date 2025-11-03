@@ -18,6 +18,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     "track_opened_chatbot": () => import("./track_opened_chatbot"),
     "track_added_to_cart": () => import("./track_added_to_cart"),
     "shop-config": () => import("./shop-config"),
+    "latest-inventory": () => import("./latest-inventory"),
+    "get_cart": () => import("./get_cart"),
+    "add_to_cart": () => import("./add_to_cart"),
+    "remove_from_cart": () => import("./remove_from_cart"),
+    "clear_cart": () => import("./clear_cart"),
   };
 
   const moduleLoader = routeMap[slug || ""];

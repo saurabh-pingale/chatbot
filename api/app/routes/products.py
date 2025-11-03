@@ -20,15 +20,14 @@ products_router = APIRouter(prefix="/products_router", tags=["products_router"])
 async def create(
     request: Request,
     background_tasks: BackgroundTasks,
-    x_shopify_store: str = Header(..., alias="X-Shopify-Store"),
-    x_shopify_access_token: str = Header(..., alias="X-Shopify-Access-Token")
+    x_shopify_store: str = Header(..., alias="X-Shopify-Store")
 ):
     """Fetch products from Shopify, generate embeddings and store in Vector DB"""
     try:
-        if not x_shopify_store or not x_shopify_access_token:
+        if not x_shopify_store:
             raise HTTPException(
                 status_code=400,
-                detail="Both X-Shopify-Store and X-Shopify-Access-Token headers are required"
+                detail="X-Shopify-Store header is required"
             )
         
         redis_client = await get_redis_client()
@@ -45,10 +44,7 @@ async def create(
                 detail="A product sync is already in progress for this store. Please wait for it to complete."
             )
 
-        products_service = ProductsService(
-            shopify_store=x_shopify_store,
-            shopify_access_token=x_shopify_access_token
-        )
+        products_service = ProductsService(shopify_store=x_shopify_store)
 
         body = await request.json()
         namespace = body.get("namespace", x_shopify_store)

@@ -1,22 +1,16 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
-import { removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
+import { getLatestInventory, removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
+import { fetchCartFromDB, addToCartDB, removeFromCartDB, clearCartDB } from '../services/cart';
 import { useDebounce } from './useDebounce';
 import { trackAddedToCart } from '../services/analytics';
-import { CART_STORAGE_KEY, POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX } from '../constants/cart';
+import { POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX, CART_STORAGE_KEY } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
+import { getShopId } from '../utils/utils';
 
 export const useCart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (err) {
-      console.error('Error parsing cart items', err);
-      return [];
-    }
-  });
-
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoadingCart, setIsLoadingCart] = useState(true);
   const debouncedCartItems = useDebounce(cartItems, 500);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
@@ -26,62 +20,70 @@ export const useCart = () => {
   let lastToken: string | null = null;
   let lastCount = 0;
 
-  useEffect(() => {
+  const loadCart = async () => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+      const dbCart = await fetchCartFromDB();
+      setCartItems(dbCart);
     } catch (err) {
-      console.error('Error saving cart to localStorage', err);
+      console.error('Failed to load cart from DB, falling back to localStorage', err);
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      if (stored) setCartItems(JSON.parse(stored));
+    } finally {
+      setIsLoadingCart(false);
     }
-  }, [cartItems]);
+  };
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  const saveCart = async () => {
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch (err) {
+      console.error('Failed to save cart to DB', err);
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    }
+  };
+
+  useEffect(() => {
+    if (!isInitialMount.current) saveCart();
+  }, [debouncedCartItems]);
 
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-
     if (syncLock.current) {
       syncLock.current = false;
       return;
     }
-
-    syncCartItemsToShopifyStoreCart(debouncedCartItems)
-      .catch(err => console.error('Background sync failed:', err));
-
+    syncCartItemsToShopifyStoreCart(debouncedCartItems).catch(err => console.error('Background sync failed:', err));
   }, [debouncedCartItems]);
 
   const pollCart = async () => {
-    if (JSON.stringify(cartItems) !== JSON.stringify(debouncedCartItems)) {
-        return;
-    }
-
+    if (JSON.stringify(cartItems) !== JSON.stringify(debouncedCartItems)) return;
     try {
       const cart = await getCart();
       if (!cart) return;
-
-      if (cart.token === lastToken && cart.item_count === lastCount) {
-        return;
-      }
-
+      if (cart.token === lastToken && cart.item_count === lastCount) return;
       lastToken = cart.token;
       lastCount = cart.item_count;
-
-      const shopifyItems: CartItem[] = cart.items.map((item) => {
-          const existingItem = cartItems.find(localItem => localItem.variant_id === `${SHOPIFY_VARIANT_PREFIX}${item.id}`);
-          return {
-            id: String(item.id),
-            variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
-            name: item.title,
-            price: item.price / 100,
-            image_url: item.image,
-            description: '',
-            quantity: item.quantity,
-            variant_quantity: existingItem?.variant_quantity ?? 10,
-          };
-        });
+      
+      const shopifyItems: CartItem[] = cart.items.map((item) => ({
+        id: String(item.id),
+        variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
+        name: item.title,
+        price: item.price / 100,
+        image_url: item.image,
+        description: '',
+        quantity: item.quantity,
+        variant_quantity: cartItems.find(localItem => localItem.variant_id === `${SHOPIFY_VARIANT_PREFIX}${item.id}`)?.variant_quantity ?? 10,
+      }));
 
       syncLock.current = true;
-      setCartItems(shopifyItems);
+      setCartItems(shopifyItems); 
     } catch (err) {
       console.error('Error polling cart:', err);
     }
@@ -92,25 +94,26 @@ export const useCart = () => {
     return () => clearInterval(intervalId);
   }, [cartItems, debouncedCartItems]);
 
-  const addToCart = useCallback((product: ProductType) => {
-    const availableQty= product.variant_quantity;
-
+  const addToCart = useCallback(async (product: ProductType) => {
+    const availableQty = product.variant_quantity ?? 10;
     const existingItem = cartItems.find(item => item.variant_id === product.variant_id);
     const currentQty = existingItem?.quantity ?? 0;
 
-    if (typeof availableQty === 'number' && currentQty >= availableQty) {
+    if (currentQty >= availableQty) {
+      setCartError("No more product available in the store");
+      return;
+    }
+
+    let newQuantity = currentQty + 1;
+    newQuantity = Math.min(newQuantity, availableQty, 10);
+    if (newQuantity === currentQty) {
       setCartError("No more product available in the store");
       return;
     }
 
     const productPrice = typeof product?.price === 'string' ? parseFloat(product?.price) : product?.price;
-
-    const newItem: CartItem = {
-      ...product,
-      price: productPrice,
-      quantity: 1,
-      variant_quantity: availableQty ?? 10
-    };
+    const variantId = Number(product.id);
+    const shopId = getShopId();
 
     setCartItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(item => 
@@ -132,28 +135,52 @@ export const useCart = () => {
         };
       } else {
         updatedProductCount = 1;
+        const newItem: CartItem = {
+          ...product,
+          price: productPrice,
+          quantity: updatedProductCount,
+          variant_quantity: availableQty ?? 10
+        };
         updatedItems = [...prevItems, newItem];
       }
 
-      storeCheckoutProduct({
-        product_id: Number(product.id),
-        product_count: updatedProductCount,
-      });
+      (async () => {
+        try {
+          await addToCartDB(variantId, updatedProductCount);
 
-      trackAddedToCart();
+          storeCheckoutProduct({ product_id: variantId, product_count: updatedProductCount });
+          trackAddedToCart();
+
+          getLatestInventory(variantId, shopId);
+        } catch (err) {
+          console.error('DB sync failed for add:', err);
+          setCartError('Failed to save cart. Please try again.');
+        }
+      })();
 
       return updatedItems;
     });
 
     setIsCartOpen(true);
-  }, []);
+  }, [cartItems]);
 
   const removeFromCart = useCallback((productId: string) => {
-    removeCheckoutProduct({product_id: Number(productId)})
+    const variantId = Number(productId);
+
     setCartItems(prev => {
-        const updatedItems = prev.filter(item => String(item.id) !== productId);
-        return updatedItems;
+      const updatedItems = prev.filter(item => String(item.id) !== productId);
+      return updatedItems;
     });
+
+    (async () => {
+      try {
+        await removeFromCartDB(variantId);
+        removeCheckoutProduct({ product_id: variantId });
+      } catch (err) {
+        console.error('DB sync failed for remove:', err);
+      }
+    })();
+
     setIsCartOpen(prev => !prev);
   }, []);
 
@@ -164,27 +191,40 @@ export const useCart = () => {
     }
 
     const cappedQuantity = Math.min(quantity, 10);
-
     const currentItem = cartItems.find(item => String(item.id) === productId);
     const oldQuantity = currentItem ? currentItem.quantity : 0;
-
     const isIncreasing = cappedQuantity > oldQuantity;
+    const availableQuantity = currentItem?.variant_quantity ?? 10;
+    const finalQuantity = Math.min(cappedQuantity, availableQuantity);
+
+    if (finalQuantity <= oldQuantity && isIncreasing) {
+      setCartError("No more product available in the store");
+      return;
+    }
+
+    const variantId = Number(productId);
+    const shopId = getShopId();
 
     setCartItems(prev => {
       const updatedItems = prev.map(item =>
         String(item.id) === productId
-          ? { ...item, quantity: cappedQuantity }
+          ? { ...item, quantity: finalQuantity, variant_quantity: availableQuantity }
           : item
       );
-      
-      storeCheckoutProduct({
-        product_id: Number(productId),
-        product_count: cappedQuantity,
-      });
 
-      if (isIncreasing) {
-        trackAddedToCart();
-      }
+      (async () => {
+        try {
+          await addToCartDB(variantId, finalQuantity);
+          storeCheckoutProduct({ product_id: variantId, product_count: cappedQuantity });
+          if (isIncreasing) {
+            trackAddedToCart();
+            getLatestInventory(variantId, shopId);
+          }
+        } catch (err) {
+          console.error('DB sync failed for update:', err);
+          setCartError('Failed to update cart. Please try again.');
+        }
+      })();
 
       return updatedItems;
     });
@@ -196,13 +236,12 @@ export const useCart = () => {
     try {
       const success = await syncCartItemsToShopifyStoreCart(cartItems);
       if (success) {
+        await clearCartDB();
         const checkoutUrl = new URL('/checkout', window.location.origin);
         checkoutUrl.searchParams.set('utm_source', 'chatbot');
-        
         window.location.href = checkoutUrl.toString();
       } else {
         alert("There was an error syncing your cart. Please try again.");
-        console.error("Failed to sync cart with Shopify before checkout.");
       }
     } catch (err) {
       alert("An unexpected error occurred during checkout. Please try again.");
@@ -214,7 +253,7 @@ export const useCart = () => {
   const totalPrice = cartItems.reduce((sum, item) => {
     const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
     return sum + (price * item.quantity);
-  },0);
+  }, 0);
 
   return {
     cartItems,
@@ -227,6 +266,7 @@ export const useCart = () => {
     toggleCart,
     checkout,
     cartError,
-    setCartError
+    setCartError,
+    isLoadingCart,
   };
-}; 
+};
