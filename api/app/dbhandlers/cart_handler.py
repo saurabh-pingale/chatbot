@@ -30,7 +30,7 @@ class CartHandler:
             await session.flush()
         return cart
 
-    async def fetch_cart_items(self, user_id: uuid.UUID, shop_id: str, session) -> List[Dict[str, Any]]:
+    async def fetch_cart_items(self, user_id: uuid.UUID, shop_id: str) -> List[Dict[str, Any]]:
         """Fetch full cart items with details."""
         async with AsyncSessionLocal() as session:
             try:
