@@ -284,8 +284,9 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
+                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
                     integration = IntegrationModel(
-                        shop_id=shop_id,
+                        shop_id=shop_id_pk,
                         title=title,
                         description=description
                     )
