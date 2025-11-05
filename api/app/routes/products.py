@@ -30,6 +30,10 @@ async def create(
                 detail="X-Shopify-Store header is required"
             )
         
+        shop_pk = getattr(request.state, 'shop_pk', None)
+        if not shop_pk:
+            raise HTTPException(status_code=404, detail=f"Shop with domain {x_shopify_store} not found.")
+        
         redis_client = await get_redis_client()
         lock_key = f"task_lock_{x_shopify_store}"
 
@@ -51,7 +55,7 @@ async def create(
 
         task_id = str(uuid.uuid4())
 
-        background_tasks.add_task(products_service.create, namespace, task_id, lock_key)
+        background_tasks.add_task(products_service.create, namespace, task_id, lock_key, shop_pk=shop_pk)
 
         return {"task_id": task_id, "shop_id": namespace}
         
@@ -68,7 +72,7 @@ async def create(
 async def get_create_status(task_id: str, request: Request):
     """Poll for the status of the product creation task."""
     try:
-        shop_id = request.headers.get("x-shopify-store")
+        shop_id = getattr(request.state, 'shop_id', request.headers.get("x-shopify-store"))
         if not shop_id:
             return {"error": "Missing x-shopify-store header"}
         

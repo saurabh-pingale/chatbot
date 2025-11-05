@@ -37,14 +37,15 @@ def _get_cleaned_shop_id(request: Request) -> str:
     },
 )
 async def create_color_preference(request: Request, body: ColorPreferenceRequest):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
     color = body.color
     if not color:
         raise HTTPException(status_code=400, detail="Missing color")
 
     try:
         app = get_app()
-        await app.shop_admin_service.create_color_preference(shop_id, color)
+        await app.shop_admin_service.create_color_preference(shop_id, shop_pk, color)
         return {
             "success": True,
             "message": "Color preference saved successfully."
@@ -64,7 +65,8 @@ async def create_color_preference(request: Request, body: ColorPreferenceRequest
     }
 )
 async def create_support_info(request: Request, body: SupportInfoRequest):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
     email = body.supportEmail
     phone = body.supportPhone
     country_code = body.countryCode
@@ -77,7 +79,7 @@ async def create_support_info(request: Request, body: SupportInfoRequest):
 
     try:
         app = get_app()
-        await app.shop_admin_service.create_support_info(shop_id, email, phone, country_code)
+        await app.shop_admin_service.create_support_info(shop_id, shop_pk, email, phone, country_code)
         return { 
             "success": True, 
             "message": "Support Info saved successfully.",
@@ -97,14 +99,15 @@ async def create_support_info(request: Request, body: SupportInfoRequest):
     },
 )
 async def create_shop_image(request: Request, body: ShopImageRequest):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
     image_url = body.imageUrl
 
     if not image_url:    
         raise HTTPException(status_code=400, detail="Missing image")
     try:
         app = get_app()
-        await app.shop_admin_service.create_shop_image(shop_id, image_url)
+        await app.shop_admin_service.create_shop_image(shop_id, shop_pk, image_url)
         return {
             "success": True,
             "message": "Shop Image saved successfully."
@@ -124,11 +127,11 @@ async def create_shop_image(request: Request, body: ShopImageRequest):
     },
 )
 async def get_shop_status(request: Request):
-    shop_domain = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
     
     try:
         app = get_app()
-        shop, subscription = await app.shop_admin_service.get_shop_status_with_subscription(shop_domain)
+        shop, subscription = await app.shop_admin_service.get_shop_status_with_subscription(shop_id)
         
         if not shop:
             return {
@@ -153,7 +156,7 @@ async def get_shop_status(request: Request):
                 "end_date": shop.plan_end_date.isoformat() if shop.plan_end_date else None,
             }
     except Exception as error:
-        logger.error(f"Error in get_shop_status for shop {shop_domain}: {error}", exc_info=True)
+        logger.error(f"Error in get_shop_status for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch shop status.")
 
 @shop_admin_router.post(
@@ -166,11 +169,12 @@ async def get_shop_status(request: Request):
     },
 )
 async def create_email_gate_preference(request: Request, body: EmailGatePreferenceRequest):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
 
     try:
         app = get_app()
-        await app.shop_admin_service.create_email_gate_preference(shop_id, body.show_email_gate)
+        await app.shop_admin_service.create_email_gate_preference(shop_id, shop_pk, body.show_email_gate)
         return {"success": True, "message": "Email Gate preference created successfully."}
     except Exception as error:
         logger.error(f"Error in create_email_gate_preference_route for shop {shop_id}: {error}", exc_info=True)
@@ -187,14 +191,15 @@ async def create_email_gate_preference(request: Request, body: EmailGatePreferen
     },
 )
 async def create_integration(request: Request, body: IntegrationRequest):
-    shop_id = _get_cleaned_shop_id(request)
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
     
     if not body.title or not body.description:
         raise HTTPException(status_code=400, detail="Title and description are required")
     
     try:
         app = get_app()
-        await app.shop_admin_service.create_integration(shop_id, body.title, body.description)
+        await app.shop_admin_service.create_integration(shop_id, shop_pk, body.title, body.description)
         return {"success": True, "message": "Integration saved successfully"}
     except Exception as error:
         logger.error(f"Error in save_integration for shop {shop_id}: {error}", exc_info=True)

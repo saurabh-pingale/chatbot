@@ -8,12 +8,12 @@ from app.models.db.subscription import SubscriptionModel, SubscriptionStatus
 from app.utils.logger import logger
 
 class SubscriptionHandler:
-    async def create_subscription(self, shop_id: int, plan: str, stripe_subscription_id: str, stripe_customer_id: str, status: SubscriptionStatus, start_date: datetime, end_date: datetime):
+    async def create_subscription(self, shop_pk: int, plan: str, stripe_subscription_id: str, stripe_customer_id: str, status: SubscriptionStatus, start_date: datetime, end_date: datetime):
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
                     db_subscription = SubscriptionModel(
-                        shop_id=shop_id,
+                        shop_id=shop_pk,
                         plan=plan,
                         stripe_subscription_id=stripe_subscription_id,
                         stripe_customer_id=stripe_customer_id,

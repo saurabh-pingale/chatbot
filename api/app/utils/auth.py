@@ -68,12 +68,8 @@ def is_missing_required_claims(decoded):
     required_claims = ['dest', 'exp', 'iss', 'sub', 'nbf', 'iat']
     return not all(claim in decoded for claim in required_claims)
 
-async def resolve_user_id(shop_id, guest_id, auth_payload):
-    async with AsyncSessionLocal() as session:
-        app = get_app()
-        shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
-        if not shop_pk:
-            raise HTTPException(status_code=404, detail="Shop not found.")
+async def resolve_user_id(shop_pk, guest_id, auth_payload):
+    app = get_app()
 
     if auth_payload:
         validated_payload = AuthPayloadModel(**auth_payload)

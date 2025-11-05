@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import create_app
 from app.dbhandlers.db import engine
 from app.models.db.base import Base
+from app.middleware.shop_validation import ShopValidation
 from app.middleware.refresh_token import add_refreshed_token_header
 from app.utils.logger import logger
 
@@ -19,6 +20,7 @@ app.add_middleware(
     expose_headers=["X-Token-Refreshed"],
 )
 
+app.add_middleware(ShopValidation)
 app.middleware("http")(add_refreshed_token_header)
 
 port = int(os.getenv("PORT", 8000))

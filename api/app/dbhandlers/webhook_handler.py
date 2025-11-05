@@ -3,6 +3,7 @@ import uuid
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.dbhandlers.shop_config_handler import ShopConfigHandler
 from app.dbhandlers.user_handler import UserHandler
 from app.models.db.order import OrderModel, OrderItemModel 
 from app.utils.logger import logger
@@ -10,6 +11,7 @@ from app.utils.logger import logger
 class WebhookHandler:
     def __init__(self):
         self.analytics_handler = AnalyticsHandler()
+        self.shop_config_handler = ShopConfigHandler()
         self.user_handler = UserHandler()
 
     async def increment_purchased_count_by_email(self, email: str, shop_id: str, amount: float, order_id: str) -> bool:
@@ -21,7 +23,7 @@ class WebhookHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+                    shop_pk = await self.shop_config_handler.get_shop_pk(shop_id, session)
                     if not shop_pk: return False
                     
                     user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
@@ -54,7 +56,7 @@ class WebhookHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_pk = await self.get_shop_pk(shop_id_str, session)
+                    shop_pk = await self.shop_config_handler.get_shop_pk(shop_id_str, session)
                     if not shop_pk:
                         logger.error(f"Could not find shop_pk for shop: {shop_id_str}")
                         return False

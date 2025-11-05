@@ -2,11 +2,15 @@ from typing import Dict, Any, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update
 
+from app.dbhandlers.user_handler import UserHandler
 from app.models.db.shop_admin import ShopModel
 from app.dbhandlers.db import AsyncSessionLocal
 from app.utils.logger import logger
 
 class ShopConfigHandler:
+    def __init__(self):
+        self.user_handler = UserHandler()
+
     async def get_shop_pk(self, shop_id: str, session) -> Optional[int]:
         """Fetches the integer primary key of a shop by its public string ID."""
         try:
@@ -88,3 +92,30 @@ class ShopConfigHandler:
         except SQLAlchemyError as e:
             logger.error(f"DB error fetching access token for {shop_domain}: {e}", exc_info=True)
             raise ValueError(f"Failed to fetch access token for {shop_domain}")
+        
+    async def get_or_create_user_for_token(self, email: str, shop_id: str, ) -> Optional[Dict[str, any]]:
+        """
+        Handles user initiation: gets/creates a user, ensures an analytics record exists,
+        and returns primary keys required for creating a JWT token.
+        """
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                try:
+                    from app.dbhandlers.analytics_handler import AnalyticsHandler
+                    analytics_handler = AnalyticsHandler()
+
+                    shop_pk = await self.get_shop_pk(shop_id, session)
+                    if not shop_pk:
+                        return None
+                    
+                    user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
+                    if not user:
+                        logger.error(f"Failed to get/create user for email {email}, shop {shop_id}")
+                        return None
+
+                    await analytics_handler._get_or_create_analytics_record(session, shop_pk, user_id=user.id)
+
+                    return {"user_id": user.id, "shop_id": shop_pk}
+                except (SQLAlchemyError, ValueError) as e:
+                    logger.error(f"Error during user processing for {email}, {shop_id}: {e}", exc_info=True)
+                    return None

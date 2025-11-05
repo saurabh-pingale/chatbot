@@ -25,10 +25,11 @@ async def store_checkout_products(
     request: Request,
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
-    shop_id = request.query_params.get("shop_id") 
     guest_id = request.query_params.get("guest_id")
 
-    if not shop_id:
+    shop_pk = request.state.shop_pk
+
+    if not shop_pk:
         raise HTTPException(status_code=400, detail="Missing shop_id")
 
     body = await request.json()
@@ -41,11 +42,6 @@ async def store_checkout_products(
     try:
         app = get_app()
         user_id = None
-
-        async with AsyncSessionLocal() as session:
-            shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
-            if not shop_pk:
-                raise HTTPException(status_code=404, detail="Shop not found.")
 
         if auth_payload:
             try:
@@ -63,7 +59,7 @@ async def store_checkout_products(
             raise HTTPException(status_code=400, detail="Missing user_id or guest_id")
 
         response = await app.checkout_product_service.store_checkout_product(
-            shop_id=shop_id, user_id=user_id, variant_id=variant_id, product_count=product_count
+            shop_pk=shop_pk, user_id=user_id, variant_id=variant_id, product_count=product_count
         )
         if response.get("success"):
             return {"success": True}
@@ -87,10 +83,11 @@ async def remove_checkout_product(
     request: Request,
     auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
 ):
-    shop_id = request.query_params.get("shop_id") 
     guest_id = request.query_params.get("guest_id")
 
-    if not shop_id:
+    shop_pk = request.state.shop_pk
+
+    if not shop_pk:
         raise HTTPException(status_code=400, detail="Missing shop_id")
 
     body = await request.json()
@@ -102,11 +99,6 @@ async def remove_checkout_product(
     try:
         app = get_app()
         user_id = None
-
-        async with AsyncSessionLocal() as session:
-            shop_pk = await app.analytics_handler.get_shop_pk(shop_id, session)
-            if not shop_pk:
-                raise HTTPException(status_code=404, detail="Shop not found.")
 
         if auth_payload:
             try:
@@ -124,7 +116,7 @@ async def remove_checkout_product(
             raise HTTPException(status_code=400, detail="Missing guest_id for guest user")
 
         response = await app.checkout_product_service.remove_checkout_product(
-            shop_id=shop_id, user_id=user_id, variant_id=variant_id
+            shop_pk=shop_pk, user_id=user_id, variant_id=variant_id
         )
         if response.get("success"):
             return {"success": True}
@@ -147,8 +139,10 @@ async def remove_checkout_product(
 async def get_latest_inventory(
     request: Request,
 ):
-    shop_id = request.query_params.get("shop_id")
     variant_id_str = request.query_params.get("variant_id")
+
+    shop_id = request.state.shop_id
+    shop_pk = request.state.shop_pk
 
     if not shop_id or not variant_id_str:
         raise HTTPException(status_code=400, detail="Missing shop_id or variant_id")
@@ -161,10 +155,6 @@ async def get_latest_inventory(
     try:
         app = get_app()
         async with AsyncSessionLocal() as session:
-            shop_pk = await app.shop_config_handler.get_shop_pk(shop_id, session)
-            if not shop_pk:
-                raise HTTPException(status_code=404, detail="Shop not found.")
-            
             latest_quantity = await app.checkout_product_service.get_latest_inventory(
                 shop_id=shop_id, shop_pk=shop_pk, variant_id=variant_id, session=session
             )
