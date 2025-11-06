@@ -1,6 +1,7 @@
 import numpy as np
 from FlagEmbedding import FlagModel
 from typing import List, Optional, Dict, Any
+import os
 
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
@@ -18,8 +19,12 @@ class EmbeddingService:
     def get_model(cls) -> FlagModel:
         """Lazily load and return the embedding model."""
         if cls._model is None:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            model_path = os.path.abspath(
+                os.path.join(base_dir, '../../local_models/bge-small-en-v1.5')
+            )
             cls._model = FlagModel(
-                'BAAI/bge-small-en-v1.5',
+                model_path,
                 query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
                 use_fp16=False
             )

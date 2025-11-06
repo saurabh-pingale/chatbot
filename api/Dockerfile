@@ -29,6 +29,8 @@ COPY --from=builder /usr/local /usr/local
 # Copy application code and set ownership to the new user
 COPY --chown=app:app . .
 
+COPY --chown=app:app local_models/bge-small-en-v1.5 ./local_models/bge-small-en-v1.5
+
 # Switch to the non-root user
 USER app
 
