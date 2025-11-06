@@ -1,0 +1,1 @@
+# Local Model bge-small-en-v1.5
