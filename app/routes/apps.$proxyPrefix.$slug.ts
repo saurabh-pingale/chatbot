@@ -21,7 +21,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     "latest-inventory": () => import("./latest-inventory"),
     "get_cart": () => import("./get_cart"),
     "add_to_cart": () => import("./add_to_cart"),
-    "remove_from_cart": () => import("./remove_from_cart"),
+    "remove_from_cart": () => import("./remove_from_cart.$variant_id"),
     "clear_cart": () => import("./clear_cart"),
   };
 

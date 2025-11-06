@@ -6,7 +6,6 @@ from app.dbhandlers.db import AsyncSessionLocal
 from app.external_service.shopify_service import ShopifyService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
-from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.shop_config_handler import ShopConfigHandler
 from app.utils.metadata_generator import MetadataGenerator
 from app.utils.category_cache import CategoryCache
@@ -34,7 +33,6 @@ class ProductsService:
         self.shopify_service = None
         self.embeddings_handler = EmbeddingsHandler()
         self.shop_admin_handler = ShopAdminHandler()
-        self.analytics_handler = AnalyticsHandler()
         self.shop_config_handler = ShopConfigHandler()
         self.metadata_generator = MetadataGenerator()
         self.category_cache = CategoryCache()
@@ -47,7 +45,7 @@ class ProductsService:
         async with AsyncSessionLocal() as session:
             return await self.shop_config_handler.get_shopify_access_token(shop_domain, session)
 
-    async def create(self, namespace: str, task_id: str, lock_key: str) -> Dict[str, Any]:
+    async def create(self, namespace: str, task_id: str, lock_key: str, shop_pk: int) -> Dict[str, Any]:
         """Fetch products from Shopify, generate embeddings and store in vector DB"""
 
         steps_config = {
@@ -82,34 +80,29 @@ class ProductsService:
                 if category and category not in sample_products_by_category:
                     sample_products_by_category[category] = product
 
-            async with AsyncSessionLocal() as session:
-                shop_pk = await self.analytics_handler.get_shop_pk(namespace, session)
-                if not shop_pk:
-                    raise HTTPException(status_code=404, detail=f"Shop with domain {namespace} not found.")
-                
-                await self.metadata_generator.generate_and_store_config(
-                    shop_id=shop_pk,
-                    namespace=namespace,
-                    sample_products_by_category=sample_products_by_category,
-                    collections=collections
-                )
-                await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
+            await self.metadata_generator.generate_and_store_config(
+                shop_pk=shop_pk,
+                namespace=namespace,
+                sample_products_by_category=sample_products_by_category,
+                collections=collections
+            )
+            await tracker.report_progress("PROCESS_METADATA", "Analyzing product categories and metadata.")
 
-                stored_collections = await self.shop_admin_handler.create_collections(collections, shop_pk)
+            stored_collections = await self.shop_admin_handler.create_collections(collections, shop_pk)
 
-                titles = [col["title"] for col in stored_collections if col.get("title")]
-                await self.category_cache.update_categories_cache(namespace, titles)
+            titles = [col["title"] for col in stored_collections if col.get("title")]
+            await self.category_cache.update_categories_cache(namespace, titles)
 
-                collection_id_map = {
-                    collection["title"]: collection["id"] for collection in stored_collections
-                }
+            collection_id_map = {
+                collection["title"]: collection["id"] for collection in stored_collections
+            }
 
             unique_products = list({product.id: product for product in products}.values())
-            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_id=shop_pk)
+            await self.shop_admin_handler.create_products(unique_products, collection_id_map, shop_pk=shop_pk)
             
             products_with_tags = [p for p in products if getattr(p, 'tags', [])]
             if products_with_tags:
-                await self.shop_admin_handler.create_offers(products_with_tags, shop_id=shop_pk)
+                await self.shop_admin_handler.create_offers(products_with_tags, shop_pk=shop_pk)
                 await self.shop_admin_handler.cache_offer_products(namespace, products_with_tags)
         
             await tracker.report_progress("SAVE_PRODUCTS_DB", "Saving product information to our database.")
@@ -127,7 +120,7 @@ class ProductsService:
                 end_date = start_date + timedelta(days=90)
 
                 await self.subscription_handler.create_subscription(
-                    shop_id=shop_pk,
+                    shop_pk=shop_pk,
                     plan="Free",
                     stripe_subscription_id=f"free-trial-{namespace}-{int(start_date.timestamp())}",
                     stripe_customer_id=f"free-customer-{namespace}",

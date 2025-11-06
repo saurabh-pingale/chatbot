@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
 import { getLatestInventory, removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
 import { fetchCartFromDB, addToCartDB, removeFromCartDB, clearCartDB } from '../services/cart';
@@ -7,6 +7,7 @@ import { trackAddedToCart } from '../services/analytics';
 import { POLL_INTERVAL, SHOPIFY_VARIANT_PREFIX, CART_STORAGE_KEY } from '../constants/cart';
 import type { CartItem, ProductType } from '../types';
 import { getShopId } from '../utils/utils';
+import { throttle } from '../utils/throttle';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -94,47 +95,46 @@ export const useCart = () => {
     return () => clearInterval(intervalId);
   }, [cartItems, debouncedCartItems]);
 
-  const addToCart = useCallback(async (product: ProductType) => {
+  const throttleAddToCart = useMemo(() => throttle(async (product: ProductType) => {
     const availableQty = product.variant_quantity ?? 10;
-    const existingItem = cartItems.find(item => item.variant_id === product.variant_id);
-    const currentQty = existingItem?.quantity ?? 0;
-
-    if (currentQty >= availableQty) {
-      setCartError("No more product available in the store");
-      return;
-    }
-
-    let newQuantity = currentQty + 1;
-    newQuantity = Math.min(newQuantity, availableQty, 10);
-    if (newQuantity === currentQty) {
-      setCartError("No more product available in the store");
-      return;
-    }
-
     const productPrice = typeof product?.price === 'string' ? parseFloat(product?.price) : product?.price;
     const variantId = Number(product.id);
     const shopId = getShopId();
 
     setCartItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(item => 
-        (item.variant_id && product.variant_id && item.variant_id === product.variant_id) || 
+      const existingItem = prevItems.find(item =>
+        (item.variant_id && product.variant_id && item.variant_id === product.variant_id) ||
+        (!item.variant_id && !product.variant_id && item.id === product.id)
+      );
+
+      const currentQty = existingItem?.quantity ?? 0;
+      if (currentQty >= availableQty) {
+        setCartError("No more product available in the store");
+        return prevItems;
+      }
+
+      let newQuantity = currentQty + 1;
+      newQuantity = Math.min(newQuantity, availableQty, 10);
+      if (newQuantity === currentQty) {
+        setCartError("No more product available in the store");
+        return prevItems;
+      }
+
+      const existingItemIndex = prevItems.findIndex(item =>
+        (item.variant_id && product.variant_id && item.variant_id === product.variant_id) ||
         (!item.variant_id && !product.variant_id && item.id === product.id)
       );
 
       let updatedItems: CartItem[];
-      let updatedProductCount: number;
-
+      const updatedProductCount = newQuantity;
       if (existingItemIndex > -1) {
         updatedItems = [...prevItems];
-        const currentQty = updatedItems[existingItemIndex]?.quantity;
-        updatedProductCount = Math.min(currentQty + 1, 10);
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity: updatedProductCount,
           variant_quantity: availableQty ?? 10,
         };
       } else {
-        updatedProductCount = 1;
         const newItem: CartItem = {
           ...product,
           price: productPrice,
@@ -143,26 +143,23 @@ export const useCart = () => {
         };
         updatedItems = [...prevItems, newItem];
       }
-
+      
       (async () => {
         try {
           await addToCartDB(variantId, updatedProductCount);
-
-          storeCheckoutProduct({ product_id: variantId, product_count: updatedProductCount });
+          await storeCheckoutProduct({ product_id: variantId, product_count: updatedProductCount });
           trackAddedToCart();
-
           getLatestInventory(variantId, shopId);
         } catch (err) {
           console.error('DB sync failed for add:', err);
-          setCartError('Failed to save cart. Please try again.');
+          setCartError(err instanceof Error ? err.message : 'Failed to save cart. Please try again.');
         }
       })();
-
+      setIsCartOpen(true);
       return updatedItems;
     });
-
-    setIsCartOpen(true);
-  }, [cartItems]);
+  }, 600),
+  [setCartItems, setCartError, setIsCartOpen]);
 
   const removeFromCart = useCallback((productId: string) => {
     const variantId = Number(productId);
@@ -215,14 +212,14 @@ export const useCart = () => {
       (async () => {
         try {
           await addToCartDB(variantId, finalQuantity);
-          storeCheckoutProduct({ product_id: variantId, product_count: cappedQuantity });
+          await storeCheckoutProduct({ product_id: variantId, product_count: cappedQuantity });
           if (isIncreasing) {
             trackAddedToCart();
             getLatestInventory(variantId, shopId);
           }
         } catch (err) {
           console.error('DB sync failed for update:', err);
-          setCartError('Failed to update cart. Please try again.');
+          setCartError(err instanceof Error ? err.message : 'Failed to update cart. Please try again.');
         }
       })();
 
@@ -260,7 +257,7 @@ export const useCart = () => {
     isCartOpen,
     totalItems,
     totalPrice,
-    addToCart,
+    addToCart: throttleAddToCart,
     removeFromCart,
     updateQuantity,
     toggleCart,

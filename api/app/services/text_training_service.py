@@ -8,7 +8,6 @@ from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 
 # TODO: Remove it when pricing flow is automated completely
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler
-from app.dbhandlers.analytics_handler import AnalyticsHandler
 from app.dbhandlers.subscription_handler import SubscriptionHandler
 
 from app.utils.text_utils import split_text_with_overlap
@@ -26,7 +25,6 @@ class TextTrainingService:
 
         # TODO: Remove it when pricing flow is automated completely
         self.shop_admin_handler = ShopAdminHandler()
-        self.analytics_handler = AnalyticsHandler()
         self.subscription_handler = SubscriptionHandler()
 
     async def train(self, text: str):

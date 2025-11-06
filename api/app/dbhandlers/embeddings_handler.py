@@ -67,6 +67,7 @@ class EmbeddingsHandler:
         """Queries embeddings from Qdrant using hybrid search with namespace as primary filter."""
         #TODO P0: Are we creating storing cache object in DB as a backup?
         #TODO P0: There might be duplicate so are we updating by replacing cache with new data?
+        #Are we storing the updated(upsert) data in cache??
         if self.cache is None:
             self.cache = await AsyncRedisLRUCache.create(capacity=100)
 

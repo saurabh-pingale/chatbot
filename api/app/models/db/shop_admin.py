@@ -44,7 +44,7 @@ class ShopModel(Base):
     shop_metadata = relationship("ShopMetadataModel", back_populates="shop", cascade="all, delete-orphan", uselist=False)
     collections = relationship("CollectionModel", back_populates="shop", cascade="all, delete-orphan")
     orders = relationship("OrderModel", back_populates="shop")
-    carts = relationship("CartModel", back_populates="shop")
+    cart_items = relationship("CartItemModel", back_populates="shop", cascade="all, delete-orphan")
 
 class UserModel(Base):
     __tablename__ = 'users'
@@ -64,7 +64,7 @@ class UserModel(Base):
     checkout_products = relationship("CheckoutProductModel", back_populates="user")
     analytics = relationship("UserShopAnalyticsModel", back_populates="user")
     orders = relationship("OrderModel", back_populates="user")
-    carts = relationship("CartModel", back_populates="user")
+    cart_items = relationship("CartItemModel", back_populates="user", cascade="all, delete-orphan")
 
     __table_args__ = (UniqueConstraint('email', 'shop_id', name='uq_user_email_shop_id'),)
 

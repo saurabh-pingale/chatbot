@@ -33,7 +33,7 @@ export const storeCheckoutProduct = async (originalBody: object = {}) => {
     return true;
   } catch (err) {
     console.error('Error storing checkout product:', err);
-    return false;
+    throw err;
   }
 };
 

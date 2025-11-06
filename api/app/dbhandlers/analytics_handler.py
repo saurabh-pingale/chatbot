@@ -9,7 +9,7 @@ import uuid
 
 from app.dbhandlers.db import AsyncSessionLocal
 from app.dbhandlers.user_handler import UserHandler
-from app.models.db.shop_admin import UserModel, ShopModel, UserShopAnalyticsModel, UserShopMinutelyAnalyticsModel
+from app.models.db.shop_admin import UserModel, UserShopAnalyticsModel, UserShopMinutelyAnalyticsModel
 from app.constants import MIN_DATAPOINTS_FOR_HOURLY_GRANULARITY, HOURLY_GRANULARITY_THRESHOLD_HOURS, SECONDS_IN_A_DAY
 from app.utils.analytics_utils import update_user_location_if_missing
 from app.utils.logger import logger
@@ -18,24 +18,10 @@ class AnalyticsHandler:
     def __init__(self):
         self.user_handler = UserHandler()
 
-    #TODO P0: In analytics handler, we need to add only analytics related handlers. so need to move this handler to shop config handler or shop admin handler
-    async def get_shop_pk(self, shop_id: str, session) -> Optional[int]:
-        """Fetches the integer primary key of a shop by its public string ID."""
-        try:
-            stmt = select(ShopModel.id).where(ShopModel.shop_id == shop_id)
-            result = await session.execute(stmt)
-            shop_pk = result.scalar_one_or_none()
-            if not shop_pk:
-                return None
-            return shop_pk
-        except SQLAlchemyError as e:
-            logger.error(f"DB error fetching shop PK for {shop_id}: {e}", exc_info=True)
-            return None
-
     async def _get_or_create_analytics_record(
         self,
         session: AsyncSession,
-        shop_id: int,
+        shop_pk: int,
         user_id: uuid.UUID,
     ) -> Optional[UserShopAnalyticsModel]:
         """
@@ -50,7 +36,7 @@ class AnalyticsHandler:
                 logger.error("user_id is None. Cannot create analytics record.")
                 return None
 
-            insert_values = {"shop_id": shop_id, "date": today, "user_id": user_id}
+            insert_values = {"shop_id": shop_pk, "date": today, "user_id": user_id}
 
             stmt = pg_insert(UserShopAnalyticsModel).values(insert_values)
 
@@ -61,7 +47,7 @@ class AnalyticsHandler:
             await session.execute(stmt)
 
             select_stmt = select(UserShopAnalyticsModel).where(
-                UserShopAnalyticsModel.shop_id == shop_id, 
+                UserShopAnalyticsModel.shop_id == shop_pk, 
                 UserShopAnalyticsModel.date == today,
                 UserShopAnalyticsModel.user_id == user_id
             )
@@ -104,18 +90,18 @@ class AnalyticsHandler:
             logger.exception(f"Database error while getting or creating minutely analytics record: {e}")
             return None
         
-    #TODO P0: Need to rewrite this function to make it more readable
+    #TODO P1: Need to rewrite this function to make it more readable
     async def _increment_analytics_counts(
         self,
         session: AsyncSession,
-        shop_id: int,
+        shop_pk: int,
         user_id: uuid.UUID,
         **kwargs
     ):
         """Generic helper to increment counts on both daily and minutely tables."""
         try:
             # Daily Record
-            daily_record = await self._get_or_create_analytics_record(session, shop_id, user_id)
+            daily_record = await self._get_or_create_analytics_record(session, shop_pk, user_id)
             if not daily_record:
                 logger.error(f"Failed to get/create daily analytics record for user:{user_id}")
                 return False
@@ -175,56 +161,11 @@ class AnalyticsHandler:
                 "success": False,
                 "message": "Unexpected error occurred"
             }
-
-    #TODO P0: In analytics handler, we need to add only analytics related handlers. so need to move shop config or admin or any other related handler.
-    async def get_or_create_user_for_token(self, email: str, shop_id: str, ) -> Optional[Dict[str, any]]:
-        """
-        Handles user initiation: gets/creates a user, ensures an analytics record exists,
-        and returns primary keys required for creating a JWT token.
-        """
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    shop_pk = await self.get_shop_pk(shop_id, session)
-                    if not shop_pk:
-                        return None
-                    
-                    user, _ = await self.user_handler.get_or_create_user(email, shop_pk)
-                    if not user:
-                        logger.error(f"Failed to get/create user for email {email}, shop {shop_id}")
-                        return None
-
-                    await self._get_or_create_analytics_record(session, shop_pk, user_id=user.id)
-
-                    return {"user_id": user.id, "shop_id": shop_pk}
-                except (SQLAlchemyError, ValueError) as e:
-                    logger.error(f"Error during user processing for {email}, {shop_id}: {e}", exc_info=True)
-                    return None
-    
-    #TODO P0: We no neeed to have update_user_chat_analytics, because its routing internally to _increment_analytics_counts, so directly call _increment_analytics_counts
-    async def update_user_chat_analytics(
-        self, 
-        shop_id: int, 
-        user_id: uuid.UUID,
-    ) -> bool:
-        """
-        Updates chat analytics. For identified users, it also updates their location.
-        For anonymous users, it increments the interaction count on the shared anonymous record.
-        """
-        async with AsyncSessionLocal() as session:
-            async with session.begin():
-                try:
-                    return await self._increment_analytics_counts(
-                        session, shop_id, user_id, chat_interactions_count=1
-                    )
-                except SQLAlchemyError as e:
-                    logger.error(f"DB error in update_user_chat_analytics for user:{user_id}, shop:{shop_id}: {e}", exc_info=True)
-                    return False
                 
     async def increment_opened_chatbot_count(
         self, 
         user_id: uuid.UUID, 
-        shop_id_pk: int,
+        shop_pk: int,
         location_info: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
@@ -232,16 +173,16 @@ class AnalyticsHandler:
         """
         async with AsyncSessionLocal() as session:
             async with session.begin():
-                user = await self.user_handler.get_user_by_id_and_shop(user_id, shop_id_pk)
+                user = await self.user_handler.get_user_by_id_and_shop(user_id, shop_pk)
                 if not user:
-                    logger.error(f"Could not find user {user_id} for shop {shop_id_pk} to increment open count.")
+                    logger.error(f"Could not find user {user_id} for shop {shop_pk} to increment open count.")
                     return False
                 
                 if location_info:
                     try:
                         await self._update_user_location(
                             user_id=user.id,
-                            shop_id=shop_id_pk,
+                            shop_id=shop_pk,
                             country=location_info.get("country"),
                             region=location_info.get("region"),
                             city=location_info.get("city"),
@@ -250,31 +191,33 @@ class AnalyticsHandler:
                     except Exception as e:
                         logger.error(f"Failed to update location for user {user.id} during chatbot open tracking: {e}")
 
-                await self._increment_analytics_counts(session, shop_id_pk, user.id, opened_chatbot_count=1)
+                await self._increment_analytics_counts(session, shop_pk, user.id, opened_chatbot_count=1)
                 return True
 
-    async def increment_added_to_cart_count(self, shop_id: int, user_id: uuid.UUID) -> bool:
+    async def increment_added_to_cart_count(self, shop_pk: int, user_id: uuid.UUID) -> bool:
         """Increments the count of how many times a user has added a product to the cart."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
-                await self._increment_analytics_counts(session, shop_id, user_id, added_to_cart_count=1)
+                await self._increment_analytics_counts(session, shop_pk, user_id, added_to_cart_count=1)
                 return True         
 
-    #TODO P0: Need to check this function, if possibe need to move service layer and rewrite to make it more readable
-    async def get_shop_analytics_summary(self, shop_id: str, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
+    #TODO P1: Need to check this function, if possibe need to move service layer and rewrite to make it more readable
+    async def get_shop_analytics_summary(self, shop_pk: int, start_date: Optional[Date], end_date: Optional[Date]) -> Optional[Dict[str, any]]:
         """
         Fetches aggregated analytics and daily chatbot open data for a given shop.
         """
         async with AsyncSessionLocal() as session:
             try:
+                from app.dbhandlers.shop_config_handler import ShopConfigHandler
+                shop_config_handler = ShopConfigHandler()
+
                 if start_date and isinstance(start_date, datetime):
                     start_date = start_date.date()
                 if end_date and isinstance(end_date, datetime):
                     end_date = end_date.date()
     
-                shop_pk = await self.get_shop_pk(shop_id, session)
                 if not shop_pk:
-                    logger.warning(f"Shop not found for shop_id: {shop_id}")
+                    logger.warning(f"Shop not found for shop_pk: {shop_pk}")
                     return {
                         "summary": {}, "timeseries": {"granularity": "daily", "data": []}, "error": "Shop not found."
                     }
@@ -393,7 +336,7 @@ class AnalyticsHandler:
                     "timeseries": timeseries_data
                 }
             except Exception as e:
-                logger.error(f"DB error in get_shop_analytics_summary for shop {shop_id}: {e}", exc_info=True)
+                logger.error(f"DB error in get_shop_analytics_summary for shop {shop_pk}: {e}", exc_info=True)
                 return {
                     "summary": {},
                     "timeseries": {"granularity": "daily", "data": []},

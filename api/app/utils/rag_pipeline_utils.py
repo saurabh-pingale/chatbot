@@ -220,14 +220,14 @@ def build_conversation_log_data(
     user_message: str,
     agent_response: Dict[str, Any],
     user_id: uuid.UUID,
-    shop_id: int,
+    shop_pk: int,
 ) -> Dict[str, Any]:
     """Builds a dictionary for logging conversation data"""
     return {
         "user_query": user_message,
         "agent_response": agent_response.get("answer"),
         "user_id": user_id,
-        "shop_id": shop_id,
+        "shop_id": shop_pk,
     }
 
 async def validate_and_get_user_info(auth_payload: Optional[Dict[str, Any]], shop_id_int: int) -> tuple[Optional[int], bool, Optional[Dict[str, Any]]]:
