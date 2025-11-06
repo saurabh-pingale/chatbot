@@ -18,15 +18,14 @@ interface TrainingLoaderData extends LoaderData {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  if (!session?.shop || !session?.accessToken) {
-    return json({ shop: null, accessToken: null, setupCompleted: false });
+  if (!session?.shop) {
+    return json({ shop: null, setupCompleted: false });
   }
 
   const { setup_completed } = await getShopStatus(session.shop);
 
   return json({ 
     shop: session.shop,
-    accessToken: session.accessToken,
     setupCompleted: setup_completed,
   });
 };
@@ -34,7 +33,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function TrainingPage() {
   const navigate = useNavigate();
   const fetcher = useFetcher<FetcherResponse>();
-  const { shop, accessToken, setupCompleted } = useLoaderData<TrainingLoaderData>();
+  const { shop, setupCompleted } = useLoaderData<TrainingLoaderData>();
   const processingRef = useRef(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -221,7 +220,7 @@ export default function TrainingPage() {
     setMessages((prev) => [...prev, { sender: "bot", text: "Fetching products..." }]);
     
     try {
-      const { task_id } = await fetchProducts(shop, accessToken)
+      const { task_id } = await fetchProducts(shop)
       if (task_id) {
         pollTaskStatus(task_id);
       } else {

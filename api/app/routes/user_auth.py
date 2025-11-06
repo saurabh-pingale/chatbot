@@ -1,6 +1,6 @@
 import random
 import asyncio
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import Dict
 from datetime import datetime, timedelta, UTC
 
@@ -14,22 +14,22 @@ from app.utils.logger import logger
 user_auth_router = APIRouter(prefix="/user_auth", tags=["user_auth"])
 
 @user_auth_router.post("/send-otp", summary="Send OTP to user's email")
-async def send_otp(payload: SendOTPRequest):
+async def send_otp(request: Request, payload: SendOTPRequest):
     try:
+        shop_id = request.state.shop_id
+        shop_pk = request.state.shop_pk
         app = get_app()
-        async with AsyncSessionLocal() as session:
             #TODO P2: First check if shop exists in redis, if not, then check in db
             #TODO P2: Those checking redis code keep inside handler of get_shop_pk
             #TODO P2: Check others handlers, Does it exists in cache use it, else check in db
-            shop = await app.analytics_handler.get_shop_pk(payload.shop_id, session)
-        if not shop:
+        if not shop_id:
             raise HTTPException(status_code=404, detail="Shop not found")
 
         otp = str(random.randint(1000, 9999))
         expired_at = datetime.now(UTC) + timedelta(minutes=5)
 
         await app.otp_handler.store_otp(email=payload.email, otp=otp, expired_at=expired_at)
-        await send_otp_email(to_email=payload.email, otp=otp, shop_domain=payload.shop_id)
+        await send_otp_email(to_email=payload.email, otp=otp, shop_domain=shop_id)
 
         return {"message": "OTP sent successfully"}
     except Exception as e:
@@ -37,26 +37,25 @@ async def send_otp(payload: SendOTPRequest):
         raise HTTPException(status_code=500, detail="Failed to send OTP")
 
 @user_auth_router.post("/verify-otp", summary="Verify OTP and return JWT token")
-async def verify_otp(payload: VerifyOTPRequest) -> Dict[str, str]:
+async def verify_otp(request: Request, payload: VerifyOTPRequest) -> Dict[str, str]:
     try:
         app = get_app()
+        shop_pk = getattr(request.state, 'shop_pk', None)
 
-        async with AsyncSessionLocal() as session:
-            shop_pk_task = app.analytics_handler.get_shop_pk(payload.shop_id, session)
-        otp_task = app.otp_handler.get_otp_by_email(payload.email)
-        shop_id, stored_otp = await asyncio.gather(shop_pk_task, otp_task)
-
-        if not shop_id:
+        if not shop_pk:
             raise HTTPException(status_code=404, detail="Shop not found")
+
+        otp_task = app.otp_handler.get_otp_by_email(payload.email)
+        stored_otp = await otp_task
 
         if not stored_otp or stored_otp != payload.otp.strip():
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
         await app.otp_handler.delete_otp(payload.email)
         
-        user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_id)
+        user = await app.user_handler.get_user_by_email_and_shop_id(email=payload.email, shop_id=shop_pk)
         if not user:
-            user = await app.user_handler.create_user(payload.email, shop_id, existing_user=user)
+            user = await app.user_handler.create_user(payload.email, shop_pk, existing_user=user)
 
         if not user or not getattr(user, "id", None) or not getattr(user, "shop_id", None):
             logger.warning(f"Invalid user data during OTP verification: {user}")

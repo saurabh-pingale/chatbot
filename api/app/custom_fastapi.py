@@ -12,6 +12,7 @@ class CustmFastAPI(FastAPI):
         from app.services.shop_config_service import ShopConfigService
         from app.services.country_code_service import CountryCodeService
         from app.services.webhook_service import WebhookService
+        from app.services.cart_service import CartService
         from app.dbhandlers.shop_admin_handler import ShopAdminHandler
         from app.dbhandlers.embeddings_handler import EmbeddingsHandler
         from app.dbhandlers.analytics_handler import AnalyticsHandler
@@ -23,6 +24,7 @@ class CustmFastAPI(FastAPI):
         from app.dbhandlers.country_code_handler import CountryCodeHandler
         from app.dbhandlers.webhook_handler import WebhookHandler
         from app.dbhandlers.user_handler import UserHandler
+        from app.dbhandlers.cart_handler import CartHandler
 
         self.shop_admin_service = ShopAdminService()
         self.analytics_service = AnalyticsService()
@@ -32,6 +34,7 @@ class CustmFastAPI(FastAPI):
         self.shop_config_service = ShopConfigService()
         self.country_code_service = CountryCodeService()
         self.webhook_service = WebhookService()
+        self.cart_service = CartService()
         self.shop_admin_handler = ShopAdminHandler()
         self.rag_pipeline_handler = EmbeddingsHandler()
         self.analytics_handler = AnalyticsHandler()
@@ -43,3 +46,4 @@ class CustmFastAPI(FastAPI):
         self.country_code_handler = CountryCodeHandler()
         self.webhook_handler = WebhookHandler()
         self.user_handler = UserHandler()
+        self.cart_handler = CartHandler()

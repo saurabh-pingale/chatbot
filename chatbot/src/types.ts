@@ -140,6 +140,7 @@ export interface CartProps {
   onClose: () => void;
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   onCheckout: () => Promise<void>;
+  isLoading: boolean;
 }
 
 export interface ChatbotToggleProps {

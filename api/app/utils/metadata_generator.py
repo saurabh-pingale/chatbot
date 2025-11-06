@@ -53,7 +53,7 @@ class MetadataGenerator:
         """
         return prompt
 
-    async def generate_and_store_config(self, shop_id: int, namespace: str, sample_products_by_category: List[Dict], collections: List[Dict]):
+    async def generate_and_store_config(self, shop_pk: int, namespace: str, sample_products_by_category: List[Dict], collections: List[Dict]):
         """Generates config via LLM and saves it to both Redis and the PostgreSQL DB."""
         try:
             if not sample_products_by_category and not collections:
@@ -71,7 +71,7 @@ class MetadataGenerator:
             logger.info(f"Successfully stored metadata in cache for namespace: {namespace}")
 
             await self.shop_admin_handler.upsert_shop_metadata(
-                shop_id=shop_id,
+                shop_pk=shop_pk,
                 namespace=namespace,
                 metadata=generated_config
             )

@@ -3,7 +3,10 @@ from fastapi import Request, HTTPException
 from jose.exceptions import JWTError
 from datetime import datetime, timezone, UTC, timedelta
 
+from app.dbhandlers.db import AsyncSessionLocal
+from app.models.api.shop_admin import AuthPayloadModel
 from app.config import SHOPIFY_API_KEY, SHOPIFY_API_SECRET
+from app.utils.app_utils import get_app
 
 def extract_token(authorization: str):
     """Extract the token from the authorization header."""
@@ -64,3 +67,17 @@ async def get_shopify_auth(request: Request):
 def is_missing_required_claims(decoded):
     required_claims = ['dest', 'exp', 'iss', 'sub', 'nbf', 'iat']
     return not all(claim in decoded for claim in required_claims)
+
+async def resolve_user_id(shop_pk, guest_id, auth_payload):
+    app = get_app()
+
+    if auth_payload:
+        validated_payload = AuthPayloadModel(**auth_payload)
+        validated_payload.validate_shop_access(shop_pk)
+        return validated_payload.user_id
+
+    if guest_id:
+        guest_user, _ = await app.user_handler.create_guest_if_not_exists(guest_id, shop_pk)
+        return guest_user.id
+
+    raise HTTPException(status_code=400, detail="Missing auth or guest_id")

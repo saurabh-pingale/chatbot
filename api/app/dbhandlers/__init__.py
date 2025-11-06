@@ -10,6 +10,7 @@ from app.dbhandlers.otp_handler import OTPHandler
 from app.dbhandlers.user_handler import UserHandler
 from app.dbhandlers.country_code_handler import CountryCodeHandler
 from app.dbhandlers.webhook_handler import WebhookHandler
+from app.dbhandlers.cart_handler import CartHandler
 
 def init_handlers(app: 'CustmFastAPI'):
     """Initialize handlers in the app state."""
@@ -23,3 +24,4 @@ def init_handlers(app: 'CustmFastAPI'):
     app.user_handler = UserHandler()
     app.country_code_handler = CountryCodeHandler()
     app.webhook_handler = WebhookHandler()
+    app.cart_handler = CartHandler()

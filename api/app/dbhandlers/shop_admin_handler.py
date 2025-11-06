@@ -11,7 +11,7 @@ from app.models.db.shop_admin import ProductModel, ShopModel, CollectionModel, I
 from app.models.api.shop_admin import (ProductRequest)
 from app.models.api.shopify import ShopifyProduct
 from app.dbhandlers.db import AsyncSessionLocal
-from app.dbhandlers.analytics_handler import AnalyticsHandler
+from app.dbhandlers.shop_config_handler import ShopConfigHandler
 from app.external_service.redis_client import get_redis_client
 from app.config import US_COUNTRY_CODE
 from app.utils.products_utils import extract_shopify_id
@@ -19,10 +19,9 @@ from app.utils.logger import logger
 
 class ShopAdminHandler:
     def __init__(self):
-        self.analytics_handler = AnalyticsHandler()
+        self.shop_config_handler = ShopConfigHandler()
         pass
 
-    #TODO P0: I see we are looping collections two times, so need to optimize it by reviewing it.
     async def create_collections(self, collections: List[CollectionModel], shop_id: int) -> List[dict]:
         """Create collections in the database using bulk operations."""
         async with AsyncSessionLocal() as session:
@@ -54,23 +53,19 @@ class ShopAdminHandler:
                         index_elements=['shop_id', 'title'],
                         set_={'products_count': stmt.excluded.products_count}
                     )
+                    stmt = stmt.returning(CollectionModel.id)
 
-                    await session.execute(stmt)
+                    result = await session.execute(stmt)
+                    ids = [row[0] for row in result]
 
-                    titles = [col.get('title') for col in collection_data_to_insert]
-                    stmt = select(CollectionModel).where(
-                        CollectionModel.shop_id == shop_id,
-                        CollectionModel.title.in_(titles)
-                    )
-                    existing_collections = await session.execute(stmt)
-                    collections_list = existing_collections.scalars().all()
-
-                    for collection in collections_list:
-                        created_collections_info.append({
-                            "title": getattr(collection, "title"),
-                            "products_count": getattr(collection, "products_count"),
-                            "id": getattr(collection, "id")
-                        })
+                    created_collections_info = [
+                        {
+                            "title": col_data['title'],
+                            "products_count": col_data['products_count'],
+                            "id": id_val
+                        }
+                        for col_data, id_val in zip(collection_data_to_insert, ids)
+                    ]
 
                     return created_collections_info 
 
@@ -81,7 +76,7 @@ class ShopAdminHandler:
                 
     async def get_collections(self, shop_id: str) -> List[str]:
         async with AsyncSessionLocal() as session:
-            shop_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+            shop_pk = await self.shop_config_handler.get_shop_pk(shop_id, session)
             if not shop_pk:
                 raise HTTPException(status_code=404, detail=f"Shop with domain {shop_id} not found.")
                 
@@ -91,7 +86,7 @@ class ShopAdminHandler:
 
             return collection_titles
 
-    async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_id: int) -> None:
+    async def create_products(self, products: List[ProductRequest], collection_id_map: Dict[str, int], shop_pk: int) -> None:
         """Create products in the database and links them to collections using bulk insert."""
         if not products:
             logger.info("No products to create. Skipping database insert.")
@@ -119,7 +114,7 @@ class ShopAdminHandler:
                             'variant_id': extract_shopify_id(product_variant_id_gid) if product_variant_id_gid else None,
                             'variant_quantity': getattr(product, 'variant_quantity', None),
                             'collection_id': col_id if col_id else None,
-                            'shop_id': shop_id
+                            'shop_id': shop_pk
                         })
 
                     stmt = insert(ProductModel).values(product_data_to_insert)
@@ -150,7 +145,7 @@ class ShopAdminHandler:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+                    shop_id_pk = await self.shop_config_handler.get_shop_pk(shop_id, session)
                     if not shop_id_pk:
                         logger.warning(f"No shop found with name: {shop_id}")
                         return {
@@ -176,17 +171,16 @@ class ShopAdminHandler:
                         "support_phone": None
                     }
     
-    async def create_color_preference(self, shop_id: str, color: str) -> None:
+    async def create_color_preference(self, shop_id, shop_pk: str, color: str) -> None:
         """Create the color preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk  = await self.analytics_handler.get_shop_pk(shop_id, session)
-                    if not shop_id_pk:
+                    if not shop_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
                     else:
-                        shop = await session.get(ShopModel, shop_id_pk)
+                        shop = await session.get(ShopModel, shop_pk)
 
                     shop.preferred_color = color
                     return shop.preferred_color
@@ -195,16 +189,15 @@ class ShopAdminHandler:
                     logger.error("Database error in create_color_preference: %s", str(error), exc_info=True)
                     raise Exception("Failed to save color preference.")
             
-    async def create_support_info(self, shop_id: str, email: str, phone: str, country_code: str) -> dict:
+    async def create_support_info(self, shop_id: str, shop_pk: int, email: str, phone: str, country_code: str) -> dict:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
-                    if not shop_id_pk:
+                    if not shop_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
                     else:    
-                        shop = await session.get(ShopModel, shop_id_pk)
+                        shop = await session.get(ShopModel, shop_pk)
 
                     shop.support_email = email
                     shop.support_phone = phone
@@ -220,17 +213,16 @@ class ShopAdminHandler:
                     logger.error("Error saving support info: %s", str(error), exc_info=True)
                     raise Exception("Failed to save support information.")
 
-    async def create_shop_image(self, shop_id: str, image_url: str) -> dict:
+    async def create_shop_image(self, shop_id: str, shop_pk: int, image_url: str) -> dict:
         """Create the image URL for a given shop."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
-                    if not shop_id_pk:
+                    if not shop_pk:
                         shop = ShopModel(shop_id=shop_id)
                         session.add(shop)
                     else:
-                        shop = await session.get(ShopModel, shop_id_pk)
+                        shop = await session.get(ShopModel, shop_pk)
 
                     shop.image = image_url
 
@@ -260,18 +252,17 @@ class ShopAdminHandler:
                     logger.error(f"Database error in get_shop_by_id for shop {shop_id}: {error}", exc_info=True)
                     raise Exception("Database operation failed while fetching shop status.")
                 
-    async def create_email_gate_preference(self, shop_id: str, show_email_gate: bool) -> None:
+    async def create_email_gate_preference(self, shop_id: str, shop_pk: int, show_email_gate: bool) -> None:
         """Create the email gate preference for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
-                    shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
-                    if not shop_id_pk:
+                    if not shop_pk:
                         shop = ShopModel(shop_id=shop_id, show_email_gate=show_email_gate)
                         session.add(shop)
                         logger.info(f"New shop created with shop_id {shop_id} and email gate preference {show_email_gate}")
                     else:
-                        shop = await session.get(ShopModel, shop_id_pk)
+                        shop = await session.get(ShopModel, shop_pk)
                         shop.show_email_gate = show_email_gate
                         logger.info(f"Updated email gate preference for shop_id {shop_id} to {show_email_gate}")
          
@@ -279,13 +270,13 @@ class ShopAdminHandler:
                     logger.error(f"Database error in create_email_gate_preference for shop {shop_id}: {error}", exc_info=True)
                     raise Exception(f"Failed to create or update email gate preference for shop {shop_id}")
                 
-    async def create_integration(self, shop_id: str, title: str, description: str) -> None:
+    async def create_integration(self, shop_id: str, shop_pk: int, title: str, description: str) -> None:
         """Create integration details for a given shop ID."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
                     integration = IntegrationModel(
-                        shop_id=shop_id,
+                        shop_id=shop_pk,
                         title=title,
                         description=description
                     )
@@ -307,7 +298,7 @@ class ShopAdminHandler:
                     logger.error(f"Database error in update_shop_setup_completed_status for shop {shop_id}: {e}", exc_info=True)
                     raise Exception(f"Failed to update setup_completed status for shop {shop_id}")
                 
-    async def create_offers(self, products: List[ShopifyProduct], shop_id: int) -> None:
+    async def create_offers(self, products: List[ShopifyProduct], shop_pk: int) -> None:
         """Extracts unique tags from products and stores them as offers."""
         offers_to_insert = []
         for product in products:
@@ -316,7 +307,7 @@ class ShopAdminHandler:
                     if tag.strip():
                         offers_to_insert.append({
                             'tag': tag.strip(),
-                            'shop_id': shop_id,
+                            'shop_id': shop_pk,
                             'product_id': product.id
                         })
 
@@ -325,7 +316,7 @@ class ShopAdminHandler:
 
         async with AsyncSessionLocal() as session:
             async with session.begin():
-                await session.execute(delete(OfferModel).where(OfferModel.shop_id == shop_id))
+                await session.execute(delete(OfferModel).where(OfferModel.shop_id == shop_pk))
                 stmt = insert(OfferModel).values(offers_to_insert)
                 stmt = stmt.on_conflict_do_nothing(index_elements=['tag', 'product_id'])
                 await session.execute(stmt)
@@ -357,7 +348,7 @@ class ShopAdminHandler:
         logger.info(f"Cache miss for offers in namespace '{shop_id}'. Fetching from DB.")
         async with AsyncSessionLocal() as session:
             async with session.begin():
-                shop_id_pk = await self.analytics_handler.get_shop_pk(shop_id, session)
+                shop_id_pk = await self.shop_config_handler.get_shop_pk(shop_id, session)
                 
                 stmt = (
                     select(OfferModel)
@@ -390,11 +381,11 @@ class ShopAdminHandler:
 
                 return offers_data
 
-    async def upsert_shop_metadata(self, shop_id: int, namespace: str, metadata: dict):        
+    async def upsert_shop_metadata(self, shop_pk: int, namespace: str, metadata: dict):        
         async with AsyncSessionLocal() as session:
             try:
                 stmt = insert(ShopMetadataModel).values(
-                    shop_id=shop_id,
+                    shop_id=shop_pk,
                     namespace=namespace,
                     config_data=metadata
                 )
@@ -406,11 +397,11 @@ class ShopAdminHandler:
                 
                 await session.execute(update_stmt)
                 await session.commit()
-                logger.info(f"Successfully upserted metadata for shop_id: {shop_id}")
+                logger.info(f"Successfully upserted metadata for shop_id: {shop_pk}")
 
             except SQLAlchemyError as e:
                 await session.rollback()
-                logger.error(f"Database error on metadata upsert for shop_id {shop_id}: {e}", exc_info=True)
+                logger.error(f"Database error on metadata upsert for shop_id {shop_pk}: {e}", exc_info=True)
             except Exception as e:
                 await session.rollback()
-                logger.error(f"Unexpected error on metadata upsert for shop_id {shop_id}: {e}", exc_info=True)
+                logger.error(f"Unexpected error on metadata upsert for shop_id {shop_pk}: {e}", exc_info=True)

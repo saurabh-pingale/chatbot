@@ -20,16 +20,19 @@ products_router = APIRouter(prefix="/products_router", tags=["products_router"])
 async def create(
     request: Request,
     background_tasks: BackgroundTasks,
-    x_shopify_store: str = Header(..., alias="X-Shopify-Store"),
-    x_shopify_access_token: str = Header(..., alias="X-Shopify-Access-Token")
+    x_shopify_store: str = Header(..., alias="X-Shopify-Store")
 ):
     """Fetch products from Shopify, generate embeddings and store in Vector DB"""
     try:
-        if not x_shopify_store or not x_shopify_access_token:
+        if not x_shopify_store:
             raise HTTPException(
                 status_code=400,
-                detail="Both X-Shopify-Store and X-Shopify-Access-Token headers are required"
+                detail="X-Shopify-Store header is required"
             )
+        
+        shop_pk = getattr(request.state, 'shop_pk', None)
+        if not shop_pk:
+            raise HTTPException(status_code=404, detail=f"Shop with domain {x_shopify_store} not found.")
         
         redis_client = await get_redis_client()
         lock_key = f"task_lock_{x_shopify_store}"
@@ -45,17 +48,14 @@ async def create(
                 detail="A product sync is already in progress for this store. Please wait for it to complete."
             )
 
-        products_service = ProductsService(
-            shopify_store=x_shopify_store,
-            shopify_access_token=x_shopify_access_token
-        )
+        products_service = ProductsService(shopify_store=x_shopify_store)
 
         body = await request.json()
         namespace = body.get("namespace", x_shopify_store)
 
         task_id = str(uuid.uuid4())
 
-        background_tasks.add_task(products_service.create, namespace, task_id, lock_key)
+        background_tasks.add_task(products_service.create, namespace, task_id, lock_key, shop_pk=shop_pk)
 
         return {"task_id": task_id, "shop_id": namespace}
         
@@ -72,7 +72,7 @@ async def create(
 async def get_create_status(task_id: str, request: Request):
     """Poll for the status of the product creation task."""
     try:
-        shop_id = request.headers.get("x-shopify-store")
+        shop_id = getattr(request.state, 'shop_id', request.headers.get("x-shopify-store"))
         if not shop_id:
             return {"error": "Missing x-shopify-store header"}
         

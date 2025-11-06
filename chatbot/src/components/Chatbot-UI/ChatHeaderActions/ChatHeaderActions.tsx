@@ -25,7 +25,7 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
 }) => {
   const [isOffersPopupOpen, setIsOffersPopupOpen] = useState(false);
   
-  const { cartItems, toggleCart } = useCart();
+  const { cartItems, toggleCart, isLoadingCart } = useCart();
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const showCartIcon = !isEmailGateVisible;
@@ -60,15 +60,19 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
           >
             <CartIconSVG />
 
-            {totalCartItems > 0 && (
+            {(isLoadingCart || totalCartItems > 0) && (
               <motion.span
-                className="chat-header-cart-count-badge"
+                className={`chat-header-cart-count-badge ${isLoadingCart ? 'loading' : ''}`}
                 style={headerStyles}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
               >
-                {totalCartItems}
+                {isLoadingCart ? (
+                  <div className="cart-badge-spinner" style={headerStyles}></div>
+                ) : (
+                  totalCartItems
+                )}
               </motion.span>
             )}
           </motion.div>

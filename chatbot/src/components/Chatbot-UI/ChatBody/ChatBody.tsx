@@ -22,7 +22,7 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
     }, [jwtToken]);
 
     const { messages, isTyping, isLoading, handleTyping, addMessage, handleBotResponse, clearConversation } = useChat(conversationKey);
-    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout } = useCart();
+    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout, isLoadingCart } = useCart();
 
     useEffect(() => {
       onMessagesCountChange(messages.length);
@@ -103,6 +103,7 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
           onClose={toggleCart}
           onUpdateQuantity={updateQuantity}
           onCheckout={checkout}
+          isLoading={isLoadingCart}
         />
       </>
     );

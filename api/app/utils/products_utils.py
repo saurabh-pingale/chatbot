@@ -12,8 +12,7 @@ from app.constants import TASK_STALLED_TIMEOUT_MINUTES
 from app.utils.progress_tracker import ProgressTracker
 from app.utils.logger import logger
 
-async def get_products_from_admin(shopify_store: str, shopify_access_token: str):
-    shopify_service = ShopifyService(shopify_store, shopify_access_token)
+async def get_products_from_admin(shopify_service: ShopifyService):
     shopify_data = await shopify_service.fetch_products_and_collections()
     products = format_products(shopify_data)
     collections= format_collections(shopify_data)

@@ -13,7 +13,8 @@ export const Cart = memo<CartProps>(({
   items,
   onClose,
   onUpdateQuantity,
-  onCheckout
+  onCheckout,
+  isLoading = false
 }) => {
   const config = useConfig();
   const total = items.reduce((sum, item: CartItem) => {
@@ -43,7 +44,12 @@ export const Cart = memo<CartProps>(({
             <CloseIcon onClose={onClose} />
           </div>
           <div className="cart-content">
-            {items?.length === 0 ? (
+            {isLoading ? (
+              <div className="cart-loading-container">
+                <div className="cart-loading-spinner" style={dynamicStyles}></div>
+                <p className="cart-loading-text">Loading your cart...</p>
+              </div>
+            ) : items?.length === 0 ? (
               <p className="cart-empty-message">Your cart is empty</p>
             ) : (
               items?.map((item: CartItem) => (
@@ -60,22 +66,24 @@ export const Cart = memo<CartProps>(({
               ))
             )}
           </div>
-          <div className="cart-footer">
-            <div className="cart-total">
-              <span className="cart-total-label">Total</span>
-              <span className="cart-total-amount">${total.toFixed(2)}</span>
+          {!isLoading && (
+            <div className="cart-footer">
+              <div className="cart-total">
+                <span className="cart-total-label">Total</span>
+                <span className="cart-total-amount">${total.toFixed(2)}</span>
+              </div>
+              <motion.button
+                className="cart-checkout-button"
+                style={dynamicStyles} 
+                onClick={onCheckout}
+                disabled={items?.length === 0}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Checkout
+              </motion.button>
             </div>
-            <motion.button
-              className="cart-checkout-button"
-              style={dynamicStyles} 
-              onClick={onCheckout}
-              disabled={items?.length === 0}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Checkout
-            </motion.button>
-          </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
