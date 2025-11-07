@@ -15,11 +15,12 @@ export const CloseIcon = ({onClose}: {onClose: () => void}) => {
   )
 }
 
-export const MinusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity}: MinusIconProps) => {
+export const MinusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity, disabled}: MinusIconProps) => {
   return (
     <motion.button
       className="cart-quantity-button"
       style={dynamicStyles} 
+      disabled={disabled}
       onClick={() => onUpdateQuantity(String(id), quantity - 1)}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
@@ -29,13 +30,13 @@ export const MinusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity}: Minus
   )
 }
 
-export const PlusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity, availableQty }: PlusIconProps) => {
+export const PlusIcon = ({dynamicStyles, onUpdateQuantity, id, quantity, availableQty, disabled }: PlusIconProps) => {
   return (
     <motion.button
       className="cart-quantity-button"
       style={dynamicStyles} 
       onClick={() => onUpdateQuantity(String(id), quantity + 1)}
-      disabled={quantity >= (availableQty ?? 10)}
+      disabled={disabled || quantity >= (availableQty ?? 10)}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
     >

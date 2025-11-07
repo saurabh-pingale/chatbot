@@ -75,3 +75,24 @@
   min-width: 24px;
   text-align: center;
 }
+
+.cart-quantity-button-loader {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-quantity-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(var(--theme-primary-color-values, 0, 0, 0), 0.2);
+  border-top-color: var(--theme-primary-color, #000);
+  border-radius: 50%;
+  animation: cart-item-spin 0.8s linear infinite;
+}
+
+@keyframes cart-item-spin {
+  to { transform: rotate(360deg); }
+}
