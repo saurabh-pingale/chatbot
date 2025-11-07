@@ -3,7 +3,7 @@ from FlagEmbedding import FlagModel
 from typing import List, Optional, Dict, Any
 import os
 
-from config import DEV_MODE
+from app.config import DEV_MODE
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
 
