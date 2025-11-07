@@ -7,12 +7,17 @@ WORKDIR /app
 # Install build dependencies for python packages that might need compilation
 # Using --no-install-recommends to keep the image smaller
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc build-essential && \
+    apt-get install -y --no-install-recommends gcc build-essential wget unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p /app/local_models && \
+  wget https://storage.googleapis.com/testapp-prod-embeddings/bge-small-en-v1.5.zip -O /app/bge-small-en-v1.5.zip && \
+  unzip /app/bge-small-en-v1.5.zip -d /app/local_models && \
+  rm /app/bge-small-en-v1.5.zip
 
 # Stage 2: Final image - for running the application
 FROM python:3.11.3-slim
@@ -29,16 +34,10 @@ RUN chown -R app:app /app
 # Copy installed packages and binaries from builder stage
 COPY --from=builder /usr/local /usr/local
 
-# Install utilities for GCS
-RUN apt-get update && apt-get install -y wget unzip gnupg && rm -rf /var/lib/apt/lists/*
-
-# (For gsutil: install only if private bucket, or use wget for public!)
-RUN pip install --no-cache-dir google-cloud-storage
+COPY --from=builder /app/local_models /app/local_models
 
 # Copy application code and set ownership to the new user
 COPY --chown=app:app . .
-
-ARG ENV=local
 
 # Switch to the non-root user
 USER app
@@ -47,13 +46,4 @@ USER app
 EXPOSE $PORT
 
 # Command to run the application in production
-CMD ["/bin/sh", "-c", "\
-if [ \"$DEV_MODE\" = \"false\" ]; then \
-  if [ ! -d /app/local_models/bge-small-en-v1.5 ]; then \
-    wget https://storage.googleapis.com/testapp-prod-embeddings/bge-small-en-v1.5.zip -O /app/bge-small-en-v1.5.zip && \
-    mkdir -p /app/local_models/ && \
-    unzip /app/bge-small-en-v1.5.zip -d /app/local_models/ && \
-    rm /app/bge-small-en-v1.5.zip ; \
-  fi ; \
-fi && \
-uvicorn main:app --host 0.0.0.0 --port $PORT"]
+CMD ["/bin/sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
