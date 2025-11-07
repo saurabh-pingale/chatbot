@@ -141,6 +141,7 @@ export interface CartProps {
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   onCheckout: () => Promise<void>;
   isLoading: boolean;
+  loadingItemId?: string | null;
 }
 
 export interface ChatbotToggleProps {
@@ -237,6 +238,7 @@ export interface CartBodyProps {
   availableQty: number;
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   dynamicStyles: StyleWithCustomProps;
+  isUpdating?: boolean;
 }
 
 export interface MinusIconProps {
@@ -244,6 +246,7 @@ export interface MinusIconProps {
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
   id: string;
   quantity: number;
+  disabled?: boolean;
 }
 
 export interface PlusIconProps {
@@ -252,6 +255,7 @@ export interface PlusIconProps {
   id: string;
   quantity: number;
   availableQty: number;
+  disabled?: boolean;
 }
 
 export interface AnalyticsSummaryData {

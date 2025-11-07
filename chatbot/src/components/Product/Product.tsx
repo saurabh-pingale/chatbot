@@ -1,17 +1,26 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useConfig } from '../../context/ConfigContext';
+import { hexToRgbArray } from '../../utils/utils';
 import type { ProductProps, StyleWithCustomProps } from '../../types';
 import './Product.scss';
-import { hexToRgbArray } from '../../utils/utils';
-import { useConfig } from '../../context/ConfigContext';
 
 export const Product = ({ product, onAddToCart }: ProductProps) => {
   const config = useConfig();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const isOutOfStock = product.variant_quantity === 0;
 
   const handleAddToCart = async () => {
+    if (isAdding || isOutOfStock) return; 
+
+    setIsAdding(true);
     try {
       await onAddToCart(product);
     } catch (err) {
       console.error('Failed to add product to cart:', err);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -23,9 +32,12 @@ export const Product = ({ product, onAddToCart }: ProductProps) => {
     dynamicButtonStyles['--theme-primary-color-rgb'] = primaryColorRgb?.join(', ');
   }
 
+  const cardClasses = `product-card ${isOutOfStock ? 'out-of-stock' : ''}`;
+  const linkClasses = `product-view-button ${isOutOfStock ? 'disabled-link' : ''}`;
+
   return (
     <motion.div
-      className="product-card"
+      className={cardClasses}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -36,15 +48,22 @@ export const Product = ({ product, onAddToCart }: ProductProps) => {
         {product.price && (
           <div className="product-price">${product.price}</div>
         )}
-        <a href={product.url} target="_blank" className="product-view-button">
+        <a
+          href={isOutOfStock ? undefined : product.url}
+          target="_blank"
+          className={linkClasses}
+          aria-disabled={isOutOfStock}
+          onClick={(e) => isOutOfStock && e.preventDefault()}
+        >
           View
         </a>
         <button 
           className="product-add-to-cart-button"
           onClick={handleAddToCart}
           style={dynamicButtonStyles}
+          disabled={isOutOfStock || isAdding}
         >
-          Add to Cart
+          {isOutOfStock ? 'Out of Stock' : (isAdding ? <div className="btn-spinner"></div> : 'Add to Cart')}
         </button>
       </div>
     </motion.div>

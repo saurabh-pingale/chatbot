@@ -56,3 +56,16 @@
   font-weight: bold;
   line-height: 1;
 }
+
+.cart-badge-spinner {
+  width: 12px; 
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cart-badge-spin 0.8s linear infinite;
+}
+
+@keyframes cart-badge-spin {
+  to { transform: rotate(360deg); }
+}

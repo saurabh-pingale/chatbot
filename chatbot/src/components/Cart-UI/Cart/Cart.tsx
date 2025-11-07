@@ -14,7 +14,8 @@ export const Cart = memo<CartProps>(({
   onClose,
   onUpdateQuantity,
   onCheckout,
-  isLoading = false
+  isLoading = false,
+  loadingItemId,
 }) => {
   const config = useConfig();
   const total = items.reduce((sum, item: CartItem) => {
@@ -62,6 +63,7 @@ export const Cart = memo<CartProps>(({
                   onUpdateQuantity={onUpdateQuantity}
                   image_url={item.image_url || ''}
                   dynamicStyles={dynamicStyles}
+                  isUpdating={loadingItemId === String(item.id)}
                 />
               ))
             )}

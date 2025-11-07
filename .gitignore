@@ -25,3 +25,5 @@ __pycache__
 .shopify.lock
 
 .vscode
+
+/api/local_models
