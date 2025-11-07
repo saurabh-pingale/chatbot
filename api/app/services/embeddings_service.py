@@ -3,6 +3,7 @@ from FlagEmbedding import FlagModel
 from typing import List, Optional, Dict, Any
 import os
 
+from config import DEV_MODE
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
 
@@ -19,8 +20,7 @@ class EmbeddingService:
     def get_model(cls) -> FlagModel:
         """Lazily load and return the embedding model."""
         if cls._model is None:
-            is_dev = os.environ.get('DEV_MODE', 'true').lower() in ('1', 'true', 'yes')
-            if not is_dev:
+            if not DEV_MODE:
                 model_path = '/app/local_models/bge-small-en-v1.5'
             else:
                 base_dir = os.path.dirname(os.path.abspath(__file__))
