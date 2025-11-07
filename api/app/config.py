@@ -56,3 +56,5 @@ REDIS_URL = os.getenv("REDIS_URL")
 
 # US_COUNTRY CODE
 US_COUNTRY_CODE = os.getenv("US_COUNTRY_CODE")
+
+DEV_MODE = os.environ.get("DEV_MODE", "true").lower() in ("1", "true", "yes")
