@@ -23,6 +23,9 @@ WORKDIR /app
 # Create a non-root user and group for security
 RUN addgroup --system app && adduser --system --ingroup app app
 
+# Give app user ownership on /app BEFORE switching to USER
+RUN chown -R app:app /app
+
 # Copy installed packages and binaries from builder stage
 COPY --from=builder /usr/local /usr/local
 
