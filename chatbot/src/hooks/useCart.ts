@@ -19,8 +19,8 @@ export const useCart = () => {
   const isInitialMount = useRef(true);
   const syncLock = useRef(false);
   
-  let lastToken: string | null = null;
-  let lastCount = 0;
+  const lastToken = useRef<string | null>(null);
+  const lastCount = useRef<number>(0);
 
   const loadCart = async () => {
     try {
@@ -69,9 +69,9 @@ export const useCart = () => {
     try {
       const cart = await getCart();
       if (!cart) return;
-      if (cart.token === lastToken && cart.item_count === lastCount) return;
-      lastToken = cart.token;
-      lastCount = cart.item_count;
+      if (cart.token === lastToken.current && cart.item_count === lastCount.current) return;
+      lastToken.current = cart.token;
+      lastCount.current = cart.item_count;
       
       const shopifyItems: CartItem[] = cart.items.map((item) => ({
         id: String(item.id),
