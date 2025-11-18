@@ -142,6 +142,7 @@ export interface CartProps {
   onCheckout: () => Promise<void>;
   isLoading: boolean;
   loadingItemId?: string | null;
+  isCheckingOut: boolean
 }
 
 export interface ChatbotToggleProps {
