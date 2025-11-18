@@ -12,6 +12,7 @@ export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoadingCart, setIsLoadingCart] = useState(true);
   const [isUpdatingCart, setIsUpdatingCart] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const debouncedCartItems = useDebounce(cartItems, 500);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -270,10 +271,11 @@ export const useCart = () => {
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
   const checkout = async () => {
+    setIsCheckingOut(true); 
     try {
       const success = await syncCartItemsToShopifyStoreCart(cartItems);
       if (success) {
-        await clearCartDB();
+        clearCartDB().catch(err => console.error('Failed to clear cart DB during checkout:', err));
         const checkoutUrl = new URL('/checkout', window.location.origin);
         checkoutUrl.searchParams.set('utm_source', 'chatbot');
         window.location.href = checkoutUrl.toString();
@@ -307,5 +309,6 @@ export const useCart = () => {
     isLoadingCart,
     isUpdatingCart,
     loadingItemId,
+    isCheckingOut,
   };
 };

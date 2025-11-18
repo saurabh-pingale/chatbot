@@ -16,6 +16,7 @@ export const Cart = memo<CartProps>(({
   onCheckout,
   isLoading = false,
   loadingItemId,
+  isCheckingOut = false,
 }) => {
   const config = useConfig();
   const total = items.reduce((sum, item: CartItem) => {
@@ -78,11 +79,11 @@ export const Cart = memo<CartProps>(({
                 className="cart-checkout-button"
                 style={dynamicStyles} 
                 onClick={onCheckout}
-                disabled={items?.length === 0}
+                disabled={items?.length === 0 || isCheckingOut}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Checkout
+                {isCheckingOut ? <div className='btn-spinner'></div> : 'Checkout'}
               </motion.button>
             </div>
           )}
