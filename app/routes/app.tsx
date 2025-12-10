@@ -6,16 +6,30 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import { authenticate } from "../shopify.server";
+import { getShopStatus } from "./get_shop_status";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  const { session } = await authenticate.admin(request);
+  const shopId = session.shop;
+
+  let shopStatus = { setup_completed: false };
+  try {
+    shopStatus = await getShopStatus(shopId);
+  } catch (error) {
+    console.error("Failed to fetch shop status:", error);
+  }
+
+  return {
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    shopStatus
+  };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, shopStatus } = useLoaderData<typeof loader>();
+  const isSetupCompleted = shopStatus.setup_completed;
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -23,11 +37,15 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/settings">Settings</Link>
-        <Link to="/app/training">Training</Link>
-        <Link to="/app/analytics">Analytics</Link>
-        {/* <Link to="/app/billings">Billing</Link> // TODO: Uncomment when pricing flow is automated completely */}
-        <Link to="/app/integrations">Integrations</Link>       
+        {isSetupCompleted && (
+          <>
+            <Link to="/app/settings">Settings</Link>
+            <Link to="/app/training">Training</Link>
+            <Link to="/app/analytics">Analytics</Link>
+            {/* <Link to="/app/billings">Billing</Link> // TODO: Uncomment when pricing flow is automated completely */}
+            <Link to="/app/integrations">Integrations</Link>
+          </>
+        )}
       </NavMenu>
       <Outlet />
     </AppProvider>

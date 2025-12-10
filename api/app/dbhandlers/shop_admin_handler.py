@@ -235,7 +235,7 @@ class ShopAdminHandler:
                     raise Exception("Failed to save shop image.")
 
     async def get_shop_status(self, shop_id: str) -> Optional[ShopModel]:
-        """Fetches a shop by its ID to check its status."""
+        """Fetches a shop by its ID to check its status. Creates a shop record if not found."""
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 try:
@@ -244,8 +244,10 @@ class ShopAdminHandler:
                     shop = result.scalars().first()
 
                     if not shop:
-                        logger.warning(f"No shop found with shop_id: {shop_id}")
-                        return None
+                        logger.info(f"Creating new shop record for shop_id: {shop_id}")
+                        shop = ShopModel(shop_id=shop_id)
+                        session.add(shop)
+                        return shop
 
                     return shop
                 except SQLAlchemyError as error:

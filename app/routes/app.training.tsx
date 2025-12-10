@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Page } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
@@ -32,6 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function TrainingPage() {
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const fetcher = useFetcher<FetcherResponse>();
   const { shop, setupCompleted } = useLoaderData<TrainingLoaderData>();
   const processingRef = useRef(false);
@@ -174,6 +175,8 @@ export default function TrainingPage() {
           if (data.status === 'completed') {
             setIsSyncError(false);
             setVisualProgress(100);
+
+            revalidator.revalidate();
 
             if (!setupCompleted) {
               setTimeout(() => {
