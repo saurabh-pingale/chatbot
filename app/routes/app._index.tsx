@@ -15,7 +15,7 @@ import {
 import { json, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { getShopStatus } from "./get_shop_status";
+import { getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 interface LoaderData {
   shop: string;
@@ -43,21 +43,21 @@ const exampleQuestions = [
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-  const shopId = session.shop;
+  const shopId = getShopId(session);
 
-  try {
-    const { plan, setup_completed, subscription_status, end_date } = await getShopStatus(shopId);
-    return json({ 
-      shop: shopId, 
-      plan, 
-      setupCompleted: setup_completed,
-      subscriptionStatus: subscription_status,
-      endDate: end_date 
-    });
-  } catch (error) {
-    console.error("Failed to fetch shop status:", error);
-    return json({ shop: shopId, plan: null, setupCompleted: false, subscriptionStatus: null, endDate: null });
+  if (!shopId) {
+    return json({ shop: null, plan: null, setupCompleted: false, subscriptionStatus: null, endDate: null });
   }
+
+  const shopStatus = await getShopStatusSafe(shopId);
+
+  return json({ 
+    shop: shopId, 
+    plan: shopStatus.plan, 
+    setupCompleted: shopStatus.setup_completed,
+    subscriptionStatus: shopStatus.subscription_status,
+    endDate: shopStatus.end_date 
+  });
 };
 
 export default function Index() {

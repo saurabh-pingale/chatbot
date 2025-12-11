@@ -7,7 +7,6 @@ import { saveSupportInfo } from "./save_support_info";
 import { uploadToCloudinary } from "./cloudinary.api";
 import { saveImageURLs } from "./save_image_urls";
 import { saveEmailGatePreference } from "./save_email_gate_preference";
-import { getShopStatus } from "./get_shop_status";
 import { getShopSettings } from "./get_shop_settings";
 import type { ActionResponse } from "../common/types/index";
 import {
@@ -28,6 +27,7 @@ import {
 } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
 import { API } from "../constants/api.constants";
+import { getAccessToken, getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 
@@ -47,7 +47,12 @@ interface SettingsData {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-  const { setup_completed } = await getShopStatus(session.shop);
+
+  const shopId = getShopId(session);
+  const accessToken = getAccessToken(session);
+  const shopStatus = await getShopStatusSafe(shopId);
+
+  let setupCompleted = shopStatus.setup_completed;
   let settings = {};
   let countryCodes: Array<{label: string, value: string}> = [];
 
@@ -60,12 +65,12 @@ export const loader: LoaderFunction = async ({ request }) => {
     console.error("Failed to load country codes:", error);
   }
 
-  if (!setup_completed && session.accessToken) {
+  if (!setupCompleted && accessToken) {
     try {
-      await fetch(`${API.STORE_ACCESS_TOKEN}?shop_id=${session.shop}`, {
+      await fetch(`${API.STORE_ACCESS_TOKEN}?shop_id=${shopId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: session.accessToken })
+        body: JSON.stringify({ access_token: accessToken })
       });
       console.log('Access token stored successfully during setup');
     } catch (error) {
@@ -73,20 +78,20 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
   }
 
-  if (setup_completed) {
+  if (setupCompleted) {
     try {
-      settings = await getShopSettings(session.shop);
+      settings = await getShopSettings(shopId!);
     } catch (error) {
       console.error("Failed to load shop settings:", error);
     }
   }
-  return json({ session, setupCompleted: setup_completed, settings, countryCodes });
+  return json({ session, setupCompleted, settings, countryCodes });
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();
-  const shopId = session.shop;
+  const shopId = getShopId(session);
   const intent = formData.get("intent");
 
   if (!shopId) {

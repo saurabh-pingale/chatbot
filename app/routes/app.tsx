@@ -6,20 +6,15 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import { authenticate } from "../shopify.server";
-import { getShopStatus } from "./get_shop_status";
+import { getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  const shopId = session.shop;
 
-  let shopStatus = { setup_completed: false };
-  try {
-    shopStatus = await getShopStatus(shopId);
-  } catch (error) {
-    console.error("Failed to fetch shop status:", error);
-  }
+  const shopId = getShopId(session);
+  const shopStatus = await getShopStatusSafe(shopId);
 
   return {
     apiKey: process.env.SHOPIFY_API_KEY || "",

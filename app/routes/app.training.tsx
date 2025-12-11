@@ -7,10 +7,10 @@ import ProgressLoader from "../components/ProgressLoader";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
 import { textTrain } from "./text_train";
-import { getShopStatus } from "./get_shop_status";
 import { API } from "../constants/api.constants";
 import type { FetcherResponse, LoaderData } from "../common/types/index";
 import styles from '../styles/training.module.css';
+import { getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 interface TrainingLoaderData extends LoaderData {
   setupCompleted: boolean;
@@ -18,15 +18,18 @@ interface TrainingLoaderData extends LoaderData {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  if (!session?.shop) {
+  const shopId = getShopId(session);
+
+  if (!shopId) {
     return json({ shop: null, setupCompleted: false });
   }
 
-  const { setup_completed } = await getShopStatus(session.shop);
+  const shopStatus = await getShopStatusSafe(shopId);
+  const setupCompleted = shopStatus.setup_completed;
 
   return json({ 
-    shop: session.shop,
-    setupCompleted: setup_completed,
+    shop: shopId,
+    setupCompleted,
   });
 };
 
@@ -111,7 +114,7 @@ export default function TrainingPage() {
   }, [visualProgress]);
 
   const handleSend = async () => {
-    if (!input.trim() || processingRef.current) return;
+    if (!input.trim() || processingRef.current || !shop) return;
 
     if (input.length > MAX_CHAR_LIMIT) {
       setMessages((prev) => [
@@ -210,7 +213,7 @@ export default function TrainingPage() {
   };
 
   const handleFetchProducts = async () => {
-    if (processingRef.current) return;
+    if (processingRef.current || !shop) return;
     processingRef.current = true;
     setIsProcessing(true);
 
