@@ -6,16 +6,25 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import { authenticate } from "../shopify.server";
+import { getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  const { session } = await authenticate.admin(request);
+
+  const shopId = getShopId(session);
+  const shopStatus = await getShopStatusSafe(shopId);
+
+  return {
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    shopStatus
+  };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, shopStatus } = useLoaderData<typeof loader>();
+  const isSetupCompleted = shopStatus.setup_completed;
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -23,11 +32,15 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/settings">Settings</Link>
-        <Link to="/app/training">Training</Link>
-        <Link to="/app/analytics">Analytics</Link>
-        {/* <Link to="/app/billings">Billing</Link> // TODO: Uncomment when pricing flow is automated completely */}
-        <Link to="/app/integrations">Integrations</Link>       
+        {isSetupCompleted && (
+          <>
+            <Link to="/app/settings">Settings</Link>
+            <Link to="/app/training">Training</Link>
+            <Link to="/app/analytics">Analytics</Link>
+            {/* <Link to="/app/billings">Billing</Link> // TODO: Uncomment when pricing flow is automated completely */}
+            <Link to="/app/integrations">Integrations</Link>
+          </>
+        )}
       </NavMenu>
       <Outlet />
     </AppProvider>

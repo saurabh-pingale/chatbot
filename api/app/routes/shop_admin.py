@@ -131,7 +131,13 @@ async def get_shop_status(request: Request):
     
     try:
         app = get_app()
-        shop, subscription = await app.shop_admin_service.get_shop_status_with_subscription(shop_id)
+
+        result = await app.shop_admin_service.get_shop_status_with_subscription(shop_id)
+
+        if not result or not isinstance(result, (list, tuple)) or len(result) < 2:
+            shop, subscription = None, None
+        else:
+            shop, subscription = result[0], result[1]
         
         if not shop:
             return {
@@ -148,13 +154,13 @@ async def get_shop_status(request: Request):
                 "subscription_status": subscription.status.value if subscription.status else None,
                 "end_date": subscription.end_date.isoformat() if subscription.end_date else None,
             }
-        else:
-            return {
-                "plan": shop.plan or "Not Selected",
-                "setup_completed": shop.setup_completed,
-                "subscription_status": "trial",
-                "end_date": shop.plan_end_date.isoformat() if shop.plan_end_date else None,
-            }
+
+        return {
+            "plan": shop.plan or "Not Selected",
+            "setup_completed": shop.setup_completed,
+            "subscription_status": "trial",
+            "end_date": shop.plan_end_date.isoformat() if shop.plan_end_date else None,
+        }
     except Exception as error:
         logger.error(f"Error in get_shop_status for shop {shop_id}: {error}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch shop status.")

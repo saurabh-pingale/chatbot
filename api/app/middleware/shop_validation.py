@@ -35,7 +35,15 @@ class ShopValidation:
             except Exception as e:
                 logger.debug(f"Could not parse body for shop_id: {e}")
 
-        if shop_id:
+        if not shop_id:
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path")
+        if path == "/shop-admin/shop-status":
+            # Skip validation for shop-status
+            request.state.shop_id = shop_id
+        else:
             async with AsyncSessionLocal() as session:
                 try:
                     shop_pk = await self.shop_config_handler.get_shop_pk(shop_id, session)
