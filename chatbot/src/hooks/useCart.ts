@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCart, syncCartItemsToShopifyStoreCart } from '../services/shopify';
-import { getLatestInventory, removeCheckoutProduct, storeCheckoutProduct } from '../services/checkout-product';
+import { getLatestInventory } from '../services/checkout-product';
 import { fetchCartFromDB, addToCartDB, removeFromCartDB, clearCartDB } from '../services/cart';
 import { useDebounce } from './useDebounce';
 import { trackAddedToCart } from '../services/analytics';
@@ -19,6 +19,7 @@ export const useCart = () => {
   const [cartError, setCartError] = useState<string | null>(null);
   const isInitialMount = useRef(true);
   const syncLock = useRef(false);
+  const lastUserActionTime = useRef<number>(0);
   
   const lastToken = useRef<string | null>(null);
   const lastCount = useRef<number>(0);
@@ -62,11 +63,17 @@ export const useCart = () => {
       syncLock.current = false;
       return;
     }
+
+    lastUserActionTime.current = Date.now();
+
     syncCartItemsToShopifyStoreCart(debouncedCartItems).catch(err => console.error('Background sync failed:', err));
   }, [debouncedCartItems]);
 
   const pollCart = async () => {
     if (JSON.stringify(cartItems) !== JSON.stringify(debouncedCartItems)) return;
+    
+    if (Date.now() - lastUserActionTime.current < 3000) return;
+
     try {
       const cart = await getCart();
       if (!cart) return;
@@ -84,6 +91,26 @@ export const useCart = () => {
         quantity: item.quantity,
         variant_quantity: cartItems.find(localItem => localItem.variant_id === `${SHOPIFY_VARIANT_PREFIX}${item.id}`)?.variant_quantity ?? 10,
       }));
+      
+      const syncToDbPromises: Promise<any>[] = [];
+
+      cartItems.forEach(localItem => {
+        const stillExists = shopifyItems.some(newItem => newItem.id === localItem.id);
+        if (!stillExists) {
+           syncToDbPromises.push(removeFromCartDB(Number(localItem.id)));
+        }
+      });
+
+      shopifyItems.forEach(newItem => {
+        const existingItem = cartItems.find(localItem => localItem.id === newItem.id);
+        if (!existingItem || existingItem.quantity !== newItem.quantity) {
+           syncToDbPromises.push(addToCartDB(Number(newItem.id), newItem.quantity));
+        }
+      });
+
+      if (syncToDbPromises.length > 0) {
+          await Promise.allSettled(syncToDbPromises);
+      }
 
       syncLock.current = true;
       setCartItems(shopifyItems); 
@@ -162,7 +189,6 @@ export const useCart = () => {
       (async () => {
         try {
           await addToCartDB(variantId, updatedProductCount);
-          await storeCheckoutProduct({ product_id: variantId, product_count: updatedProductCount });
           trackAddedToCart();
         } catch (err) {
           console.error('DB sync failed for add:', err);
@@ -191,7 +217,6 @@ export const useCart = () => {
     (async () => {
       try {
         await removeFromCartDB(variantId);
-        removeCheckoutProduct({ product_id: variantId });
       } catch (err) {
         console.error('DB sync failed for remove:', err);
       }
@@ -249,7 +274,6 @@ export const useCart = () => {
       (async () => {
         try {
           await addToCartDB(variantId, finalQuantity);
-          await storeCheckoutProduct({ product_id: variantId, product_count: cappedQuantity });
           if (isIncreasing) {
             trackAddedToCart();
           }

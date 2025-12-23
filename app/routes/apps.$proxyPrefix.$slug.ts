@@ -10,8 +10,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const routeMap: Record<string, () => Promise<any>> = {
     "agent_conversation": () => import("./agent_conversation"),
-    "store_checkout_product": () => import("./store_checkout_product"),
-    "remove_checkout_product": () => import("./remove_checkout_product"),
     "initiate_session": () => import("./initiate_session"),
     "send-otp": () => import("./send-otp"),
     "verify-otp": () => import("./verify-otp"),

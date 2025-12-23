@@ -1,3 +1,5 @@
 export const CONFIGMESSAGE = {
     MIN_MESSAGES_TO_SHOW_CLEAR_ICON: 4,
 }
+
+export const MESSAGE_REVEAL_EXPIRY_MS = 5000;

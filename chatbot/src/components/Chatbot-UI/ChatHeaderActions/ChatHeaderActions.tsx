@@ -54,10 +54,10 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
         )}
         {showCartIcon && (
           <motion.div
-            className="chat-header-icon-wrapper chat-header-cart-icon-wrapper"
-            onClick={toggleCart}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            className={`chat-header-icon-wrapper chat-header-cart-icon-wrapper ${isCartLoading ? 'disabled' : ''}`}
+            onClick={isCartLoading ? undefined : toggleCart}
+            whileHover={isCartLoading ? undefined : { scale: 1.1 }}
+            whileTap={isCartLoading ? undefined : { scale: 0.95 }}
             title="View Cart"
           >
             <CartIconSVG />
