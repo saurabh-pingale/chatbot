@@ -1,5 +1,6 @@
 import { SHOPIFY_VARIANT_PREFIX } from "../constants/cart";
 import { getShopConfiguration } from "../services/chat";
+import { MESSAGE_REVEAL_EXPIRY_MS } from "../constants/messages";
 
 export const getShopId = (): string => {
   return window.Shopify?.shop || '';
@@ -153,3 +154,13 @@ export const normalizeShopifyGID = (id: string): string => {
     return `gid://shopify/${type.charAt(0).toUpperCase()}${type.slice(1)}`;
   });
 };
+
+export function isMessageExpired(
+  timestamp?: string | number | Date
+): boolean {
+  if (!timestamp) return false;
+
+  const messageTime = 
+    timestamp instanceof Date ? timestamp.getTime() : new Date(timestamp).getTime();
+  return Date.now() - messageTime > MESSAGE_REVEAL_EXPIRY_MS;
+}

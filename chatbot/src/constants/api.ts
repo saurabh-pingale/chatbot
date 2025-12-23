@@ -1,7 +1,5 @@
 export const API_ENDPOINTS = {
   AGENT_CONVERSATION: '/apps/chatbot-api-1/agent_conversation',
-  STORE_CHECKOUT_PRODUCT: '/apps/chatbot-api-1/store_checkout_product',
-  REMOVE_CHECKOUT_PRODUCT: '/apps/chatbot-api-1/remove_checkout_product',
   INITIATE_SESSION: '/apps/chatbot-api-1/initiate_session',
   SEND_OTP: '/apps/chatbot-api-1/send-otp',
   VERIFY_OTP: '/apps/chatbot-api-1/verify-otp',

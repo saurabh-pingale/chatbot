@@ -6,7 +6,7 @@ import { ProductSlider } from '../../ProductSlider/ProductSlider';
 import { ChatbotTags } from '../ChatbotTags/ChatbotTags';
 import { TypingIndicator } from '../../TypingIndicator/TypingIndicator';
 import { useConfig } from '../../../context/ConfigContext';
-import { formatMessage } from '../../../utils/utils';
+import { formatMessage, isMessageExpired } from '../../../utils/utils';
 import type { MessageProps, ProductType, TagItem } from '../../../types';
 import './Message.scss';
 
@@ -50,10 +50,10 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
   }, [visibleCount]);
 
   useEffect(() => {
-    if (hasMultipleSegments <= 1) {
-      setVisibleCount(1);
+    if (hasMultipleSegments <= 1 || isMessageExpired(message.timestamp)) {
+      setVisibleCount(hasMultipleSegments);
       setShowLoader(false);
-      setShowProductSlider(hasMultipleSegments <= 1);
+      setShowProductSlider(true);
       return;
     }
 
@@ -94,7 +94,7 @@ export const Message = memo(forwardRef<HTMLDivElement, ExtendedMessageProps>(({
       isMounted = false;
       timeoutIdsRef.current.forEach(clearTimeout);
     };
-  }, [message.content, message.type]);
+  }, [message.content, message.type, message.timestamp, hasMultipleSegments]);
 
   const interleavedContent: React.ReactNode[] = [];
   for (let i = 0; i < hasMultipleSegments; i++) {

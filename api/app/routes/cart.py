@@ -54,9 +54,10 @@ async def add_cart_item(
         app = get_app()
         user_id = await resolve_user_id(shop_pk, guest_id, auth_payload)
 
+        updated_item = await app.cart_service.add_to_cart(shop_pk, user_id, variant_id, quantity)
+        
         await app.checkout_product_service.store_checkout_product(shop_pk, user_id, variant_id, quantity)
 
-        updated_item = await app.cart_service.add_to_cart(shop_pk, user_id, variant_id, quantity)
         return updated_item
     except Exception as e:
         logger.error(f"Error adding cart item: {e}")
@@ -79,11 +80,11 @@ async def remove_cart_item(
         app = get_app()
         user_id = await resolve_user_id(shop_pk, guest_id, auth_payload)
 
-        await app.checkout_product_service.remove_checkout_product(shop_pk, user_id, variant_id)
-
         success = await app.cart_service.remove_from_cart(shop_pk, user_id, variant_id)
         if not success:
             raise HTTPException(status_code=404, detail="Item not found in cart")
+
+        await app.checkout_product_service.remove_checkout_product(shop_pk, user_id, variant_id)
 
         return {"success": True}
     except Exception as e:
