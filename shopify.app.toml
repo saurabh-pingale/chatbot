@@ -1,13 +1,12 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5c6356e63895028f5c0c531b2f8c9846"
-name = "Reezo AI"
+client_id = "c5321cbc8d5febf2640dc5edb558a0ff"
+name = "chatbot-test"
 application_url = "https://bot.reezoai.com"
 embedded = true
-handle = "reezo-ai-1"
 
 [webhooks]
-api_version = "2026-01"
+api_version = "2025-10"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
