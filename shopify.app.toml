@@ -1,21 +1,22 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "c5321cbc8d5febf2640dc5edb558a0ff"
-name = "chatbot-test"
+client_id = "5c6356e63895028f5c0c531b2f8c9846"
+name = "Reezo AI"
 application_url = "https://bot.reezoai.com"
 embedded = true
+handle = "reezo-ai-1"
 
 [webhooks]
-api_version = "2025-10"
+api_version = "2026-01"
+
+[access.admin]
+direct_api_mode = "offline"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_metaobjects,read_products,write_products"
 optional_scopes = [ ]
 use_legacy_install_flow = false
-
-[access.admin]
-direct_api_mode = "offline"
 
 [auth]
 redirect_urls = [
@@ -28,6 +29,3 @@ redirect_urls = [
 url = "https://bot.reezoai.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
-
-[build]
-automatically_update_urls_on_dev = true
