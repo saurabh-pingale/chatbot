@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { json, type LoaderFunction, type ActionFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
@@ -26,14 +26,14 @@ import {
   Select
 } from "@shopify/polaris";
 import SetupStepper from "../components/SetupStepper";
+import { useRootData } from "../hooks/useRootData";
 import { API } from "../constants/api.constants";
-import { getAccessToken, getShopId, getShopStatusSafe } from "../utils/session.utils";
+import { getAccessToken, getShopId } from "../utils/session.utils";
 
 const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#33FFF5"];
 
 interface SettingsData {
   session: { shop: string };
-  setupCompleted: boolean;
   settings?: {
     preferred_color?: string;
     support_email?: string;
@@ -50,42 +50,42 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const shopId = getShopId(session);
   const accessToken = getAccessToken(session);
-  const shopStatus = await getShopStatusSafe(shopId);
 
-  let setupCompleted = shopStatus.setup_completed;
   let settings = {};
   let countryCodes: Array<{label: string, value: string}> = [];
 
   try {
-    const response = await fetch(`${API.COUNTRY_CODES}`);
-    if (response.ok) {
-      countryCodes = await response.json();
-    }
-  } catch (error) {
-    console.error("Failed to load country codes:", error);
-  }
+    const countryCodesPromise = fetch(`${API.COUNTRY_CODES}`);
+    const settingsPromise = shopId ? getShopSettings(shopId!) : Promise.resolve({});
+    const promises: Promise<Response | void | {}>[] = [countryCodesPromise, settingsPromise];
 
-  if (!setupCompleted && accessToken) {
-    try {
-      await fetch(`${API.STORE_ACCESS_TOKEN}?shop_id=${shopId}`, {
+    if (accessToken && shopId) {
+      const accessTokenPromise = fetch(`${API.STORE_ACCESS_TOKEN}?shop_id=${shopId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ access_token: accessToken })
+      }).then((res) => {
+        console.log('Access token stored successfully during setup');
+        return res;
+      }).catch((error) => {
+        console.error('Failed to store access token during setup:', error);
       });
-      console.log('Access token stored successfully during setup');
-    } catch (error) {
-      console.error('Failed to store access token during setup:', error);
+      promises.push(accessTokenPromise);
     }
-  }
 
-  if (setupCompleted) {
-    try {
-      settings = await getShopSettings(shopId!);
-    } catch (error) {
-      console.error("Failed to load shop settings:", error);
+    const results = await Promise.all(promises);
+    const countryRes = results[0] as Response;
+    const settingsRes = results[1] as {};
+
+    if (countryRes.ok) {
+      countryCodes = await countryRes.json();
     }
+
+    settings = settingsRes;
+  } catch (error) {
+    console.error("Failed to load in loader:", error);
   }
-  return json({ session, setupCompleted, settings, countryCodes });
+  return json({ session, settings, countryCodes });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -163,26 +163,40 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { session, setupCompleted, settings, countryCodes = [] } = useLoaderData<SettingsData>();
+  const { setupCompleted } = useRootData();
+  const { session, settings, countryCodes = [] } = useLoaderData<SettingsData>();
   const fetcher = useFetcher<ActionResponse>();
   const navigate = useNavigate();
 
-  const [settingDetails, setSettingDetails] = useState(() => {
-    const initialCountryCode =
-      countryCodes.find(c => c.value.startsWith(settings?.support_country_code || ''))?.value ||
+  const STORAGE_KEY = `settings_${session.shop}`;
+
+  const initialCountryCode = useMemo(() => {
+    const code = settings?.support_country_code || '';
+    return countryCodes.find(c => c.value.startsWith(code))?.value ||
       countryCodes.find(c => c.value.startsWith('+1'))?.value ||
       (countryCodes.length > 0 ? countryCodes[0].value : '');
-    
-    return {
-      selectedColor: settings?.preferred_color || null,
-      supportEmail: settings?.support_email || "",
-      supportPhone: settings?.support_phone || "",
-      countryCode: initialCountryCode,
-      uploadedImage: settings?.image || null,
-      emailGatePreference:
-        settings?.show_email_gate !== undefined ? String(settings.show_email_gate) : "false",
-    };
+  }, [countryCodes, settings?.support_country_code]);
+
+  const baseSettings = useMemo(() => ({
+    selectedColor: settings?.preferred_color || null,
+    supportEmail: settings?.support_email || "",
+    supportPhone: settings?.support_phone || "",
+    countryCode: initialCountryCode,
+    uploadedImage: settings?.image || null,
+    emailGatePreference: settings?.show_email_gate !== undefined ? String(settings.show_email_gate) : "false",
+  }), [settings, initialCountryCode]);
+
+  const [originalSettings, setOriginalSettings] = useState(baseSettings);
+
+  const [settingDetails, setSettingDetails] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const parsedStored = stored ? JSON.parse(stored) : {};
+    return { ...baseSettings, ...parsedStored };
   });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settingDetails));
+  }, [settingDetails, STORAGE_KEY]);
 
   const [uploading, setUploading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
@@ -215,10 +229,12 @@ export default function Settings() {
   useEffect(() => {
     if (fetcher.data?.success) {
       setShowSuccessBanner(true);
+      localStorage.removeItem(STORAGE_KEY);
       if (!setupCompleted) {
         setIsRedirecting(true);
         navigate("/app/training");
       } else {
+        setOriginalSettings({ ...settingDetails });
         const timer = setTimeout(() => setShowSuccessBanner(false), 2000);
         return () => clearTimeout(timer);
       }
@@ -227,7 +243,7 @@ export default function Settings() {
       const timer = setTimeout(() => setShowErrorBanner(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [fetcher.data, navigate, setupCompleted]);
+  }, [fetcher.data, navigate, setupCompleted, settingDetails]);
 
   const handleStateChange = (field: string, value: any) => {
     setSettingDetails(prev => ({ ...prev, [field]: value }));
@@ -343,6 +359,13 @@ export default function Settings() {
   };
 
   const isLoading = fetcher.state !== "idle" || isRedirecting || uploading;
+
+  const isColorChanged = settingDetails.selectedColor !== originalSettings.selectedColor;
+  const isEmailGateChanged = settingDetails.emailGatePreference !== originalSettings.emailGatePreference;
+  const isSupportChanged = settingDetails.supportEmail !== originalSettings.supportEmail ||
+    settingDetails.supportPhone !== originalSettings.supportPhone ||
+    settingDetails.countryCode !== originalSettings.countryCode;
+  const isImageChanged = settingDetails.uploadedImage !== originalSettings.uploadedImage;
 
   return (
     <Page>
@@ -475,7 +498,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveColor}
-                      disabled={!settingDetails.selectedColor || isLoading}
+                      disabled={!settingDetails.selectedColor || isLoading || !isColorChanged}
                       loading={isLoading && fetcher.formData?.get('intent') === 'saveColor'}
                     >
                       Save Color
@@ -541,6 +564,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveEmailGatePreference}
+                      disabled={isLoading || !isEmailGateChanged}
                       loading={isLoading && fetcher.formData?.get('intent') === 'saveEmailGatePref'}
                     >
                       Save Email Gate Setting
@@ -619,7 +643,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveSupportInfo}
-                      disabled={!settingDetails.supportEmail || !settingDetails.supportPhone || isLoading}
+                      disabled={!settingDetails.supportEmail || !settingDetails.supportPhone || isLoading || !isSupportChanged}
                       loading={isLoading && fetcher.formData?.get('intent') === 'saveSupport'}
                     >
                       Save Support Info
@@ -687,7 +711,7 @@ export default function Settings() {
                     <Button
                       variant="primary"
                       onClick={handleSaveImage}
-                      disabled={!settingDetails.uploadedImage || uploading || isLoading}
+                      disabled={!settingDetails.uploadedImage || uploading || isLoading || !isImageChanged}
                       loading={uploading || (isLoading && fetcher.formData?.get('intent') === 'saveImage')}
                     >
                       {uploading ? "Uploading..." : "Save Image"}

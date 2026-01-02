@@ -9,6 +9,14 @@ handle = "reezo-ai-1"
 [webhooks]
 api_version = "2026-01"
 
+[[webhooks.subscriptions]]
+compliance_topics = [
+  "customers/data_request",
+  "customers/redact",
+  "shop/redact"
+]
+uri = "/webhooks"
+
 [access.admin]
 direct_api_mode = "offline"
 
@@ -29,3 +37,6 @@ redirect_urls = [
 url = "https://bot.reezoai.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
+
+[build]
+automatically_update_urls_on_dev = true
