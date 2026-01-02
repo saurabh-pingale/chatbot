@@ -26,6 +26,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json({ session });
 };
 
+export const shouldRevalidate = () => false;
+
 export const action: ActionFunction = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();

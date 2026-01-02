@@ -1,10 +1,11 @@
 import React from "react";
 import { Box, Text, InlineStack } from "@shopify/polaris";
 import { useNavigate } from "@remix-run/react";
+import { useRootData } from "../hooks/useRootData";
 
 interface SetupStepperProps {
   currentStep: number;
-  setupCompleted: boolean;
+  setupCompleted?: boolean;
 }
 
 const stepStyles: React.CSSProperties = {
@@ -48,8 +49,11 @@ const lineStyles: React.CSSProperties = {
 };
 
 
-export default function SetupStepper({ currentStep, setupCompleted }: SetupStepperProps) {
-  if (setupCompleted) {
+export default function SetupStepper({ currentStep, setupCompleted: propCompleted }: SetupStepperProps) {
+  const { setupCompleted } = useRootData();
+  const finalSetupCompleted = propCompleted !== undefined ? propCompleted : setupCompleted;
+  
+  if (finalSetupCompleted) {
     return null;
   }
   

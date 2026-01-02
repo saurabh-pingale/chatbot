@@ -13,16 +13,13 @@ import {
   Spinner,
 } from "@shopify/polaris";
 import { json, type LoaderFunction } from "@remix-run/node";
-import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { useLoaderData, useNavigation, Link, useNavigate } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
-import { getShopId, getShopStatusSafe } from "../utils/session.utils";
+import { getShopId } from "../utils/session.utils";
+import { useRootData } from "../hooks/useRootData";
 
 interface LoaderData {
   shop: string;
-  plan: string | null;
-  setupCompleted: boolean;
-  subscriptionStatus: string | null;
-  endDate: string | null;
 }
 
 const features = [
@@ -46,28 +43,20 @@ export const loader: LoaderFunction = async ({ request }) => {
   const shopId = getShopId(session);
 
   if (!shopId) {
-    return json({ shop: null, plan: null, setupCompleted: false, subscriptionStatus: null, endDate: null });
+    return json({ shop: null });
   }
 
-  const shopStatus = await getShopStatusSafe(shopId);
-
-  return json({ 
-    shop: shopId, 
-    plan: shopStatus.plan, 
-    setupCompleted: shopStatus.setup_completed,
-    subscriptionStatus: shopStatus.subscription_status,
-    endDate: shopStatus.end_date 
-  });
+  return json({ shop: shopId });
 };
 
-export default function Index() {
-  const { shop, plan, setupCompleted, subscriptionStatus, endDate } = useLoaderData<LoaderData>();
-  const navigate = useNavigate();
-  const navigation = useNavigation();
+export const shouldRevalidate = () => false;
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+export default function Index() {
+  const { shop } = useLoaderData<LoaderData>();
+  const { setupCompleted, shopStatus } = useRootData();
+  const { plan, subscription_status: subscriptionStatus, end_date: endDate } = shopStatus || {};
+  const navigation = useNavigation();
+  const navigate = useNavigate();
 
   const isLoading = navigation.state !== "idle";
 
@@ -112,7 +101,7 @@ export default function Index() {
                 tone="warning"
                 action={{
                     content: "Renew Now",
-                    onAction: () => handleNavigation("/app/billings"),
+                    onAction: () => navigate("/app/billings"),
                 }}
             >
                 <p>
@@ -136,7 +125,7 @@ export default function Index() {
                 tone="warning"
                 action={{
                   content: "Complete Setup",
-                  onAction: () => handleNavigation("/app/settings"),
+                  onAction: () => navigate("/app/settings"),
                 }}
               >
                 <p>
@@ -219,22 +208,22 @@ export default function Index() {
               Quick Actions
             </Text>
             <InlineStack gap="400" align="center">
-              <Button onClick={() => handleNavigation("/app/settings")}>
-                Go to Settings
-              </Button>
-              <Button onClick={() => handleNavigation("/app/training")}>
-                Train Chatbot
-              </Button>
-              <Button onClick={() => handleNavigation("/app/analytics")}>
-                View Analytics
-              </Button>
+              <Link to="/app/settings">
+                <Button>Go to Settings</Button>
+              </Link>
+              <Link to="/app/training">
+                <Button>Train Chatbot</Button>
+              </Link>
+              <Link to="/app/analytics">
+                <Button>View Analytics</Button>
+              </Link>
               {/* TODO: Uncomment when pricing flow is automated completely
-                <Button onClick={() => handleNavigation("/app/billings")}>
-                View Billing
-              </Button> */}
-              <Button onClick={() => handleNavigation("/app/integrations")}>
-                Go to Integrations
-              </Button>
+                <Link to="/app/billings">
+                  <Button>View Billing</Button>
+                </Link> */}
+              <Link to="/app/integrations">
+                <Button>Go to Integrations</Button>
+              </Link>
             </InlineStack>
           </BlockStack>
         </Card>

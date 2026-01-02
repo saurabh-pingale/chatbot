@@ -126,6 +126,7 @@ export interface ShopifyCartResponse {
     properties: Record<string, ShopifyPropertyValue>;
   }>;
   item_count: number;
+  sections?: Record<string, string>;
 }
 
 export interface StyleWithCustomProps extends CSSProperties {

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useFetcher, useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Page } from "@shopify/polaris";
+import { useRootData } from "../hooks/useRootData";
 import SetupStepper from "../components/SetupStepper";
 import ProgressLoader from "../components/ProgressLoader";
 import { authenticate } from "../shopify.server";
@@ -9,35 +10,26 @@ import { fetchProducts } from "./products"
 import { textTrain } from "./text_train";
 import { API } from "../constants/api.constants";
 import type { FetcherResponse, LoaderData } from "../common/types/index";
+import { getShopId } from "../utils/session.utils";
 import styles from '../styles/training.module.css';
-import { getShopId, getShopStatusSafe } from "../utils/session.utils";
-
-interface TrainingLoaderData extends LoaderData {
-  setupCompleted: boolean;
-}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopId = getShopId(session);
 
   if (!shopId) {
-    return json({ shop: null, setupCompleted: false });
+    return json({ shop: null });
   }
 
-  const shopStatus = await getShopStatusSafe(shopId);
-  const setupCompleted = shopStatus.setup_completed;
-
-  return json({ 
-    shop: shopId,
-    setupCompleted,
-  });
+  return json({ shop: shopId });
 };
 
 export default function TrainingPage() {
+  const { setupCompleted } = useRootData();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const fetcher = useFetcher<FetcherResponse>();
-  const { shop, setupCompleted } = useLoaderData<TrainingLoaderData>();
+  const { shop } = useLoaderData<LoaderData>();
   const processingRef = useRef(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
