@@ -259,7 +259,7 @@ export default function TrainingPage() {
           isComplete={isSyncComplete}
           isError={isSyncError}
           onRetry={handleRetry}
-          onNavigate={navigate}
+          onNavigate={setupCompleted ? (() => {}) : navigate}
           chatbotDeepLink={themeEditorDeepLink}
         />
       )}
