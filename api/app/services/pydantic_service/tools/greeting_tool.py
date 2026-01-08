@@ -48,10 +48,11 @@ class GreetingTool(BaseTool):
         try:
             logger.info(f"Greeting tool called for message: {user_message}")
 
-            store_name = shop_id.replace(".myshopify.com", "")
+            raw_store_name = shop_id.replace(".myshopify.com", "")
+            clean_store_name = raw_store_name.replace("-", " ").title()
             
             return {
-                "store_name": store_name,
+                "store_name": clean_store_name,
                 "user_message": user_message,
                 "success": True
             }
@@ -59,7 +60,7 @@ class GreetingTool(BaseTool):
         except Exception as e:
             logger.error(f"Error in greeting tool: {e}", exc_info=True)
             return {
-                "store_name": store_name,
+                "store_name": clean_store_name,
                 "user_message": user_message,
                 "success": False
             }
