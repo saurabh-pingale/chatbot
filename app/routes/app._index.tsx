@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Page,
   Layout,
@@ -13,10 +13,11 @@ import {
   Spinner,
 } from "@shopify/polaris";
 import { json, type LoaderFunction } from "@remix-run/node";
-import { useLoaderData, useNavigation, Link, useNavigate } from "@remix-run/react";
+import { useLoaderData, useNavigation, Link, useNavigate, useFetcher } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { getShopId } from "../utils/session.utils";
 import { useRootData } from "../hooks/useRootData";
+import { StatusPopup } from "../components/StatusPopup";
 
 interface LoaderData {
   shop: string;
@@ -57,19 +58,37 @@ export default function Index() {
   const { plan, subscription_status: subscriptionStatus, end_date: endDate } = shopStatus || {};
   const navigation = useNavigation();
   const navigate = useNavigate();
+  const fetcher = useFetcher<{ status: string; data: any }>();
+
+  const [isBackendReady, setIsBackendReady] = useState<boolean>(setupCompleted);
 
   const isLoading = navigation.state !== "idle";
 
-  // TODO: Uncomment when pricing flow is automated completely
-  // const showSubscriptionWarning = () => {
-  //   if (!endDate || (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing')) {
-  //     return false;
-  //   }
-  //   const now = new Date();
-  //   const expiry = new Date(endDate);
-  //   const daysUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
-  //   return daysUntilExpiry <= 7;
-  // }
+  useEffect(() => {
+    if (isBackendReady) return;
+
+    const pollStatus = () => {
+      if (fetcher.state === "idle") {
+        fetcher.load("/api/status");
+      }
+    };
+
+    pollStatus();
+
+    const intervalId = setInterval(pollStatus, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isBackendReady, fetcher.state]);
+
+  useEffect(() => {
+    if (fetcher.data?.status === "ok") {
+      setIsBackendReady(true);
+    }
+  }, [fetcher.data]);
+
+  if (!isBackendReady) {
+    return <StatusPopup />;
+  }
 
   const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
 
@@ -115,7 +134,7 @@ export default function Index() {
             <Text as="h2" variant="headingLg">
               Welcome to the Smart Chatbot App!
             </Text>
-            {/*  TODO: Uncomment when pricing flow is introduced
+            {/* TODO: Uncomment when pricing flow is introduced
              <Text as="p" variant="bodyMd">
               Your current plan is: <strong>{plan || "Not selected"}</strong>
             </Text> */}
@@ -217,10 +236,6 @@ export default function Index() {
               <Link to="/app/analytics">
                 <Button>View Analytics</Button>
               </Link>
-              {/* TODO: Uncomment when pricing flow is automated completely
-                <Link to="/app/billings">
-                  <Button>View Billing</Button>
-                </Link> */}
               <Link to="/app/integrations">
                 <Button>Go to Integrations</Button>
               </Link>
