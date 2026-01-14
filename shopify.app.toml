@@ -1,10 +1,12 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5c6356e63895028f5c0c531b2f8c9846"
-name = "Reezo AI"
+client_id = "37adddb813286968ef22009e4323cf44"
+name = "custom-chatbot-app"
 application_url = "https://bot.reezoai.com"
 embedded = true
-handle = "reezo-ai-1"
+
+[build]
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2026-01"
@@ -37,6 +39,3 @@ redirect_urls = [
 url = "https://bot.reezoai.com"
 subpath = "chatbot-api-1"
 prefix = "apps"
-
-[build]
-automatically_update_urls_on_dev = true
