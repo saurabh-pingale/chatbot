@@ -227,23 +227,31 @@ export default function Settings() {
   }, [settingDetails, setupCompleted]);
 
   useEffect(() => {
-    if (fetcher.data?.success) {
+    if (
+      fetcher.data?.success &&
+      fetcher.formData?.get("intent") === "saveAllSettings"
+    ) {
       setShowSuccessBanner(true);
       localStorage.removeItem(STORAGE_KEY);
-      if (!setupCompleted) {
-        setIsRedirecting(true);
-        navigate("/app/training");
-      } else {
-        setOriginalSettings({ ...settingDetails });
-        const timer = setTimeout(() => setShowSuccessBanner(false), 2000);
-        return () => clearTimeout(timer);
-      }
-    } else if (fetcher.data?.error) {
+
+      setIsRedirecting(true);
+      navigate("/app/training", { replace: true });
+      return;
+    }
+
+    if (fetcher.data?.success) {
+      setShowSuccessBanner(true);
+      setOriginalSettings({ ...settingDetails });
+      const timer = setTimeout(() => setShowSuccessBanner(false), 2000);
+      return () => clearTimeout(timer);
+    }
+
+    if (fetcher.data?.error) {
       setShowErrorBanner(true);
       const timer = setTimeout(() => setShowErrorBanner(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [fetcher.data, navigate, setupCompleted, settingDetails]);
+  }, [fetcher.data, fetcher.formData, navigate, settingDetails]);
 
   const handleStateChange = (field: string, value: any) => {
     setSettingDetails(prev => ({ ...prev, [field]: value }));
@@ -289,7 +297,7 @@ export default function Settings() {
         emailGatePreference,
         imageUrl: uploadedImage
       },
-      { method: "post" }
+      { method: "post", preventScrollReset: true }
     );
   };
 
