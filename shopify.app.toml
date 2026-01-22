@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5d732d05fc020582d6062c13e152a98d"
-name = "test-chatbot-custom-dist-v2"
+client_id = "9c3025263a3aeddaebcafbf1eb794329"
+name = "test-chatbot-custom-dist-v3"
 application_url = "https://bot.reezoai.com"
 embedded = true
 
