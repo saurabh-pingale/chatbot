@@ -6,7 +6,7 @@ export const saveEmailGatePreference = async (
   payload: SaveEmailGatePreferencePayload
 ) => {
   try {
-    const response = await fetch(`${API.SAVE_EMAIL_PAGE_PREFERENCE}/?shopId=${encodeURIComponent(shopId)}`, {
+    const response = await fetch(`${API.SAVE_EMAIL_PAGE_PREFERENCE}?shopId=${encodeURIComponent(shopId)}`, {
       method: "POST",
       body: JSON.stringify(payload),
       headers: {
