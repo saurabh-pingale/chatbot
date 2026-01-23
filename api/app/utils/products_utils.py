@@ -75,12 +75,16 @@ async def create_product_embeddings(products: List, tracker: ProgressTracker) ->
             "type": "product"
         }
         metadata.update(standardized_metafields)
+        metadata["collections"] = [col.lower() for col in getattr(product, "collections", [])]
 
         metafields_str = " ".join([f"{key}: {value}" for key, value in product.metafields.items() if value])
+        collections_str = ", ".join(getattr(product, "collections", [])) if getattr(product, "collections", []) else "no collections"
+
         embedding_text = (
             f"Product: {product.title}. "
             f"Description: {product.description}. "
             f"Category: {product.category}. "
+            f"Collections: {collections_str}. "
             f"Price: {product.price}. "
             f"Available stock: {variant_quantity}. "
             f"{metafields_str}"

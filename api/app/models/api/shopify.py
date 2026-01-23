@@ -6,6 +6,7 @@ class ShopifyProduct(BaseModel):
     title: str
     description: str
     category: str
+    collections: List[str] = []
     handle: str
     url: str
     price: str

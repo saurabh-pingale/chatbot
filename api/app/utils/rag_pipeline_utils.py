@@ -137,9 +137,16 @@ def build_query_filters(
                         )
                     )
                 else:
-                    must_conditions.append(
-                        models.FieldCondition(key=key, match=models.MatchValue(value=val))
-                    )
+                    if key == "category":
+                        should_conditions = [
+                            models.FieldCondition(key="category", match=models.MatchValue(value=val)),
+                            models.FieldCondition(key="collections", match=models.MatchAny(any=[val]))
+                        ]
+                        must_conditions.append(models.Filter(should=should_conditions))
+                    else:
+                        must_conditions.append(
+                            models.FieldCondition(key=key, match=models.MatchValue(value=val))
+                        )
             if namespace:
                 must_conditions.append(models.FieldCondition(key="namespace", match=models.MatchValue(value=namespace)))
             query_filters.append(models.Filter(must=must_conditions))

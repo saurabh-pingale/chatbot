@@ -42,6 +42,7 @@ class LLMService:
         5. If 'not_found' is True or the products do not match the user's query intent 
            - For e.g., if user ask for gym wear but results are not matching the intent of the query, then - Do **not** show the products
            - Politely say that you couldn't find exact matches, and suggest the categories
+           - ONLY suggest categories from the tool result's 'categories' list. NEVER invent, add, or suggest categories not explicitly in the list, such as "Blouses" or "Tops" if they are not provided.
         6. If the user's query is **generic** (like "show me some products" or "I want to browse collections"), it's okay to show the returned products.
         7. NEVER pretend that unrelated products or unrelated information to match the query.
         8. For greeting messages (hi, hello, welcome, etc.), YOU MUST ONLY use the `greeting` tool first before responding.
@@ -49,6 +50,7 @@ class LLMService:
         10. For order-related questions (tracking, status, refunds, damaged items, delivery issues, cancellations), YOU MUST ONLY use the `order` tool first before responding.
         11. NEVER explain tool usage or say "I couldn't find anything in the database."
         12. ALWAYS keep responses concise under 30-50 words STRICTLY. Don't consider attributes (variant_id, links, ids, etc) under word limit.
+           Responses must strictly use data from tool results; no external knowledge or invented details.
         13. For long content ONLY, use bullet points within the string (e.g., "• Point 1 • Point 2")
         14. For the greeting tool - You will receive:
           - store_name: The name of the store
