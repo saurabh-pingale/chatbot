@@ -33,9 +33,13 @@ class MetadataCache:
             attributes_key = f"{namespace}:metadata:attributes"
             patterns_key = f"{namespace}:metadata:patterns"
 
-            aliases_str, attributes_str, patterns_str = await redis_client.mget(
-                aliases_key, attributes_key, patterns_key
-            )
+            try:
+                aliases_str, attributes_str, patterns_str = await redis_client.mget(
+                    aliases_key, attributes_key, patterns_key
+                )
+            except Exception as e:
+                logger.warning(f"Redis unavailable, using default metadata config: {e}")
+                return {}
 
             if not all([aliases_str, attributes_str, patterns_str]):
                 logger.info(f"Metadata config not found in Redis for '{namespace}'. Using fallback.")

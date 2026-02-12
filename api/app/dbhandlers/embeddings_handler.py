@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+import asyncio
 
 from app.constants import QDRANT_COLLECTION_NAME
 from app.config import QDRANT_API_URL, QDRANT_API_KEY
@@ -17,9 +18,12 @@ from app.utils.logger import logger
 
 class EmbeddingsHandler:
     """Handles embedding storage and querying."""
+    _client = None
 
     def __init__(self):
-        self.client = QdrantClient(url=QDRANT_API_URL, api_key=QDRANT_API_KEY)
+        if EmbeddingsHandler._client is None:
+            EmbeddingsHandler._client = QdrantClient(url=QDRANT_API_URL, api_key=QDRANT_API_KEY)
+        self.client = EmbeddingsHandler._client
         self._ensure_collection_exists()
         self.cache = None
 
@@ -89,7 +93,8 @@ class EmbeddingsHandler:
                 top_k
             )
 
-            search_results = self.client.search_batch(
+            search_results = await asyncio.to_thread(
+                self.client.search_batch,
                 collection_name=QDRANT_COLLECTION_NAME,
                 requests=search_requests
             )
