@@ -1,23 +1,17 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "9c3025263a3aeddaebcafbf1eb794329"
-name = "test-chatbot-custom-dist-v3"
+client_id = "5c6356e63895028f5c0c531b2f8c9846"
+name = "Reezo AI"
 application_url = "https://bot.reezoai.com"
 embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
+handle = "reezo-ai-1"
 
 [webhooks]
-api_version = "2026-04"
+api_version = "2026-01"
 
-[[webhooks.subscriptions]]
-compliance_topics = [
-  "customers/data_request",
-  "customers/redact",
-  "shop/redact"
-]
-uri = "/webhooks"
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [access.admin]
 direct_api_mode = "offline"
