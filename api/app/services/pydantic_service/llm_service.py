@@ -21,6 +21,7 @@ class LLMService:
             "anthropic-version": "2023-06-01",
             "content-type": "application/json"
         }
+        self.client = httpx.AsyncClient(timeout=60)
         
         self.tool_registry = ToolRegistry()
         
@@ -72,156 +73,152 @@ class LLMService:
         """Call Claude API with tool support"""
         tool_results = [] 
         tools_json = self.tool_registry.get_all_tools_for_claude()
-        logger.info(f"Tool JSON: {tools_json}")
+        logger.debug(f"Tool JSON: {tools_json}")
         
-        async with httpx.AsyncClient(timeout=60) as client:
-            logger.info("Claude API call with tool_choice: any")
+        logger.debug("Claude API call with tool_choice: any")
+        
+        body = {
+            "model": self.model,
+            "max_tokens": 256,
+            "system": self.system_message,
+            "tools": tools_json,
+            "messages": messages,
+            "tool_choice": {"type": "any"}
+        }
+        
+        try:
+            response = await self.client.post(self.api_url, headers=self.headers, json=body)
+            response.raise_for_status()
+            data = response.json()
+            logger.debug("Claude response received")
             
-            body = {
-                "model": self.model,
-                "max_tokens": 1024,
-                "system": self.system_message,
-                "tools": tools_json,
-                "messages": messages,
-                "tool_choice": {"type": "any"}
-            }
+            stop_reason = data.get("stop_reason")
+            logger.debug(f"Claude response stop_reason: {stop_reason}")
             
-            try:
-                response = await client.post(self.api_url, headers=self.headers, json=body)
-                response.raise_for_status()
-                data = response.json()
-                logger.info(f"Response Body: {json.dumps(data, indent=2)}")
-                
-                stop_reason = data.get("stop_reason")
-                logger.info(f"Claude response stop_reason: {stop_reason}")
-                
-                if stop_reason == "tool_use":
-                    tool_use_blocks = [c for c in data["content"] if c["type"] == "tool_use"]
-                    if not tool_use_blocks:
-                        logger.error("Tool use block missing!")
-                        return {
-                            "answer": "I'm having trouble processing your request. Please try again.",
-                            "success": False,
-                            "error": "Tool use block missing"
-                        }
-                    
-                    for tool_block in tool_use_blocks:
-                        tool_name = tool_block["name"]
-                        tool_input = tool_block["input"]
-                        
-                        logger.info(f"Executing tool: {tool_name} with input: {tool_input}")
-                        
-                        tool_input_with_shop = tool_input.copy()
-                        tool_input_with_shop["shop_id"] = shop_id
-                        
-                        result = await self.tool_registry.run_tool(tool_name, **tool_input_with_shop)
-                        tool_results.append((tool_block, result))
-                        logger.info(f"\n Tool {tool_name} executed successfully \n")
-                        logger.info(f"\n Tool {tool_name} result: {result} \n")
-                    
-                    messages.append({"role": "assistant", "content": data["content"]})
-                    
-                    tool_result_content = []
-                    for tool_block, result in tool_results:
-                        structured_result = {
-                            "tool": tool_block["name"],
-                            "tool_use_id": tool_block["id"],
-                            "result": result
-                        }
-
-                        tool_result_content.append({
-                            "type": "tool_result",
-                            "tool_use_id": tool_block["id"],
-                            "content": json.dumps(structured_result)
-                        })
-                    
-                    messages.append({
-                        "role": "user",
-                        "content": tool_result_content
-                    })
-                    
-                    final_body = {
-                        "model": self.model,
-                        "max_tokens": 1024,
-                        "system": self.system_message,
-                        "tools": tools_json,
-                        "messages": messages
-                    }
-                    
-                    final_response = await client.post(self.api_url, headers=self.headers, json=final_body)
-                    final_data = final_response.json()
-                    logger.info(f"Final Response Body: {json.dumps(final_data, indent=2)}")
-                    
-                    final_text = ""
-                    for block in final_data["content"]:
-                        if block["type"] == "text":
-                            final_text += block["text"]
-
-                    logger.info(f"Final Claude response: {final_text}") 
-
-                    return {
-                        "answer": final_text,
-                        "success": True,
-                        "tool_results": tool_results
-                    }
-                
-                elif stop_reason == "end_turn":
-                    final_text = ""
-                    for block in data["content"]:
-                        if block["type"] == "text": 
-                            final_text += block["text"]
-
-                    logger.info(f"Direct Claude response: {final_text}")
-
-                    return {
-                        "answer": final_text,
-                        "success": True,
-                        "tool_results": tool_results
-                    }
-                
-                else:
-                    logger.warning(f"Unknown stop_reason: {stop_reason}")
+            if stop_reason == "tool_use":
+                tool_use_blocks = [c for c in data["content"] if c["type"] == "tool_use"]
+                if not tool_use_blocks:
+                    logger.error("Tool use block missing!")
                     return {
                         "answer": "I'm having trouble processing your request. Please try again.",
                         "success": False,
-                        "error": f"Unknown stop_reason: {stop_reason}"
+                        "error": "Tool use block missing"
                     }
+                
+                for tool_block in tool_use_blocks:
+                    tool_name = tool_block["name"]
+                    tool_input = tool_block["input"]
                     
-            except httpx.HTTPStatusError as e:
-                logger.error(f"HTTP error calling Claude API: {e}")
-                return {
-                    "answer": "I'm having trouble connecting right now. Please try again in a moment.",
-                    "success": False,
-                    "error": str(e)
+                    logger.debug(f"Executing tool: {tool_name} with input: {tool_input}")
+                    
+                    tool_input_with_shop = tool_input.copy()
+                    tool_input_with_shop["shop_id"] = shop_id
+                    
+                    result = await self.tool_registry.run_tool(tool_name, **tool_input_with_shop)
+                    tool_results.append((tool_block, result))
+                    logger.debug(f"\n Tool {tool_name} executed successfully \n")
+                    logger.debug(f"\n Tool {tool_name} result: {result} \n")
+                
+                messages.append({"role": "assistant", "content": data["content"]})
+                
+                tool_result_content = []
+                for tool_block, result in tool_results:
+                    structured_result = {
+                        "tool": tool_block["name"],
+                        "tool_use_id": tool_block["id"],
+                        "result": result
+                    }
+
+                    tool_result_content.append({
+                        "type": "tool_result",
+                        "tool_use_id": tool_block["id"],
+                        "content": json.dumps(structured_result)
+                    })
+                
+                messages.append({
+                    "role": "user",
+                    "content": tool_result_content
+                })
+                
+                final_body = {
+                    "model": self.model,
+                    "max_tokens": 256,
+                    "system": self.system_message,
+                    "tools": tools_json,
+                    "messages": messages
                 }
-            except Exception as e:
-                logger.error(f"Error calling Claude API: {e}", exc_info=True)
+                
+                final_response = await self.client.post(self.api_url, headers=self.headers, json=final_body)
+                final_data = final_response.json()
+                
+                final_text = ""
+                for block in final_data["content"]:
+                    if block["type"] == "text":
+                        final_text += block["text"]
+                logger.debug(f"Final Claude response: {final_text}") 
+
                 return {
-                    "answer": "Something went wrong. Please try again.",
-                    "success": False,
-                    "error": str(e)
+                    "answer": final_text,
+                    "success": True,
+                    "tool_results": tool_results
                 }
+            
+            elif stop_reason == "end_turn":
+                final_text = ""
+                for block in data["content"]:
+                    if block["type"] == "text": 
+                        final_text += block["text"]
+                logger.debug(f"Direct Claude response: {final_text}")
+
+                return {
+                    "answer": final_text,
+                    "success": True,
+                    "tool_results": tool_results
+                }
+            
+            else:
+                logger.warning(f"Unknown stop_reason: {stop_reason}")
+                return {
+                    "answer": "I'm having trouble processing your request. Please try again.",
+                    "success": False,
+                    "error": f"Unknown stop_reason: {stop_reason}"
+                }
+                
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error calling Claude API: {e}")
+            return {
+                "answer": "I'm having trouble connecting right now. Please try again in a moment.",
+                "success": False,
+                "error": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error calling Claude API: {e}", exc_info=True)
+            return {
+                "answer": "Something went wrong. Please try again.",
+                "success": False,
+                "error": str(e)
+            }
     
     async def handle_user_message(self, user_message: str, shop_id: str, previous_messages: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle user message and return structured response"""
-        logger.info(f"\n User message: '{user_message}' \n")
+        logger.debug(f"\n User message: '{user_message}' \n")
         
         try:
             history_messages = format_message_history(previous_messages or [])
-            logger.info(f"History Message before appending the latest message: {history_messages}")
+            logger.debug(f"History Message before appending the latest message: {history_messages}")
 
             history_messages.append({"role": "user", "content": user_message})
-            logger.info(f"History Message after appending the latest message: {history_messages}")
+            logger.debug(f"History Message after appending the latest message: {history_messages}")
 
             claude_response = await self.call_claude_with_tools(history_messages, shop_id)
-            logger.info(f"Claude Response: {claude_response}")
+            logger.debug(f"Claude Response: {claude_response}")
 
             products, categories = [], []
             tool_used = None
 
             for tool_block, result in claude_response.get("tool_results", []):
                 tool_name = tool_block.get("name")
-                logger.info(f"Tool Name: {tool_name}")
+                logger.debug(f"Tool Name: {tool_name}")
                 tool_used = tool_used or tool_name
 
                 if tool_name == "product":

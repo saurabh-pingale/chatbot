@@ -28,6 +28,8 @@ class MetadataExtractor:
         Extracts all products and their attributes from a query.
         Uses dynamic config from Redis if provided, otherwise uses static fallback.
         """
+        category_regex = None
+
         if config:
             category_aliases = config.get("category_aliases", FALLBACK_ALIASES).copy()
             category_attributes = config.get("category_attributes", FALLBACK_ATTRIBUTES).copy()
@@ -51,7 +53,10 @@ class MetadataExtractor:
             sorted_aliases = sorted(category_aliases.keys(), key=len, reverse=True)
             category_regex = re.compile(r"\b(" + "|".join(re.escape(alias) for alias in sorted_aliases) + r")\b", re.IGNORECASE)
 
-        category_matches = list(category_regex.finditer(query))
+        if category_regex:
+            category_matches = list(category_regex.finditer(query))
+        else:
+            category_matches = []
 
         if not category_matches:
             return self._extract_title(query, attribute_patterns)
