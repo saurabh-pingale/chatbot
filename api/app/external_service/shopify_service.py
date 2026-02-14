@@ -58,6 +58,13 @@ class ShopifyService:
                         category {
                             name
                         }
+                        collections(first: 50) {
+                            edges {
+                                node {
+                                    title
+                                }
+                            }
+                        }
                         handle
                         onlineStorePreviewUrl
                         metafields(first: 20) {

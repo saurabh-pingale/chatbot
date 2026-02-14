@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException, Depends, BackgroundTasks
 from typing import Optional, Dict, Any
 
 from app.utils.app_utils import get_app
@@ -26,7 +26,8 @@ agent_conversation_router = APIRouter(prefix="/agent_conversation_router", tags=
 async def agent_conversation(
     request: Request, 
     payload: AgentConversationPayload,
-    auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload)
+    background_tasks: BackgroundTasks,
+    auth_payload: Optional[Dict[str, Any]] = Depends(get_current_user_payload),
 ):
     try:
         shop_id = request.state.shop_id
@@ -74,18 +75,20 @@ async def agent_conversation(
         #TODO P1: Please create a doc explaining this logic
         previous_messages = contents[:EXCLUDE_LAST_MESSAGE][PREVIOUS_MESSAGE_CONTEXT_LIMIT:] if len(contents) > 1 else []
 
-        await app.analytics_service.record_chat_interaction(user_id=user_id, shop_pk=shop_pk)
+        background_tasks.add_task(
+            app.analytics_service.record_chat_interaction,
+            user_id=user_id,
+            shop_pk=shop_pk
+        )
 
         agent_response = await app.llm_service.handle_user_message(user_message, shop_id, previous_messages)
 
         conversation_log_data = build_conversation_log_data(user_message, agent_response, user_id, shop_pk )
 
-        conversation_response = await app.conversation_service.record_conversation_into_db(conversation_log_data)
-        
-        if isinstance(conversation_response, dict) and conversation_response.get("status") == "error":
-            logger.warning(f"Conversation logging failed: {conversation_response}")
-        else:
-            logger.info(f"Conversation stored with ID: {conversation_response}")
+        background_tasks.add_task(
+            app.conversation_service.record_conversation_into_db,
+            conversation_log_data
+        )
     
         return agent_response
 

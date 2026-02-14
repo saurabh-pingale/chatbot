@@ -74,11 +74,14 @@ def _clean_product_edge(edge: Dict[str, Any], metaobject_names: Dict[str, str], 
         if media_edges:
             image_url = media_edges[0].get("node", {}).get("preview", {}).get("image", {}).get("url", image_url)
 
+        product_collections = [edge["node"]["title"] for edge in node.get("collections", {}).get("edges", [])]
+
         cleaned_products.append(ShopifyProduct(
             id=node.get("id"),
             title=title,
             description=node.get("description") or "No description available",
             category=node.get("category", {}).get("name", "Uncategorized"),
+            collections=product_collections,
             handle=node.get("handle"),
             url=node.get("onlineStorePreviewUrl") or f"https://{shopify_store}/products/{node.get('handle')}",
             price=variant.get("price", "0.00"),

@@ -59,7 +59,7 @@ class ProductTool(BaseTool):
 
         try:
             embedding = EmbeddingService.create_embeddings(query)
-            metadata_config = await self.metadata_cache.get_config(shop_id)
+            metadata_config = await self.metadata_cache.get_config(shop_id) or {}
             metadata_filters = metadata_extractor.extract_all_metadata(
                 query, 
                 dynamic_categories=dynamic_categories,
