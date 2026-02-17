@@ -1,7 +1,1 @@
-export {};
-
-declare global {
-  interface Window {
-    shopId: string;
-  }
-}
+declare module "*.css";
