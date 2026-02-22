@@ -3,7 +3,8 @@ from FlagEmbedding import FlagModel
 from typing import List, Optional, Dict, Any
 import os
 
-from app.config import DEV_MODE
+import app.config as app_config
+from app.config import DEV_MODE, EMBEDDING_MODEL_LOCAL_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_PATH
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
 
@@ -21,12 +22,11 @@ class EmbeddingService:
         """Lazily load and return the embedding model."""
         if cls._model is None:
             if not DEV_MODE:
-                model_path = '/app/local_models/bge-small-en-v1.5'
+                model_path = os.path.join(EMBEDDING_MODEL_PATH, EMBEDDING_MODEL_NAME)
             else:
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-                model_path = os.path.abspath(
-                    os.path.join(base_dir, '../../local_models/bge-small-en-v1.5')
-                )
+                api_root = os.path.dirname(os.path.dirname(os.path.abspath(app_config.__file__)))
+                local_path = os.path.normpath((EMBEDDING_MODEL_LOCAL_PATH or "").strip())
+                model_path = os.path.abspath(os.path.join(api_root, local_path))
             assert os.path.isdir(model_path), f"Model directory not found: {model_path}"
             cls._model = FlagModel(
                 model_path,

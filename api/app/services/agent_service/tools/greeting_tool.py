@@ -1,6 +1,6 @@
 from typing import Dict, Any
 
-from app.services.pydantic_service.tools.base_tool import BaseTool
+from app.services.agent_service.tools.base_tool import BaseTool
 from app.utils.logger import logger
 
 class GreetingTool(BaseTool):

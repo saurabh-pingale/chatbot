@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://shopify-chatbot-fastapi-578494102556.us-central1.run.app";
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 
 export const API = {
     BACKEND_URL,
@@ -19,7 +19,7 @@ export const API = {
     COUNTRY_CODES: `${BACKEND_URL}/country_code`,
     SAVE_INTEGRATIONS: `${BACKEND_URL}/shop-admin/integration`,
     SAVE_QUICK_REPLIES: `${BACKEND_URL}/shop-admin/save-quick-replies`
-} 
+}
 
 export const CLOUDINARY = {
     URL : "https://api.cloudinary.com/v1_1/de9unppfa/image/upload",

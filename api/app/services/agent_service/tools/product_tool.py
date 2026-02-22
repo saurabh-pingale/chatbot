@@ -1,6 +1,6 @@
 from typing import Dict, Any
 
-from app.services.pydantic_service.tools.base_tool import BaseTool
+from app.services.agent_service.tools.base_tool import BaseTool
 from app.services.embeddings_service import EmbeddingService
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.dbhandlers.shop_admin_handler import ShopAdminHandler

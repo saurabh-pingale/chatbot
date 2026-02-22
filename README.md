@@ -53,12 +53,7 @@ SHOPIFY_API_KEY='your-shopify-api-key'
 SHOPIFY_API_SECRET='your-shopify-api-secret'
 SHOPIFY_APP_URL='your-shopify-app-url'
 
-SUPABASE_URL='your-supabase-url'
-SUPABASE_SERVICE_ROLE_KEY='your-supabase-service-role-key'
-
 QDRANT_API_KEY='your-qdrant-api-key'
-
-HUGGINGFACE_API_KEY='your-huggingface-api-key'
 ```
 
 ### 4\. Run the Application

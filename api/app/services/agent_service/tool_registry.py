@@ -1,10 +1,10 @@
 from typing import Dict, Any, List
 
-from app.services.pydantic_service.tools.base_tool import BaseTool
-from app.services.pydantic_service.tools.product_tool import ProductTool
-from app.services.pydantic_service.tools.order_tool import OrderTool
-from app.services.pydantic_service.tools.terms_tool import TermsTool
-from app.services.pydantic_service.tools.greeting_tool import GreetingTool
+from app.services.agent_service.tools.base_tool import BaseTool
+from app.services.agent_service.tools.product_tool import ProductTool
+from app.services.agent_service.tools.order_tool import OrderTool
+from app.services.agent_service.tools.terms_tool import TermsTool
+from app.services.agent_service.tools.greeting_tool import GreetingTool
 from app.utils.logger import logger
 
 class ToolRegistry:
