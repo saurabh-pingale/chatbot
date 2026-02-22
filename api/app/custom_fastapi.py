@@ -7,7 +7,7 @@ class CustmFastAPI(FastAPI):
         from app.services.shop_admin_service import ShopAdminService
         from app.services.analytics_service import AnalyticsService
         from app.services.conversation_service import ConversationService
-        from app.services.pydantic_service.llm_service import LLMService
+        from app.services.agent_service.llm_service import LLMService
         from app.services.checkout_product_service import CheckoutProductService
         from app.services.shop_config_service import ShopConfigService
         from app.services.country_code_service import CountryCodeService

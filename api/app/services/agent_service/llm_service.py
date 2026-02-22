@@ -3,7 +3,7 @@ import httpx
 from pydantic import BaseModel
 from typing import Dict, Any, List, Union
 
-from app.services.pydantic_service.tool_registry import ToolRegistry
+from app.services.agent_service.tool_registry import ToolRegistry
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME, TAG_LIBRARY 
 from app.config import ANTHROPIC_API_KEY
 from app.utils.rag_pipeline_utils import format_message_history
@@ -92,7 +92,7 @@ class LLMService:
             data = response.json()
             logger.debug("Claude response received")
             
-            stop_reason = data.get("stop_reason")
+            stop_reason = data.get("stop_reason") #stop_reason means why the response is stopped. Here we are handling tool_use and end_turn.
             logger.debug(f"Claude response stop_reason: {stop_reason}")
             
             if stop_reason == "tool_use":

@@ -317,7 +317,7 @@ export default function TrainingPage() {
                 className={styles.fetchButton}
                 disabled={processingRef.current || isProcessing}
               >
-                {isProcessing ? "Fetching..." : "Fetch Products"}
+                {isProcessing ? "Fetching..." : "Sync Products"}
               </button>
             </div>
           </div>
