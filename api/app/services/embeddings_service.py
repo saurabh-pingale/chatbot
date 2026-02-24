@@ -47,20 +47,20 @@ class EmbeddingService:
             if norm > 0:
                 embedding = embedding / norm
 
-            return pad_vector(embedding.tolist(), 1024)
+            return embedding.tolist()
 
         elif isinstance(text, list):
             embeddings = model.encode(text)
             embeddings = np.array(embeddings)
 
-            padded_embeddings = []
+            normalized_embeddings = []
             for emb in embeddings:
                 norm = np.linalg.norm(emb)
                 if norm > 0:
                     emb = emb / norm
-                padded_embeddings.append(pad_vector(emb.tolist(), 1024))
+                normalized_embeddings.append(emb.tolist())
 
-            return padded_embeddings
+            return normalized_embeddings
 
     @staticmethod
     async def get_embeddings(

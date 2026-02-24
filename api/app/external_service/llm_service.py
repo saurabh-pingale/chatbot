@@ -53,9 +53,15 @@ class LLMService:
                 logger.error(f"HTTP error calling Claude API: {e.response.status_code} - {e.response.text}")
                 raise RuntimeError(f"Claude API request failed with status {e.response.status_code}: {e.response.text}") from e
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to decode JSON from Claude API response: {e}")
-                logger.error(f"Raw response text: {json_text}")
-                raise ValueError(f"Invalid JSON received from Claude API: {e}") from e
+                logger.warning("Claude returned invalid JSON. Attempting to repair...")
+
+                try:
+                    repaired_text = json_text.replace("\\", "\\\\")
+                    return json.loads(repaired_text)
+                except Exception:
+                    logger.warning("Failed to repair Claude JSON output. Skipping metadata generation.")
+                    logger.debug(f"Invalid Claude response: {json_text}")
+                    return None
             except Exception as e:
                 logger.error(f"An unexpected error occurred when calling Claude API: {e}", exc_info=True)
                 raise RuntimeError(f"Unexpected error when calling Claude API: {e}") from e

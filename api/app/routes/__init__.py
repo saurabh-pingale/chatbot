@@ -12,6 +12,7 @@ from app.routes.country_code import country_code_router
 from app.routes.subscriptions import subscriptions_router
 from app.routes.webhooks import webhook_router
 from app.routes.cart import cart_router
+from app.routes.products_websocket import products_ws_router
 
 def init_routes(app: CustmFastAPI):
     app.include_router(shop_admin_router)
@@ -27,3 +28,4 @@ def init_routes(app: CustmFastAPI):
     app.include_router(subscriptions_router)
     app.include_router(webhook_router)
     app.include_router(cart_router)
+    app.include_router(products_ws_router)

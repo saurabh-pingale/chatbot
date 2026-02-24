@@ -100,19 +100,32 @@ def build_query_filters(
     metadata_filters: Optional[Dict[str, Any]],
     namespace: Optional[str]
 ) -> List[models.Filter]:
-    
-    query_filters = []
+
+    query_filters: List[models.Filter] = []
+
+    namespace_condition = None
+    if namespace:
+        namespace_condition = models.FieldCondition(
+            key="namespace",
+            match=models.MatchValue(value=namespace)
+        )
 
     if metadata_filters:
         keys = list(metadata_filters.keys())
         values_lists = [
-            metadata_filters[k] if isinstance(metadata_filters[k], list) else [metadata_filters[k]]
+            metadata_filters[k] if isinstance(metadata_filters[k], list)
+            else [metadata_filters[k]]
             for k in keys
         ]
+
         max_len = max(len(lst) for lst in values_lists)
 
         for i in range(max_len):
             must_conditions = []
+
+            if namespace_condition:
+                must_conditions.append(namespace_condition)
+
             for key, values in zip(keys, values_lists):
                 val = values[i] if i < len(values) else values[-1]
 
@@ -128,6 +141,7 @@ def build_query_filters(
                             )
                         )
                     )
+
                 elif key == "price" and isinstance(val, (int, float, Decimal)):
                     rounded_price = int(Decimal(str(val)).to_integral_value(rounding=ROUND_HALF_UP))
                     must_conditions.append(
@@ -136,6 +150,7 @@ def build_query_filters(
                             range=models.Range(gte=rounded_price, lte=rounded_price)
                         )
                     )
+
                 else:
                     if key == "category":
                         should_conditions = [
@@ -147,15 +162,13 @@ def build_query_filters(
                         must_conditions.append(
                             models.FieldCondition(key=key, match=models.MatchValue(value=val))
                         )
-            if namespace:
-                must_conditions.append(models.FieldCondition(key="namespace", match=models.MatchValue(value=namespace)))
+
             query_filters.append(models.Filter(must=must_conditions))
     else:
-        must_conditions = []
-        if namespace:
-            must_conditions.append(models.FieldCondition(key="namespace", match=models.MatchValue(value=namespace)))
-        if must_conditions:
-            query_filters.append(models.Filter(must=must_conditions))
+        if namespace_condition:
+            query_filters.append(
+                models.Filter(must=[namespace_condition])
+            )
 
     return query_filters
 

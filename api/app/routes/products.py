@@ -64,39 +64,3 @@ async def create(
         if isinstance(e, HTTPException):
             raise
         raise HTTPException(status_code=500, detail="Failed to sync products")
-    
-@products_router.get(
-    "/create/status/{task_id}", 
-    summary="Get the status of a product sync task"
-)
-async def get_create_status(task_id: str, request: Request):
-    """Poll for the status of the product creation task."""
-    try:
-        shop_id = getattr(request.state, 'shop_id', request.headers.get("x-shopify-store"))
-        if not shop_id:
-            return {"error": "Missing x-shopify-store header"}
-        
-        redis_client = await get_redis_client()
-
-        redis_key = f"task_progress_{shop_id}_{task_id}"
-        progress_data = await redis_client.get(redis_key)
-        
-        if progress_data is None:
-            return {
-                "percentage": 0,
-                "message": "Initializing...",
-                "status": "pending"
-            }
-
-        task_details = json.loads(progress_data)
-
-        if task_details.get("shop_id") != shop_id:
-            raise HTTPException(status_code=403, detail="Access denied for this task.")
-        
-        task_details = check_and_update_stalled_status(task_details)
-        
-        return task_details
-
-    except Exception as e:
-        logger.error(f"Error fetching task status for {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to fetch task status")
