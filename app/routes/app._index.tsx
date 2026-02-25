@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Page,
   Layout,
@@ -13,7 +13,7 @@ import {
   Spinner,
 } from "@shopify/polaris";
 import { json, type LoaderFunction } from "@remix-run/node";
-import { useLoaderData, useNavigation, Link, useNavigate, useFetcher } from "@remix-run/react";
+import { useLoaderData, useNavigation, useNavigate, useFetcher } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { getShopId } from "../utils/session.utils";
 import { useRootData } from "../hooks/useRootData";
@@ -59,17 +59,22 @@ export default function Index() {
   const navigation = useNavigation();
   const navigate = useNavigate();
   const fetcher = useFetcher<{ status: string; data: any }>();
+  const fetcherRef = useRef(fetcher);
 
   const [isBackendReady, setIsBackendReady] = useState<boolean>(setupCompleted);
 
   const isLoading = navigation.state !== "idle";
 
   useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
+
+  useEffect(() => {
     if (isBackendReady) return;
 
     const pollStatus = () => {
-      if (fetcher.state === "idle") {
-        fetcher.load("/api/status");
+      if (fetcherRef.current.state === "idle") {
+        fetcherRef.current.load("/api/status");
       }
     };
 
@@ -78,7 +83,7 @@ export default function Index() {
     const intervalId = setInterval(pollStatus, 1000);
 
     return () => clearInterval(intervalId);
-  }, [isBackendReady, fetcher.state]);
+  }, [isBackendReady]);
 
   useEffect(() => {
     if (fetcher.data?.status === "ok") {
@@ -227,18 +232,10 @@ export default function Index() {
               Quick Actions
             </Text>
             <InlineStack gap="400" align="center">
-              <Link to="/app/settings">
-                <Button>Go to Settings</Button>
-              </Link>
-              <Link to="/app/training">
-                <Button>Train Chatbot</Button>
-              </Link>
-              <Link to="/app/analytics">
-                <Button>View Analytics</Button>
-              </Link>
-              <Link to="/app/integrations">
-                <Button>Go to Integrations</Button>
-              </Link>
+              <Button onClick={() => navigate("/app/settings")}>Go to Settings</Button>
+              <Button onClick={() => navigate("/app/training")}>Train Chatbot</Button>
+              <Button onClick={() => navigate("/app/analytics")}>View Analytics</Button>
+              <Button onClick={() => navigate("/app/integrations")}>Go to Integrations</Button>
             </InlineStack>
           </BlockStack>
         </Card>

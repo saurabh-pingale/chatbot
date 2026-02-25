@@ -51,13 +51,14 @@ const lineStyles: React.CSSProperties = {
 
 export default function SetupStepper({ currentStep, setupCompleted: propCompleted }: SetupStepperProps) {
   const { setupCompleted } = useRootData();
+  const navigate = useNavigate();
+
   const finalSetupCompleted = propCompleted !== undefined ? propCompleted : setupCompleted;
   
   if (finalSetupCompleted) {
     return null;
   }
   
-  const navigate = useNavigate();
   const steps = [
     { label: "Configure Settings", path: "/app/settings" },
     { label: "Train Chatbot", path: "/app/training" },
