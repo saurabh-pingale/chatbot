@@ -1,15 +1,15 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "b63a45de6e03cb4a3e5f37ec1a2a80aa"
-name = "chatbot-growth"
-application_url = "https://bot.reezoai.com"
+client_id = "7a74b677148771413acd5519c8c0f796"
+name = "chatbot-custom"
+application_url = "https://shopify.dev/apps/default-app-home"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2026-01"
+api_version = "2026-04"
 
   [[webhooks.subscriptions]]
   uri = "/webhooks"
