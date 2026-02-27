@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "7a74b677148771413acd5519c8c0f796"
-name = "chatbot-custom"
+client_id = "dae9a4140dd729fca3592b2926faa19a"
+name = "test-chatbot"
 application_url = "https://shopify.dev/apps/default-app-home"
 embedded = true
 
