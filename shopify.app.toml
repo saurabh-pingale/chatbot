@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "dae9a4140dd729fca3592b2926faa19a"
-name = "test-chatbot"
-application_url = "https://shopify.dev/apps/default-app-home"
+client_id = "e2669f1d24434f242919657ff156a226"
+name = "saurabh-chatbot"
+application_url = "https://bot.reezoai.com"
 embedded = true
 
 [build]
