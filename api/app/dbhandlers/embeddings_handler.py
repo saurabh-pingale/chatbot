@@ -24,18 +24,24 @@ class EmbeddingsHandler:
         if EmbeddingsHandler._client is None:
             EmbeddingsHandler._client = QdrantClient(url=QDRANT_API_URL, api_key=QDRANT_API_KEY)
         self.client = EmbeddingsHandler._client
+        self.collection = QDRANT_COLLECTION_NAME
         self._ensure_collection_exists()
         self.cache = None
 
-    def _ensure_collection_exists(self, vector_size: int = 1024):
+    def _ensure_collection_exists(self, vector_size: int = 384):
         """Ensures the Qdrant collection exists, creates it if not."""
-        if not self.client.collection_exists(collection_name=QDRANT_COLLECTION_NAME):
+        if not self.client.collection_exists(collection_name=self.collection):
             self.client.create_collection(
-                collection_name=QDRANT_COLLECTION_NAME,
+                collection_name=self.collection,
                 vectors_config=models.VectorParams(
                     size=vector_size,
                     distance=models.Distance.COSINE
                 )
+            )
+            self.client.create_payload_index(
+                collection_name=self.collection,
+                field_name="namespace",
+                field_schema="keyword"
             )
 
     async def create_embeddings(

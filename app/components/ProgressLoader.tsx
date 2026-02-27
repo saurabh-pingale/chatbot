@@ -10,7 +10,7 @@ interface ProgressLoaderProps {
   isComplete: boolean;
   isError: boolean;
   onRetry: () => void;
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
   chatbotDeepLink: string;
 }
 
@@ -26,6 +26,8 @@ export default function ProgressLoader({
   const [loadingButton, setLoadingButton] = useState<string | null>(null);
 
   const handleNavigate = (path: string, key: string) => {
+    if (!onNavigate) return;
+
     setLoadingButton(key);
     setTimeout(() => {
       onNavigate(path);

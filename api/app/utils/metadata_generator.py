@@ -66,8 +66,8 @@ class MetadataGenerator:
             prompt = self._build_prompt(sample_products_by_category, collections)
             generated_config = await self.llm_service.generate_json(prompt)
 
-            if not isinstance(generated_config, dict):
-                logger.warning("LLM did not return a valid dictionary. Skipping Redis update.")
+            if not generated_config or not isinstance(generated_config, dict):
+                logger.warning("Metadata config generation failed or returned invalid JSON.")
                 return
             
             await self.cache_handler.store_config(namespace, generated_config)

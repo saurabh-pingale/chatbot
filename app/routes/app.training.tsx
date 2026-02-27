@@ -8,7 +8,7 @@ import ProgressLoader from "../components/ProgressLoader";
 import { authenticate } from "../shopify.server";
 import { fetchProducts } from "./products"
 import { textTrain } from "./text_train";
-import { API } from "../constants/api.constants";
+import { createProductSyncSocket } from '../utils/productSyncSocket';
 import type { FetcherResponse, LoaderData } from "../common/types/index";
 import { getShopId } from "../utils/session.utils";
 import styles from '../styles/training.module.css';
@@ -30,9 +30,12 @@ export default function TrainingPage() {
   const revalidator = useRevalidator();
   const fetcher = useFetcher<FetcherResponse>();
   const { shop } = useLoaderData<LoaderData>();
+
   const processingRef = useRef(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
+  const socketControllerRef = useRef<{ close: () => void } | null>(null);
 
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([]);
   const [input, setInput] = useState("");
@@ -77,9 +80,14 @@ export default function TrainingPage() {
   }, [messages]);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
+      isMountedRef.current = false;
+      socketControllerRef.current?.close();
+
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
       }
     };
   }, []);
@@ -92,8 +100,10 @@ export default function TrainingPage() {
     const step = () => {
       setDisplayedProgress((prev) => {
         if (prev < visualProgress) {
+          const diff = visualProgress - prev;
+          const increment = Math.max(1, Math.ceil(diff / 10));
           animationFrame = requestAnimationFrame(step);
-          return prev + 1;
+          return prev + increment;
         } else {
           return visualProgress;
         }
@@ -124,10 +134,11 @@ export default function TrainingPage() {
       { sender: "bot", text: "Chatbot is triggered with your data..." },
     ]);
 
+    const userInput = input;
     setInput("");
 
     await textTrain({
-      input,
+      input: userInput,
       shop,
       onSuccess: (data) => {
         setMessages((prev) => [
@@ -150,58 +161,43 @@ export default function TrainingPage() {
     });
   };
 
-  const pollTaskStatus = (taskId: string) => {
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const response = await fetch(`${API.GET_PRODUCTS_STATUS}/${taskId}`, {
-          headers: { "x-shopify-store": shop}
-        });
-        if (!response.ok) throw new Error('Polling request failed');
-        const data = await response.json();
+  const handleCompletion = () => {
+    setIsSyncError(false);
+    setVisualProgress(100);
 
-        setVisualProgress(data.percentage);
-        setProgressMessage(data.message);
+    if (!setupCompleted) {
+      completionTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
 
-        if (data.status === 'completed' || data.status === 'failed') {
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-          }
+        setIsSyncComplete(true);
+        revalidator.revalidate();
+      }, 600);
+    } else {
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: "Products synced successfully!" },
+        ]);
 
-          if (data.status === 'completed') {
-            setIsSyncError(false);
-            setVisualProgress(100);
-
-            revalidator.revalidate();
-
-            if (!setupCompleted) {
-              setTimeout(() => {
-                setIsSyncComplete(true);
-              }, 600);
-            } else {
-              setTimeout(() => {
-                setMessages((prev) => [...prev, { sender: 'bot', text: 'Products synced successfully!' }]);
-                setVisualProgress(null);
-                setIsSyncComplete(false);
-                processingRef.current = false;
-                setIsProcessing(false);
-              }, 1000);
-            }
-          } else if (data.status === 'failed') {
-            setIsSyncError(true);
-            setMessages((prev) => [...prev, { sender: 'bot', text: `Failed to sync products: ${data.message || 'Please try again.'}` }]);
-            processingRef.current = false;
-            setIsProcessing(false);
-          }
-        }
-      } catch (error) {
-        console.error("Polling failed:", error);
-        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-        setIsSyncError(true);
-        setProgressMessage('An error occurred while checking sync status. Please try again.');
+        setVisualProgress(null);
+        setIsSyncComplete(false);
         processingRef.current = false;
         setIsProcessing(false);
-      }
-    }, 3000);
+
+        revalidator.revalidate();
+      }, 1000);
+    }
+  };
+
+  const handleFailure = (message?: string) => {
+    setIsSyncError(true);
+    setProgressMessage(message || "Sync failed.");
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: message || "Failed to sync products." },
+    ]);
+    processingRef.current = false;
+    setIsProcessing(false);
   };
 
   const handleFetchProducts = async () => {
@@ -220,7 +216,18 @@ export default function TrainingPage() {
     try {
       const { task_id } = await fetchProducts(shop)
       if (task_id) {
-        pollTaskStatus(task_id);
+        socketControllerRef.current = createProductSyncSocket({
+          taskId: task_id,
+          shop,
+          isMountedRef,
+          onProgress: (data) => {
+            if (!isMountedRef.current) return;
+            setVisualProgress(Number(data.percentage) || 0);
+            setProgressMessage(data.message || "");
+          },
+          onComplete: handleCompletion,
+          onFailure: handleFailure,
+        });
       } else {
         throw new Error("Failed to get a task ID for product sync.");
       }
@@ -252,14 +259,14 @@ export default function TrainingPage() {
 
   return (
     <Page>
-      {visualProgress !== null && (
+      {(isProcessing ||  visualProgress !== null) && (
         <ProgressLoader 
           progress={displayedProgress}
           message={progressMessage}
           isComplete={isSyncComplete}
           isError={isSyncError}
           onRetry={handleRetry}
-          onNavigate={setupCompleted ? (() => {}) : navigate}
+          onNavigate={!setupCompleted ? navigate : undefined}
           chatbotDeepLink={themeEditorDeepLink}
         />
       )}
