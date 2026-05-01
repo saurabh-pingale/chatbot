@@ -1,10 +1,32 @@
 import json
+import re
 import httpx
 from typing import Dict, Any
 
 from app.config import ANTHROPIC_API_KEY
 from app.constants import CLAUDE_API_URL, CLAUDE_MODEL_NAME
 from app.utils.logger import logger
+
+
+def _parse_json_from_llm_text(raw: str) -> Dict[str, Any]:
+    """Parse JSON from Claude text; strips ```json ... ``` fences if present."""
+    text = (raw or "").strip()
+    if not text:
+        raise ValueError("Empty text content from Claude API")
+
+    m = re.match(r"^```(?:json)?\s*\r?\n?", text, re.IGNORECASE)
+    if m:
+        text = text[m.end() :]
+        text = re.sub(r"\r?\n?```\s*$", "", text, flags=re.IGNORECASE).strip()
+
+    if not text.startswith("{"):
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            text = text[start : end + 1]
+
+    return json.loads(text)
+
 
 class LLMService:
     def __init__(self):
@@ -40,21 +62,23 @@ class LLMService:
                 response.raise_for_status()
                 
                 data = response.json()
-                
                 if not data.get("content") or data["content"][0].get("type") != "text":
                     logger.error("Claude API response is missing the expected text content block.")
                     raise ValueError("Invalid response format from Claude API")
 
                 json_text = data["content"][0]["text"]
-                
-                return json.loads(json_text)
+                return _parse_json_from_llm_text(json_text)
 
             except httpx.HTTPStatusError as e:
                 logger.error(f"HTTP error calling Claude API: {e.response.status_code} - {e.response.text}")
                 raise RuntimeError(f"Claude API request failed with status {e.response.status_code}: {e.response.text}") from e
             except json.JSONDecodeError as e:
+                raw = locals().get("json_text", "")
                 logger.error(f"Failed to decode JSON from Claude API response: {e}")
-                logger.error(f"Raw response text: {json_text}")
+                logger.error(
+                    "Raw response text (truncated): %s",
+                    (raw[:4000] + "…") if len(raw) > 4000 else raw or "<unavailable>",
+                )
                 raise ValueError(f"Invalid JSON received from Claude API: {e}") from e
             except Exception as e:
                 logger.error(f"An unexpected error occurred when calling Claude API: {e}", exc_info=True)

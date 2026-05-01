@@ -6,11 +6,29 @@ from alembic import context
 
 from app.config import DATABASE_URL
 from app.models.db.base import Base
-# Import all models to ensure they are registered with SQLAlchemy
-from app.models.db.shop_admin import ShopModel, UserModel, CollectionModel, ProductModel, UserShopAnalyticsModel
+# Import all models so Base.metadata is complete for autogenerate (omitting any
+# table that exists in the DB but not here produces bogus DROP operations).
+#
+# DB handlers (e.g. ShopConfigHandler) are not tables — only import ORM models.
+# ShopConfigHandler reads ``shops`` (ShopModel) and may use ``shop_metadata``
+# (ShopMetadataModel); both must stay imported so missing tables appear in diffs.
+from app.models.db.shop_admin import (
+    ShopModel,
+    ShopMetadataModel,
+    UserModel,
+    CollectionModel,
+    ProductModel,
+    UserShopAnalyticsModel,
+    UserShopMinutelyAnalyticsModel,
+    IntegrationModel,
+    OfferModel,
+)
+from app.models.db.cart import CartItemModel
 from app.models.db.checkout_product import CheckoutProductModel
 from app.models.db.conversation import ConversationModel
 from app.models.db.country_code import CountryCodeModel
+from app.models.db.order import OrderModel, OrderItemModel
+from app.models.db.subscription import SubscriptionModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -24,6 +42,16 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 target_metadata = Base.metadata
+
+_APP_SCHEMAS = frozenset({None, "public"})
+
+
+def include_object(obj, name, type_, reflected, compare_to):
+    """Ignore tables/indexes in Supabase-managed schemas when autogenerating."""
+    if reflected and getattr(obj, "schema", None) not in _APP_SCHEMAS:
+        return False
+    return True
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -51,7 +79,7 @@ def run_migrations_offline() -> None:
         compare_type=True,
         compare_server_default=True,
         include_schemas=True,
-        include_object=lambda obj, name, type_, reflected, compare_to: True
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -80,7 +108,7 @@ def run_migrations_online() -> None:
             compare_type=True,
             compare_server_default=True,
             include_schemas=True,
-            include_object=lambda obj, name, type_, reflected, compare_to: True
+            include_object=include_object,
         )
 
         with context.begin_transaction():
