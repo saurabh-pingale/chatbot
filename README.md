@@ -123,7 +123,7 @@ To customize the chatbot's appearance:
 
 ### Training the Chatbot
 
-To train the chatbot with your product data:
+To train the chatbot with your product data:-
 
 1.  Go to the **Training** page within the app.
 2.  You have two options:
