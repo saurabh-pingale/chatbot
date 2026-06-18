@@ -285,7 +285,10 @@ class ShopAdminHandler:
                     session.add(integration)
                 except SQLAlchemyError as error:
                     logger.error(f"Database error in save_integration for shop {shop_id}: {error}", exc_info=True)
-                    raise Exception(f"Failed to create integration for shop {shop_id}")
+                    raise Exception(f"Failed to create integration for shop {shop_id}") from error
+                except ValueError as error:
+                    logger.error(f"save_integration for shop {shop_id}: {error}", exc_info=True)
+                    raise Exception(f"Failed to create integration for shop {shop_id}") from error
                 
     async def update_shop_setup_completed_status(self, shop_id: int, status: bool) -> None:
         """Updates the setup_completed status for a given shop."""

@@ -1,20 +1,30 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "24603c844d3f319fe6cd5e556aa3f8da"
-name = "twentysix-bot"
+client_id = "988e8c648bf854725a055af7312309e4"
+name = "chatbot-may-2026"
 application_url = "https://shopify.dev/apps/default-app-home"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
-api_version = "2026-04"
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+
+[access.admin]
+direct_api_mode = "offline"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_metaobjects,read_orders,read_products,write_products"
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [
+  "https://bot.reezoai.com/auth/callback",
+  "https://bot.reezoai.com/auth/shopify/callback",
+  "https://bot.reezoai.com/api/auth/callback"
+]

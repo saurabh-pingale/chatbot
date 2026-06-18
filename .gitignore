@@ -27,3 +27,4 @@ __pycache__
 .vscode
 
 /api/local_models
+.cursor
