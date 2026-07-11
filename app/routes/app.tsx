@@ -32,12 +32,12 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
+        <Link to="/app/faqs">FAQs</Link>
         {isSetupCompleted && (
           <>
             <Link to="/app/settings">Settings</Link>
             <Link to="/app/training">Training</Link>
             <Link to="/app/analytics">Analytics</Link>
-            {/* <Link to="/app/billings">Billing</Link> // TODO: Uncomment when pricing flow is automated completely */}
             <Link to="/app/integrations">Integrations</Link>
           </>
         )}
