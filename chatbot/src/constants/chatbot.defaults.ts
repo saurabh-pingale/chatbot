@@ -6,7 +6,7 @@ export const CHATBOT_DEFAULTS = {
   primaryColor: '#1A1A1A',
   logoUrl: '',
   headerTitle: 'Support Assistant',
-  greetingMessage: "Hi! I'm faq assistant. Ask me anything from our FAQs.",
+  greetingMessage: "Hey there, I'm happy to help you today.",
   helloButtonLabel: 'Hello 👋',
   fallbackMessage:
     "Sorry, I couldn't find an answer to that. Please contact our support team for further help.",

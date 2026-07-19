@@ -1,12 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "87d90090dd00b1d5fe09301727899bb9"
-name = "Cognito Assistant"
+client_id = "65e0db13af700ffeb0197ba3c973098e"
+name = "cognito-bot-v2"
 application_url = "https://bot.cognitoinnovations.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-10"

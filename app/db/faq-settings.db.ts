@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const SETTINGS_TABLE = "shop_faq_settings";
 
-const DEFAULT_FALLBACK_MESSAGE =
+export const DEFAULT_FALLBACK_MESSAGE =
   "Sorry, I couldn't find an answer to that. Please contact our support team for further help.";
 
 export interface ShopFaqSettings {
@@ -25,7 +25,7 @@ export async function fetchFaqSettings(
     throw new Error(error.message);
   }
 
-  return data?.fallback_message ?? DEFAULT_FALLBACK_MESSAGE;
+  return data?.fallback_message ?? "";
 }
 
 export async function saveFaqSettings(

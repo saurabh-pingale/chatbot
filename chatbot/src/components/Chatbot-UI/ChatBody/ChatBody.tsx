@@ -33,11 +33,22 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
       });
     }, [config.shopId]);
 
-    const { messages, isTyping, isLoading, handleTyping, addMessage, handleBotResponse, clearConversation } = useChat(conversationKey);
+    const {
+      messages,
+      isTyping,
+      isLoading,
+      handleTyping,
+      addMessage,
+      handleBotResponse,
+      clearConversation,
+      startFreshConversation,
+    } = useChat(conversationKey);
 
     useEffect(() => {
-      onMessagesCountChange(messages.length);
-    }, [messages.length, onMessagesCountChange]);
+      // Hide header clear icon on the Hello welcome screen, even if old
+      // messages are still loaded from IndexedDB in the background.
+      onMessagesCountChange(hasStarted ? messages.length : 0);
+    }, [hasStarted, messages.length, onMessagesCountChange]);
 
     const handleStartConversation = useCallback(async () => {
       if (!assistantDataRef.current) {
@@ -45,9 +56,9 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
       }
 
       const greetingTags: TagItem[] = buildTopFaqTags(assistantDataRef.current.faqs);
-      addMessage(config.greetingMessage, 'bot', undefined, greetingTags);
+      await startFreshConversation(config.greetingMessage, greetingTags);
       setHasStarted(true);
-    }, [addMessage, config.greetingMessage, config.shopId]);
+    }, [startFreshConversation, config.greetingMessage, config.shopId]);
 
     const resetChat = useCallback(async () => {
         await clearConversation();
