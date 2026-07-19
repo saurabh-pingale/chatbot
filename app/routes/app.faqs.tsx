@@ -75,6 +75,11 @@ export default function FaqsPage() {
     handleDownloadTemplate,
     handleFileSelect,
     handleBulkImport,
+    fallbackMessage,
+    settingsError,
+    setFallbackMessage,
+    setSettingsError,
+    handleSaveFallback,
   } = useFaqManager({ shop, supabaseUrl, supabaseKey });
 
   if (configMissing) {
@@ -84,7 +89,7 @@ export default function FaqsPage() {
   return (
     <Page
       title="FAQ Management"
-      subtitle="Add questions and answers that your chatbot will use to help customers"
+      subtitle={`Add questions and answers to a chatbot will use to help customers`}
       backAction={{ content: "Home", url: "/app" }}
     >
       <BlockStack gap="500">
@@ -118,6 +123,46 @@ export default function FaqsPage() {
             <p>{bulkError}</p>
           </Banner>
         )}
+
+        {settingsError && (
+          <Banner
+            title="Settings error"
+            tone="critical"
+            onDismiss={() => setSettingsError("")}
+          >
+            <p>{settingsError}</p>
+          </Banner>
+        )}
+
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">
+              Default fallback message
+            </Text>
+            <Text as="p" variant="bodyMd">
+              Shown in the chatbot when a customer question does not match any
+              FAQ. Top FAQ suggestions are also displayed below this message.
+            </Text>
+            <TextField
+              label="Fallback message"
+              value={fallbackMessage}
+              onChange={setFallbackMessage}
+              multiline={3}
+              autoComplete="off"
+              disabled={isSaving || configMissing}
+            />
+            <InlineStack gap="200">
+              <Button
+                variant="primary"
+                onClick={handleSaveFallback}
+                loading={isSaving}
+                disabled={configMissing}
+              >
+                Save fallback message
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Card>
 
         <Card>
           <BlockStack gap="400">
@@ -298,7 +343,7 @@ export default function FaqsPage() {
                     required for each row
                   </List.Item>
                 </List>
-                <InlineStack gap="200">
+                <InlineStack gap="200" blockAlign="center">
                   <Button onClick={handleDownloadTemplate}>
                     Download CSV Template
                   </Button>

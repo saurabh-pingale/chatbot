@@ -28,11 +28,17 @@ export interface CartItem extends ProductType {
 
 export interface ChatbotAppConfig {
   primaryColor: string;
-  storeImage: string;
+  logoUrl: string;
+  headerTitle: string;
+  greetingMessage: string;
+  helloButtonLabel: string;
+  fallbackMessage: string;
   shopId: string;
   showEmailGate: boolean;
   setupCompleted: boolean;
   allowGuestMode: boolean;
+  /** @deprecated Use logoUrl */
+  storeImage?: string;
 }
 
 export interface ChatbotConfig {

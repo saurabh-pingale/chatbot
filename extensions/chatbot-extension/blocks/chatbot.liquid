@@ -1,10 +1,10 @@
 {% schema %}
 {
-  "name": "Chatbot",
+  "name": "Cognito Bot",
   "target": "body",
   "javascript": "chatbot-main.js",
   "stylesheet": "chatbot-main.css",
 }
 {% endschema %}
 
-<div id="shopify-chatbot"></div>
+<div id="shopify-chatbot" data-shop="{{ shop.permanent_domain }}"></div>

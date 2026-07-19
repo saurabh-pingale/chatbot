@@ -248,7 +248,14 @@ export default function TrainingPage() {
     handleFetchProducts();
   };
 
-  const themeEditorDeepLink = `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent('reezo-ai-1/chatbot-extension')}`;
+  const getThemeEditorDeepLink = (shop: string) => {
+    const SHOPIFY_API_KEY = "65e0db13af700ffeb0197ba3c973098e";
+    const APP_EMBED_BLOCK_HANDLE = "chatbot";
+    const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
+    return `https://${shop}/admin/themes/current/editor?context=apps&template=index&activateAppId=${activateAppId}`;
+  };
+
+  const themeEditorDeepLink = shop ? getThemeEditorDeepLink(shop) : "";
 
   return (
     <Page>

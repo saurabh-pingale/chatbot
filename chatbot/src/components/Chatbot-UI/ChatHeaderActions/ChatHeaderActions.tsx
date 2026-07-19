@@ -1,13 +1,10 @@
-import { memo, useState, useCallback } from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 
-import { useCart } from '../../../context/CartContext';
-import { OffersPopup } from '../../OffersPopup/OffersPopup';
 import { CONFIGMESSAGE } from '../../../constants/messages';
-import { CartIconSVG } from '../../../assets/cart_icon';
 import { TrashIconSVG } from '../../../assets/TrashIcon';
 import { ChevronDownIconSVG } from '../../../assets/ChevronDownIcon';
-import { RingBellIconSVG } from '../../../assets/RingBellIcon';
+// import { RingBellIconSVG } from '../../../assets/RingBellIcon';
 import type { ChatHeaderProps, StyleWithCustomProps } from '../../../types';
 import './ChatHeaderActions.scss';
 
@@ -18,33 +15,18 @@ interface ChatHeaderActionsProps extends Pick<ChatHeaderProps, 'onClearConversat
 export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
   onClearConversation,
   onMinimize,
-  setError,
   isEmailGateVisible,
   messagesCount,
-  headerStyles
 }) => {
-  const [isOffersPopupOpen, setIsOffersPopupOpen] = useState(false);
-  
-  const { cartItems, toggleCart, isLoadingCart, isUpdatingCart } = useCart();
-  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  const showCartIcon = !isEmailGateVisible;
-  const showOffersIcon = !isEmailGateVisible;
   const showClearConversationIcon = (messagesCount >= CONFIGMESSAGE.MIN_MESSAGES_TO_SHOW_CLEAR_ICON) && !isEmailGateVisible;
-
-  const handleToggleOffers = useCallback(() => {
-    setIsOffersPopupOpen(prev => !prev);
-  }, []);
-
-  const isCartLoading = isLoadingCart || isUpdatingCart;
 
   return (
     <>
       <div className="chat-header-right-section">
-        {showOffersIcon && (
+        {/* Notification / offers icon — disabled for FAQ assistant MVP
+        {!isEmailGateVisible && (
           <motion.div
-            className={`chat-header-icon-wrapper chat-header-offers-icon-wrapper ${isOffersPopupOpen ? 'active' : ''}`}
-            onClick={handleToggleOffers}
+            className="chat-header-icon-wrapper chat-header-offers-icon-wrapper"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             title="View Offers"
@@ -52,33 +34,8 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
             <RingBellIconSVG />
           </motion.div>
         )}
-        {showCartIcon && (
-          <motion.div
-            className={`chat-header-icon-wrapper chat-header-cart-icon-wrapper ${isCartLoading ? 'disabled' : ''}`}
-            onClick={isCartLoading ? undefined : toggleCart}
-            whileHover={isCartLoading ? undefined : { scale: 1.1 }}
-            whileTap={isCartLoading ? undefined : { scale: 0.95 }}
-            title="View Cart"
-          >
-            <CartIconSVG />
+        */}
 
-            {(isCartLoading || totalCartItems > 0) && (
-              <motion.span
-                className={`chat-header-cart-count-badge ${isCartLoading ? 'loading' : ''}`}
-                style={headerStyles}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-              >
-                {isCartLoading ? (
-                  <div className="cart-badge-spinner" style={headerStyles}></div>
-                ) : (
-                  totalCartItems
-                )}
-              </motion.span>
-            )}
-          </motion.div>
-        )}
         {showClearConversationIcon && onClearConversation && (
           <motion.div
             className="chat-header-icon-wrapper chat-header-trash-icon-wrapper"
@@ -100,13 +57,8 @@ export const ChatHeaderActions = memo<ChatHeaderActionsProps>(({
           <ChevronDownIconSVG />
         </motion.div>
       </div>
-      {showOffersIcon && (
-        <OffersPopup
-          isOpen={isOffersPopupOpen}
-          onClose={() => setIsOffersPopupOpen(false)}
-          setError={setError}
-        />
-      )}
     </>
   );
 });
+
+ChatHeaderActions.displayName = 'ChatHeaderActions';
