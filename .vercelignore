@@ -1,0 +1,14 @@
+api
+chatbot
+.git
+node_modules
+.shopify
+build
+.cursor
+*.sqlite
+.env
+.env.*
+prisma/dev.sqlite
+prisma/dev.sqlite-journal
+api/app/logs
+/api/local_models

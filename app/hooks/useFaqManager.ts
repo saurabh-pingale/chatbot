@@ -8,6 +8,10 @@ import {
   updateFaq,
 } from "../db/faq.db";
 import {
+  fetchFaqSettings,
+  saveFaqSettings,
+} from "../db/faq-settings.db";
+import {
   downloadCsvTemplate,
   isCsvFile,
   parseFaqCsv,
@@ -49,6 +53,8 @@ export function useFaqManager({
   >(null);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [templateDownloaded, setTemplateDownloaded] = useState(false);
+  const [fallbackMessage, setFallbackMessage] = useState("");
+  const [settingsError, setSettingsError] = useState("");
 
   useEffect(() => {
     if (configMissing || typeof window === "undefined") {
@@ -89,8 +95,12 @@ export function useFaqManager({
     setLoadError("");
 
     try {
-      const data = await fetchFaqs(supabase, shop);
+      const [data, fallback] = await Promise.all([
+        fetchFaqs(supabase, shop),
+        fetchFaqSettings(supabase, shop),
+      ]);
       setFaqs(data);
+      setFallbackMessage(fallback);
     } catch (error) {
       setLoadError(
         error instanceof Error ? error.message : "Failed to load FAQs.",
@@ -268,6 +278,30 @@ export function useFaqManager({
     }
   }, [shop, supabase, bulkPreview, showSuccessBanner, resetBulkUpload]);
 
+  const handleSaveFallback = useCallback(async () => {
+    if (!shop || !supabase) return;
+
+    const trimmed = fallbackMessage.trim();
+    if (!trimmed) {
+      setSettingsError("Fallback message is required.");
+      return;
+    }
+
+    setSettingsError("");
+    setIsSaving(true);
+
+    try {
+      await saveFaqSettings(supabase, shop, trimmed);
+      showSuccessBanner("Fallback message saved");
+    } catch (error) {
+      setSettingsError(
+        error instanceof Error ? error.message : "Failed to save fallback message.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [shop, supabase, fallbackMessage, showSuccessBanner]);
+
   return {
     fileInputRef,
     configMissing,
@@ -285,6 +319,11 @@ export function useFaqManager({
     bulkPreview,
     selectedFileName,
     templateDownloaded,
+    fallbackMessage,
+    settingsError,
+    setFallbackMessage,
+    setSettingsError,
+    handleSaveFallback,
     setShowSuccess,
     setLoadError,
     setBulkError,

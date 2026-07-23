@@ -83,7 +83,7 @@ export const EmailGate = memo<EmailGateProps>(({ onSuccess }) => {
     >
       <div className="email-gate-content">
         {config.storeImage && (
-          <img src={config.storeImage} alt="Shop Logo" className="shop-logo-email-gate" />
+          <img src={config.logoUrl || config.storeImage} alt="Shop Logo" className="shop-logo-email-gate" />
         )}
         <p className="email-gate-description">
           {otpSent

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
@@ -6,25 +7,36 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import { authenticate } from "../shopify.server";
-import { getShopId, getShopStatusSafe } from "../utils/session.utils";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-
-  const shopId = getShopId(session);
-  const shopStatus = await getShopStatusSafe(shopId);
+  await authenticate.admin(request);
 
   return {
     apiKey: process.env.SHOPIFY_API_KEY || "",
-    shopStatus
   };
 };
 
+async function pingWithSessionToken() {
+  const shopifyGlobal = window.shopify;
+  if (!shopifyGlobal?.idToken) return;
+
+  await shopifyGlobal.ready;
+  const token = await shopifyGlobal.idToken();
+  await fetch("/app/ping", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export default function App() {
-  const { apiKey, shopStatus } = useLoaderData<typeof loader>();
-  const isSetupCompleted = shopStatus.setup_completed;
+  const { apiKey } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    void pingWithSessionToken().catch(() => {
+      // Best-effort telemetry for Partner Dashboard session-token checks.
+    });
+  }, []);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -33,14 +45,6 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/faqs">FAQs</Link>
-        {isSetupCompleted && (
-          <>
-            <Link to="/app/settings">Settings</Link>
-            <Link to="/app/training">Training</Link>
-            <Link to="/app/analytics">Analytics</Link>
-            <Link to="/app/integrations">Integrations</Link>
-          </>
-        )}
       </NavMenu>
       <Outlet />
     </AppProvider>

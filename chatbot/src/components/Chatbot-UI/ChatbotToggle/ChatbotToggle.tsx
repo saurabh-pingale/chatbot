@@ -2,6 +2,8 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 
 import { useConfig } from '../../../context/ConfigContext';
+import { CHATBOT_LOGO_DATA_URI } from '../../../assets/ChatbotLogo';
+import { ChatbotLogo } from '../../../assets/ChatbotLogo';
 import { IMAGE } from '../../../constants/image';
 import type { ChatbotToggleProps, StyleWithCustomProps } from '../../../types';
 import { iconAnimation, toggleAnimation } from '../../../styles/animations';
@@ -12,6 +14,8 @@ export const ChatbotToggle = memo<ChatbotToggleProps>(({
   onClick 
 }) => {
   const config = useConfig();
+  const logoSrc = config.logoUrl || config.storeImage || CHATBOT_LOGO_DATA_URI;
+  const useInlineLogo = logoSrc.startsWith('data:image/svg');
 
   const toggleStyles: StyleWithCustomProps = {
     '--theme-primary-color': config.primaryColor,
@@ -31,14 +35,18 @@ export const ChatbotToggle = memo<ChatbotToggleProps>(({
         exit="exit"
         variants={iconAnimation}
       >
-        <img
-          src={config.storeImage || IMAGE.FALLBACK}
-          alt="Store Logo"
-          onError={(e) => {
-            const img = e.target as HTMLImageElement;
-            img.src = IMAGE.FALLBACK;
-          }}
-        />
+        {useInlineLogo ? (
+          <ChatbotLogo size={32} variant="icon" />
+        ) : (
+          <img
+            src={logoSrc}
+            alt={config.headerTitle}
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.src = CHATBOT_LOGO_DATA_URI;
+            }}
+          />
+        )}
       </motion.div>
       <motion.div
         className="chatbot-toggle-close-icon"
@@ -50,4 +58,6 @@ export const ChatbotToggle = memo<ChatbotToggleProps>(({
       />
     </motion.button>
   );
-}); 
+});
+
+ChatbotToggle.displayName = 'ChatbotToggle';

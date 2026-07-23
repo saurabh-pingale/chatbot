@@ -1,45 +1,69 @@
-import { memo, useState, useEffect, forwardRef, useImperativeHandle, useCallback, useRef } from 'react';
+import { memo, useState, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
 import { useChat } from '../../../hooks/useChat';
-import { useCart } from '../../../context/CartContext';
-import { sendAgentMessage } from '../../../services/chat';
 import { getConversationKey } from '../../../services/user';
-import { STATIC_BOT_GREETING, DEFAULT_TAGS } from '../../../constants/botMessages.constants';
+import { getOrCreateGuestId } from '../../../utils/guest';
+import {
+  loadFaqAssistantData,
+  resolveFaqMessage,
+  buildTopFaqTags,
+  type FaqAssistantData,
+} from '../../../services/faqAssistant';
+import { useConfig } from '../../../context/ConfigContext';
 import { MessageList } from '../MessageList/MessageList';
 import { ChatInput } from '../ChatInput/ChatInput';
-import { Cart } from '../../Cart-UI/Cart/Cart';
-import { useConfig } from '../../../context/ConfigContext';
-import type { AgentConversationRequestPayload, ChatBodyHandle, ChatBodyProps, Message, ProductType } from '../../../types';
+import { ChatWelcome } from '../ChatWelcome/ChatWelcome';
+import type { ChatBodyHandle, ChatBodyProps, TagItem } from '../../../types';
+import './ChatBody.scss';
 
 const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
   ({ jwtToken, setError, isEmailGateVisible, onMessagesCountChange }, ref) => {  
     const config = useConfig();
     const [conversationKey, setConversationKey] = useState<string | null>(null);
-    const [chatLimitReached, setChatLimitReached] = useState(false);
-    const isInitialMount = useRef(true);
+    const [hasStarted, setHasStarted] = useState(false);
+    const assistantDataRef = useRef<FaqAssistantData | null>(null);
     
     useEffect(() => {
      setConversationKey(getConversationKey(config.shopId));
-    }, [jwtToken]);
-
-    const { messages, isTyping, isLoading, handleTyping, addMessage, handleBotResponse, clearConversation } = useChat(conversationKey);
-    const { cartItems, isCartOpen, updateQuantity, toggleCart, addToCart, checkout, isLoadingCart, loadingItemId, isCheckingOut } = useCart();
+    }, [jwtToken, config.shopId]);
 
     useEffect(() => {
-      onMessagesCountChange(messages.length);
-    }, [messages.length, onMessagesCountChange]);
+      loadFaqAssistantData(config.shopId).then((data) => {
+        assistantDataRef.current = data;
+        console.log('[Chatbot] Loaded FAQs:', data.faqs.length);
+      });
+    }, [config.shopId]);
+
+    const {
+      messages,
+      isTyping,
+      isLoading,
+      handleTyping,
+      addMessage,
+      handleBotResponse,
+      clearConversation,
+      startFreshConversation,
+    } = useChat(conversationKey);
 
     useEffect(() => {
-      if (isInitialMount.current && !isLoading && !isEmailGateVisible && messages.length === 0) {
-        addMessage(STATIC_BOT_GREETING, 'bot', undefined, DEFAULT_TAGS);
-        isInitialMount.current = false;
+      // Hide header clear icon on the Hello welcome screen, even if old
+      // messages are still loaded from IndexedDB in the background.
+      onMessagesCountChange(hasStarted ? messages.length : 0);
+    }, [hasStarted, messages.length, onMessagesCountChange]);
+
+    const handleStartConversation = useCallback(async () => {
+      if (!assistantDataRef.current) {
+        assistantDataRef.current = await loadFaqAssistantData(config.shopId);
       }
-    }, [isLoading, isEmailGateVisible, messages.length, addMessage]);
+
+      const greetingTags: TagItem[] = buildTopFaqTags(assistantDataRef.current.faqs);
+      await startFreshConversation(config.greetingMessage, greetingTags);
+      setHasStarted(true);
+    }, [startFreshConversation, config.greetingMessage, config.shopId]);
 
     const resetChat = useCallback(async () => {
         await clearConversation();
-        isInitialMount.current = true;
-        setChatLimitReached(false);
-    }, [clearConversation, addMessage]);
+        setHasStarted(false);
+    }, [clearConversation]);
 
     useImperativeHandle(ref, () => ({
       clearConversation: resetChat,
@@ -47,67 +71,64 @@ const ChatBody = forwardRef<ChatBodyHandle, ChatBodyProps>(
 
     const handleSendMessage = async (content: string) => {
       addMessage(content, 'user');
-      const currentMessages: Message[] = [...messages, { id: Date.now().toString(), content, type: 'user', timestamp: new Date() }];
-
       handleTyping(true);
-      try {
-        const payloadBase: AgentConversationRequestPayload = {
-          messages: currentMessages,
-        };
-        if (jwtToken) {
-          payloadBase.token = jwtToken;
-        }
-        const response = await sendAgentMessage(config.shopId, payloadBase);
 
-        if (response.limit_reached) setChatLimitReached(true);
+      try {
+        if (!assistantDataRef.current) {
+          assistantDataRef.current = await loadFaqAssistantData(config.shopId);
+        }
+
+        const sessionId = conversationKey || getOrCreateGuestId();
+        const response = await resolveFaqMessage(
+          config.shopId,
+          sessionId,
+          content,
+          assistantDataRef.current,
+        );
+
         handleBotResponse(response);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred.';
+        console.error('[Chatbot] Message error:', errorMessage);
         setError(errorMessage);
-        handleBotResponse({ answer: `Sorry, an error occurred: ${errorMessage}`, products: [], success: false, error: errorMessage });
+        handleBotResponse({
+          answer: config.fallbackMessage,
+          products: [],
+          success: false,
+          tags: assistantDataRef.current
+            ? buildTopFaqTags(assistantDataRef.current.faqs)
+            : [],
+        });
       } finally {
         handleTyping(false);
-      }
-    };
-    
-    const handleProductAddToCart = async (product: ProductType) => {
-      try {
-        await addToCart(product);
-      } catch (err) {
-        console.error("Error adding product to cart from ChatBody:", err);
-        setError('Failed to add product to cart. Please try again.');
       }
     };
 
     const lastMessage = messages[messages.length - 1];
     const tagsToShow = lastMessage?.type === 'bot' ? lastMessage.tags || [] : [];
+    const showWelcome = !hasStarted && !isLoading && !isEmailGateVisible;
 
     return (
-      <>
-        <MessageList
-          messages={messages}
-          isTyping={isTyping}
-          onProductAddToCart={handleProductAddToCart}
-          tags={tagsToShow}
-          handleSendMessage={handleSendMessage}
-        />
+      <div className="chat-body-container">
+        {showWelcome ? (
+          <ChatWelcome onStart={handleStartConversation} />
+        ) : (
+          <>
+            <MessageList
+              messages={messages}
+              isTyping={isTyping}
+              onProductAddToCart={async () => {}}
+              tags={tagsToShow}
+              handleSendMessage={handleSendMessage}
+            />
 
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          disabled={isTyping || chatLimitReached}
-        />
-
-        <Cart
-          isOpen={isCartOpen}
-          items={cartItems}
-          onClose={toggleCart}
-          onUpdateQuantity={updateQuantity}
-          onCheckout={checkout}
-          isLoading={isLoadingCart}
-          loadingItemId={loadingItemId}
-          isCheckingOut={isCheckingOut}
-        />
-      </>
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              disabled={isTyping}
+            />
+          </>
+        )}
+      </div>
     );
   }
 );

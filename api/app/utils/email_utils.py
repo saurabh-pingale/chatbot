@@ -20,7 +20,7 @@ async def send_otp_email(to_email: str, otp: str, shop_domain):
         part.capitalize() 
         for part in shop_domain.replace(".myshopify.com", "").split("-")
     )
-    company_name = "ReezoAI"
+    company_name = "Cognito Innovations"
 
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Your {store_name} Verification Code"

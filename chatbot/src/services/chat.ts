@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '../constants/api';
-import { COLORS } from '../constants/colors';
-import { IMAGE } from '../constants/image';
+import { CHATBOT_DEFAULTS } from '../constants/chatbot.defaults';
+import { CHATBOT_LOGO_DATA_URI } from '../assets/ChatbotLogo';
 import { getShopId } from '../utils/utils';
 import { getOrCreateGuestId } from '../utils/guest';
 import type {
@@ -74,10 +74,10 @@ export const getShopConfiguration = async () => {
     let shopId = getShopId();
     if (!shopId) {
       return { 
-        preferred_color: COLORS.ORANGE_450,
-        image: IMAGE.FALLBACK,
-        setup_completed: false,
-        show_email_gate: false
+        preferred_color: CHATBOT_DEFAULTS.primaryColor,
+        image: CHATBOT_LOGO_DATA_URI,
+        setup_completed: CHATBOT_DEFAULTS.setupCompleted,
+        show_email_gate: CHATBOT_DEFAULTS.showEmailGate
       };
     }
     shopId = shopId.split("?")[0];
@@ -89,27 +89,27 @@ export const getShopConfiguration = async () => {
     if (!response.ok) {
       console.error('Failed to fetch shop config:', response.status, await response.text());
       return { 
-        preferred_color: COLORS.ORANGE_450,
-        image: IMAGE.FALLBACK,
-        setup_completed: false,
-        show_email_gate: false
+        preferred_color: CHATBOT_DEFAULTS.primaryColor,
+        image: CHATBOT_LOGO_DATA_URI,
+        setup_completed: CHATBOT_DEFAULTS.setupCompleted,
+        show_email_gate: CHATBOT_DEFAULTS.showEmailGate
       };
     }
 
     const data = await response.json();
     return {
-      preferred_color: data.preferred_color || COLORS.ORANGE_450,
-      image: data.image || IMAGE.FALLBACK,
-      setup_completed: data.setup_completed || false,
-      show_email_gate: data.show_email_gate || false,
+      preferred_color: data.preferred_color || CHATBOT_DEFAULTS.primaryColor,
+      image: data.image || CHATBOT_LOGO_DATA_URI,
+      setup_completed: data.setup_completed ?? CHATBOT_DEFAULTS.setupCompleted,
+      show_email_gate: data.show_email_gate ?? CHATBOT_DEFAULTS.showEmailGate,
     };
   } catch (err) {
-    console.error('Config fetch error:', err);
+    console.error('[Chatbot] Config fetch error:', err);
     return { 
-      preferred_color: COLORS.ORANGE_450,
-      image: IMAGE.FALLBACK,
-      setup_completed: false,
-      show_email_gate: false
+      preferred_color: CHATBOT_DEFAULTS.primaryColor,
+      image: CHATBOT_LOGO_DATA_URI,
+      setup_completed: CHATBOT_DEFAULTS.setupCompleted,
+      show_email_gate: CHATBOT_DEFAULTS.showEmailGate
     };
   }
 };

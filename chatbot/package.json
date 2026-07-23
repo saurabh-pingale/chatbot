@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && cp dist/chatbot-main.js dist/chatbot-main.css ../extensions/chatbot-extension/assets/",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@supabase/supabase-js": "^2.110.2",
     "framer-motion": "^12.16.0",
+    "fuse.js": "^7.4.2",
     "idb": "^8.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

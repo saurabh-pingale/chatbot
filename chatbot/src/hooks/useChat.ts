@@ -69,6 +69,25 @@ export const useChat = (conversationKey: string | null) => {
     await db.clearDBConversation(conversationKey);
   }, [conversationKey]);
 
+  /** Clears any prior thread, then seeds a single bot message (e.g. Hello). */
+  const startFreshConversation = useCallback(async (
+    content: string,
+    tags?: TagItem[]
+  ) => {
+    if (conversationKey) {
+      await db.clearDBConversation(conversationKey);
+    }
+
+    const greeting: Message = {
+      id: uuidv4(),
+      content,
+      type: 'bot',
+      timestamp: new Date(),
+      tags,
+    };
+    setMessages([greeting]);
+  }, [conversationKey]);
+
   return {
     messages,
     isTyping,
@@ -77,5 +96,6 @@ export const useChat = (conversationKey: string | null) => {
     addMessage,
     handleBotResponse,
     clearConversation,
+    startFreshConversation,
   };
 };

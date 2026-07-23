@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Page,
   Layout,
@@ -10,6 +10,7 @@ import {
   InlineStack,
   Button,
   Banner,
+  Collapsible,
 } from "@shopify/polaris";
 import { json, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
@@ -46,13 +47,22 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const shouldRevalidate = () => false;
 
+export function getThemeEditorDeepLink(
+  shop: string,
+  template: string = "index",
+): string {
+  const APP_EMBED_BLOCK_HANDLE = "chatbot";
+  const SHOPIFY_API_KEY = "87d90090dd00b1d5fe09301727899bb9";
+  const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
+  return `https://${shop}/admin/themes/current/editor?context=apps&template=${template}&activateAppId=${activateAppId}`;
+}
+
 export default function Index() {
   const { shop } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
-
-  const themeEditorDeepLink = shop
-    ? `https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${encodeURIComponent("reezo-ai-1/chatbot-extension")}`
-    : null;
+  const [setupOpen, setSetupOpen] = useState(false);
+  const APP_BRAND_NAME = "Cognito Assistant";
+  const themeEditorDeepLink = shop ? getThemeEditorDeepLink(shop) : null;
 
   return (
     <Page>
@@ -60,12 +70,11 @@ export default function Index() {
         <Card>
           <BlockStack gap="300">
             <Text as="h2" variant="headingLg">
-              Welcome to the Faq Chatbot App!
+              Welcome to {APP_BRAND_NAME}!
             </Text>
             <Text variant="bodyMd" as="p">
-              Your store's faq assistant, powered by advance searching
-              capabilities to provide accurate, helpful answers to your
-              customers.
+              Your store&apos;s FAQ assistant, powered by smart search to give
+              customers accurate, helpful answers.
             </Text>
             <InlineStack gap="300">
               <Button variant="primary" onClick={() => navigate("/app/faqs")}>
@@ -75,7 +84,7 @@ export default function Index() {
                 <Button
                   onClick={() => window.open(themeEditorDeepLink, "_blank")}
                 >
-                  Open Theme Editor
+                  Enable chatbot in theme
                 </Button>
               )}
             </InlineStack>
@@ -88,7 +97,7 @@ export default function Index() {
               <BlockStack gap="500">
                 <Banner title="Get started with your FAQs" tone="info">
                   Add questions and answers that your customers ask most often.
-                  The chatbot will use smart search to match customer queries
+                  {APP_BRAND_NAME} uses smart search to match customer queries
                   and return the best answer.
                 </Banner>
 
@@ -140,8 +149,8 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      The chatbot searches your FAQs to find the closest
-                      matching question
+                      The {APP_BRAND_NAME} widget searches your FAQs to find the
+                      closest matching question
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
@@ -196,6 +205,66 @@ export default function Index() {
             </BlockStack>
           </Layout.Section>
         </Layout>
+
+        <Card>
+          <BlockStack gap="200">
+            <Button
+              variant="monochromePlain"
+              disclosure={setupOpen ? "up" : "down"}
+              onClick={() => setSetupOpen((open) => !open)}
+              textAlign="left"
+            >
+              Set up the storefront chatbot (app embed)
+            </Button>
+            <Collapsible
+              open={setupOpen}
+              id="app-embed-setup"
+              transition={{ duration: "150ms", timingFunction: "ease" }}
+            >
+              <BlockStack gap="300">
+                <Text as="p" variant="bodyMd">
+                  The chatbot is an app embed. It stays off until you enable it
+                  in the theme editor and save.
+                </Text>
+                <List type="number">
+                  <List.Item>
+                    Click{" "}
+                    <Text as="span" fontWeight="semibold">
+                      Enable chatbot in theme
+                    </Text>{" "}
+                    (opens the theme editor App embeds panel for Cognito Assistant).
+                  </List.Item>
+                  <List.Item>
+                    Turn on the{" "}
+                    <Text as="span" fontWeight="semibold">
+                      Cognito Assistant
+                    </Text>{" "}
+                    toggle.
+                  </List.Item>
+                  <List.Item>
+                    Click{" "}
+                    <Text as="span" fontWeight="semibold">
+                      Save
+                    </Text>{" "}
+                    in the theme editor.
+                  </List.Item>
+                  <List.Item>
+                    Preview your storefront — the chat widget should appear. Add
+                    FAQs under{" "}
+                    <Text as="span" fontWeight="semibold">
+                      Manage FAQs
+                    </Text>{" "}
+                    so the bot can answer customers.
+                  </List.Item>
+                </List>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Manual path: Online Store → Themes → Customize → App embeds →
+                  enable Cognito Assistant → Save.
+                </Text>
+              </BlockStack>
+            </Collapsible>
+          </BlockStack>
+        </Card>
       </BlockStack>
     </Page>
   );
