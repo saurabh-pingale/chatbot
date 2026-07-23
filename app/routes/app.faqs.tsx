@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import { json, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {
@@ -24,6 +24,7 @@ import { getSupabaseConfig } from "../utils/supabase.config";
 import { useFaqManager } from "../hooks/useFaqManager";
 import { DEFAULT_FALLBACK_MESSAGE } from "../db/faq-settings.db";
 import emptyStateImage from "../images/emptystate-files.avif";
+import type { FaqItem } from "../utils/faq.utils";
 
 interface LoaderData {
   shop: string | null;
@@ -45,6 +46,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function FaqsPage() {
   const { shop, supabaseUrl, supabaseKey } = useLoaderData<LoaderData>();
+  const faqFormRef = useRef<HTMLDivElement>(null);
 
   const {
     fileInputRef,
@@ -83,10 +85,19 @@ export default function FaqsPage() {
     handleSaveFallback,
   } = useFaqManager({ shop, supabaseUrl, supabaseKey });
 
-  if (configMissing) {
-    console.log("Configuration is missing");
-  }
-  console.log(fallbackMessage);
+  const handleEditAndScroll = useCallback(
+    (faq: FaqItem) => {
+      handleEdit(faq);
+      requestAnimationFrame(() => {
+        faqFormRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+    [handleEdit],
+  );
+
   return (
     <Page
       title="FAQ Management"
@@ -180,7 +191,7 @@ export default function FaqsPage() {
                       <InlineStack gap="200">
                         <Button
                           size="slim"
-                          onClick={() => handleEdit(faq)}
+                          onClick={() => handleEditAndScroll(faq)}
                           disabled={isSaving}
                         >
                           Edit
@@ -233,6 +244,7 @@ export default function FaqsPage() {
           </BlockStack>
         </Card>
 
+        <div ref={faqFormRef}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -299,6 +311,7 @@ export default function FaqsPage() {
             </Card>
           </Layout.Section>
         </Layout>
+        </div>
 
         <Card>
           <BlockStack gap="400">
