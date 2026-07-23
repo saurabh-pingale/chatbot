@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
@@ -17,8 +18,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
+async function pingWithSessionToken() {
+  const shopifyGlobal = window.shopify;
+  if (!shopifyGlobal?.idToken) return;
+
+  await shopifyGlobal.ready;
+  const token = await shopifyGlobal.idToken();
+  await fetch("/app/ping", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    void pingWithSessionToken().catch(() => {
+      // Best-effort telemetry for Partner Dashboard session-token checks.
+    });
+  }, []);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
