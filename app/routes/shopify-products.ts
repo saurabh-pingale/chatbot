@@ -11,7 +11,7 @@ const PRODUCT_QUERY = `#graphql
           title
           description
           onlineStoreUrl
-
+          handle
           featuredImage {
             url
           }
@@ -39,6 +39,7 @@ const PRODUCT_QUERY = `#graphql
 export async function action({ request }: ActionFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const shopId = getShopId(session);
+  const shopify_store = shopId;
 
   if (!shopId) {
     return new Response(JSON.stringify({ message: "Shop not found." }), {
@@ -61,10 +62,10 @@ export async function action({ request }: ActionFunctionArgs) {
       id: edge.node.id,
       title: edge.node.title,
       description: edge.node.description,
-      onlineStoreUrl: edge.node.onlineStoreUrl,
+      onlineStoreUrl: edge.node.onlineStoreUrl ?? `https://${shopify_store}/products/${edge.node.handle}`,
       featuredImageUrl: edge.node.featuredImage?.url ?? null,
       productType: edge.node.productType ?? null,
-      category: edge.node.category?.name ?? "Miscellaneous",
+      category:  edge.node.category?.name=="Uncategorized" ? "Other" : edge.node.category?.name ?? "Other",
       variantQuantity:
         edge.node.variants?.edges?.[0]?.node?.inventoryQuantity ?? 0,
     }));

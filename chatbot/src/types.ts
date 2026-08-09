@@ -189,7 +189,7 @@ export interface MessageListProps {
   isTyping: boolean;
   onProductAddToCart?: (product: ProductType) => Promise<void>;
   tags: TagItem[];
-  handleSendMessage: (tag: string) => void;
+  handleSendMessage: (tag: string, tagMeta?: TagItem) => void;
 }
 
 export interface ProductProps {
@@ -285,9 +285,13 @@ export interface NotificationPopupProps {
   onClose: () => void;
 }
 
+export type TagAction = 'greeting' | 'category' | 'browse_all' | 'faq';
+
 export type TagItem = {
   name: string;
   description: string;
+  categoryId?: string;
+  action?: TagAction;
 };
 
 export interface ChatbotTagsProps {

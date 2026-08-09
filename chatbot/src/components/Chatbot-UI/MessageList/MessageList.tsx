@@ -32,6 +32,13 @@ export const MessageList = memo<MessageListProps>(({
     return () => clearTimeout(timeoutId);
   }, [messages, isTyping]);
 
+  // Forward both the display name and the full TagItem so ChatBody can
+  // pass action/categoryId to the resolver.
+  const handleTagClick = (tagName: string) => {
+    const tagItem = tags.find((t) => t.name === tagName);
+    handleSendMessage(tagName, tagItem);
+  };
+
   return (
     <div ref={containerRef} className="message-list-container">
       <motion.div
@@ -49,7 +56,7 @@ export const MessageList = memo<MessageListProps>(({
             ref={index === messages.length - 1 ? lastMessageRef : null}
             showTagsAfterMessage={index === messages.length - 1 && tags.length > 0}
             tags={tags}
-            onTagClick={handleSendMessage}
+            onTagClick={handleTagClick}
           />
         ))}
 

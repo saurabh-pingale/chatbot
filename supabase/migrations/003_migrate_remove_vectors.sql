@@ -25,13 +25,13 @@ GRANT ALL ON public.shop_categories TO anon, authenticated;
 
 -- Backfill categories from legacy category text column when present
 INSERT INTO public.shop_categories (shop_id, name)
-SELECT DISTINCT shop_id, COALESCE(NULLIF(TRIM(category), ''), 'Miscellaneous')
+SELECT DISTINCT shop_id, COALESCE(NULLIF(TRIM(category), ''), 'Other')
 FROM public.shop_products
 WHERE category IS NOT NULL
 ON CONFLICT (shop_id, name) DO NOTHING;
 
 INSERT INTO public.shop_categories (shop_id, name)
-SELECT DISTINCT shop_id, 'Miscellaneous'
+SELECT DISTINCT shop_id, 'Other'
 FROM public.shop_products
 WHERE category IS NULL OR TRIM(category) = ''
 ON CONFLICT (shop_id, name) DO NOTHING;
@@ -43,7 +43,7 @@ UPDATE public.shop_products sp
 SET category_id = sc.id
 FROM public.shop_categories sc
 WHERE sp.shop_id = sc.shop_id
-  AND sc.name = COALESCE(NULLIF(TRIM(sp.category), ''), 'Miscellaneous')
+  AND sc.name = COALESCE(NULLIF(TRIM(sp.category), ''), 'Other')
   AND sp.category_id IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_shop_products_category_id ON public.shop_products (category_id);

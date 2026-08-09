@@ -5,7 +5,7 @@
 export const CHATBOT_DEFAULTS = {
   primaryColor: '#1A1A1A',
   logoUrl: '',
-  headerTitle: 'Support Assistant',
+  headerTitle: 'Assistant',
   greetingMessage: "Hey there, I'm happy to help you today.",
   helloButtonLabel: 'Hello 👋',
   fallbackMessage:
@@ -16,6 +16,9 @@ export const CHATBOT_DEFAULTS = {
   shopId: 'demo-shop',
   /** Max FAQ question tags shown when no match is found */
   topFaqSuggestionsCount: 3,
+  /** Tag-driven catalog browsing */
+  greetingTags: ['Hi', 'Hello'] as const,
+  browseAllCategoriesLabel: 'Browse all categories',
   /** Fuse.js threshold — lower = stricter match (0.0–1.0) */
   faqSearchThreshold: 0.45,
 } as const;

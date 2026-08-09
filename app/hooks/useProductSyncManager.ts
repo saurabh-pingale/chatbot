@@ -303,7 +303,7 @@ export function useProductSyncManager({
 
       const normalizedProducts = payload.products.map(normalizeShopifyProduct);
       const uniqueCategoryNames = Array.from(
-        new Set(normalizedProducts.map((product) => product.category_name ?? "Miscellaneous")),
+        new Set(normalizedProducts.map((product) => product.category_name ?? "Other")),
       );
 
       setSyncMessage("Saving categories...");
@@ -313,7 +313,7 @@ export function useProductSyncManager({
       const records: ProductRecord[] = [];
       for (let index = 0; index < normalizedProducts.length; index += 1) {
         const product = normalizedProducts[index];
-        const categoryName = product.category_name ?? "Miscellaneous";
+        const categoryName = product.category_name ?? "Other";
         records.push({
           ...product,
           category_id: categoryIdByName.get(categoryName) ?? null,

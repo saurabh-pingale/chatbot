@@ -21,7 +21,7 @@ export interface ShopifyProductNode {
   variantQuantity: number;
 }
 
-const DEFAULT_CATEGORY = "Miscellaneous ";
+const DEFAULT_CATEGORY = "Other ";
 
 export function resolveCategoryName(category: string | null | undefined): string {
   const trimmed = category?.trim();
