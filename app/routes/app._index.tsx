@@ -22,16 +22,16 @@ interface LoaderData {
 }
 
 const features = [
-  "Add and manage your own FAQs and reduce customer support workload",
-  "Bulk upload up to 50 FAQs at once using a CSV template",
-  "Smart search matches customer queries to your FAQs",
+  "Sync your Shopify products to Supabase organized by category",
+  "Browse the catalog through guided auto-suggestions in the admin panel",
+  "View every product in a category with rich product cards",
 ];
 
 const exampleQuestions = [
-  "How do I track my order?",
-  "What's your return policy?",
-  "How can I contact customer support?",
-  "What are your business hours?",
+  "Show me matching products for a red dress",
+  "What sneakers are available in size 10?",
+  "Find beach accessories with fast shipping",
+  "Search for gifts under $50",
 ];
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -77,8 +77,8 @@ export default function Index() {
               customers accurate, helpful answers.
             </Text>
             <InlineStack gap="300">
-              <Button variant="primary" onClick={() => navigate("/app/faqs")}>
-                Manage FAQs
+              <Button variant="primary" onClick={() => navigate("/app/product-sync")}>
+                Product sync
               </Button>
               {themeEditorDeepLink && (
                 <Button
