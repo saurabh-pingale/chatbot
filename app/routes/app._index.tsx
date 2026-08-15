@@ -52,7 +52,7 @@ export function getThemeEditorDeepLink(
   template: string = "index",
 ): string {
   const APP_EMBED_BLOCK_HANDLE = "chatbot";
-  const SHOPIFY_API_KEY = "87d90090dd00b1d5fe09301727899bb9";
+  const SHOPIFY_API_KEY = "f295d1e7944ddacc405d0630c25839f1";
   const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
   return `https://${shop}/admin/themes/current/editor?context=apps&template=${template}&activateAppId=${activateAppId}`;
 }
@@ -246,7 +246,7 @@ export default function Index() {
                   <List.Item>
                     Preview your storefront — the product discovery widget should appear. Sync products from the{" "}
                     <Text as="span" fontWeight="semibold">
-                      Products
+                      Sync Products
                     </Text>{" "}
                     page so customers can browse your catalog.
                   </List.Item>

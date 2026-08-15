@@ -54,7 +54,7 @@ export default function ProductSyncPage() {
 
   return (
     <Page
-      title="Product sync & catalog browse"
+      title="Product sync"
       subtitle="Sync your Shopify catalog and explore products through guided category suggestions"
       backAction={{ content: "Home", url: "/app" }}
     >

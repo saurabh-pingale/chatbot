@@ -185,6 +185,11 @@ export async function resolveFaqMessage(
 
   // ── 2. Browse all categories ───────────────────────────────────────────────
   if (tagMeta?.action === 'browse_all') {
+    if (categories.length === 0) {
+      const answer = `Sorry, no categories are available at the moment.`;
+      await saveChatMessage(shopId, sessionId, 'bot', answer);
+      return { answer, products: [], success: true, tags: [] };
+    }
     const answer = `Here are all our categories`;
     const tags = buildAllCategoryTags(categories);
     await saveChatMessage(shopId, sessionId, 'bot', answer);

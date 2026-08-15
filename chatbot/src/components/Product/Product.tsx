@@ -46,12 +46,14 @@ export const Product = ({ product }: ProductProps) => {
         <h4 className="product-title">{product.name}</h4>
 
         {/* Price */}
-        {formattedPrice && (
+        {formattedPrice ? (
           <div className="product-price">{formattedPrice}</div>
+        ) : (
+          <div className="product-price">{getCurrencySymbol(product.currency_code)}0.00</div>
         )}
 
         {/* Category + stock badges */}
-        <div className="product-badges">
+        <div className="product-badge-parent">
           <span className={`product-badge ${inStock ? 'product-badge--in-stock' : 'product-badge--out-of-stock'}`}>
             {inStock ? `${product.variant_quantity} in stock` : 'Out of stock'}
           </span>
