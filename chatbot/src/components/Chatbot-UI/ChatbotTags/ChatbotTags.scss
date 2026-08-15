@@ -4,13 +4,16 @@
   display: flex;
   justify-content: flex-start;
   margin-left: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chatbot-tags.horizontal-categories {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin: 8px 0;
+  max-width: 100%;
 }
 
 .chatbot-tag-button.premium-tag {

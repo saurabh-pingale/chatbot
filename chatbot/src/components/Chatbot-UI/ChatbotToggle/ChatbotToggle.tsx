@@ -36,7 +36,7 @@ export const ChatbotToggle = memo<ChatbotToggleProps>(({
         variants={iconAnimation}
       >
         {useInlineLogo ? (
-          <ChatbotLogo size={32} variant="icon" />
+          <ChatbotLogo size={28} variant="icon" />
         ) : (
           <img
             src={logoSrc}
