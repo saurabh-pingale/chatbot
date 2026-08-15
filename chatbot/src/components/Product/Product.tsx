@@ -2,6 +2,23 @@ import { motion } from 'framer-motion';
 import type { ProductProps } from '../../types';
 import './Product.scss';
 
+// Convert currency code to symbol
+const getCurrencySymbol = (currencyCode: string): string => {
+  try {
+    return new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .format(0)
+      .replace(/\d/g, '')
+      .trim();
+  } catch {
+    return currencyCode;
+  }
+};
+
 export const Product = ({ product }: ProductProps) => {
   const inStock = (product.variant_quantity ?? 0) > 0;
   const cardClasses = `product-card ${!inStock ? 'out-of-stock' : ''}`;
@@ -9,7 +26,7 @@ export const Product = ({ product }: ProductProps) => {
 
   const formattedPrice =
     product.price !== undefined && product.price !== null && product.price !== 0 && product.price !== ''
-      ? `$${Number(product.price).toFixed(2)}`
+      ? `${getCurrencySymbol(product.currency_code)}${Number(product.price).toFixed(2)}`
       : null;
 
   return (
@@ -20,7 +37,7 @@ export const Product = ({ product }: ProductProps) => {
       transition={{ duration: 0.3 }}
     >
       <img
-        src={product.image_url || 'https://placehold.co/320x240/f4f6f8/94a3b8?text=No+Image'}
+        src={product.image_url || 'https://placehold.co/320x240/e5e7eb/6b7280?text=No+Image'}
         alt={product.name}
         className="product-image"
       />
@@ -35,9 +52,6 @@ export const Product = ({ product }: ProductProps) => {
 
         {/* Category + stock badges */}
         <div className="product-badges">
-          {product.category && (
-            <span className="product-badge product-badge--category">{product.category}</span>
-          )}
           <span className={`product-badge ${inStock ? 'product-badge--in-stock' : 'product-badge--out-of-stock'}`}>
             {inStock ? `${product.variant_quantity} in stock` : 'Out of stock'}
           </span>

@@ -67,6 +67,8 @@ export async function loadProductsByCategory(
       image_url,
       variant_quantity,
       metadata,
+      price,
+      currency_code,
       category_id,
       shop_categories ( name )
     `)
@@ -81,18 +83,21 @@ export async function loadProductsByCategory(
 
   type ProductRow = ProductRecord & {
     shop_categories?: { name: string } | { name: string }[] | null;
+    price: number;
+    currency_code: string;
   };
-
+  
   return ((data ?? []) as unknown as ProductRow[]).map((p) => {
     // Supabase may return the joined relation as an array or a single object
     const cat = Array.isArray(p.shop_categories)
       ? p.shop_categories[0]
       : p.shop_categories;
-
+  
     return {
       id: p.product_id || p.id,
       name: p.title,
-      price: (p.metadata?.price as number | string) ?? 0,
+      price: p.price,
+      currency_code: p.currency_code,
       url: p.url ?? undefined,
       image_url: p.image_url ?? undefined,
       description: p.description ?? undefined,

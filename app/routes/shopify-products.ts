@@ -4,6 +4,9 @@ import { getShopId } from "../utils/session.utils";
 
 const PRODUCT_QUERY = `#graphql
   query shopProducts($first: Int!) {
+    shop {
+      currencyCode
+    }
     products(first: $first) {
       edges {
         node {
@@ -27,6 +30,7 @@ const PRODUCT_QUERY = `#graphql
           variants(first: 1) {
             edges {
               node {
+                price
                 inventoryQuantity
               }
             }
@@ -58,6 +62,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!json?.data?.products?.edges) {
       throw new Error("Invalid Shopify response");
     }
+    const currency = json?.data?.shop?.currencyCode ?? "USD";
     const products = json.data.products.edges.map((edge: any) => ({
       id: edge.node.id,
       title: edge.node.title,
@@ -66,6 +71,8 @@ export async function action({ request }: ActionFunctionArgs) {
       featuredImageUrl: edge.node.featuredImage?.url ?? null,
       productType: edge.node.productType ?? null,
       category:  edge.node.category?.name=="Uncategorized" ? "Other" : edge.node.category?.name ?? "Other",
+      price: edge.node.variants?.edges?.[0]?.node?.price ?? 0.0,
+      currencyCode: currency,
       variantQuantity:
         edge.node.variants?.edges?.[0]?.node?.inventoryQuantity ?? 0,
     }));

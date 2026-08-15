@@ -8,6 +8,8 @@ export interface ProductRecord {
   category_name: string | null;
   variant_quantity: number;
   metadata?: Record<string, unknown>;
+  price: number;
+  currency_code: string;
 }
 
 export interface ShopifyProductNode {
@@ -19,6 +21,8 @@ export interface ShopifyProductNode {
   productType: string | null;
   category: string | null;
   variantQuantity: number;
+  price: number;
+  currencyCode: string;
 }
 
 const DEFAULT_CATEGORY = "Other ";
@@ -37,7 +41,8 @@ export function normalizeShopifyProduct(product: ShopifyProductNode): Omit<Produ
     image_url: product.featuredImageUrl,
     category_name: resolveCategoryName(product.category ?? product.productType),
     variant_quantity: product.variantQuantity ?? 0,
-    metadata: {},
+    price: product.price,
+    currency_code: product.currencyCode,
   };
 }
 
@@ -51,6 +56,8 @@ export function toDisplayProduct(row: {
   category_id?: string | null;
   category_name?: string | null;
   shop_categories?: { name: string } | null;
+  price: number;
+  currency_code: string;
 }): ProductRecord {
   return {
     product_id: row.product_id,
@@ -61,5 +68,7 @@ export function toDisplayProduct(row: {
     category_id: row.category_id ?? null,
     category_name: row.category_name ?? row.shop_categories?.name ?? null,
     variant_quantity: row.variant_quantity,
+    price: row.price,
+    currency_code: row.currency_code,
   };
 }

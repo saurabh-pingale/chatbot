@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { BlockStack, Card, Text } from "@shopify/polaris";
 import ChatResultList from "./ChatResultList";
-import ChatSuggestionBubbles from "./ChatSuggestionBubbles";
 import type { ChatFlowStep, ChatMessage, ChatSuggestion } from "../utils/chat-flow.utils";
 
 interface ChatSearchSectionProps {
@@ -51,7 +50,7 @@ export default function ChatSearchSection({
       <BlockStack gap="400">
         <BlockStack gap="100">
           <Text as="h2" variant="headingMd">
-            Catalog assistant
+            ReezoAI Assist
           </Text>
           <Text as="p" variant="bodyMd" tone="subdued">
             Browse your synced Shopify catalog through guided suggestions — just like a storefront chatbot.
@@ -75,20 +74,12 @@ export default function ChatSearchSection({
             showLoading={showLoading}
             isSyncing={isSyncing}
             isFetchingCategory={isFetchingCategory}
+            suggestions={suggestions}
+            suggestionsDisabled={suggestionsDisabled}
+            onSuggestion={onSuggestion}
+            helperText={helperText}
           />
         </div>
-
-        <BlockStack gap="200">
-          <Text as="span" variant="bodySm" tone="subdued">
-            {helperText}
-          </Text>
-          <ChatSuggestionBubbles
-            suggestions={suggestions}
-            disabled={suggestionsDisabled}
-            onSelect={onSuggestion}
-            align="right"
-          />
-        </BlockStack>
       </BlockStack>
     </Card>
   );

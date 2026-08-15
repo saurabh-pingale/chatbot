@@ -177,7 +177,7 @@ export async function resolveFaqMessage(
 
   // ── 1. Greeting tag (Hi / Hello) ──────────────────────────────────────────
   if (tagMeta?.action === 'greeting') {
-    const answer = `Hello! 👋 What are you looking for today? Here are our categories:`;
+    const answer = `Hello!, Here are our categories`;
     const tags = buildCategoryTags(categories);
     await saveChatMessage(shopId, sessionId, 'bot', answer);
     return { answer, products: [], success: true, tags };
@@ -185,7 +185,7 @@ export async function resolveFaqMessage(
 
   // ── 2. Browse all categories ───────────────────────────────────────────────
   if (tagMeta?.action === 'browse_all') {
-    const answer = `Here are all our categories:`;
+    const answer = `Here are all our categories`;
     const tags = buildAllCategoryTags(categories);
     await saveChatMessage(shopId, sessionId, 'bot', answer);
     return { answer, products: [], success: true, tags };

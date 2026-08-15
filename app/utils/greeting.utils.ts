@@ -72,7 +72,7 @@ export function getGreetingTypeMessage(greetingType?: GreetingDetectionResult["g
     case "thanks":
       return "You're welcome! Let me know if you'd like to explore another category.";
     case "bot_info":
-      return "I'm your catalog assistant. I help you browse synced Shopify products by category — no search needed, just tap a suggestion.";
+      return "I'm your Assist. I help you browse products by category — no search, just give a tap.";
     default:
       return "";
   }

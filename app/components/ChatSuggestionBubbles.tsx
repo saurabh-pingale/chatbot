@@ -22,10 +22,9 @@ export default function ChatSuggestionBubbles({
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
-        alignItems: align === "right" ? "flex-end" : "flex-start",
-        gap: 8,
-        marginTop: 4,
+        flexWrap: "wrap",
+        gap: 10,
+        marginTop: 8,
       }}
     >
       {suggestions.map((suggestion) => (
@@ -36,26 +35,26 @@ export default function ChatSuggestionBubbles({
           onClick={() => onSelect(suggestion)}
           style={{
             appearance: "none",
-            border: "1.5px solid #2c6ecb",
-            background: "#ffffff",
-            color: "#2c6ecb",
-            borderRadius: 999,
-            padding: "10px 18px",
-            fontSize: 14,
+            border: "2px solid #000000",
+            background: "transparent",
+            color: "#000000",
+            borderRadius: 20,
+            padding: "6px 14px",
+            fontSize: 13,
             fontWeight: 500,
             lineHeight: 1.2,
             cursor: disabled ? "not-allowed" : "pointer",
-            opacity: disabled ? 0.55 : 1,
-            transition: "background 0.15s ease, color 0.15s ease, transform 0.1s ease",
-            maxWidth: "85%",
-            textAlign: "center",
+            opacity: disabled ? 0.5 : 1,
+            transition: "background 0.2s ease, color 0.2s ease",
           }}
           onMouseEnter={(event) => {
             if (disabled) return;
-            event.currentTarget.style.background = "#eef4ff";
+            event.currentTarget.style.background = "#000000";
+            event.currentTarget.style.color = "#ffffff";
           }}
           onMouseLeave={(event) => {
-            event.currentTarget.style.background = "#ffffff";
+            event.currentTarget.style.background = "transparent";
+            event.currentTarget.style.color = "#000000";
           }}
         >
           {suggestion.label}

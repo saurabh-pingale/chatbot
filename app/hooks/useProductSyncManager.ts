@@ -134,13 +134,14 @@ export function useProductSyncManager({
     setChatMessages((prev) => [...prev, { ...message, id: createMessageId() }]);
   }, []);
 
-  const showCategoriesStep = useCallback(() => {
-    setChatStep("categories");
-    appendMessage({
-      role: "bot",
-      text: getCategoriesIntro(categories.length),
-    });
-  }, [appendMessage, categories.length]);
+  //TODO: For later use
+  // const showCategoriesStep = useCallback(() => {
+  //   setChatStep("categories");
+  //   appendMessage({
+  //     role: "bot",
+  //     text: getCategoriesIntro(categories.length),
+  //   });
+  // }, [appendMessage, categories.length]);
 
   const handleGreeting = useCallback(() => {
     setActiveCategoryId(null);
@@ -179,18 +180,14 @@ export function useProductSyncManager({
         const rows = await fetchProductsByCategoryId(supabase, shop, categoryId);
         const displayProducts = mapRowsToProducts(rows);
 
+        // Add delay for animation effect similar to chatbot
+        await new Promise(resolve => setTimeout(resolve, 300));
+
         appendMessage({
           role: "bot",
           text: getCategoryProductsIntro(categoryName, displayProducts.length),
           products: displayProducts,
         });
-
-        if (categories.length > 1) {
-          appendMessage({
-            role: "bot",
-            text: getOtherCategoriesPrompt(),
-          });
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load category products.");
       } finally {
@@ -291,7 +288,6 @@ export function useProductSyncManager({
       if (!Array.isArray(payload.products)) {
         throw new Error("Invalid product payload from Shopify.");
       }
-
       const total = payload.products.length;
       if (total === 0) {
         setSuccessMessage("No products found in your Shopify store.");
@@ -324,7 +320,6 @@ export function useProductSyncManager({
         setSyncProgress(Math.round((processed / total) * 100));
         setSyncMessage(`Processed ${processed} of ${total} products...`);
       }
-
       setSyncMessage("Saving products...");
       const insertedRows = await upsertShopProducts(supabase, shop, records);
       setProducts(insertedRows);

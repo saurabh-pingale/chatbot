@@ -3,7 +3,7 @@ import { PRODUCT_TABLE, type ShopProductRow } from "../utils/supabase.types";
 import type { ProductRecord } from "../utils/product.utils";
 
 const PRODUCT_SELECT =
-  "id, shop_id, product_id, category_id, title, description, url, image_url, variant_quantity, metadata, created_at, updated_at, shop_categories(id, name)";
+  "id, shop_id, product_id, category_id, title, description, url, image_url, variant_quantity, metadata, price, currency_code, created_at, updated_at, shop_categories(id, name)";
 
 function normalizeProductRows(data: unknown): ShopProductRow[] {
   return (Array.isArray(data) ? data : []).map((row) => {
@@ -69,7 +69,9 @@ export async function upsertShopProducts(
     url: product.url,
     image_url: product.image_url,
     variant_quantity: product.variant_quantity,
-    metadata: product.metadata ?? {},
+    metadata: (product as any).metadata ?? {},
+    price: product.price,
+    currency_code: product.currency_code,
   }));
 
   const { data, error } = await supabase

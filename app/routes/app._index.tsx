@@ -22,16 +22,16 @@ interface LoaderData {
 }
 
 const features = [
-  "Sync your Shopify products to Supabase organized by category",
-  "Browse the catalog through guided auto-suggestions in the admin panel",
+  "Sync your Shopify products into our product discovery system",
+  "Browse the products through guided auto-suggestions in the admin panel",
   "View every product in a category with rich product cards",
 ];
 
-const exampleQuestions = [
-  "Show me matching products for a red dress",
-  "What sneakers are available in size 10?",
-  "Find beach accessories with fast shipping",
-  "Search for gifts under $50",
+const exampleBrowsing = [
+  "Browse products by category",
+  "View product details with pricing and availability",
+  "Discover items through guided suggestions",
+  "Explore your entire catalog easily",
 ];
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -61,7 +61,7 @@ export default function Index() {
   const { shop } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const [setupOpen, setSetupOpen] = useState(false);
-  const APP_BRAND_NAME = "Cognito Assistant";
+  const APP_BRAND_NAME = "ReezoAI Assist";
   const themeEditorDeepLink = shop ? getThemeEditorDeepLink(shop) : null;
 
   return (
@@ -73,12 +73,11 @@ export default function Index() {
               Welcome to {APP_BRAND_NAME}!
             </Text>
             <Text variant="bodyMd" as="p">
-              Your store&apos;s FAQ assistant, powered by smart search to give
-              customers accurate, helpful answers.
+              Your store&apos;s smart product discovery assistant, helping customers browse and discover products through guided category suggestions.
             </Text>
             <InlineStack gap="300">
               <Button variant="primary" onClick={() => navigate("/app/product-sync")}>
-                Product sync
+                Sync Products
               </Button>
               {themeEditorDeepLink && (
                 <Button
@@ -94,11 +93,10 @@ export default function Index() {
         <Layout>
           <Layout.Section>
             <Card>
-              <BlockStack gap="500">
-                <Banner title="Get started with your FAQs" tone="info">
-                  Add questions and answers that your customers ask most often.
-                  {APP_BRAND_NAME} uses smart search to match customer queries
-                  and return the best answer.
+              <BlockStack gap="800">
+                <Banner title="Get started with Sync Products" tone="info">
+                  Sync your Shopify products to enable smart product discovery.
+                  {APP_BRAND_NAME} organizes your catalog by category to help customers browse and find products easily.
                 </Banner>
 
                 <BlockStack gap="400">
@@ -117,8 +115,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      Add FAQs one at a time or bulk upload up to 50 using the
-                      CSV template in the FAQ manager
+                      Sync your products from Shopify to organize them by category into our product discovery system.
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
@@ -133,8 +130,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      A customer asks a question through the chat interface on
-                      your store
+                      Customers visit your store and interact with the ReezoAI Assist widget to discover products through an intuitive browsing experience
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
@@ -149,8 +145,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      The {APP_BRAND_NAME} widget searches your FAQs to find the
-                      closest matching question
+                      The {APP_BRAND_NAME} widget guides customers through categories with smart suggestions
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
@@ -165,7 +160,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      The customer receives the matching answer instantly
+                      Customers discover and view products with detailed cards showing pricing and availability
                     </Text>
                   </InlineStack>
                 </BlockStack>
@@ -190,14 +185,14 @@ export default function Index() {
               <Card>
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    Example Questions
+                    Product Discovery
                   </Text>
                   <Text as="p" variant="bodyMd">
-                    You can add FAQs like these for your customers:
+                    Customers can:
                   </Text>
                   <List type="bullet">
-                    {exampleQuestions.map((question, index) => (
-                      <List.Item key={index}>{question}</List.Item>
+                    {exampleBrowsing.map((example, index) => (
+                      <List.Item key={index}>{example}</List.Item>
                     ))}
                   </List>
                 </BlockStack>
@@ -232,12 +227,12 @@ export default function Index() {
                     <Text as="span" fontWeight="semibold">
                       Enable chatbot in theme
                     </Text>{" "}
-                    (opens the theme editor App embeds panel for Cognito Assistant).
+                    (opens the theme editor App embeds panel for ReezoAI Assist).
                   </List.Item>
                   <List.Item>
                     Turn on the{" "}
                     <Text as="span" fontWeight="semibold">
-                      Cognito Assistant
+                      ReezoAI Assist
                     </Text>{" "}
                     toggle.
                   </List.Item>
@@ -249,17 +244,16 @@ export default function Index() {
                     in the theme editor.
                   </List.Item>
                   <List.Item>
-                    Preview your storefront — the chat widget should appear. Add
-                    FAQs under{" "}
+                    Preview your storefront — the product discovery widget should appear. Sync products from the{" "}
                     <Text as="span" fontWeight="semibold">
-                      Manage FAQs
+                      Products
                     </Text>{" "}
-                    so the bot can answer customers.
+                    page so customers can browse your catalog.
                   </List.Item>
                 </List>
                 <Text as="p" variant="bodySm" tone="subdued">
                   Manual path: Online Store → Themes → Customize → App embeds →
-                  enable Cognito Assistant → Save.
+                  enable ReezoAI Assist → Save.
                 </Text>
               </BlockStack>
             </Collapsible>

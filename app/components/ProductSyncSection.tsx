@@ -41,7 +41,10 @@ export default function ProductSyncSection({
           Sync Shopify products
         </Text>
         <Text as="p" variant="bodyMd" tone="subdued">
-          Pull products from your connected Shopify store and organize them by category in Supabase for guided catalog browsing.
+          Sync products from your Shopify store to enable smart product discovery for your customers.
+        </Text>
+        <Text as="p" variant="bodySm" tone="subdued">
+          🔒 Your product information is securely stored and never shared with third parties strictly.
         </Text>
 
         {error ? (

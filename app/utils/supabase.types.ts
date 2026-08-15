@@ -29,7 +29,9 @@ export interface ShopProductRow {
   url: string | null;
   image_url: string | null;
   variant_quantity: number;
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  price: number;
+  currency_code: string;
   created_at: string;
   updated_at: string;
   shop_categories?: Pick<ShopCategoryRow, "id" | "name"> | null;

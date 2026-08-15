@@ -21,11 +21,13 @@ export interface ChatMessage {
     image_url: string | null;
     category_name: string | null;
     variant_quantity: number;
+    price: number;
+    currency_code: string;
   }>;
 }
 
 export const GREETING_SUGGESTIONS: ChatSuggestion[] = [
-  { id: "greet-hi", label: "Hi", type: "greeting" },
+  { id: "greet-hi", label: "Hi 👋", type: "greeting" },
   { id: "greet-hello", label: "Hello", type: "greeting" },
 ];
 
@@ -55,7 +57,7 @@ export function buildOtherCategorySuggestions(
 }
 
 export function getGreetingResponse(): string {
-  return "Hello! Welcome to your store catalog assistant. I can help you browse products by category — pick one below to get started.";
+  return "Hello! Welcome to store. I can help you browse products by category — pick one below to get started.";
 }
 
 export function getCategoriesIntro(categoryCount: number): string {
@@ -72,14 +74,10 @@ export function getCategoriesIntro(categoryCount: number): string {
 
 export function getCategoryProductsIntro(categoryName: string, productCount: number): string {
   if (productCount === 0) {
-    return `No products found in "${categoryName}" right now. Try another category below.`;
+    return `Sorry, we don't have any products in ${categoryName} right now.`;
   }
 
-  if (productCount === 1) {
-    return `Found 1 product in "${categoryName}":`;
-  }
-
-  return `Found ${productCount} products in "${categoryName}":`;
+  return `Here are products in ${categoryName}:`;
 }
 
 export function getOtherCategoriesPrompt(): string {

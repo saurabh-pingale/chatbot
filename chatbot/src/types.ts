@@ -4,6 +4,7 @@ export interface ProductType {
   id: string | number;
   name: string;
   price: number | string;
+  currency_code: string;
   url?: string;
   image_url?: string;
   description?: string;
@@ -129,6 +130,7 @@ export interface ShopifyCartResponse {
     title: string;
     price: number;
     image: string;
+    currency_code: string;
     properties: Record<string, ShopifyPropertyValue>;
   }>;
   item_count: number;
