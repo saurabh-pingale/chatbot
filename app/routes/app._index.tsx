@@ -73,7 +73,7 @@ export default function Index() {
               Welcome to {APP_BRAND_NAME}!
             </Text>
             <Text variant="bodyMd" as="p">
-              Your store&apos;s smart product discovery assistant, helping customers browse and discover products through guided category suggestions.
+              Your store&apos;s smart product discovery assistant, helping customers browse and discover products through guided category suggestions. Designed with built-in security and privacy protections for a trusted shopping experience.
             </Text>
             <InlineStack gap="300">
               <Button variant="primary" onClick={() => navigate("/app/product-sync")}>

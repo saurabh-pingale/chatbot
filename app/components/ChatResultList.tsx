@@ -134,7 +134,7 @@ function ProductCard({
             overflow: "hidden",
             textOverflow: "ellipsis",
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
             lineHeight: 1.4,
             textTransform: "capitalize",

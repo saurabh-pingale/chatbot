@@ -21,6 +21,14 @@ const PRODUCT_QUERY = `#graphql
 
           productType
 
+          collections(first: 1) {
+            edges {
+              node {
+                title
+              }
+            }
+          }
+
           category {
             id
             name
@@ -70,7 +78,8 @@ export async function action({ request }: ActionFunctionArgs) {
       onlineStoreUrl: edge.node.onlineStoreUrl ?? `https://${shopify_store}/products/${edge.node.handle}`,
       featuredImageUrl: edge.node.featuredImage?.url ?? null,
       productType: edge.node.productType ?? null,
-      category:  edge.node.category?.name=="Uncategorized" ? "Other" : edge.node.category?.name ?? "Other",
+      category: edge.node.collections?.edges?.[0]?.node?.title ?? 
+                (edge.node.category?.name === "Uncategorized" ? "Other" : edge.node.category?.name ?? "Other"),
       price: edge.node.variants?.edges?.[0]?.node?.price ?? 0.0,
       currencyCode: currency,
       variantQuantity:
