@@ -3,6 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 const FAQ_TABLE = 'shop_faqs';
 const SETTINGS_TABLE = 'shop_faq_settings';
 const MESSAGES_TABLE = 'shop_chat_messages';
+const PRODUCT_TABLE = 'shop_products';
+const CATEGORY_TABLE = 'shop_categories';
 
 let client: SupabaseClient | null = null;
 
@@ -33,4 +35,10 @@ export async function getDataClient(): Promise<SupabaseClient | null> {
   return client;
 }
 
-export { FAQ_TABLE, SETTINGS_TABLE, MESSAGES_TABLE };
+export {
+  FAQ_TABLE,
+  SETTINGS_TABLE,
+  MESSAGES_TABLE,
+  PRODUCT_TABLE,
+  CATEGORY_TABLE,
+};

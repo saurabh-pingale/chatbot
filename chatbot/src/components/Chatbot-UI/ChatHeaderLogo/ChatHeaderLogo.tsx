@@ -25,7 +25,7 @@ export const ChatHeaderLogo = memo(() => {
     <div className="chat-header-left-section">
       <div className="chat-header-logo">
         {useInlineLogo ? (
-          <ChatbotLogo size={32} variant="badge" />
+          <ChatbotLogo size={28} variant="badge" />
         ) : (
           <img
             src={logoSrc}

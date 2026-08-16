@@ -3,26 +3,29 @@
 .chatbot-tags-container.agent-side {
   display: flex;
   justify-content: flex-start;
-  margin-left: 12px;
+  margin-left: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chatbot-tags.horizontal-categories {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 8px;
+  gap: 8px;
+  margin: 8px 0;
+  max-width: 100%;
 }
 
 .chatbot-tag-button.premium-tag {
-  padding: 6px 10px;
-  border: 2px solid var(--theme-primary-color);
+  padding: 6px 14px;
+  border: 2px solid $black;
   background-color: transparent;
-  color: var(--theme-primary-color);
+  color: $black;
   border-radius: 20px;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 
   outline: none;
   box-shadow: none;
@@ -33,7 +36,12 @@
   }
 
   &:hover {
-    background-color: var(--theme-primary-color);
-    color: white;
+    background-color: $black;
+    color: $white-100;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 }

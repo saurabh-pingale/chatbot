@@ -4,9 +4,9 @@ import { hexToRgbArray } from '../../../utils/utils';
 import type { ChatInputProps, StyleWithCustomProps } from '../../../types';
 import './ChatInput.scss';
 
-export const ChatInput = memo<ChatInputProps>(({ 
+export const ChatInput = memo<ChatInputProps>(({
   onSendMessage,
-  disabled = false
+  disabled = false,
 }) => {
   const [message, setMessage] = useState('');
   const config = useConfig();
@@ -15,18 +15,18 @@ export const ChatInput = memo<ChatInputProps>(({
   const primaryColorRgb = hexToRgbArray(config.primaryColor);
   const dynamicStyles: StyleWithCustomProps = {
     '--theme-primary-color': config.primaryColor,
+    ...(primaryColorRgb && {
+      '--theme-primary-color-rgb': primaryColorRgb.join(', '),
+    }),
   };
-  if (primaryColorRgb) {
-    dynamicStyles['--theme-primary-color-rgb'] = primaryColorRgb.join(', ');
-  }
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, 150);
+      const newHeight = Math.min(textarea.scrollHeight, 120);
       textarea.style.height = `${newHeight}px`;
-      textarea.style.overflowY = textarea.scrollHeight > 150 ? 'auto' : 'hidden';
+      textarea.style.overflowY = textarea.scrollHeight > 120 ? 'auto' : 'hidden';
     }
   };
 
@@ -35,24 +35,26 @@ export const ChatInput = memo<ChatInputProps>(({
   }, [message]);
 
   const handleSubmit = () => {
-    const trimmedMessage = message.trim();
-    if (!trimmedMessage || disabled) return;
+    const trimmed = message.trim();
+    if (!trimmed || disabled) return;
 
-    if (trimmedMessage.length > 200) {
-      onSendMessage('The message you submitted was too long, please reload the conversation and submit something shorter.');
+    if (trimmed.length > 200) {
+      onSendMessage(
+        'The message you submitted was too long, please reload the conversation and submit something shorter.',
+      );
       return;
     }
 
-    onSendMessage(trimmedMessage);
+    onSendMessage(trimmed);
     setMessage('');
-    
+
     if (textareaRef.current) {
-      textareaRef.current.style.height = '48px';
+      textareaRef.current.style.height = '44px';
       textareaRef.current.style.overflowY = 'hidden';
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();

@@ -26,7 +26,7 @@ export const ChatWelcome = memo(({ onStart }: ChatWelcomeProps) => {
       transition={{ duration: 0.25 }}
     >
       <div className="chat-welcome-logo">
-        <ChatbotLogo size={64} variant="badge" />
+        <ChatbotLogo size={48} variant="badge" />
       </div>
       <button
         type="button"

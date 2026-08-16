@@ -86,6 +86,7 @@ export const useCart = () => {
         variant_id: `${SHOPIFY_VARIANT_PREFIX}${item.id}`,
         name: item.title,
         price: item.price / 100,
+        currency_code: item.currency_code,
         image_url: item.image,
         description: '',
         quantity: item.quantity,

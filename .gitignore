@@ -29,3 +29,4 @@ __pycache__
 /api/local_models
 .cursor
 .vercel/
+.vercel

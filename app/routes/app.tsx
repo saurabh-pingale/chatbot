@@ -44,7 +44,7 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/faqs">FAQs</Link>
+        <Link to="/app/product-sync">Sync Products</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

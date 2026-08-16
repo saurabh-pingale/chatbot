@@ -81,7 +81,14 @@
 }
 
 .product-slider-message-container {
-  margin-top: 8px;
+  margin-top: 0px;
   width: 100%;
   max-width: 100%;
+}
+
+.chatbot-tags-after-message {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
