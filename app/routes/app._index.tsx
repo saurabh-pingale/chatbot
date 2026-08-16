@@ -52,7 +52,7 @@ export function getThemeEditorDeepLink(
   template: string = "index",
 ): string {
   const APP_EMBED_BLOCK_HANDLE = "chatbot";
-  const SHOPIFY_API_KEY = "1400b0e89b804db2ee8597ced164e044";
+  const SHOPIFY_API_KEY = "f295d1e7944ddacc405d0630c25839f1";
   const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
   return `https://${shop}/admin/themes/current/editor?context=apps&template=${template}&activateAppId=${activateAppId}`;
 }
