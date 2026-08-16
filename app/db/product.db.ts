@@ -74,6 +74,16 @@ export async function upsertShopProducts(
     currency_code: product.currency_code,
   }));
 
+  const { error: deleteError } = await supabase
+    .from(PRODUCT_TABLE)
+    .delete()
+    .eq("shop_id", shopId);
+
+  if (deleteError) {
+    console.error("Failed to delete products from Supabase:", deleteError);
+  }
+
+  // Insert all products fresh
   const { data, error } = await supabase
     .from(PRODUCT_TABLE)
     .upsert(payload, { onConflict: "shop_id,product_id" })

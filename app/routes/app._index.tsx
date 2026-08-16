@@ -22,9 +22,9 @@ interface LoaderData {
 }
 
 const features = [
-  "Sync your Shopify products into our product discovery system",
-  "Browse the products through guided auto-suggestions in the admin panel",
-  "View every product in a category with rich product cards",
+  "Configure products with categories or collections for chatbot discovery",
+  "Smart product suggestions organized by category/collection",
+  "Rich product cards with pricing and availability",
 ];
 
 const exampleBrowsing = [
@@ -52,7 +52,7 @@ export function getThemeEditorDeepLink(
   template: string = "index",
 ): string {
   const APP_EMBED_BLOCK_HANDLE = "chatbot";
-  const SHOPIFY_API_KEY = "f295d1e7944ddacc405d0630c25839f1";
+  const SHOPIFY_API_KEY = "1400b0e89b804db2ee8597ced164e044";
   const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
   return `https://${shop}/admin/themes/current/editor?context=apps&template=${template}&activateAppId=${activateAppId}`;
 }
@@ -95,8 +95,8 @@ export default function Index() {
             <Card>
               <BlockStack gap="800">
                 <Banner title="Get started with Sync Products" tone="info">
-                  Sync your Shopify products to enable smart product discovery.
-                  {APP_BRAND_NAME} organizes your catalog by category to help customers browse and find products easily.
+                  Important: Products must be configured with categories or collections to appear in the chatbot.
+                  Sync your products to enable smart discovery and browsing.
                 </Banner>
 
                 <BlockStack gap="400">
@@ -115,7 +115,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      Sync your products from Shopify to organize them by category into our product discovery system.
+                      Sync products with assigned categories or collections. Products without categories won't appear in the chatbot.
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
