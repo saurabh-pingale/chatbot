@@ -168,7 +168,7 @@
     <h1>Privacy Policy</h1>
     <p class="meta">
       For <strong>ReezoAI Assist</strong> by Cognito Innovations<br />
-      Effective date: July 1st, 2026 &nbsp;·&nbsp; Last updated: July 20, 2026
+      Effective date: January 1st, 2026 &nbsp;·&nbsp; Last updated: August 16, 2026
     </p>
 
     <section>
@@ -225,11 +225,14 @@
       <h3>Storefront widget and shopper information</h3>
       <p>
         When shoppers use the widget, we may process category selections and product browsing
-        interactions; a randomly generated guest identifier stored in the browser; optional email
-        address and one-time verification codes if you enable an email gate; approximate location
-        and IP-related information that may be collected when a shopper opens the widget; basic
-        usage events (for example, widget opened, categories browsed); and browsing history stored
-        locally in the shopper's browser for a seamless experience on that device.
+        interactions; a randomly generated guest identifier stored in the browser; basic
+        usage events (for example, widget opened, categories browsed); and browsing preferences stored
+        locally in the shopper's browser for a seamless experience on that device. We do not collect
+        personal identifiable information from shoppers in the current version.
+      </p>
+      <p class="note">
+        Note: Email collection and advanced features are planned for future versions and are not
+        currently active.
       </p>
 
       <h3>Technical and support information</h3>
@@ -265,11 +268,12 @@
       <p>We may share information only as needed to run the service, including with:</p>
       <ul>
         <li><strong>Shopify</strong> — to authenticate, install, and operate within the Shopify platform</li>
-        <li><strong>Infrastructure providers</strong> — such as hosting, databases, and related cloud services used to store and process app data</li>
+        <li><strong>Infrastructure providers</strong> — including Supabase (database hosting) and Vercel (application hosting) where product data and app settings are securely stored and processed</li>
         <li><strong>Service providers</strong> — vendors who help us operate the app under appropriate confidentiality and security obligations</li>
         <li><strong>Legal / compliance</strong> — when required by law, regulation, or valid legal process, or to protect rights and safety</li>
       </ul>
       <p>
+        We do not sell or share personal information with third parties for their marketing purposes.
         Merchants remain responsible for how they use ReezoAI Assist on their storefronts and for
         providing their own customer-facing privacy disclosures where required.
       </p>
@@ -278,25 +282,36 @@
     <section>
       <h2>6. Cookies and local storage</h2>
       <p>
-        ReezoAI Assist may use browser storage technologies (such as cookies, local storage, and
-        IndexedDB) to keep merchant or shopper sessions working, remember guest identifiers, store
-        recent browsing preferences on the shopper's device, and support optional email verification
-        flows when enabled by the merchant.
+        ReezoAI Assist uses browser storage technologies (such as local storage and sessionStorage)
+        to keep merchant sessions working, remember guest identifiers, and store recent browsing
+        preferences on the shopper's device.
       </p>
       <p>
+        <strong>Specifically, we use:</strong>
+      </p>
+      <ul>
+        <li><strong>Session cookies</strong> — for merchant authentication via Shopify OAuth</li>
+        <li><strong>Local storage</strong> — to remember shopper's browsing preferences and category selections</li>
+        <li><strong>Session storage</strong> — for temporary session data that expires when the browser is closed</li>
+      </ul>
+      <p>
         Shoppers can clear this data through their browser settings. Clearing browser data may reset
-        the browsing preferences on that device.
+        the browsing preferences on that device. We do not use third-party tracking cookies or analytics cookies.
       </p>
     </section>
 
     <section>
       <h2>7. Data retention</h2>
+      <p>We retain data only as long as necessary to provide ReezoAI Assist services:</p>
       <ul>
-        <li>Merchant product catalog data and settings are retained while the app is installed and as needed to provide the service</li>
-        <li>Shopify session data is retained as required for authentication and is deleted when a shop requests redaction after uninstall (subject to Shopify's timelines)</li>
-        <li>Shopper browsing preferences stored in the browser remain until cleared by the shopper</li>
-        <li>Logs and analytics data are retained only as long as reasonably needed for security, operations, and improvement</li>
+        <li><strong>Merchant product catalog data</strong> — retained while the app is installed. Automatically deleted within 48 hours after app uninstall or when a shop redaction request is received</li>
+        <li><strong>Shopify session data</strong> — retained as required for authentication. Deleted when a shop requests redaction after uninstall or within 48 hours of uninstall</li>
+        <li><strong>Shopper browsing preferences</strong> — stored locally in the browser only, not on our servers. Remains until cleared by the shopper</li>
+        <li><strong>Server logs</strong> — retained for 30 days maximum for security and debugging purposes, then automatically deleted</li>
       </ul>
+      <p>
+        Upon app uninstall, we comply with Shopify's mandatory webhooks to delete all merchant and shop data.
+      </p>
     </section>
 
     <section>
@@ -343,11 +358,16 @@
       </p>
     </section>
 
-    <section>
-      <h2>12. Merchant responsibilities</h2>
-      <p>If you are a merchant using ReezoAI Assist, you are responsible for:</p>
-      <ul>
-        <li>Providing your own privacy notice to store visitors as required by law</li>
+    <section> in your jurisdiction</li>
+        <li>Ensuring product catalog data and widget settings do not unlawfully collect or disclose personal data</li>
+        <li>Disclosing to your customers that you use third-party services (including ReezoAI Assist) for product discovery</li>
+        <li>Responding to customer privacy requests related to your store where you are the data controller</li>
+        <li>Ensuring your use of ReezoAI Assist complies with applicable data protection laws (GDPR, CCPA, etc.)</li>
+      </ul>
+      <p class="note">
+        <strong>Important:</strong> ReezoAI Assist acts as a data processor for merchant product data.
+        Merchants are the data controllers and must ensure their own compliance with privacy laws.
+      </pi>Providing your own privacy notice to store visitors as required by law</li>
         <li>Ensuring product catalog data and widget settings do not unlawfully collect or disclose personal data</li>
         <li>Using optional features (such as email collection) in a lawful manner, including obtaining any required consent</li>
         <li>Responding to customer privacy requests related to your store where you are the controller</li>
