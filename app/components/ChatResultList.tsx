@@ -70,7 +70,7 @@ function ProductCard({
   index?: number;
 }) {
   const imageUrl = product.image_url || "https://placehold.co/320x240/e5e7eb/6b7280?text=No+Image";
-  const inStock = (product.variant_quantity ?? 0) > 0;
+  const inStock = 1; //TODO: update instock logic
 
   // Convert currency code to symbol
   const getCurrencySymbol = (currencyCode: string): string => {
@@ -138,6 +138,7 @@ function ProductCard({
             WebkitBoxOrient: "vertical",
             lineHeight: 1.4,
             textTransform: "capitalize",
+            textAlign: "center",
           }}
         >
           {product.title}
@@ -149,7 +150,7 @@ function ProductCard({
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 5, marginTop: 2 }}>
+        {/* <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 5, marginTop: 2 }}>
           <span
             style={{
               display: "inline-block",
@@ -165,7 +166,7 @@ function ProductCard({
           >
             {inStock ? `${product.variant_quantity} in stock` : "Out of stock"}
           </span>
-        </div>
+        </div> */}
 
         <a
           href={!inStock ? undefined : product.url}

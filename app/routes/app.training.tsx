@@ -249,7 +249,7 @@ export default function TrainingPage() {
   };
 
   const getThemeEditorDeepLink = (shop: string) => {
-    const SHOPIFY_API_KEY = "f295d1e7944ddacc405d0630c25839f1";
+    const SHOPIFY_API_KEY = "e897c317acc55171e58b97bd794f7356";
     const APP_EMBED_BLOCK_HANDLE = "chatbot";
     const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
     return `https://${shop}/admin/themes/current/editor?context=apps&template=index&activateAppId=${activateAppId}`;

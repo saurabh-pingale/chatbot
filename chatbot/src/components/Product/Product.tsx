@@ -20,7 +20,7 @@ const getCurrencySymbol = (currencyCode: string): string => {
 };
 
 export const Product = ({ product }: ProductProps) => {
-  const inStock = (product.variant_quantity ?? 0) > 0;
+  const inStock = 1; //TODO: update instock logic
   const cardClasses = `product-card ${!inStock ? 'out-of-stock' : ''}`;
   const linkClasses = `product-view-button ${!inStock ? 'disabled-link' : ''}`;
 
@@ -53,11 +53,11 @@ export const Product = ({ product }: ProductProps) => {
         )}
 
         {/* Category + stock badges */}
-        <div className="product-badge-parent">
+        {/* <div className="product-badge-parent">
           <span className={`product-badge ${inStock ? 'product-badge--in-stock' : 'product-badge--out-of-stock'}`}>
             {inStock ? `${product.variant_quantity} in stock` : 'Out of stock'}
           </span>
-        </div>
+        </div> */}
 
         {/* View link */}
         <a

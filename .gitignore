@@ -30,3 +30,4 @@ __pycache__
 .cursor
 .vercel/
 .vercel
+.env*.local

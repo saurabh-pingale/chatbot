@@ -52,7 +52,7 @@ export function getThemeEditorDeepLink(
   template: string = "index",
 ): string {
   const APP_EMBED_BLOCK_HANDLE = "chatbot";
-  const SHOPIFY_API_KEY = "f295d1e7944ddacc405d0630c25839f1";
+  const SHOPIFY_API_KEY = "e897c317acc55171e58b97bd794f7356";
   const activateAppId = `${SHOPIFY_API_KEY}/${APP_EMBED_BLOCK_HANDLE}`;
   return `https://${shop}/admin/themes/current/editor?context=apps&template=${template}&activateAppId=${activateAppId}`;
 }
@@ -115,7 +115,7 @@ export default function Index() {
                       </Text>
                     </Box>
                     <Text as="p">
-                      Sync products with assigned categories or collections. Products without categories won't appear in the chatbot.
+                      Sync products to make them available and discoverable in the chatbot. Re-sync after any inventory update to reflect the latest details in the chatbot.
                     </Text>
                   </InlineStack>
                   <InlineStack wrap={false} gap="500" align="start">
